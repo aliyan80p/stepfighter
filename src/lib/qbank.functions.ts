@@ -6,12 +6,18 @@ export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const [{ count: totalQ }, { data: subjects }, { data: attempts }, { count: bookmarks }] = await Promise.all([
+    const [{ count: totalQ }, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }] = await Promise.all([
       supabase.from("questions").select("*", { count: "exact", head: true }),
       supabase.from("subjects").select("id,name,count").order("id"),
+      fetchAllQuestionRows(supabase, "id,subject_id"),
       supabase.from("attempts").select("is_correct,question_id,selected_answer").eq("user_id", userId),
       supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId),
     ]);
+    const subjectCounts = new Map<number, number>();
+    for (const q of questionMeta) {
+      if (q.subject_id != null) subjectCounts.set(q.subject_id, (subjectCounts.get(q.subject_id) ?? 0) + 1);
+    }
+    const subjects = (subjectsRaw ?? []).map((s) => ({ ...s, count: subjectCounts.get(s.id) ?? 0 }));
     const uniqueDone = new Set((attempts ?? []).map((a) => a.question_id)).size;
     const correct = (attempts ?? []).filter((a) => a.is_correct).length;
     const incorrect = (attempts ?? []).filter((a) => a.is_correct === false && a.selected_answer != null).length;
@@ -36,15 +42,15 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 export const getFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [{ data: subjectsRaw }, { data: systemsRaw }, { data: qs }] = await Promise.all([
+    const [{ data: subjectsRaw }, { data: systemsRaw }, qs] = await Promise.all([
       context.supabase.from("subjects").select("id,name").order("name"),
       context.supabase.from("systems").select("id,name").order("name"),
-      context.supabase.from("questions").select("title,subject_id,system_id"),
+      fetchAllQuestionRows(context.supabase, "id,title,subject_id,system_id"),
     ]);
     const subjectCounts = new Map<number, number>();
     const systemCounts = new Map<number, number>();
     const topicMap = new Map<string, { name: string; count: number; subjectIds: Set<number>; systemIds: Set<number> }>();
-    for (const q of qs ?? []) {
+    for (const q of qs) {
       if (q.subject_id != null) subjectCounts.set(q.subject_id, (subjectCounts.get(q.subject_id) ?? 0) + 1);
       if (q.system_id != null) systemCounts.set(q.system_id, (systemCounts.get(q.system_id) ?? 0) + 1);
       const name = (q.title ?? "").trim();
@@ -60,7 +66,13 @@ export const getFilters = createServerFn({ method: "GET" })
     const topics = Array.from(topicMap.values())
       .map((t) => ({ name: t.name, count: t.count, subjectIds: Array.from(t.subjectIds), systemIds: Array.from(t.systemIds) }))
       .sort((a, b) => a.name.localeCompare(b.name));
-    return { subjects, systems, topics };
+    const questionMeta = qs.map((q) => ({
+      id: q.id as number,
+      title: (q.title ?? "").trim(),
+      subjectId: q.subject_id as number | null,
+      systemId: q.system_id as number | null,
+    }));
+    return { subjects, systems, topics, questionMeta, totalQuestions: questionMeta.length };
   });
 
 const CreateTestInput = z.object({
@@ -78,13 +90,8 @@ export const createTest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateTestInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    let query = supabase.from("questions").select("id");
-    if (data.subjectIds.length) query = query.in("subject_id", data.subjectIds);
-    if (data.systemIds.length) query = query.in("system_id", data.systemIds);
-    if (data.topicNames.length) query = query.in("title", data.topicNames);
-
-    const { data: rows } = await query.limit(10000);
-    let ids = (rows ?? []).map((r) => r.id);
+    const rows = await fetchAllQuestionRows(supabase, "id", data);
+    let ids = rows.map((r) => r.id as number);
 
     if (data.scope !== "all") {
       const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId);
@@ -117,12 +124,8 @@ export const getPoolCount = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    let query = supabase.from("questions").select("id");
-    if (data.subjectIds.length) query = query.in("subject_id", data.subjectIds);
-    if (data.systemIds.length) query = query.in("system_id", data.systemIds);
-    if (data.topicNames.length) query = query.in("title", data.topicNames);
-    const { data: rows } = await query.limit(10000);
-    let ids = (rows ?? []).map((r) => r.id);
+    const rows = await fetchAllQuestionRows(supabase, "id", data);
+    let ids = rows.map((r) => r.id as number);
     if (data.scope !== "all") {
       const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId);
       const attempted = new Set((att ?? []).map((a) => a.question_id));
@@ -162,6 +165,33 @@ function shuffle<T>(arr: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+type QuestionFilters = {
+  subjectIds?: number[];
+  systemIds?: number[];
+  topicNames?: string[];
+};
+
+async function fetchAllQuestionRows(supabase: any, columns: string, filters: QuestionFilters = {}) {
+  const pageSize = 1000;
+  const rows: any[] = [];
+  for (let from = 0; ; from += pageSize) {
+    let query = supabase
+      .from("questions")
+      .select(columns)
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (filters.subjectIds?.length) query = query.in("subject_id", filters.subjectIds);
+    if (filters.systemIds?.length) query = query.in("system_id", filters.systemIds);
+    if (filters.topicNames?.length) query = query.in("title", filters.topicNames);
+    const { data, error } = await query;
+    if (error) throw error;
+    const page = data ?? [];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return rows;
 }
 
 export const getTest = createServerFn({ method: "GET" })
