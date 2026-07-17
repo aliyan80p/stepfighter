@@ -78,8 +78,18 @@ function TestRunner() {
   return (
     <div className="flex h-screen">
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="border-b border-border p-4 flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">Question {idx + 1} of {total}</div>
+        <div className="border-b border-border p-4 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3 text-sm flex-wrap">
+            <span className="font-semibold">Question {idx + 1} <span className="text-muted-foreground font-normal">of {total}</span></span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono">ID {question.id}</span>
+            {question.subject_id != null && data.subjectMap[question.subject_id] && (
+              <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{data.subjectMap[question.subject_id]}</span>
+            )}
+            {question.system_id != null && data.systemMap[question.system_id] && (
+              <span className="text-xs px-2 py-0.5 rounded bg-accent text-accent-foreground">{data.systemMap[question.system_id]}</span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={bookmark}>
               {isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
@@ -92,6 +102,7 @@ function TestRunner() {
           <div className="max-w-3xl mx-auto">
             {question.title && <div className="text-xs uppercase text-muted-foreground mb-2">{question.title}</div>}
             <div className="prose prose-invert max-w-none qbank-html" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
+
 
             <div className="mt-6 space-y-2">
               {answers.map((a, i) => {
