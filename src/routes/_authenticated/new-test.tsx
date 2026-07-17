@@ -60,42 +60,50 @@ function NewTest() {
     topics: hasSystem,
   };
 
-  const totalStep2 = data?.subjects.reduce((n, s) => n + (s.count ?? 0), 0) ?? 0;
+  const questionMeta = data?.questionMeta ?? [];
+  const totalStep2 = data?.totalQuestions ?? questionMeta.length;
 
-  // Systems narrowed by selected subjects, with counts scoped to those subjects
+  // Systems narrowed by selected subjects, counted from individual question rows
   const filteredSystems = useMemo(() => {
     if (!data) return [];
     const counts = new Map<number, number>();
-    for (const t of data.topics) {
-      if (hasSubject && !t.subjectIds.some((id) => subjectIds.includes(id))) continue;
-      for (const sid of t.systemIds) counts.set(sid, (counts.get(sid) ?? 0) + t.count);
+    for (const q of questionMeta) {
+      if (q.systemId == null) continue;
+      if (hasSubject && (q.subjectId == null || !subjectIds.includes(q.subjectId))) continue;
+      counts.set(q.systemId, (counts.get(q.systemId) ?? 0) + 1);
     }
     return data.systems
       .filter((s) => counts.has(s.id))
       .map((s) => ({ ...s, count: counts.get(s.id) ?? 0 }));
-  }, [data, subjectIds, hasSubject]);
+  }, [data, questionMeta, subjectIds, hasSubject]);
 
-  // Topics narrowed by selected subjects and systems
+  // Topics narrowed by selected subjects and systems, counted from individual question rows
   const filteredTopics = useMemo(() => {
     if (!data) return [];
-    return data.topics.filter((t) => {
-      if (hasSubject && !t.subjectIds.some((id) => subjectIds.includes(id))) return false;
-      if (hasSystem && !t.systemIds.some((id) => systemIds.includes(id))) return false;
-      return true;
-    });
-  }, [data, subjectIds, systemIds, hasSubject, hasSystem]);
+    const counts = new Map<string, number>();
+    for (const q of questionMeta) {
+      if (!q.title) continue;
+      if (hasSubject && (q.subjectId == null || !subjectIds.includes(q.subjectId))) continue;
+      if (hasSystem && (q.systemId == null || !systemIds.includes(q.systemId))) continue;
+      counts.set(q.title, (counts.get(q.title) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [data, questionMeta, subjectIds, systemIds, hasSubject, hasSystem]);
 
-  // Subjects: show global count, but reflect selection scope if systems chosen
+  // Subjects: show global count, but reflect selected systems when present
   const subjectItems = useMemo(() => {
     if (!data) return [];
     if (!hasSystem) return data.subjects.map((s) => ({ ...s, count: s.count ?? 0 }));
     const counts = new Map<number, number>();
-    for (const t of data.topics) {
-      if (!t.systemIds.some((id) => systemIds.includes(id))) continue;
-      for (const sid of t.subjectIds) counts.set(sid, (counts.get(sid) ?? 0) + t.count);
+    for (const q of questionMeta) {
+      if (q.subjectId == null) continue;
+      if (q.systemId == null || !systemIds.includes(q.systemId)) continue;
+      counts.set(q.subjectId, (counts.get(q.subjectId) ?? 0) + 1);
     }
     return data.subjects.map((s) => ({ ...s, count: counts.get(s.id) ?? 0 }));
-  }, [data, systemIds, hasSystem]);
+  }, [data, questionMeta, systemIds, hasSystem]);
 
   // pool count
   const { data: pool } = useQuery({
