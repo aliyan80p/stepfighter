@@ -36,13 +36,17 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 export const getFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [{ data: subjects }, { data: systems }, { data: qs }] = await Promise.all([
-      context.supabase.from("subjects").select("id,name,count").order("name"),
-      context.supabase.from("systems").select("id,name,count").order("name"),
+    const [{ data: subjectsRaw }, { data: systemsRaw }, { data: qs }] = await Promise.all([
+      context.supabase.from("subjects").select("id,name").order("name"),
+      context.supabase.from("systems").select("id,name").order("name"),
       context.supabase.from("questions").select("title,subject_id,system_id"),
     ]);
+    const subjectCounts = new Map<number, number>();
+    const systemCounts = new Map<number, number>();
     const topicMap = new Map<string, { name: string; count: number; subjectIds: Set<number>; systemIds: Set<number> }>();
     for (const q of qs ?? []) {
+      if (q.subject_id != null) subjectCounts.set(q.subject_id, (subjectCounts.get(q.subject_id) ?? 0) + 1);
+      if (q.system_id != null) systemCounts.set(q.system_id, (systemCounts.get(q.system_id) ?? 0) + 1);
       const name = (q.title ?? "").trim();
       if (!name) continue;
       const t = topicMap.get(name) ?? { name, count: 0, subjectIds: new Set<number>(), systemIds: new Set<number>() };
@@ -51,10 +55,12 @@ export const getFilters = createServerFn({ method: "GET" })
       if (q.system_id != null) t.systemIds.add(q.system_id);
       topicMap.set(name, t);
     }
+    const subjects = (subjectsRaw ?? []).map((s) => ({ ...s, count: subjectCounts.get(s.id) ?? 0 }));
+    const systems = (systemsRaw ?? []).map((s) => ({ ...s, count: systemCounts.get(s.id) ?? 0 }));
     const topics = Array.from(topicMap.values())
       .map((t) => ({ name: t.name, count: t.count, subjectIds: Array.from(t.subjectIds), systemIds: Array.from(t.systemIds) }))
       .sort((a, b) => a.name.localeCompare(b.name));
-    return { subjects: subjects ?? [], systems: systems ?? [], topics };
+    return { subjects, systems, topics };
   });
 
 const CreateTestInput = z.object({
