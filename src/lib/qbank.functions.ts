@@ -9,19 +9,26 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     const [{ count: totalQ }, { data: subjects }, { data: attempts }, { count: bookmarks }] = await Promise.all([
       supabase.from("questions").select("*", { count: "exact", head: true }),
       supabase.from("subjects").select("id,name,count").order("id"),
-      supabase.from("attempts").select("is_correct,question_id").eq("user_id", userId),
+      supabase.from("attempts").select("is_correct,question_id,selected_answer").eq("user_id", userId),
       supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId),
     ]);
     const uniqueDone = new Set((attempts ?? []).map((a) => a.question_id)).size;
     const correct = (attempts ?? []).filter((a) => a.is_correct).length;
+    const incorrect = (attempts ?? []).filter((a) => a.is_correct === false && a.selected_answer != null).length;
+    const omitted = (attempts ?? []).filter((a) => a.selected_answer == null).length;
     const total = (attempts ?? []).length;
     return {
       totalQuestions: totalQ ?? 0,
       subjects: subjects ?? [],
       answered: uniqueDone,
+      unused: (totalQ ?? 0) - uniqueDone,
       totalAttempts: total,
       correctAttempts: correct,
+      incorrectAttempts: incorrect,
+      omittedAttempts: omitted,
       accuracy: total ? Math.round((correct / total) * 100) : 0,
+      usedPct: totalQ ? Math.round((uniqueDone / totalQ) * 1000) / 10 : 0,
+      correctPct: total ? Math.round((correct / total) * 1000) / 10 : 0,
       bookmarks: bookmarks ?? 0,
     };
   });
@@ -120,14 +127,23 @@ export const getTest = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .eq("test_id", data.id);
     const { data: bookmarks } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).in("question_id", test.question_ids);
+    const [{ data: subjects }, { data: systems }] = await Promise.all([
+      supabase.from("subjects").select("id,name"),
+      supabase.from("systems").select("id,name"),
+    ]);
+    const subjectMap: Record<number, string> = Object.fromEntries((subjects ?? []).map((s) => [s.id, s.name]));
+    const systemMap: Record<number, string> = Object.fromEntries((systems ?? []).map((s) => [s.id, s.name]));
     return {
       test,
       questions: (test.question_ids as number[]).map((id) => (questions ?? []).find((q) => q.id === id)!).filter(Boolean),
       answersByQ: groupBy(answers ?? [], (a) => a.question_id),
       attemptsByQ: Object.fromEntries((attempts ?? []).map((a) => [a.question_id, a])),
       bookmarkedIds: new Set((bookmarks ?? []).map((b) => b.question_id)),
+      subjectMap,
+      systemMap,
     };
   });
+
 
 function groupBy<T, K extends string | number>(arr: T[], fn: (x: T) => K): Record<K, T[]> {
   const out: Record<string, T[]> = {};
