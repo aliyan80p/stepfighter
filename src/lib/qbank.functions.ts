@@ -36,19 +36,35 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 export const getFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [{ data: subjects }, { data: systems }] = await Promise.all([
+    const [{ data: subjects }, { data: systems }, { data: qs }] = await Promise.all([
       context.supabase.from("subjects").select("id,name,count").order("name"),
       context.supabase.from("systems").select("id,name,count").order("name"),
+      context.supabase.from("questions").select("title,subject_id,system_id"),
     ]);
-    return { subjects: subjects ?? [], systems: systems ?? [] };
+    const topicMap = new Map<string, { name: string; count: number; subjectIds: Set<number>; systemIds: Set<number> }>();
+    for (const q of qs ?? []) {
+      const name = (q.title ?? "").trim();
+      if (!name) continue;
+      const t = topicMap.get(name) ?? { name, count: 0, subjectIds: new Set<number>(), systemIds: new Set<number>() };
+      t.count++;
+      if (q.subject_id != null) t.subjectIds.add(q.subject_id);
+      if (q.system_id != null) t.systemIds.add(q.system_id);
+      topicMap.set(name, t);
+    }
+    const topics = Array.from(topicMap.values())
+      .map((t) => ({ name: t.name, count: t.count, subjectIds: Array.from(t.subjectIds), systemIds: Array.from(t.systemIds) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return { subjects: subjects ?? [], systems: systems ?? [], topics };
   });
 
 const CreateTestInput = z.object({
   subjectIds: z.array(z.number()).default([]),
   systemIds: z.array(z.number()).default([]),
-  count: z.number().min(1).max(200).default(20),
+  topicNames: z.array(z.string()).default([]),
+  count: z.number().min(1).max(50).default(20),
   mode: z.enum(["practice", "test"]).default("practice"),
-  scope: z.enum(["all", "unused", "incorrect", "bookmarked"]).default("all"),
+  timed: z.boolean().default(false),
+  scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
 });
 
 export const createTest = createServerFn({ method: "POST" })
@@ -59,32 +75,32 @@ export const createTest = createServerFn({ method: "POST" })
     let query = supabase.from("questions").select("id");
     if (data.subjectIds.length) query = query.in("subject_id", data.subjectIds);
     if (data.systemIds.length) query = query.in("system_id", data.systemIds);
+    if (data.topicNames.length) query = query.in("title", data.topicNames);
 
-    if (data.scope === "unused" || data.scope === "incorrect") {
-      const { data: att } = await supabase.from("attempts").select("question_id,is_correct").eq("user_id", userId);
+    const { data: rows } = await query.limit(10000);
+    let ids = (rows ?? []).map((r) => r.id);
+
+    if (data.scope !== "all") {
+      const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId);
       const attempted = new Set((att ?? []).map((a) => a.question_id));
-      const incorrect = new Set((att ?? []).filter((a) => !a.is_correct).map((a) => a.question_id));
-      const { data: rows } = await query.limit(5000);
-      let ids = (rows ?? []).map((r) => r.id);
+      const correctIds = new Set((att ?? []).filter((a) => a.is_correct).map((a) => a.question_id));
+      const incorrectIds = new Set((att ?? []).filter((a) => a.selected_answer != null && !a.is_correct).map((a) => a.question_id));
+      const omittedIds = new Set((att ?? []).filter((a) => a.selected_answer == null).map((a) => a.question_id));
       if (data.scope === "unused") ids = ids.filter((id) => !attempted.has(id));
-      if (data.scope === "incorrect") ids = ids.filter((id) => incorrect.has(id));
-      ids = shuffle(ids).slice(0, data.count);
-      if (!ids.length) throw new Error("No questions match those filters.");
-      return await insertTest(supabase, userId, ids, data);
+      else if (data.scope === "correct") ids = ids.filter((id) => correctIds.has(id));
+      else if (data.scope === "incorrect") ids = ids.filter((id) => incorrectIds.has(id));
+      else if (data.scope === "omitted") ids = ids.filter((id) => omittedIds.has(id));
+      else if (data.scope === "marked") {
+        const { data: bm } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId);
+        const bmIds = new Set((bm ?? []).map((b) => b.question_id));
+        ids = ids.filter((id) => bmIds.has(id));
+      }
     }
-    if (data.scope === "bookmarked") {
-      const { data: bm } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId);
-      const bmIds = new Set((bm ?? []).map((b) => b.question_id));
-      const { data: rows } = await query.limit(5000);
-      const ids = shuffle((rows ?? []).map((r) => r.id).filter((id) => bmIds.has(id))).slice(0, data.count);
-      if (!ids.length) throw new Error("No bookmarked questions match those filters.");
-      return await insertTest(supabase, userId, ids, data);
-    }
-    const { data: rows } = await query.limit(5000);
-    const ids = shuffle((rows ?? []).map((r) => r.id)).slice(0, data.count);
+    ids = shuffle(ids).slice(0, data.count);
     if (!ids.length) throw new Error("No questions match those filters.");
     return await insertTest(supabase, userId, ids, data);
   });
+
 
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
   const { data: inserted, error } = await supabase
