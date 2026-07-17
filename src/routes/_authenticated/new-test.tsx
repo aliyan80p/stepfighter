@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { ChevronUp, ChevronDown, Search, BookOpen, Landmark, Layers, Network, Tag, Info, Clock, GraduationCap, ClipboardCheck } from "lucide-react";
+import { ChevronUp, Search, Info, Clock, GraduationCap, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/new-test")({
