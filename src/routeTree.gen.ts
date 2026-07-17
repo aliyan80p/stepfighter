@@ -17,6 +17,19 @@ import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBookmarksRouteImport } from './routes/_authenticated/bookmarks'
 import { Route as AuthenticatedTestIdRouteImport } from './routes/_authenticated/test.$id'
+import { Route as AuthenticatedSelfAssessmentsScorePredictorRouteImport } from './routes/_authenticated/self-assessments.score-predictor'
+import { Route as AuthenticatedSelfAssessmentsReportRouteImport } from './routes/_authenticated/self-assessments.report'
+import { Route as AuthenticatedSelfAssessmentsNbmeLibraryRouteImport } from './routes/_authenticated/self-assessments.nbme-library'
+import { Route as AuthenticatedSelfAssessmentsAssessmentsRouteImport } from './routes/_authenticated/self-assessments.assessments'
+import { Route as AuthenticatedQbanksSearchRouteImport } from './routes/_authenticated/qbanks.search'
+import { Route as AuthenticatedPerformanceScoreCalculatorRouteImport } from './routes/_authenticated/performance.score-calculator'
+import { Route as AuthenticatedPerformancePeerRankingRouteImport } from './routes/_authenticated/performance.peer-ranking'
+import { Route as AuthenticatedPerformanceOverallRouteImport } from './routes/_authenticated/performance.overall'
+import { Route as AuthenticatedPerformanceGraphsRouteImport } from './routes/_authenticated/performance.graphs'
+import { Route as AuthenticatedPerformanceAiTestAnalysisRouteImport } from './routes/_authenticated/performance.ai-test-analysis'
+import { Route as AuthenticatedCoursesMyCoursesRouteImport } from './routes/_authenticated/courses.my-courses'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account.settings'
+import { Route as AuthenticatedAccountResetRouteImport } from './routes/_authenticated/account.reset'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -57,6 +70,84 @@ const AuthenticatedTestIdRoute = AuthenticatedTestIdRouteImport.update({
   path: '/test/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSelfAssessmentsScorePredictorRoute =
+  AuthenticatedSelfAssessmentsScorePredictorRouteImport.update({
+    id: '/self-assessments/score-predictor',
+    path: '/self-assessments/score-predictor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSelfAssessmentsReportRoute =
+  AuthenticatedSelfAssessmentsReportRouteImport.update({
+    id: '/self-assessments/report',
+    path: '/self-assessments/report',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSelfAssessmentsNbmeLibraryRoute =
+  AuthenticatedSelfAssessmentsNbmeLibraryRouteImport.update({
+    id: '/self-assessments/nbme-library',
+    path: '/self-assessments/nbme-library',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSelfAssessmentsAssessmentsRoute =
+  AuthenticatedSelfAssessmentsAssessmentsRouteImport.update({
+    id: '/self-assessments/assessments',
+    path: '/self-assessments/assessments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedQbanksSearchRoute =
+  AuthenticatedQbanksSearchRouteImport.update({
+    id: '/qbanks/search',
+    path: '/qbanks/search',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceScoreCalculatorRoute =
+  AuthenticatedPerformanceScoreCalculatorRouteImport.update({
+    id: '/performance/score-calculator',
+    path: '/performance/score-calculator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformancePeerRankingRoute =
+  AuthenticatedPerformancePeerRankingRouteImport.update({
+    id: '/performance/peer-ranking',
+    path: '/performance/peer-ranking',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceOverallRoute =
+  AuthenticatedPerformanceOverallRouteImport.update({
+    id: '/performance/overall',
+    path: '/performance/overall',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceGraphsRoute =
+  AuthenticatedPerformanceGraphsRouteImport.update({
+    id: '/performance/graphs',
+    path: '/performance/graphs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceAiTestAnalysisRoute =
+  AuthenticatedPerformanceAiTestAnalysisRouteImport.update({
+    id: '/performance/ai-test-analysis',
+    path: '/performance/ai-test-analysis',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCoursesMyCoursesRoute =
+  AuthenticatedCoursesMyCoursesRouteImport.update({
+    id: '/courses/my-courses',
+    path: '/courses/my-courses',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/account/settings',
+    path: '/account/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountResetRoute =
+  AuthenticatedAccountResetRouteImport.update({
+    id: '/account/reset',
+    path: '/account/reset',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,6 +156,19 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/new-test': typeof AuthenticatedNewTestRoute
   '/tests': typeof AuthenticatedTestsRoute
+  '/account/reset': typeof AuthenticatedAccountResetRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
+  '/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
+  '/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
+  '/performance/overall': typeof AuthenticatedPerformanceOverallRoute
+  '/performance/peer-ranking': typeof AuthenticatedPerformancePeerRankingRoute
+  '/performance/score-calculator': typeof AuthenticatedPerformanceScoreCalculatorRoute
+  '/qbanks/search': typeof AuthenticatedQbanksSearchRoute
+  '/self-assessments/assessments': typeof AuthenticatedSelfAssessmentsAssessmentsRoute
+  '/self-assessments/nbme-library': typeof AuthenticatedSelfAssessmentsNbmeLibraryRoute
+  '/self-assessments/report': typeof AuthenticatedSelfAssessmentsReportRoute
+  '/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/test/$id': typeof AuthenticatedTestIdRoute
 }
 export interface FileRoutesByTo {
@@ -74,6 +178,19 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/new-test': typeof AuthenticatedNewTestRoute
   '/tests': typeof AuthenticatedTestsRoute
+  '/account/reset': typeof AuthenticatedAccountResetRoute
+  '/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
+  '/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
+  '/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
+  '/performance/overall': typeof AuthenticatedPerformanceOverallRoute
+  '/performance/peer-ranking': typeof AuthenticatedPerformancePeerRankingRoute
+  '/performance/score-calculator': typeof AuthenticatedPerformanceScoreCalculatorRoute
+  '/qbanks/search': typeof AuthenticatedQbanksSearchRoute
+  '/self-assessments/assessments': typeof AuthenticatedSelfAssessmentsAssessmentsRoute
+  '/self-assessments/nbme-library': typeof AuthenticatedSelfAssessmentsNbmeLibraryRoute
+  '/self-assessments/report': typeof AuthenticatedSelfAssessmentsReportRoute
+  '/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/test/$id': typeof AuthenticatedTestIdRoute
 }
 export interface FileRoutesById {
@@ -85,6 +202,19 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/new-test': typeof AuthenticatedNewTestRoute
   '/_authenticated/tests': typeof AuthenticatedTestsRoute
+  '/_authenticated/account/reset': typeof AuthenticatedAccountResetRoute
+  '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
+  '/_authenticated/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
+  '/_authenticated/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
+  '/_authenticated/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
+  '/_authenticated/performance/overall': typeof AuthenticatedPerformanceOverallRoute
+  '/_authenticated/performance/peer-ranking': typeof AuthenticatedPerformancePeerRankingRoute
+  '/_authenticated/performance/score-calculator': typeof AuthenticatedPerformanceScoreCalculatorRoute
+  '/_authenticated/qbanks/search': typeof AuthenticatedQbanksSearchRoute
+  '/_authenticated/self-assessments/assessments': typeof AuthenticatedSelfAssessmentsAssessmentsRoute
+  '/_authenticated/self-assessments/nbme-library': typeof AuthenticatedSelfAssessmentsNbmeLibraryRoute
+  '/_authenticated/self-assessments/report': typeof AuthenticatedSelfAssessmentsReportRoute
+  '/_authenticated/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/_authenticated/test/$id': typeof AuthenticatedTestIdRoute
 }
 export interface FileRouteTypes {
@@ -96,6 +226,19 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/new-test'
     | '/tests'
+    | '/account/reset'
+    | '/account/settings'
+    | '/courses/my-courses'
+    | '/performance/ai-test-analysis'
+    | '/performance/graphs'
+    | '/performance/overall'
+    | '/performance/peer-ranking'
+    | '/performance/score-calculator'
+    | '/qbanks/search'
+    | '/self-assessments/assessments'
+    | '/self-assessments/nbme-library'
+    | '/self-assessments/report'
+    | '/self-assessments/score-predictor'
     | '/test/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -105,6 +248,19 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/new-test'
     | '/tests'
+    | '/account/reset'
+    | '/account/settings'
+    | '/courses/my-courses'
+    | '/performance/ai-test-analysis'
+    | '/performance/graphs'
+    | '/performance/overall'
+    | '/performance/peer-ranking'
+    | '/performance/score-calculator'
+    | '/qbanks/search'
+    | '/self-assessments/assessments'
+    | '/self-assessments/nbme-library'
+    | '/self-assessments/report'
+    | '/self-assessments/score-predictor'
     | '/test/$id'
   id:
     | '__root__'
@@ -115,6 +271,19 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/new-test'
     | '/_authenticated/tests'
+    | '/_authenticated/account/reset'
+    | '/_authenticated/account/settings'
+    | '/_authenticated/courses/my-courses'
+    | '/_authenticated/performance/ai-test-analysis'
+    | '/_authenticated/performance/graphs'
+    | '/_authenticated/performance/overall'
+    | '/_authenticated/performance/peer-ranking'
+    | '/_authenticated/performance/score-calculator'
+    | '/_authenticated/qbanks/search'
+    | '/_authenticated/self-assessments/assessments'
+    | '/_authenticated/self-assessments/nbme-library'
+    | '/_authenticated/self-assessments/report'
+    | '/_authenticated/self-assessments/score-predictor'
     | '/_authenticated/test/$id'
   fileRoutesById: FileRoutesById
 }
@@ -182,6 +351,97 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTestIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/self-assessments/score-predictor': {
+      id: '/_authenticated/self-assessments/score-predictor'
+      path: '/self-assessments/score-predictor'
+      fullPath: '/self-assessments/score-predictor'
+      preLoaderRoute: typeof AuthenticatedSelfAssessmentsScorePredictorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/self-assessments/report': {
+      id: '/_authenticated/self-assessments/report'
+      path: '/self-assessments/report'
+      fullPath: '/self-assessments/report'
+      preLoaderRoute: typeof AuthenticatedSelfAssessmentsReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/self-assessments/nbme-library': {
+      id: '/_authenticated/self-assessments/nbme-library'
+      path: '/self-assessments/nbme-library'
+      fullPath: '/self-assessments/nbme-library'
+      preLoaderRoute: typeof AuthenticatedSelfAssessmentsNbmeLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/self-assessments/assessments': {
+      id: '/_authenticated/self-assessments/assessments'
+      path: '/self-assessments/assessments'
+      fullPath: '/self-assessments/assessments'
+      preLoaderRoute: typeof AuthenticatedSelfAssessmentsAssessmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qbanks/search': {
+      id: '/_authenticated/qbanks/search'
+      path: '/qbanks/search'
+      fullPath: '/qbanks/search'
+      preLoaderRoute: typeof AuthenticatedQbanksSearchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/score-calculator': {
+      id: '/_authenticated/performance/score-calculator'
+      path: '/performance/score-calculator'
+      fullPath: '/performance/score-calculator'
+      preLoaderRoute: typeof AuthenticatedPerformanceScoreCalculatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/peer-ranking': {
+      id: '/_authenticated/performance/peer-ranking'
+      path: '/performance/peer-ranking'
+      fullPath: '/performance/peer-ranking'
+      preLoaderRoute: typeof AuthenticatedPerformancePeerRankingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/overall': {
+      id: '/_authenticated/performance/overall'
+      path: '/performance/overall'
+      fullPath: '/performance/overall'
+      preLoaderRoute: typeof AuthenticatedPerformanceOverallRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/graphs': {
+      id: '/_authenticated/performance/graphs'
+      path: '/performance/graphs'
+      fullPath: '/performance/graphs'
+      preLoaderRoute: typeof AuthenticatedPerformanceGraphsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/ai-test-analysis': {
+      id: '/_authenticated/performance/ai-test-analysis'
+      path: '/performance/ai-test-analysis'
+      fullPath: '/performance/ai-test-analysis'
+      preLoaderRoute: typeof AuthenticatedPerformanceAiTestAnalysisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/courses/my-courses': {
+      id: '/_authenticated/courses/my-courses'
+      path: '/courses/my-courses'
+      fullPath: '/courses/my-courses'
+      preLoaderRoute: typeof AuthenticatedCoursesMyCoursesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/account/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/reset': {
+      id: '/_authenticated/account/reset'
+      path: '/account/reset'
+      fullPath: '/account/reset'
+      preLoaderRoute: typeof AuthenticatedAccountResetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -190,6 +450,19 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedNewTestRoute: typeof AuthenticatedNewTestRoute
   AuthenticatedTestsRoute: typeof AuthenticatedTestsRoute
+  AuthenticatedAccountResetRoute: typeof AuthenticatedAccountResetRoute
+  AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
+  AuthenticatedCoursesMyCoursesRoute: typeof AuthenticatedCoursesMyCoursesRoute
+  AuthenticatedPerformanceAiTestAnalysisRoute: typeof AuthenticatedPerformanceAiTestAnalysisRoute
+  AuthenticatedPerformanceGraphsRoute: typeof AuthenticatedPerformanceGraphsRoute
+  AuthenticatedPerformanceOverallRoute: typeof AuthenticatedPerformanceOverallRoute
+  AuthenticatedPerformancePeerRankingRoute: typeof AuthenticatedPerformancePeerRankingRoute
+  AuthenticatedPerformanceScoreCalculatorRoute: typeof AuthenticatedPerformanceScoreCalculatorRoute
+  AuthenticatedQbanksSearchRoute: typeof AuthenticatedQbanksSearchRoute
+  AuthenticatedSelfAssessmentsAssessmentsRoute: typeof AuthenticatedSelfAssessmentsAssessmentsRoute
+  AuthenticatedSelfAssessmentsNbmeLibraryRoute: typeof AuthenticatedSelfAssessmentsNbmeLibraryRoute
+  AuthenticatedSelfAssessmentsReportRoute: typeof AuthenticatedSelfAssessmentsReportRoute
+  AuthenticatedSelfAssessmentsScorePredictorRoute: typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   AuthenticatedTestIdRoute: typeof AuthenticatedTestIdRoute
 }
 
@@ -198,6 +471,26 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedNewTestRoute: AuthenticatedNewTestRoute,
   AuthenticatedTestsRoute: AuthenticatedTestsRoute,
+  AuthenticatedAccountResetRoute: AuthenticatedAccountResetRoute,
+  AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
+  AuthenticatedCoursesMyCoursesRoute: AuthenticatedCoursesMyCoursesRoute,
+  AuthenticatedPerformanceAiTestAnalysisRoute:
+    AuthenticatedPerformanceAiTestAnalysisRoute,
+  AuthenticatedPerformanceGraphsRoute: AuthenticatedPerformanceGraphsRoute,
+  AuthenticatedPerformanceOverallRoute: AuthenticatedPerformanceOverallRoute,
+  AuthenticatedPerformancePeerRankingRoute:
+    AuthenticatedPerformancePeerRankingRoute,
+  AuthenticatedPerformanceScoreCalculatorRoute:
+    AuthenticatedPerformanceScoreCalculatorRoute,
+  AuthenticatedQbanksSearchRoute: AuthenticatedQbanksSearchRoute,
+  AuthenticatedSelfAssessmentsAssessmentsRoute:
+    AuthenticatedSelfAssessmentsAssessmentsRoute,
+  AuthenticatedSelfAssessmentsNbmeLibraryRoute:
+    AuthenticatedSelfAssessmentsNbmeLibraryRoute,
+  AuthenticatedSelfAssessmentsReportRoute:
+    AuthenticatedSelfAssessmentsReportRoute,
+  AuthenticatedSelfAssessmentsScorePredictorRoute:
+    AuthenticatedSelfAssessmentsScorePredictorRoute,
   AuthenticatedTestIdRoute: AuthenticatedTestIdRoute,
 }
 
