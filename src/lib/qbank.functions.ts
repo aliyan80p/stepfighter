@@ -101,6 +101,43 @@ export const createTest = createServerFn({ method: "POST" })
     return await insertTest(supabase, userId, ids, data);
   });
 
+export const getPoolCount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    subjectIds: z.array(z.number()).default([]),
+    systemIds: z.array(z.number()).default([]),
+    topicNames: z.array(z.string()).default([]),
+    scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    let query = supabase.from("questions").select("id");
+    if (data.subjectIds.length) query = query.in("subject_id", data.subjectIds);
+    if (data.systemIds.length) query = query.in("system_id", data.systemIds);
+    if (data.topicNames.length) query = query.in("title", data.topicNames);
+    const { data: rows } = await query.limit(10000);
+    let ids = (rows ?? []).map((r) => r.id);
+    if (data.scope !== "all") {
+      const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId);
+      const attempted = new Set((att ?? []).map((a) => a.question_id));
+      const correctIds = new Set((att ?? []).filter((a) => a.is_correct).map((a) => a.question_id));
+      const incorrectIds = new Set((att ?? []).filter((a) => a.selected_answer != null && !a.is_correct).map((a) => a.question_id));
+      const omittedIds = new Set((att ?? []).filter((a) => a.selected_answer == null).map((a) => a.question_id));
+      if (data.scope === "unused") ids = ids.filter((id) => !attempted.has(id));
+      else if (data.scope === "correct") ids = ids.filter((id) => correctIds.has(id));
+      else if (data.scope === "incorrect") ids = ids.filter((id) => incorrectIds.has(id));
+      else if (data.scope === "omitted") ids = ids.filter((id) => omittedIds.has(id));
+      else if (data.scope === "marked") {
+        const { data: bm } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId);
+        const bmIds = new Set((bm ?? []).map((b) => b.question_id));
+        ids = ids.filter((id) => bmIds.has(id));
+      }
+    }
+    return { count: ids.length };
+  });
+
+
+
 
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
   const { data: inserted, error } = await supabase
