@@ -213,7 +213,7 @@ function NewTest() {
         )}
         {openTab === "subjects" && (
           <SelectionList
-            items={(data?.subjects ?? []).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+            items={subjectItems.map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
             selected={subjectIds}
             onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
             search={subjectSearch}
