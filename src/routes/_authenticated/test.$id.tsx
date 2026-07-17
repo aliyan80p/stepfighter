@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.functions";
+import { rewriteMedia } from "@/lib/media";
 import { Button } from "@/components/ui/button";
 import { Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { toast } from "sonner";
@@ -90,7 +91,7 @@ function TestRunner() {
         <div className="flex-1 overflow-auto p-8">
           <div className="max-w-3xl mx-auto">
             {question.title && <div className="text-xs uppercase text-muted-foreground mb-2">{question.title}</div>}
-            <div className="prose prose-invert max-w-none qbank-html" dangerouslySetInnerHTML={{ __html: question.question }} />
+            <div className="prose prose-invert max-w-none qbank-html" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
             <div className="mt-6 space-y-2">
               {answers.map((a, i) => {
@@ -114,7 +115,7 @@ function TestRunner() {
                     }`}>
                       {isCorrect ? <Check className="h-3.5 w-3.5" /> : isWrong ? <X className="h-3.5 w-3.5" /> : String.fromCharCode(65 + i)}
                     </div>
-                    <div className="flex-1 qbank-html" dangerouslySetInnerHTML={{ __html: a.answer_text }} />
+                    <div className="flex-1 qbank-html" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
                   </button>
                 );
               })}
@@ -123,7 +124,7 @@ function TestRunner() {
             {showAnswers && question.explanation && (
               <div className="mt-8 rounded-lg border border-border p-5 bg-card">
                 <h3 className="font-semibold mb-3">Explanation</h3>
-                <div className="qbank-html prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: question.explanation }} />
+                <div className="qbank-html prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }} />
               </div>
             )}
           </div>
