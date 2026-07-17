@@ -25,7 +25,7 @@ function NewTest() {
   const createFn = useServerFn(createTest);
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
-  const { data } = useQuery({ queryKey: ["filters"], queryFn: () => getFn() });
+  const { data } = useQuery({ queryKey: ["filters", "all-questions-v2"], queryFn: () => getFn() });
 
   const [openTab, setOpenTab] = useState<Tab>("courses");
   const [courseIds, setCourseIds] = useState<string[]>([]);
