@@ -365,7 +365,7 @@ function SelectionList<T extends string | number>({
           </div>
         )}
       </div>
-      <div className={cn("grid gap-2", scrollable && "max-h-[380px] overflow-y-auto pr-2", `grid-cols-1 md:grid-cols-${columns}`)}>
+      <div className={cn("grid gap-2", scrollable && "max-h-[380px] overflow-y-auto pr-2", columns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-3")}>
         {filtered.map((it) => {
           const isSel = selected.includes(it.id);
           return (
