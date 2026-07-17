@@ -178,25 +178,12 @@ function AuthedLayout() {
           })}
         </nav>
 
-        <div className="p-3 border-t border-border space-y-4">
+        <div className="p-3 border-t border-border">
           <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start">
             <LogOut className="h-4 w-4 mr-2" /> Logout
           </Button>
-
-          <div className="space-y-3 text-center">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">USMLE Step 1 Qbank (Trial)</p>
-              <p className="text-sm font-semibold">Expiration Date</p>
-              <p className="text-xs text-muted-foreground">Aug 19, 2025</p>
-              <Button size="sm" className="mt-1 h-7 px-4">Renew</Button>
-            </div>
-            <div className="space-y-1 pt-2 border-t border-border">
-              <p className="text-xs text-muted-foreground">USMLE Step 2 CK Qbank</p>
-              <p className="text-sm font-semibold">Expiration Date</p>
-              <p className="text-xs text-muted-foreground">Sep 22, 2026</p>
-            </div>
-          </div>
         </div>
+
       </aside>
 
       <main className="flex-1 overflow-auto">

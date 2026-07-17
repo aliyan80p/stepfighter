@@ -1,39 +1,108 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { getFilters, createTest } from "@/lib/qbank.functions";
+import { useMemo, useState, useEffect } from "react";
+import { getFilters, createTest, getPoolCount } from "@/lib/qbank.functions";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from "@/lib/utils";
+import { ChevronUp, Search, Info, Clock, GraduationCap, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/new-test")({
   component: NewTest,
 });
 
+type Tab = "courses" | "qbank" | "subjects" | "systems" | "topics";
+type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
+
+const COURSES = [{ id: "step2", name: "USMLE Step 2 CK" }];
+const QBANKS = [{ id: "step2", name: "USMLE World Step 2 CK" }];
+
 function NewTest() {
   const getFn = useServerFn(getFilters);
   const createFn = useServerFn(createTest);
+  const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
   const { data } = useQuery({ queryKey: ["filters"], queryFn: () => getFn() });
 
+  const [openTab, setOpenTab] = useState<Tab>("courses");
+  const [courseIds, setCourseIds] = useState<string[]>([]);
+  const [qbankIds, setQbankIds] = useState<string[]>([]);
   const [subjectIds, setSubjectIds] = useState<number[]>([]);
   const [systemIds, setSystemIds] = useState<number[]>([]);
-  const [count, setCount] = useState(20);
+  const [topicNames, setTopicNames] = useState<string[]>([]);
+
+  const [scope, setScope] = useState<Scope>("unused");
+  const [difficulty, setDifficulty] = useState<number[]>([1, 2, 3, 4, 5]);
   const [mode, setMode] = useState<"practice" | "test">("practice");
-  const [scope, setScope] = useState<"all" | "unused" | "incorrect" | "bookmarked">("all");
+  const [timed, setTimed] = useState(false);
+  const [count, setCount] = useState(20);
+  const [quizName, setQuizName] = useState(() => `Custom Quiz ${new Date().toLocaleString()}`);
   const [loading, setLoading] = useState(false);
 
-  const toggle = (arr: number[], id: number, set: (v: number[]) => void) =>
-    set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
+  const [subjectSearch, setSubjectSearch] = useState("");
+  const [systemSearch, setSystemSearch] = useState("");
+  const [topicSearch, setTopicSearch] = useState("");
+
+  // gating
+  const hasCourse = courseIds.length > 0;
+  const hasQbank = qbankIds.length > 0;
+  const hasSubject = subjectIds.length > 0;
+  const hasSystem = systemIds.length > 0;
+
+  const availableTabs: Record<Tab, boolean> = {
+    courses: true,
+    qbank: hasCourse,
+    subjects: hasQbank,
+    systems: hasSubject,
+    topics: hasSystem,
+  };
+
+  const totalStep2 = data?.subjects.reduce((n, s) => n + (s.count ?? 0), 0) ?? 0;
+
+  // filtered systems: only those tied to selected subjects
+  const filteredSystems = useMemo(() => {
+    if (!data) return [];
+    if (!hasSubject) return data.systems;
+    const allowed = new Set<number>();
+    for (const t of data.topics) {
+      if (t.subjectIds.some((id) => subjectIds.includes(id))) {
+        for (const sid of t.systemIds) allowed.add(sid);
+      }
+    }
+    return data.systems.filter((s) => allowed.has(s.id));
+  }, [data, subjectIds, hasSubject]);
+
+  // filtered topics: match selected subjects AND systems
+  const filteredTopics = useMemo(() => {
+    if (!data) return [];
+    return data.topics.filter((t) => {
+      if (hasSubject && !t.subjectIds.some((id) => subjectIds.includes(id))) return false;
+      if (hasSystem && !t.systemIds.some((id) => systemIds.includes(id))) return false;
+      return true;
+    });
+  }, [data, subjectIds, systemIds, hasSubject, hasSystem]);
+
+  // pool count
+  const { data: pool } = useQuery({
+    queryKey: ["pool", subjectIds, systemIds, topicNames, scope],
+    queryFn: () => poolFn({ data: { subjectIds, systemIds, topicNames, scope } }),
+    enabled: !!data,
+  });
+  const poolCount = pool?.count ?? 0;
+
+  useEffect(() => {
+    if (count > poolCount && poolCount > 0) setCount(Math.min(poolCount, 50));
+  }, [poolCount]);
 
   const start = async () => {
+    if (!hasCourse || !hasQbank) return toast.error("Select a course and QBank");
+    if (count < 1) return toast.error("Enter a question count");
     setLoading(true);
     try {
-      const r = await createFn({ data: { subjectIds, systemIds, count, mode, scope } });
+      const r = await createFn({ data: { subjectIds, systemIds, topicNames, count, mode, timed, scope } });
       navigate({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to create test");
@@ -41,67 +110,281 @@ function NewTest() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold">New Test</h1>
-      <p className="text-muted-foreground mt-1">Configure your practice session</p>
+    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Generate Quiz</h1>
+        <p className="text-muted-foreground mt-1">Build a custom practice session</p>
+      </div>
 
-      <div className="mt-8 space-y-6">
-        <section>
-          <Label className="text-base">Mode</Label>
-          <RadioGroup value={mode} onValueChange={(v) => setMode(v as any)} className="mt-2 grid grid-cols-2 gap-3">
-            <label className="flex items-start gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-accent">
-              <RadioGroupItem value="practice" />
-              <div><div className="font-medium">Practice / Tutor</div><div className="text-xs text-muted-foreground">See explanation after each question</div></div>
-            </label>
-            <label className="flex items-start gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-accent">
-              <RadioGroupItem value="test" />
-              <div><div className="font-medium">Test</div><div className="text-xs text-muted-foreground">Explanations only at the end</div></div>
-            </label>
-          </RadioGroup>
-        </section>
-
-        <section>
-          <Label className="text-base">Question Pool</Label>
-          <RadioGroup value={scope} onValueChange={(v) => setScope(v as any)} className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[{v:"all",l:"All"},{v:"unused",l:"Unused"},{v:"incorrect",l:"Incorrect"},{v:"bookmarked",l:"Bookmarked"}].map(o=>(
-              <label key={o.v} className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent">
-                <RadioGroupItem value={o.v} /> <span className="text-sm">{o.l}</span>
-              </label>
-            ))}
-          </RadioGroup>
-        </section>
-
-        <section>
-          <Label className="text-base">Subjects</Label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(data?.subjects ?? []).map((s) => (
-              <label key={s.id} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm cursor-pointer transition-colors ${subjectIds.includes(s.id) ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent"}`}>
-                <Checkbox checked={subjectIds.includes(s.id)} onCheckedChange={() => toggle(subjectIds, s.id, setSubjectIds)} className="h-3 w-3" />
-                {s.name} <span className="opacity-60 text-xs">({s.count})</span>
-              </label>
-            ))}
+      {/* Test Mode */}
+      <Card>
+        <div className="flex items-start gap-3 mb-4">
+          <IconBadge><ClipboardCheck className="h-4 w-4" /></IconBadge>
+          <div>
+            <h2 className="font-semibold">Test Mode</h2>
+            <p className="text-xs text-muted-foreground">Choose your preferred testing experience</p>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Leave empty for all subjects</p>
-        </section>
-
-        <section>
-          <Label className="text-base">Systems</Label>
-          <div className="mt-2 flex flex-wrap gap-2 max-h-60 overflow-auto p-2 border border-border rounded-lg">
-            {(data?.systems ?? []).map((s) => (
-              <label key={s.id} className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs cursor-pointer transition-colors ${systemIds.includes(s.id) ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-accent"}`}>
-                <Checkbox checked={systemIds.includes(s.id)} onCheckedChange={() => toggle(systemIds, s.id, setSystemIds)} className="h-3 w-3" />
-                {s.name}
-              </label>
-            ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <ModeCard active={mode === "practice"} onClick={() => setMode("practice")} icon={<GraduationCap className="h-4 w-4" />} title="Tutor Mode" desc="Learn as you go" />
+          <ModeCard active={mode === "test"} onClick={() => setMode("test")} icon={<ClipboardCheck className="h-4 w-4" />} title="Exam Mode" desc="Simulate real exam" />
+        </div>
+        <button
+          onClick={() => setTimed((t) => !t)}
+          className="mt-3 w-full flex items-center justify-between rounded-lg border border-border p-4 text-left hover:bg-accent/40"
+        >
+          <div className="flex items-center gap-3">
+            <IconBadge><Clock className="h-4 w-4" /></IconBadge>
+            <div>
+              <div className="font-medium text-sm">Timed Mode</div>
+              <div className="text-xs text-muted-foreground">Add time pressure to your test</div>
+            </div>
           </div>
-        </section>
+          <div className={cn("h-6 w-11 rounded-full transition-colors relative", timed ? "bg-primary" : "bg-muted")}>
+            <div className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-all", timed ? "left-5" : "left-0.5")} />
+          </div>
+        </button>
+      </Card>
 
-        <section>
-          <Label htmlFor="count" className="text-base">Number of Questions</Label>
-          <Input id="count" type="number" min={1} max={200} value={count} onChange={(e) => setCount(+e.target.value)} className="mt-2 w-32" />
-        </section>
+      {/* Quiz Type */}
+      <Card>
+        <h2 className="font-semibold mb-3">Quiz Type</h2>
+        <div className="rounded-lg border border-border p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">Edit Quiz Name</div>
+          <Input value={quizName} onChange={(e) => setQuizName(e.target.value)} className="border-0 shadow-none p-0 focus-visible:ring-0 h-auto text-sm" />
+        </div>
+      </Card>
 
-        <Button size="lg" onClick={start} disabled={loading}>{loading ? "Creating..." : "Start Test"}</Button>
+      {/* Tabs / Selection */}
+      <Card>
+        <div className="flex items-center gap-1 border-b border-border mb-4 -mt-2 -mx-6 px-6">
+          {(Object.keys(availableTabs) as Tab[]).map((t) => {
+            const enabled = availableTabs[t];
+            return (
+              <button
+                key={t}
+                disabled={!enabled}
+                onClick={() => enabled && setOpenTab(t)}
+                className={cn(
+                  "px-4 py-3 text-sm font-medium capitalize border-b-2 -mb-px transition-colors",
+                  openTab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground",
+                  enabled ? "hover:text-foreground cursor-pointer" : "opacity-40 cursor-not-allowed",
+                )}
+              >
+                {t === "qbank" ? "QBank" : t}
+              </button>
+            );
+          })}
+          <div className="ml-auto">
+            <button className="rounded-md border border-border p-1.5 text-muted-foreground hover:text-foreground">
+              <ChevronUp className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {openTab === "courses" && (
+          <SelectionList
+            items={COURSES.map((c) => ({ id: c.id, label: c.name, count: totalStep2 }))}
+            selected={courseIds}
+            onToggle={(id) => setCourseIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+            columns={3}
+            radio
+          />
+        )}
+        {openTab === "qbank" && (
+          <SelectionList
+            items={QBANKS.map((q) => ({ id: q.id, label: q.name, count: totalStep2 }))}
+            selected={qbankIds}
+            onToggle={(id) => setQbankIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+            columns={3}
+          />
+        )}
+        {openTab === "subjects" && (
+          <SelectionList
+            items={(data?.subjects ?? []).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+            selected={subjectIds}
+            onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
+            search={subjectSearch}
+            onSearch={setSubjectSearch}
+            selectAll={() => setSubjectIds((data?.subjects ?? []).map((s) => s.id))}
+            clearAll={() => setSubjectIds([])}
+            columns={3}
+          />
+        )}
+        {openTab === "systems" && (
+          <SelectionList
+            items={filteredSystems.map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+            selected={systemIds}
+            onToggle={(id) => setSystemIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
+            search={systemSearch}
+            onSearch={setSystemSearch}
+            selectAll={() => setSystemIds(filteredSystems.map((s) => s.id))}
+            clearAll={() => setSystemIds([])}
+            columns={3}
+          />
+        )}
+        {openTab === "topics" && (
+          <SelectionList
+            items={filteredTopics.map((t) => ({ id: t.name, label: t.name, count: t.count }))}
+            selected={topicNames}
+            onToggle={(id) => setTopicNames((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+            search={topicSearch}
+            onSearch={setTopicSearch}
+            selectAll={() => setTopicNames(filteredTopics.map((t) => t.name))}
+            clearAll={() => setTopicNames([])}
+            columns={3}
+            scrollable
+          />
+        )}
+      </Card>
+
+      {/* Question types + Difficulty */}
+      <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h3 className="font-semibold mb-3">Question Types</h3>
+            <div className="grid grid-cols-2 gap-y-3">
+              {[
+                { v: "marked", l: "Marked Questions" },
+                { v: "omitted", l: "Omitted Questions" },
+                { v: "unused", l: "Unused Questions" },
+                { v: "correct", l: "Correct Questions" },
+                { v: "incorrect", l: "Incorrect Questions" },
+                { v: "all", l: "All" },
+              ].map((o) => (
+                <label key={o.v} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox checked={scope === o.v} onCheckedChange={() => setScope(o.v as Scope)} />
+                  {o.l}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Difficulty</h3>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setDifficulty((d) => d.includes(n) ? d.filter((x) => x !== n) : [...d, n])}
+                  className={cn(
+                    "h-10 w-10 rounded-md text-sm font-semibold transition-colors",
+                    difficulty.includes(n) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Limit + Generate */}
+      <Card>
+        <div className="flex items-center gap-3 rounded-lg border-l-4 border-primary bg-primary/5 p-3 mb-4">
+          <Info className="h-4 w-4 text-primary" />
+          <div className="text-sm flex-1">
+            <span className="text-primary font-semibold text-xs uppercase tracking-wider">Question Limit</span>
+            <div>New limit! Now Maximum <b>50 questions</b> per quiz</div>
+          </div>
+          <span className="text-xs font-semibold rounded-full bg-primary text-primary-foreground px-3 py-1">50 MAX</span>
+        </div>
+        <div className="flex items-center gap-3 rounded-lg border border-border p-4">
+          <span className="text-sm">Generate</span>
+          <Input
+            type="number"
+            min={0}
+            max={Math.min(50, poolCount)}
+            value={count}
+            onChange={(e) => setCount(Math.max(0, Math.min(50, +e.target.value)))}
+            className="w-20 text-center"
+          />
+          <span className="text-sm">/ <b>{poolCount}</b> Questions</span>
+        </div>
+        <Button size="lg" onClick={start} disabled={loading || !hasCourse || !hasQbank || count < 1 || poolCount === 0} className="mt-4">
+          {loading ? "Generating…" : "Generate Test"}
+        </Button>
+      </Card>
+    </div>
+  );
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-xl border border-border bg-card p-6 shadow-sm">{children}</div>;
+}
+function IconBadge({ children }: { children: React.ReactNode }) {
+  return <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary shrink-0">{children}</div>;
+}
+function ModeCard({ active, onClick, icon, title, desc }: { active: boolean; onClick: () => void; icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-start gap-3 rounded-lg border p-4 text-left transition-colors",
+        active ? "border-primary bg-primary/10" : "border-border hover:bg-accent/40",
+      )}
+    >
+      <IconBadge>{icon}</IconBadge>
+      <div>
+        <div className="font-medium text-sm">{title}</div>
+        <div className="text-xs text-muted-foreground">{desc}</div>
+      </div>
+    </button>
+  );
+}
+
+function SelectionList<T extends string | number>({
+  items, selected, onToggle, search, onSearch, selectAll, clearAll, columns = 3, scrollable, radio,
+}: {
+  items: { id: T; label: string; count: number }[];
+  selected: T[];
+  onToggle: (id: T) => void;
+  search?: string;
+  onSearch?: (v: string) => void;
+  selectAll?: () => void;
+  clearAll?: () => void;
+  columns?: number;
+  scrollable?: boolean;
+  radio?: boolean;
+}) {
+  const filtered = search ? items.filter((i) => i.label.toLowerCase().includes(search.toLowerCase())) : items;
+  const allSelected = items.length > 0 && selected.length === items.length;
+  return (
+    <div>
+      <div className="flex items-center gap-4 mb-3">
+        {!radio && selectAll && (
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox checked={allSelected} onCheckedChange={() => (allSelected ? clearAll?.() : selectAll())} />
+            Select All
+          </label>
+        )}
+        {onSearch && (
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Search" className="pl-8 h-9" />
+          </div>
+        )}
+      </div>
+      <div className={cn("grid gap-2", scrollable && "max-h-[380px] overflow-y-auto pr-2", columns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-3")}>
+        {filtered.map((it) => {
+          const isSel = selected.includes(it.id);
+          return (
+            <label
+              key={String(it.id)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg border p-2.5 cursor-pointer transition-colors text-sm",
+                isSel ? "border-primary bg-primary/5" : "border-border hover:bg-accent/40",
+              )}
+            >
+              <Checkbox checked={isSel} onCheckedChange={() => onToggle(it.id)} />
+              <span className="flex-1 truncate">{it.label}</span>
+              <span className="rounded bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 min-w-[2rem] text-center">
+                {it.count}
+              </span>
+            </label>
+          );
+        })}
+        {filtered.length === 0 && <p className="text-sm text-muted-foreground col-span-full py-6 text-center">No items</p>}
       </div>
     </div>
   );
