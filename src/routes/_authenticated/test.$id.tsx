@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.functions";
+import { rewriteMedia } from "@/lib/media";
 import { Button } from "@/components/ui/button";
 import { Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { toast } from "sonner";
