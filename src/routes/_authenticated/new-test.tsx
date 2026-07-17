@@ -62,20 +62,20 @@ function NewTest() {
 
   const totalStep2 = data?.subjects.reduce((n, s) => n + (s.count ?? 0), 0) ?? 0;
 
-  // filtered systems: only those tied to selected subjects
+  // Systems narrowed by selected subjects, with counts scoped to those subjects
   const filteredSystems = useMemo(() => {
     if (!data) return [];
-    if (!hasSubject) return data.systems;
-    const allowed = new Set<number>();
+    const counts = new Map<number, number>();
     for (const t of data.topics) {
-      if (t.subjectIds.some((id) => subjectIds.includes(id))) {
-        for (const sid of t.systemIds) allowed.add(sid);
-      }
+      if (hasSubject && !t.subjectIds.some((id) => subjectIds.includes(id))) continue;
+      for (const sid of t.systemIds) counts.set(sid, (counts.get(sid) ?? 0) + t.count);
     }
-    return data.systems.filter((s) => allowed.has(s.id));
+    return data.systems
+      .filter((s) => counts.has(s.id))
+      .map((s) => ({ ...s, count: counts.get(s.id) ?? 0 }));
   }, [data, subjectIds, hasSubject]);
 
-  // filtered topics: match selected subjects AND systems
+  // Topics narrowed by selected subjects and systems
   const filteredTopics = useMemo(() => {
     if (!data) return [];
     return data.topics.filter((t) => {
@@ -84,6 +84,18 @@ function NewTest() {
       return true;
     });
   }, [data, subjectIds, systemIds, hasSubject, hasSystem]);
+
+  // Subjects: show global count, but reflect selection scope if systems chosen
+  const subjectItems = useMemo(() => {
+    if (!data) return [];
+    if (!hasSystem) return data.subjects.map((s) => ({ ...s, count: s.count ?? 0 }));
+    const counts = new Map<number, number>();
+    for (const t of data.topics) {
+      if (!t.systemIds.some((id) => systemIds.includes(id))) continue;
+      for (const sid of t.subjectIds) counts.set(sid, (counts.get(sid) ?? 0) + t.count);
+    }
+    return data.subjects.map((s) => ({ ...s, count: counts.get(s.id) ?? 0 }));
+  }, [data, systemIds, hasSystem]);
 
   // pool count
   const { data: pool } = useQuery({
