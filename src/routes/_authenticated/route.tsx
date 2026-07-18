@@ -190,6 +190,8 @@ function AuthedLayout() {
         </div>
 
       </aside>
+      )}
+
 
 
       <main className="flex-1 overflow-auto">
