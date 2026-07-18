@@ -30,6 +30,18 @@ const NBME_COUNTS: Record<string, number> = {
   NBME8: 200, NBME9: 200, NBME10: 200, NBME11: 200, NBME12: 200,
   NBME13: 200, NBME14: 200, NBME15: 200, NBME16: 200,
 };
+// CMS Clinical Mastery Series forms for Step 2 CK
+const STEP2_CMS: Array<{ specialty: string; tag: string; forms: number[] }> = [
+  { specialty: "Psychiatry",         tag: "PSY",  forms: [5, 6, 7, 8] },
+  { specialty: "Pediatrics",         tag: "PEDS", forms: [5, 6, 7, 8, 9] },
+  { specialty: "Surgery",            tag: "SUR",  forms: [5, 6, 7, 8, 9] },
+  { specialty: "Neurology",          tag: "NEU",  forms: [5, 6, 7, 8, 9] },
+  { specialty: "Internal Medicine",  tag: "IM",   forms: [5, 6, 7, 8, 9, 10] },
+  { specialty: "Ob/Gyn",             tag: "OBG",  forms: [5, 6, 7, 8, 9, 10] },
+  { specialty: "Family Medicine",    tag: "FM",   forms: [2, 3, 5] },
+  { specialty: "Emergency Medicine", tag: "EM",   forms: [1, 2, 3] },
+];
+const CMS_COUNTS: Record<string, number> = { CMS_IM6: 49 };
 const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
   if (q.slug === "step1") {
     return [
@@ -53,6 +65,16 @@ const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
         id: `step2:NBME${n}`, qbankId: q.id, name: `NBME ${n}`,
         source: `NBME${n}`, count: NBME_COUNTS[`NBME${n}`] ?? 200,
       })),
+      ...STEP2_CMS.flatMap(({ specialty, tag, forms }) =>
+        forms.map((n) => {
+          const source = `CMS_${tag}${n}`;
+          return {
+            id: `step2:${source}`, qbankId: q.id,
+            name: `CMS ${specialty} Form ${n}`,
+            source, count: CMS_COUNTS[source] ?? 50,
+          };
+        }),
+      ),
     ];
   }
   if (q.slug === "step3") {
