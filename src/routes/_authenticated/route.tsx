@@ -126,6 +126,10 @@ function AuthedLayout() {
           <span className="font-semibold">QBank</span>
         </Link>
 
+        <QbankSwitcher />
+
+
+
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {/* Welcome / Dashboard */}
