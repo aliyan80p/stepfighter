@@ -277,10 +277,10 @@ function TestRunner() {
   const embeddedMediaKeys = new Set<string>();
   getEmbeddedMediaKeys(question.question).forEach((key) => embeddedMediaKeys.add(key));
   answers.forEach((answer) => getEmbeddedMediaKeys(answer.answer_text).forEach((key) => embeddedMediaKeys.add(key)));
-  if (showAnswers) {
-    getEmbeddedMediaKeys(question.explanation).forEach((key) => embeddedMediaKeys.add(key));
-    getEmbeddedMediaKeys(correctText).forEach((key) => embeddedMediaKeys.add(key));
-  }
+  // Always exclude explanation-embedded media from the top block so they only
+  // appear inline within the explanation after the answer is revealed.
+  getEmbeddedMediaKeys(question.explanation).forEach((key) => embeddedMediaKeys.add(key));
+  getEmbeddedMediaKeys(correctText).forEach((key) => embeddedMediaKeys.add(key));
   const mediaItems = allMediaItems.filter((m) => !isEmbeddedMedia(m, embeddedMediaKeys));
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
