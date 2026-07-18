@@ -21,6 +21,8 @@ function contentTypeFor(name: string): string {
   return map[ext] ?? "application/octet-stream";
 }
 
+const HIGHRES_PREFIXES = ["highresdefault_", "hqdefault_", "sddefault_", "mqdefault_", "default_"];
+
 function candidateNames(name: string): string[] {
   const set = new Set<string>();
   const bases = [name, stripPrefix(name)];
@@ -28,6 +30,11 @@ function candidateNames(name: string): string[] {
     set.add(b);
     if (/^L\d/.test(b)) set.add("U" + b.slice(1));
     else if (/^U\d/.test(b)) set.add("L" + b.slice(1));
+    // If no known CDN prefix, also try prefixed variants that live in the bucket
+    const lower = b.toLowerCase();
+    if (!HIGHRES_PREFIXES.some((p) => lower.startsWith(p))) {
+      for (const p of HIGHRES_PREFIXES) set.add(p + b);
+    }
   }
   return Array.from(set);
 }
