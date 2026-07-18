@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { QBANKS, setActiveQbankId, useActiveQbankId } from "@/lib/active-qbank";
+
 
 type Item = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 type Group = { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: Item[] };
