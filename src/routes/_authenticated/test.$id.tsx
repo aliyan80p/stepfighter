@@ -863,35 +863,84 @@ function TestRunner() {
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
 
+        const examUI = !tutorMode && !isReview;
         return (
           <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
-              {isReview ? "" : `Block Time: ${bh}:${bm}:${bs}`}
+              {isReview ? "" : examUI ? `Block Time Remaining:  ${bh}:${bm}:${bs}` : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
-            <div className="font-semibold tracking-wide hidden md:block">IMD QBank</div>
+            <div className="font-semibold tracking-wide hidden md:flex items-center gap-3">
+              <span>{examUI ? "USMLE Fighter" : "IMD QBank"}</span>
+              {examUI && (
+                <span title="Exam locked" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500/90 text-[10px] text-black">🔒</span>
+              )}
+            </div>
             <div className="flex items-center gap-3">
-              {!isReview && (
+              {!isReview && !examUI && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
                   <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
                   <div className="w-px h-6 bg-white/20 mx-1" />
                 </>
               )}
-              <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
-              <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
-              <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
+              {!examUI && <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />}
+              {!examUI && <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />}
+              {!examUI && <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />}
               {isReview ? (
                 <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
-                  <TopBtn icon={Clock} label="Suspend" onClick={() => { if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" }); }} />
-                  <TopBtn icon={ArrowLeft} label="End Block" onClick={() => { if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish(); }} />
+                  <TopBtn icon={Clock} label="Suspend" onClick={() => {
+                    if (examUI) setBreakModal("suspend");
+                    else if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" });
+                  }} />
+                  <TopBtn icon={ArrowLeft} label="End Block" onClick={() => {
+                    if (examUI) setBreakModal("end");
+                    else if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish();
+                  }} />
                 </>
               )}
+              {examUI && <span className="inline-block h-3 w-3 rounded-full bg-red-500 ml-1 shadow-[0_0_6px_rgba(239,68,68,0.9)]" title="Recording" />}
             </div>
           </div>
         );
       })()}
+
+      {breakModal && (
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setBreakModal(null)}>
+          <div className="w-full max-w-md rounded shadow-lg overflow-hidden bg-white" onClick={(e) => e.stopPropagation()}>
+            <div className="px-5 py-3 text-white font-semibold text-center" style={{ background: "#a94442" }}>
+              Unauthorized Break Warning
+            </div>
+            <div className="px-6 py-5 text-center text-sm text-gray-700 space-y-1">
+              <div>You are about to lock the exam and take an Unauthorized Break.</div>
+              <div>An Unauthorized Break may be reported as an irregularity for the exam.</div>
+            </div>
+            <div className="flex items-center justify-center gap-6 pb-5">
+              <button
+                onClick={() => {
+                  const action = breakModal;
+                  setBreakModal(null);
+                  if (action === "suspend") nav({ to: "/tests" });
+                  else finish();
+                }}
+                className="px-5 py-2 rounded text-white text-sm font-semibold"
+                style={{ background: "#a94442" }}
+              >
+                Unauthorized Break
+              </button>
+              <button
+                onClick={() => setBreakModal(null)}
+                className="px-5 py-2 rounded text-white text-sm font-semibold"
+                style={{ background: "#d4a017" }}
+              >
+                Return to Exam
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
 
       {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
