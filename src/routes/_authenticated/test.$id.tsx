@@ -170,7 +170,7 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
-  const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
+  const HL_COLORS = ["#ffeb3b", "#4ade80", "#38bdf8", "#f472b6", "#fb923c", "#c084fc"];
 
   const persistHighlights = () => {
     if (!question || !contentRef.current) return;
