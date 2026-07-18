@@ -154,3 +154,15 @@ mark.qbank-hl *, .qbank-theme-dark mark.qbank-hl *, .qbank-theme-sepia mark.qban
 }
 
 
+
+.qbank-inline-media-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 0.75rem 0;
+}
+.qbank-inline-media-wrap .qbank-inline-media {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
