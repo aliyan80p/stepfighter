@@ -367,14 +367,14 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`max-w-4xl mx-auto px-8 py-6 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+          <div className={`${sidebarOpen ? "max-w-4xl" : "max-w-5xl"} mx-auto px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
             {(() => null)()}
 
 
             
             <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
-            <div className="mt-6 inline-block rounded border px-4 py-3" style={{ borderColor: theme === "dark" ? "#334155" : "#b8c6de", background: themeStyles.cardBg }}>
+            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: theme === "dark" ? "#334155" : "#b8c6de", background: themeStyles.cardBg }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
@@ -415,7 +415,7 @@ function TestRunner() {
 
             {/* Answered banner — placed just above the explanation */}
             {submitted && (
-              <div className={`mt-8 rounded-md border-l-4 p-4 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
+              <div className={`mt-4 rounded-md border-l-4 p-3 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
                 <div>
                   <div className={`font-semibold ${isCorrect ? "text-green-700" : "text-red-700"}`}>
                     {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
@@ -447,7 +447,7 @@ function TestRunner() {
             )}
 
             {showAnswers && question.explanation && (
-              <div className="mt-8">
+              <div className="mt-4">
                 <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
                   <div
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
@@ -457,7 +457,7 @@ function TestRunner() {
                   </div>
                 </div>
                 <div
-                  className="pt-6 pb-4"
+                  className="pt-3 pb-2"
                   style={{
                     background: transparentExpl ? "transparent" : "transparent",
                     fontSize: `${fontSize}px`,
