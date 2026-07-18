@@ -1,0 +1,1 @@
+CREATE POLICY "Authenticated read qbank-media" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'qbank-media');
