@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import {
   BarChart3, ListOrdered, StickyNote, CheckCircle2, ChevronRight, Flame,
-  TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2,
+  TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2, X, Copy, Check,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/test-results/$id")({
@@ -34,6 +34,7 @@ function TestResults() {
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
+  const [showQList, setShowQList] = useState(false);
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -141,7 +142,7 @@ function TestResults() {
           <div className="font-medium">Quiz tools and shortcuts</div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm"><ListOrdered className="h-4 w-4 mr-1.5" /> Questions List</Button>
+          <Button variant="outline" size="sm" onClick={() => setShowQList(true)}><ListOrdered className="h-4 w-4 mr-1.5" /> Questions List</Button>
           <Button variant="outline" size="sm"><StickyNote className="h-4 w-4 mr-1.5" /> Notes</Button>
           <Button size="sm" onClick={() => navigate({ to: "/test/$id", params: { id } })}>
             <CheckCircle2 className="h-4 w-4 mr-1.5" /> Review
@@ -280,6 +281,69 @@ function TestResults() {
           ))}
         </div>
       </div>
+
+      {showQList && (
+        <QuestionsListModal
+          onClose={() => setShowQList(false)}
+          allIds={rows.map((r) => r.id)}
+          wrongIds={rows.filter((r) => r.status === "wrong").map((r) => r.id)}
+          omittedIds={rows.filter((r) => r.status === "omitted").map((r) => r.id)}
+        />
+      )}
+    </div>
+  );
+}
+
+function QuestionsListModal({
+  onClose, allIds, wrongIds, omittedIds,
+}: { onClose: () => void; allIds: number[]; wrongIds: number[]; omittedIds: number[] }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 md:p-8 overflow-y-auto" onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-2xl bg-card border border-border shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="text-lg font-semibold">Questions</div>
+          <button onClick={onClose} className="h-8 w-8 rounded-full hover:bg-muted flex items-center justify-center"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <IdSection title="All Question IDs" ids={allIds} tone="neutral" />
+          <IdSection title="Wrong Answer IDs" ids={wrongIds} tone="danger" emptyText="No wrong answers in this quiz." />
+          <IdSection title="Omitted IDs" ids={omittedIds} tone="info" emptyText="No omitted questions in this quiz." />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IdSection({ title, ids, tone, emptyText }: { title: string; ids: number[]; tone: "neutral" | "danger" | "info"; emptyText?: string }) {
+  const [copied, setCopied] = useState(false);
+  const toneCls = tone === "danger"
+    ? { border: "border-red-200 dark:border-red-900/40", bg: "bg-red-50/50 dark:bg-red-950/20", title: "text-red-600 dark:text-red-400", text: "text-red-600 dark:text-red-400", btn: "border-red-300 text-red-600 hover:bg-red-100 dark:hover:bg-red-950/40" }
+    : tone === "info"
+    ? { border: "border-blue-200 dark:border-blue-900/40", bg: "bg-blue-50/50 dark:bg-blue-950/20", title: "text-blue-600 dark:text-blue-400", text: "text-foreground", btn: "border-blue-300 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-950/40" }
+    : { border: "border-border", bg: "bg-muted/30", title: "text-foreground", text: "text-foreground", btn: "border-border hover:bg-muted" };
+  const copy = async () => {
+    await navigator.clipboard.writeText(ids.join(", "));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <div className={`rounded-xl border ${toneCls.border} ${toneCls.bg} p-4`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className={`font-semibold ${toneCls.title}`}>{title}</div>
+        <span className="text-xs font-medium text-muted-foreground bg-background border border-border rounded-full px-2.5 py-0.5">{ids.length}</span>
+      </div>
+      {ids.length === 0 ? (
+        <div className="text-sm text-muted-foreground bg-background/60 border border-dashed border-border rounded-lg px-3 py-2">
+          {emptyText ?? "No items."}
+        </div>
+      ) : (
+        <div className="flex items-start justify-between gap-3">
+          <div className={`text-sm leading-relaxed break-words ${toneCls.text}`}>{ids.join(", ")}</div>
+          <button onClick={copy} className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium ${toneCls.btn}`}>
+            {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
