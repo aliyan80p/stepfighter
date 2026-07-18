@@ -68,10 +68,10 @@ function TestRunner() {
   const [largeImages, setLargeImages] = useState(false);
   const [highlightOnly, setHighlightOnly] = useState(false);
   const [multicolor, setMulticolor] = useState(true);
-  const [activeHighlight, setActiveHighlight] = useState<string>("#fff59d");
+  const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
   const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>({
-    "#fff59d": true, "#a5d6a7": true, "#81d4fa": true,
-    "#f8bbd0": true, "#ffcc80": true, "#ce93d8": true,
+    "#ffeb3b": true, "#4ade80": true, "#38bdf8": true,
+    "#f472b6": true, "#fb923c": true, "#c084fc": true,
   });
 
   // Highlight toolbar state (hooks must live above early returns)
@@ -170,7 +170,7 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
-  const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
+  const HL_COLORS = ["#ffeb3b", "#4ade80", "#38bdf8", "#f472b6", "#fb923c", "#c084fc"];
 
   const persistHighlights = () => {
     if (!question || !contentRef.current) return;
@@ -350,7 +350,7 @@ function TestRunner() {
           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
-          {HL_COLORS.filter(c => enabledHighlights[c]).map(c => (
+          {(multicolor ? HL_COLORS.filter(c => enabledHighlights[c]) : [HL_COLORS[0]]).map(c => (
             <button
               key={c}
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyColor(c); }}
@@ -613,12 +613,12 @@ function TestRunner() {
 /* ---------------- Settings Panel ---------------- */
 
 const HIGHLIGHTS = [
-  { color: "#fff59d", label: "Yellow" },
-  { color: "#a5d6a7", label: "Green" },
-  { color: "#81d4fa", label: "Cyan" },
-  { color: "#f8bbd0", label: "Pink" },
-  { color: "#ffcc80", label: "Orange" },
-  { color: "#ce93d8", label: "Purple" },
+  { color: "#ffeb3b", label: "Yellow" },
+  { color: "#4ade80", label: "Green" },
+  { color: "#38bdf8", label: "Blue" },
+  { color: "#f472b6", label: "Pink" },
+  { color: "#fb923c", label: "Orange" },
+  { color: "#c084fc", label: "Purple" },
 ];
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
@@ -685,7 +685,6 @@ function SettingsPanel(props: any) {
 
       <div className="p-4 border-b">
         <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Highlight Features</div>
-        <Row label="Highlight-Only Mode"><Toggle on={highlightOnly} onChange={setHighlightOnly} /></Row>
         <Row label="Multicolor Highlighting"><Toggle on={multicolor} onChange={setMulticolor} /></Row>
       </div>
 
