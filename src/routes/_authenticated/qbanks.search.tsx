@@ -32,12 +32,12 @@ type SearchResult = {
 
 function SearchPage() {
   const searchFn = useServerFn(searchQuestions);
-  const qbankId = useActiveQbankId();
+  const activeQbankId = useActiveQbankId();
+  const [selectedQbankId, setSelectedQbankId] = useState<number>(activeQbankId);
   const [query, setQuery] = useState("");
-  const [course, setCourse] = useState("USMLE Step 2 CK");
 
   const mutation = useMutation({
-    mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
+    mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId: selectedQbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
   });
 
 
