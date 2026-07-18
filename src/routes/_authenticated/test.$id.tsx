@@ -763,7 +763,18 @@ function TestRunner() {
               >
                 <ChevronLeft className="h-4 w-4 inline -mt-0.5" /> Previous
               </button>
-              {!tutorMode ? (
+              {isReview ? (
+                <button
+                  onClick={() => {
+                    if (idx === total - 1) nav({ to: "/test-results/$id", params: { id } });
+                    else goToQuestion(idx + 1);
+                  }}
+                  className="px-6 py-2 rounded text-white text-sm font-semibold"
+                  style={{ background: NAV_BG }}
+                >
+                  {idx === total - 1 ? "Finish Review" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
+                </button>
+              ) : !tutorMode ? (
                 <button
                   onClick={proceedExam}
                   disabled={selected == null && !submitted}
