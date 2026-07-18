@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import {
   Search, Copy, Info, Loader2, Eye, ArrowUpDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, FileText,
+  Maximize2, FlaskConical, StickyNote, Notebook, Calculator, Settings,
+  Library, Zap, MessageSquare, ArrowLeft, Flag, Clock, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions } from "@/lib/qbank.functions";
@@ -120,7 +122,7 @@ function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
-  const [viewing, setViewing] = useState<SearchResult | null>(null);
+  const [viewingIdx, setViewingIdx] = useState<number | null>(null);
   const pageSize = 20;
 
   const sorted = useMemo(() => {
@@ -184,22 +186,25 @@ function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {pageRows.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
-                  <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
-                  <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
-                  <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setViewing(r)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600"
-                    >
-                      <Eye className="h-3.5 w-3.5" /> View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {pageRows.map((r) => {
+                const absIdx = sorted.findIndex((x) => x.id === r.id);
+                return (
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => setViewingIdx(absIdx)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600"
+                      >
+                        <Eye className="h-3.5 w-3.5" /> View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -239,7 +244,14 @@ function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult
         </div>
       </div>
 
-      {viewing && <QuestionModal r={viewing} onClose={() => setViewing(null)} />}
+      {viewingIdx != null && sorted[viewingIdx] && (
+        <QuestionModal
+          items={sorted}
+          index={viewingIdx}
+          setIndex={setViewingIdx}
+          onClose={() => setViewingIdx(null)}
+        />
+      )}
     </>
   );
 }
@@ -256,95 +268,173 @@ function PagerBtn({ children, onClick, disabled }: { children: React.ReactNode; 
   );
 }
 
-function QuestionModal({ r, onClose }: { r: SearchResult; onClose: () => void }) {
+const NAV_BG = "#1e3a8a";
+
+function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center justify-center px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px]"
+    >
+      <Icon className="h-5 w-5" />
+      <span className="text-[11px] mt-0.5">{label}</span>
+    </button>
+  );
+}
+
+function QuestionModal({
+  items, index, setIndex, onClose,
+}: {
+  items: SearchResult[];
+  index: number;
+  setIndex: (i: number) => void;
+  onClose: () => void;
+}) {
+  const r = items[index];
+  const total = items.length;
+  const notImpl = (name: string) => () => toast.info(`${name} — coming soon`);
+  const correctAns = r.answers.find((a) => a.answer_index === r.correctAnswer);
+  const correctLetter = correctAns ? String.fromCharCode(65 + correctAns.answer_index) : "";
+  const correctText = correctAns?.answer_text ?? "";
+  const go = (dir: number) => {
+    const next = index + dir;
+    if (next >= 0 && next < total) setIndex(next);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center" onClick={onClose}>
       <div
-        className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto shadow-2xl"
+        className="bg-white w-full h-full md:w-[95vw] md:h-[95vh] md:rounded-lg overflow-hidden shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b bg-slate-50 sticky top-0 z-10">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="font-mono font-bold text-[#1e3a8a]">#{r.id}</span>
-            {r.subject && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">{r.subject}</span>}
-            {r.system && <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">{r.system}</span>}
-            {r.title && <span className="text-sm font-semibold text-slate-700">{r.title}</span>}
+        {/* Top nav */}
+        <div className="flex items-center justify-between px-3 py-1.5 text-white shrink-0" style={{ background: NAV_BG }}>
+          <div className="flex items-center gap-4">
+            <button className="p-1 hover:bg-white/10 rounded" onClick={onClose} title="Close">
+              <X className="h-5 w-5" />
+            </button>
+            <div className="text-sm leading-tight">
+              <div className="font-semibold">Item {index + 1} of {total}</div>
+              <div className="text-[11px] text-white/75">Question Id: {r.id}</div>
+            </div>
+            <button
+              onClick={notImpl("Mark")}
+              className="flex flex-col items-center px-2 py-1 rounded hover:bg-white/10 text-white/90"
+              title="Mark question"
+            >
+              <Flag className="h-5 w-5" />
+              <span className="text-[11px]">Mark</span>
+            </button>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-slate-200">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <TopBtn icon={ChevronLeft} label="Previous" onClick={() => go(-1)} />
+            <TopBtn icon={ChevronRight} label="Next" onClick={() => go(1)} />
+          </div>
+          <div className="flex items-center gap-1">
+            <TopBtn icon={Maximize2} label="Full Screen" onClick={notImpl("Full Screen")} />
+            <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
+            <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
+            <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />
+            <TopBtn icon={Calculator} label="Calculator" onClick={notImpl("Calculator")} />
+            <TopBtn icon={Settings} label="Settings" onClick={notImpl("Settings")} />
+          </div>
         </div>
-        <div className="p-5 qbank-theme-light">
-          <div
-            data-hlkey="q"
-            className="qbank-html qbank-light text-[15px] text-slate-800"
-            dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "") }}
-          />
 
-          <div
-            className="mt-3 inline-block rounded border-2 px-4 py-2"
-            style={{ borderColor: "#5b8fc9", background: "#ffffff" }}
-          >
-            {r.answers.map((a, i) => {
-              const letter = String.fromCharCode(65 + a.answer_index);
-              const isCorrect = a.answer_index === r.correctAnswer;
-              return (
-                <div key={i} className="w-full text-left flex items-center gap-2 py-1.5 text-[15px] text-slate-800">
-                  <span className="w-4 flex justify-center shrink-0">
-                    {isCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
-                  </span>
-                  <span className="h-4 w-4 rounded-full border border-gray-400 flex items-center justify-center shrink-0" />
-                  <span className="flex-1">
-                    <span className="font-normal">{letter}. </span>
-                    <span
-                      data-hlkey={`a${i}`}
-                      className="qbank-html qbank-light inline"
-                      dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "") }}
-                    />
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+        {/* Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="w-full mx-auto px-6 py-3 qbank-theme-light" style={{ color: "#1f2937" }}>
+            <div
+              data-hlkey="q"
+              className="qbank-html qbank-light text-[15px]"
+              dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "") }}
+            />
 
-          {(() => {
-            const correctAns = r.answers.find((a) => a.answer_index === r.correctAnswer);
-            const correctLetter = correctAns ? String.fromCharCode(65 + correctAns.answer_index) : "";
-            const correctText = correctAns?.answer_text ?? "";
-            return (
-              <div className="mt-4 rounded-md border-l-4 p-3 border-green-500 bg-green-50">
-                <div className="font-semibold text-green-700">Correct Answer</div>
-                <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
+            <div className="mt-3 inline-block rounded border-2 px-4 py-2" style={{ borderColor: "#5b8fc9", background: "#ffffff" }}>
+              {r.answers.map((a, i) => {
+                const letter = String.fromCharCode(65 + a.answer_index);
+                const isCorrect = a.answer_index === r.correctAnswer;
+                return (
+                  <div key={i} className="w-full text-left flex items-center gap-2 py-1.5 text-[15px]">
+                    <span className="w-4 flex justify-center shrink-0">
+                      {isCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
+                    </span>
+                    <span className="h-4 w-4 rounded-full border border-gray-400 flex items-center justify-center shrink-0" />
+                    <span className="flex-1">
+                      <span className="font-normal">{letter}. </span>
+                      <span
+                        data-hlkey={`a${i}`}
+                        className="qbank-html qbank-light inline"
+                        dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "") }}
+                      />
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 rounded-md border-l-4 p-3 border-green-500 bg-green-50 flex items-start justify-between gap-6">
+              <div>
+                <div className="text-xs text-gray-600">The correct answer is:</div>
                 <div
                   className="font-semibold text-gray-800 mt-1"
                   dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }}
                 />
               </div>
-            );
-          })()}
-
-          {r.explanation && (
-            <div className="mt-4">
-              <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
-                <div
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
-                  style={{ color: "#1e3a8a", boxShadow: "inset 0 -3px 0 #1e3a8a" }}
-                >
-                  <FileText className="h-4 w-4" /> Explanation
+              <div className="flex items-center gap-4 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-blue-700" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">0 sec</div>
+                    <div className="text-[11px] text-gray-500">Time Taken</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle2 className="h-4 w-4 text-green-700" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">—</div>
+                    <div className="text-[11px] text-gray-500">Answered Correctly</div>
+                  </div>
                 </div>
               </div>
-              <div
-                className="pt-3 pb-2"
-                style={{ lineHeight: 1.7, color: "#1f2937" }}
-              >
-                <div
-                  data-hlkey="e"
-                  className="qbank-html qbank-light qbank-explanation"
-                  dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true }) }}
-                />
-              </div>
             </div>
-          )}
+
+            {r.explanation && (
+              <div className="mt-4">
+                <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
+                  <div
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
+                    style={{ color: "#1e3a8a", boxShadow: "inset 0 -3px 0 #1e3a8a" }}
+                  >
+                    <FileText className="h-4 w-4" /> Explanation
+                  </div>
+                </div>
+                <div className="pt-3 pb-6" style={{ lineHeight: 1.7, color: "#1f2937" }}>
+                  <div
+                    data-hlkey="e"
+                    className="qbank-html qbank-light qbank-explanation"
+                    dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true }) }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom nav */}
+        <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs shrink-0" style={{ background: NAV_BG }}>
+          <div className="font-semibold tracking-wide" />
+          <div className="font-semibold tracking-wide hidden md:block">USMLE Fighter</div>
+          <div className="flex items-center gap-3">
+            <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
+            <TopBtn icon={FileText} label="NBME Library" onClick={notImpl("NBME Library")} />
+            <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
+            <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
+            <TopBtn icon={ArrowLeft} label="Go Back" onClick={onClose} />
+          </div>
         </div>
       </div>
     </div>
