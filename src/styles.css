@@ -112,8 +112,9 @@
 .qbank-html img { max-width: 320px; height: auto; border: 1px solid #cbd5e1; border-radius: 4px; margin: 0.5rem 0; background: var(--color-muted); cursor: zoom-in; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .qbank-html img:hover { border-color: #1e3a8a; }
 .qbank-large-images .qbank-html img { max-width: 100%; }
-.qbank-html table { border-collapse: collapse; margin: 0.75rem 0; width: 100%; }
-.qbank-html table td, .qbank-html table th { border: 1px solid var(--color-border); padding: 0.5rem 0.75rem; }
+.qbank-html table { border-collapse: collapse; margin: 0.75rem 0; width: 100%; border: 2px solid #94a3b8; }
+.qbank-html table td, .qbank-html table th { border: 1.5px solid #94a3b8; padding: 0.5rem 0.75rem; }
+.qbank-html table th { background: #f1f5f9; }
 .qbank-html p { margin: 0.5rem 0; line-height: 1.6; }
 .qbank-html ul, .qbank-html ol { padding-left: 1.5rem; margin: 0.5rem 0; }
 .qbank-html li { margin: 0.25rem 0; }
@@ -140,7 +141,9 @@
 .qbank-theme-dark .qbank-explanation strong, .qbank-theme-dark .qbank-explanation b,
 .qbank-theme-dark .qbank-html strong, .qbank-theme-dark .qbank-html b { color: #f9fafb !important; }
 .qbank-theme-dark .qbank-html a { color: #93c5fd !important; }
-.qbank-theme-dark .qbank-html table td, .qbank-theme-dark .qbank-html table th { border-color: #334155 !important; }
+.qbank-theme-dark .qbank-html table { border-color: #475569 !important; }
+.qbank-theme-dark .qbank-html table td, .qbank-theme-dark .qbank-html table th { border-color: #475569 !important; }
+.qbank-theme-dark .qbank-html table th { background: #1e293b !important; }
 
 .qbank-theme-sepia, .qbank-theme-sepia .qbank-html, .qbank-theme-sepia .qbank-explanation,
 .qbank-theme-sepia .qbank-explanation p, .qbank-theme-sepia .qbank-explanation li,
