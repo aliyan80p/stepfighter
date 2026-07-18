@@ -78,6 +78,7 @@ function TestRunner() {
   const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
   const [highlightHtml, setHighlightHtml] = useState<Record<string, string>>({});
   const savedRangeRef = useRef<Range | null>(null);
+  const savedSelectionRef = useRef<{ key: string; start: number; end: number } | null>(null);
   const savedTextRef = useRef("");
 
   const themeStyles = theme === "dark"
@@ -188,6 +189,50 @@ function TestRunner() {
     return el?.closest<HTMLElement>("[data-hlkey]") ?? null;
   };
 
+  const getSelectionOffsets = (root: HTMLElement, range: Range) => {
+    const before = document.createRange();
+    before.selectNodeContents(root);
+    before.setEnd(range.startContainer, range.startOffset);
+    const start = before.toString().length;
+    return { start, end: start + range.toString().length };
+  };
+
+  const rangeFromOffsets = (root: HTMLElement, start: number, end: number) => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    let pos = 0;
+    let didStart = false;
+    let node = walker.nextNode();
+
+    while (node) {
+      const textLength = node.textContent?.length ?? 0;
+      const next = pos + textLength;
+
+      if (!didStart && start >= pos && start <= next) {
+        range.setStart(node, Math.max(0, Math.min(textLength, start - pos)));
+        didStart = true;
+      }
+
+      if (didStart && end >= pos && end <= next) {
+        range.setEnd(node, Math.max(0, Math.min(textLength, end - pos)));
+        return range;
+      }
+
+      pos = next;
+      node = walker.nextNode();
+    }
+
+    return null;
+  };
+
+  const restoreSavedRange = () => {
+    const snap = savedSelectionRef.current;
+    if (!snap || !contentRef.current) return savedRangeRef.current;
+    const root = contentRef.current.querySelector<HTMLElement>(`[data-hlkey="${CSS.escape(snap.key)}"]`);
+    if (!root) return savedRangeRef.current;
+    return rangeFromOffsets(root, snap.start, snap.end) ?? savedRangeRef.current;
+  };
+
   const handleSelection = (event?: React.MouseEvent<HTMLDivElement>) => {
     const target = event?.target instanceof Element ? event.target : null;
     if (target?.closest("[data-hl-toolbar]")) return;
@@ -198,17 +243,22 @@ function TestRunner() {
     const endRoot = getHighlightRoot(range.endContainer);
     if (!startRoot || startRoot !== endRoot || !contentRef.current?.contains(startRoot)) {
       setHlBar(null);
+      savedSelectionRef.current = null;
       savedTextRef.current = "";
       return;
     }
+    const key = startRoot.dataset.hlkey;
+    if (!key) return;
+    const offsets = getSelectionOffsets(startRoot, range);
     savedRangeRef.current = range.cloneRange();
+    savedSelectionRef.current = { key, ...offsets };
     savedTextRef.current = range.toString();
     const rect = range.getBoundingClientRect();
     setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
   };
 
   const wrapSelection = (styler: (m: HTMLElement) => void) => {
-    const range = savedRangeRef.current;
+    const range = restoreSavedRange();
     if (!range || range.collapsed) return;
     const mark = document.createElement("mark");
     mark.className = "qbank-hl";
@@ -226,18 +276,19 @@ function TestRunner() {
     }
     window.getSelection()?.removeAllRanges();
     savedRangeRef.current = null;
+    savedSelectionRef.current = null;
     savedTextRef.current = "";
     setHlBar(null);
     persistHighlights();
   };
 
   const applyColor = (c: string) => {
-    setActiveHighlight(c);
     wrapSelection(m => { m.style.backgroundColor = c; });
+    setActiveHighlight(c);
   };
   const applyStrike = () => wrapSelection(m => { m.style.textDecoration = "line-through"; m.style.textDecorationColor = "#ef4444"; });
   const eraseHighlight = () => {
-    const range = savedRangeRef.current;
+    const range = restoreSavedRange();
     if (!range) return;
     const anchor = range.commonAncestorContainer;
     const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
@@ -249,6 +300,8 @@ function TestRunner() {
       }
     });
     window.getSelection()?.removeAllRanges();
+    savedRangeRef.current = null;
+    savedSelectionRef.current = null;
     savedTextRef.current = "";
     setHlBar(null);
     persistHighlights();
