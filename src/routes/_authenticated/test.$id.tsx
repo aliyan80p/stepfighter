@@ -149,12 +149,6 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
-  // Floating highlight toolbar state
-  const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
-  const savedRangeRef = useRef<Range | null>(null);
-
-  const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
-
   const hlStorageKey = question ? `qbank-hl-${question.id}` : "";
 
   // Restore saved highlights per question
