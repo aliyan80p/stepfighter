@@ -7,7 +7,7 @@ import { rewriteMedia } from "@/lib/media";
 import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
-  ArrowLeft, Clock, CheckCircle2, FileText, Strikethrough, Eraser, Copy, Sparkles,
+  ArrowLeft, Clock, CheckCircle2, FileText, Strikethrough, Eraser, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,6 +57,7 @@ function TestRunner() {
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Settings
   const [fontSize, setFontSize] = useState(16);
@@ -71,6 +72,10 @@ function TestRunner() {
     "#fff59d": true, "#a5d6a7": true, "#81d4fa": true,
     "#f8bbd0": true, "#ffcc80": true, "#ce93d8": true,
   });
+
+  // Highlight toolbar state (hooks must live above early returns)
+  const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
+  const savedRangeRef = useRef<Range | null>(null);
 
   const themeStyles = theme === "dark"
     ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
@@ -144,11 +149,26 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
-  // Floating highlight toolbar state
-  const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
-  const savedRangeRef = useRef<Range | null>(null);
+  const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
 
-  const HL_COLORS = ["#fde047", "#86efac", "#67e8f9", "#f9a8d4", "#fdba74", "#c4b5fd"];
+  // Restore saved highlights per question
+  useEffect(() => {
+    if (!question || !contentRef.current) return;
+    const saved = (() => { try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); } catch { return {}; } })();
+    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
+      const k = el.dataset.hlkey!;
+      if (typeof saved[k] === "string") el.innerHTML = saved[k];
+    });
+  }, [question?.id, submitted]);
+
+  const persistHighlights = () => {
+    if (!question || !contentRef.current) return;
+    const snap: Record<string, string> = {};
+    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
+      if (el.querySelector("mark.qbank-hl")) snap[el.dataset.hlkey!] = el.innerHTML;
+    });
+    try { localStorage.setItem(`qbank-hl-${question.id}`, JSON.stringify(snap)); } catch {}
+  };
 
   const handleSelection = () => {
     if (!(multicolor || highlightOnly)) { setHlBar(null); return; }
@@ -173,6 +193,7 @@ function TestRunner() {
     try { range.surroundContents(mark); } catch { /* cross-node */ }
     window.getSelection()?.removeAllRanges();
     setHlBar(null);
+    persistHighlights();
   };
 
   const applyColor = (c: string) => {
@@ -193,11 +214,32 @@ function TestRunner() {
     });
     window.getSelection()?.removeAllRanges();
     setHlBar(null);
+    persistHighlights();
   };
   const copySel = async () => {
     const range = savedRangeRef.current;
     if (!range) return;
-    try { await navigator.clipboard.writeText(range.toString()); toast("Copied"); } catch {}
+    const text = range.toString();
+    let ok = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch {}
+    if (!ok) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {}
+    }
+    toast(ok ? "Copied to clipboard" : "Copy failed");
     setHlBar(null);
   };
 
@@ -224,9 +266,6 @@ function TestRunner() {
           </button>
           <button onClick={eraseHighlight} className="p-1 hover:bg-white/10 rounded" title="Remove highlight">
             <Eraser className="h-4 w-4" />
-          </button>
-          <button onClick={() => toast("AI note — coming soon")} className="p-1 hover:bg-white/10 rounded" title="AI">
-            <Sparkles className="h-4 w-4" />
           </button>
           <button onClick={copySel} className="p-1 hover:bg-white/10 rounded" title="Copy">
             <Copy className="h-4 w-4" />
@@ -295,13 +334,13 @@ function TestRunner() {
         </aside>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto" ref={contentRef}>
           <div className={`max-w-4xl mx-auto px-8 py-6 ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight }}>
             {(() => null)()}
 
 
             
-            <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
+            <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
             <div className="mt-6 rounded border bg-white px-4 py-3" style={{ borderColor: "#b8c6de" }}>
               {answers.map((a, i) => {
@@ -334,7 +373,7 @@ function TestRunner() {
                     </span>
                     <span className="flex-1">
                       <span className="font-normal">{letter}. </span>
-                      <span className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
+                      <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
                       {submitted && pct != null && <span className="text-gray-600 ml-1">({pct}%)</span>}
                     </span>
                   </button>
@@ -399,6 +438,7 @@ function TestRunner() {
                   }}
                 >
                   <div
+                    data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
                     dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }}
                   />
