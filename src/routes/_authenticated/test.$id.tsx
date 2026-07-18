@@ -579,12 +579,14 @@ function TestRunner() {
         </div>
 
         <div className="flex items-center gap-1">
-          <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
+          {(tutorMode || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
           {mediaItems.length > 0 && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
           <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
           <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
-          <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />
+          {(tutorMode || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+          {!tutorMode && !isReview && <TopBtn icon={Eraser} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
+          {!tutorMode && !isReview && <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />}
           <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
         </div>
       </div>
