@@ -312,7 +312,7 @@ function TestRunner() {
   // Auto-end exam mode when block time runs out
   const autoEndedRef = useRef(false);
   useEffect(() => {
-    if (isReview || tutorMode || !timedMode) return;
+    if (isReview || !createdExam || !timedMode) return;
     const allowed = total * 90;
     if (blockElapsed >= allowed && !autoEndedRef.current) {
       autoEndedRef.current = true;
