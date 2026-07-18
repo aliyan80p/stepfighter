@@ -52,14 +52,15 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 
 export const getFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ qbankId: qb(), sources: z.array(z.string()).default([]) }).parse(d))
   .handler(async ({ data, context }) => {
     const qbankId = data.qbankId;
     const [{ data: subjectsRaw }, { data: systemsRaw }, qs] = await Promise.all([
       context.supabase.from("subjects").select("id,name").eq("qbank_id", qbankId).order("name"),
       context.supabase.from("systems").select("id,name").eq("qbank_id", qbankId).order("name"),
-      fetchAllQuestionRows(context.supabase, "id,title,subject_id,system_id", { qbankId }),
+      fetchAllQuestionRows(context.supabase, "id,title,subject_id,system_id", { qbankId, sources: data.sources }),
     ]);
+
     const subjectCounts = new Map<number, number>();
     const systemCounts = new Map<number, number>();
     const topicMap = new Map<string, { name: string; count: number; subjectIds: Set<number>; systemIds: Set<number> }>();
