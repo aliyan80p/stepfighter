@@ -701,7 +701,7 @@ function TestRunner() {
               </div>
             )}
 
-            <div className="mt-3 inline-block rounded border-2 px-4 py-2" style={{ borderColor: theme === "dark" ? "#475569" : "#5b8fc9", background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
+            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (!tutorMode && !isReview && !showAnswers) ? (theme === "dark" ? "#475569" : "#c9c9c9") : (theme === "dark" ? "#475569" : "#5b8fc9"), borderWidth: (!tutorMode && !isReview && !showAnswers) ? 1 : 2, background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
