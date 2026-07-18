@@ -319,7 +319,7 @@ function TestRunner() {
       toast.message("Time's up — submitting your block.");
       finish();
     }
-  }, [blockElapsed, timedMode, tutorMode, isReview, total]);
+  }, [blockElapsed, timedMode, createdExam, isReview, total]);
 
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
