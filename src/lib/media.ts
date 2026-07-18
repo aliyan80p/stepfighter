@@ -6,16 +6,19 @@ for (const [k, v] of Object.entries({ ...imgManifest, ...vidManifest } as Record
   map[k.toLowerCase()] = v;
 }
 
-function resolve(src: string): string | null {
+const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1" };
+
+function resolve(src: string, qbankId = 1): string | null {
   if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
+  const slug = QBANK_SLUG[qbankId] ?? "";
+  const prefix = slug ? `/api/media/${slug}/` : `/api/media/`;
   const original = src.split("/").pop() ?? src;
   const base = original.toLowerCase();
-  if (map[base]) return `/api/media/${encodeURIComponent(base)}`;
+  if (qbankId === 1 && map[base]) return `${prefix}${encodeURIComponent(base)}`;
   const strippedLower = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
-  if (strippedLower !== base && map[strippedLower]) return `/api/media/${encodeURIComponent(strippedLower)}`;
-  // Fallback: preserve original casing since Supabase Storage is case-sensitive.
+  if (qbankId === 1 && strippedLower !== base && map[strippedLower]) return `${prefix}${encodeURIComponent(strippedLower)}`;
   const strippedOriginal = original.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
-  return `/api/media/${encodeURIComponent(strippedOriginal)}`;
+  return `${prefix}${encodeURIComponent(strippedOriginal)}`;
 }
 
 function stripTags(html: string): string {
