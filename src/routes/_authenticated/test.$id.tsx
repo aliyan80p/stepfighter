@@ -820,25 +820,7 @@ function TestRunner() {
                 >
                   {idx === total - 1 ? "Finish Review" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
                 </button>
-              ) : !tutorMode ? (
-                <button
-                  onClick={proceedExam}
-                  disabled={selected == null && !submitted}
-                  className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40"
-                  style={{ background: NAV_BG }}
-                >
-                  {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
-                </button>
-              ) : !submitted ? (
-                <button
-                  onClick={submit}
-                  disabled={selected == null}
-                  className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40"
-                  style={{ background: NAV_BG }}
-                >
-                  Submit
-                </button>
-              ) : (
+              ) : !tutorMode ? null : !submitted ? null : (
                 <button
                   onClick={() => {
                     if (idx === total - 1) {
