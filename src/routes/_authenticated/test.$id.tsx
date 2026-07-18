@@ -554,22 +554,27 @@ function TestRunner() {
       {/* Top nav */}
       <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
         <div className="flex items-center gap-4">
-          <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
-            <span className="block w-5 h-0.5 bg-white mb-1" />
-            <span className="block w-5 h-0.5 bg-white mb-1" />
-            <span className="block w-5 h-0.5 bg-white" />
-          </button>
-          <div className="text-sm leading-tight">
-            <div className="font-semibold">Item {idx + 1} of {total}</div>
-            <div className="text-[11px] text-white/75">Question Id: {question.id}</div>
+          {!(!tutorMode && !isReview) && (
+            <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
+              <span className="block w-5 h-0.5 bg-white mb-1" />
+              <span className="block w-5 h-0.5 bg-white mb-1" />
+              <span className="block w-5 h-0.5 bg-white" />
+            </button>
+          )}
+          <div className="text-[12px] leading-tight">
+            <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
+            {(!tutorMode && !isReview)
+              ? <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
+              : <div className="text-[11px] text-white/75">Question Id: {question.id}</div>}
           </div>
           <button
             onClick={bookmark}
-            className={`flex flex-col items-center px-2 py-1 rounded hover:bg-white/10 ${isBookmarked ? "text-yellow-300" : "text-white/90"}`}
+            className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-white/10"
             title={isBookmarked ? "Remove flag" : "Flag question"}
           >
-            <Flag className="h-5 w-5" fill={isBookmarked ? "currentColor" : "none"} />
-            <span className="text-[11px]">Flag</span>
+            <span className={`inline-block w-3.5 h-3.5 border ${isBookmarked ? "bg-white border-white" : "border-white/80"}`} />
+            <span className="text-[12px]">Mark</span>
+            <Flag className={`h-4 w-4 ${isBookmarked ? "text-yellow-300" : "text-white/90"}`} fill={isBookmarked ? "currentColor" : "none"} />
           </button>
         </div>
 
@@ -585,9 +590,9 @@ function TestRunner() {
           <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
           {(tutorMode || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          {!tutorMode && !isReview && <TopBtn icon={Eraser} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
-          {!tutorMode && !isReview && <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />}
-          <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
+          <TopBtn icon={Eraser} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />
+          <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
+          {(tutorMode || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
         </div>
       </div>
 
