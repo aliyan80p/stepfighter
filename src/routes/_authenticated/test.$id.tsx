@@ -228,36 +228,51 @@ function TestRunner() {
   }, [question?.id, submitted]);
 
 
+  const optimisticAttempt = (questionId: number, selectedIndex: number, secs: number, isCorrect: boolean) => {
+    qc.setQueryData(["test", testId], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        attemptsByQ: {
+          ...old.attemptsByQ,
+          [questionId]: {
+            ...(old.attemptsByQ?.[questionId] ?? {}),
+            question_id: questionId,
+            selected_answer: selectedIndex,
+            is_correct: isCorrect,
+            time_seconds: secs,
+          },
+        },
+      };
+    });
+  };
+
   const submit = async () => {
     if (selected == null || !question) return;
     const secs = Math.round((Date.now() - startedAt) / 1000);
-    try {
-      await subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } });
-      setSubmitted(true);
-      qc.invalidateQueries({ queryKey: ["test", testId] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to submit");
-    }
+    const isCorrect = question.correct_answer === selected;
+    // Optimistic: mark submitted immediately, update cache, fire-and-forget the server call
+    setSubmitted(true);
+    optimisticAttempt(question.id, selected, secs, isCorrect);
+    subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } })
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
   };
 
   const proceedExam = async () => {
     if (!question) return;
     if (selected != null && !submitted) {
       const secs = Math.round((Date.now() - startedAt) / 1000);
-      try {
-        await subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } });
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Failed to submit");
-        return;
-      }
+      const isCorrect = question.correct_answer === selected;
+      optimisticAttempt(question.id, selected, secs, isCorrect);
+      // Fire-and-forget so navigation is instant
+      subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } })
+        .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
     }
     if (idx === total - 1) {
       if (window.confirm("End the block and submit your answers? This cannot be undone.")) {
-        qc.invalidateQueries({ queryKey: ["test", testId] });
         await finish();
       }
     } else {
-      qc.invalidateQueries({ queryKey: ["test", testId] });
       goToQuestion(idx + 1);
     }
   };
