@@ -350,3 +350,58 @@ export const listBookmarks = createServerFn({ method: "GET" })
     const { data: qs } = await context.supabase.from("questions").select("id,title,subject_id,system_id").in("id", ids);
     return (bm ?? []).map((b) => ({ ...b, question: (qs ?? []).find((q) => q.id === b.question_id) }));
   });
+
+export const searchQuestions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ query: z.string().default("") }).parse(d))
+  .handler(async ({ data, context }) => {
+    const q = data.query.trim();
+    if (!q) return { results: [], total: 0, truncated: false };
+    const { supabase } = context;
+    const LIMIT = 200;
+
+    // ID search: comma/space separated numbers
+    const idTokens = q.split(/[\s,]+/).map((s) => Number(s)).filter((n) => Number.isFinite(n) && n > 0);
+    const isPureIds = idTokens.length > 0 && q.split(/[\s,]+/).every((s) => /^\d+$/.test(s.trim()) || s.trim() === "");
+
+    let rows: any[] = [];
+    if (isPureIds) {
+      const { data: r } = await supabase
+        .from("questions")
+        .select("id,title,question,correct_answer,subject_id,system_id")
+        .in("id", idTokens.slice(0, LIMIT));
+      rows = r ?? [];
+    } else {
+      const like = `%${q.replace(/[%_]/g, (m) => "\\" + m)}%`;
+      const { data: r } = await supabase
+        .from("questions")
+        .select("id,title,question,correct_answer,subject_id,system_id")
+        .or(`title.ilike.${like},question.ilike.${like}`)
+        .limit(LIMIT + 1);
+      rows = r ?? [];
+    }
+    const truncated = rows.length > LIMIT;
+    rows = rows.slice(0, LIMIT);
+    const ids = rows.map((r) => r.id);
+    const [{ data: answers }, { data: subjects }, { data: systems }] = await Promise.all([
+      ids.length
+        ? supabase.from("answers").select("question_id,answer_index,answer_text").in("question_id", ids).order("answer_index")
+        : Promise.resolve({ data: [] as any[] }),
+      supabase.from("subjects").select("id,name"),
+      supabase.from("systems").select("id,name"),
+    ]);
+    const subjMap: Record<number, string> = Object.fromEntries((subjects ?? []).map((s: any) => [s.id, s.name]));
+    const sysMap: Record<number, string> = Object.fromEntries((systems ?? []).map((s: any) => [s.id, s.name]));
+    const ansByQ: Record<number, { answer_index: number; answer_text: string }[]> = {};
+    for (const a of answers ?? []) (ansByQ[a.question_id] ??= []).push(a);
+    const results = rows.map((r) => ({
+      id: r.id as number,
+      title: r.title as string,
+      question: r.question as string,
+      correctAnswer: r.correct_answer as number,
+      subject: r.subject_id != null ? subjMap[r.subject_id] ?? "" : "",
+      system: r.system_id != null ? sysMap[r.system_id] ?? "" : "",
+      answers: ansByQ[r.id] ?? [],
+    }));
+    return { results, total: results.length, truncated };
+  });
