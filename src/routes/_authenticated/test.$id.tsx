@@ -34,6 +34,28 @@ function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onCl
   );
 }
 
+function ToggleSwitch({
+  label, rightLabel, checked, onChange,
+}: { label: string; rightLabel?: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center gap-2 text-white/90">
+      <span className="text-[11px] font-medium">{label}</span>
+      <button
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${checked ? "bg-sky-400" : "bg-white/30"}`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? "translate-x-4" : "translate-x-1"}`}
+        />
+      </button>
+      {rightLabel && <span className="text-[11px] font-medium">{rightLabel}</span>}
+    </div>
+  );
+}
+
+
 function TestRunner() {
   const { id } = Route.useParams();
   const testId = Number(id);
@@ -57,6 +79,9 @@ function TestRunner() {
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [timedMode, setTimedMode] = useState(true);
+  const [tutorMode, setTutorMode] = useState(true);
+
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -600,16 +625,31 @@ function TestRunner() {
       </div>
 
       {/* Bottom nav */}
-      <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
-        <div className="font-semibold tracking-wide">IMD QBank</div>
-        <div className="flex items-center gap-1">
-          <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
-          <TopBtn icon={BookOpen} label="NBME Library" onClick={notImpl("NBME Library")} />
-          <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
-          <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
-          <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/tests" })} />
-        </div>
-      </div>
+      {(() => {
+        const blockSec = Math.max(0, 30 * 60 - elapsed);
+        const bh = String(Math.floor(blockSec / 3600)).padStart(2, "0");
+        const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
+        const bs = String(blockSec % 60).padStart(2, "0");
+        return (
+          <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+            <div className="font-semibold tracking-wide tabular-nums">
+              Block Time: {bh}:{bm}:{bs}
+            </div>
+            <div className="font-semibold tracking-wide hidden md:block">IMD QBank</div>
+            <div className="flex items-center gap-3">
+              <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
+              <ToggleSwitch label="Tutor" rightLabel="Exam" checked={tutorMode} onChange={setTutorMode} />
+              <div className="w-px h-6 bg-white/20 mx-1" />
+              <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
+              <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
+              <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
+              <TopBtn icon={Clock} label="Suspend" onClick={() => nav({ to: "/tests" })} />
+              <TopBtn icon={ArrowLeft} label="End Block" onClick={finish} />
+            </div>
+          </div>
+        );
+      })()}
+
 
       {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
       {showSettings && (
