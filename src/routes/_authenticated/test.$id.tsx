@@ -467,12 +467,7 @@ function TestRunner() {
     while (n) { nodes.push(n); n = walker.nextNode() as Text | null; }
     for (const node of nodes) {
       if (!node.textContent) continue;
-      const nodeRange = document.createRange();
-      nodeRange.selectNodeContents(node);
-      // Skip nodes fully outside the selection
-      if (range.compareBoundaryPoints(Range.END_TO_START, nodeRange) >= 0) continue;
-      if (range.compareBoundaryPoints(Range.START_TO_END, nodeRange) <= 0) continue;
-      // Clamp to intersection
+      if (!range.intersectsNode(node)) continue;
       const startOffset = node === range.startContainer ? range.startOffset : 0;
       const endOffset = node === range.endContainer ? range.endOffset : node.textContent.length;
       if (endOffset <= startOffset) continue;
