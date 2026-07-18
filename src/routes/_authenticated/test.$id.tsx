@@ -177,6 +177,7 @@ function TestRunner() {
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
+  const isReview = !!data?.test.done;
   const total = data?.questions.length ?? 0;
 
   useEffect(() => {
@@ -301,7 +302,7 @@ function TestRunner() {
   if (data.test.done) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
-  const showAnswers = submitted && isPractice && tutorMode;
+  const showAnswers = isReview || (submitted && isPractice && tutorMode);
   const isBookmarked = data.bookmarkedIds.has(question.id);
   const isCorrect = submitted && selected === correctIdx;
   const correctLetter = correctIdx != null ? String.fromCharCode(65 + correctIdx) : "";
@@ -811,18 +812,28 @@ function TestRunner() {
         return (
           <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
-              Block Time: {bh}:{bm}:{bs}
+              {isReview ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
             <div className="font-semibold tracking-wide hidden md:block">IMD QBank</div>
             <div className="flex items-center gap-3">
-              <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
-              <ToggleSwitch label="Tutor" rightLabel="Exam" checked={tutorMode} onChange={setTutorMode} />
-              <div className="w-px h-6 bg-white/20 mx-1" />
+              {!isReview && (
+                <>
+                  <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
+                  <ToggleSwitch label="Tutor" rightLabel="Exam" checked={tutorMode} onChange={setTutorMode} />
+                  <div className="w-px h-6 bg-white/20 mx-1" />
+                </>
+              )}
               <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
               <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
               <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
-              <TopBtn icon={Clock} label="Suspend" onClick={() => { if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" }); }} />
-              <TopBtn icon={ArrowLeft} label="End Block" onClick={() => { if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish(); }} />
+              {isReview ? (
+                <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+              ) : (
+                <>
+                  <TopBtn icon={Clock} label="Suspend" onClick={() => { if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" }); }} />
+                  <TopBtn icon={ArrowLeft} label="End Block" onClick={() => { if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish(); }} />
+                </>
+              )}
             </div>
           </div>
         );
