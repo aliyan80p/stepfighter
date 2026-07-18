@@ -853,7 +853,7 @@ function TestRunner() {
                     {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
                   </div>
                   <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
-                  <div className="font-semibold text-gray-800 mt-1" dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }} />
+                  <div className="font-semibold text-gray-800 mt-1" dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1 })}` }} />
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="flex items-center gap-2">
