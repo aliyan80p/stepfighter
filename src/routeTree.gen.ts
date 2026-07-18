@@ -31,6 +31,7 @@ import { Route as AuthenticatedPerformanceAiTestAnalysisRouteImport } from './ro
 import { Route as AuthenticatedCoursesMyCoursesRouteImport } from './routes/_authenticated/courses.my-courses'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account.settings'
 import { Route as AuthenticatedAccountResetRouteImport } from './routes/_authenticated/account.reset'
+import { Route as AuthenticatedTestIdResultsRouteImport } from './routes/_authenticated/test.$id.results'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -155,6 +156,12 @@ const AuthenticatedAccountResetRoute =
     path: '/account/reset',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTestIdResultsRoute =
+  AuthenticatedTestIdResultsRouteImport.update({
+    id: '/results',
+    path: '/results',
+    getParentRoute: () => AuthenticatedTestIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -177,7 +184,8 @@ export interface FileRoutesByFullPath {
   '/self-assessments/report': typeof AuthenticatedSelfAssessmentsReportRoute
   '/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/test-results/$id': typeof AuthenticatedTestResultsIdRoute
-  '/test/$id': typeof AuthenticatedTestIdRoute
+  '/test/$id': typeof AuthenticatedTestIdRouteWithChildren
+  '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -200,7 +208,8 @@ export interface FileRoutesByTo {
   '/self-assessments/report': typeof AuthenticatedSelfAssessmentsReportRoute
   '/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/test-results/$id': typeof AuthenticatedTestResultsIdRoute
-  '/test/$id': typeof AuthenticatedTestIdRoute
+  '/test/$id': typeof AuthenticatedTestIdRouteWithChildren
+  '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -225,7 +234,8 @@ export interface FileRoutesById {
   '/_authenticated/self-assessments/report': typeof AuthenticatedSelfAssessmentsReportRoute
   '/_authenticated/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/_authenticated/test-results/$id': typeof AuthenticatedTestResultsIdRoute
-  '/_authenticated/test/$id': typeof AuthenticatedTestIdRoute
+  '/_authenticated/test/$id': typeof AuthenticatedTestIdRouteWithChildren
+  '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/self-assessments/score-predictor'
     | '/test-results/$id'
     | '/test/$id'
+    | '/test/$id/results'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/self-assessments/score-predictor'
     | '/test-results/$id'
     | '/test/$id'
+    | '/test/$id/results'
   id:
     | '__root__'
     | '/'
@@ -298,6 +310,7 @@ export interface FileRouteTypes {
     | '/_authenticated/self-assessments/score-predictor'
     | '/_authenticated/test-results/$id'
     | '/_authenticated/test/$id'
+    | '/_authenticated/test/$id/results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -462,8 +475,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountResetRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/test/$id/results': {
+      id: '/_authenticated/test/$id/results'
+      path: '/results'
+      fullPath: '/test/$id/results'
+      preLoaderRoute: typeof AuthenticatedTestIdResultsRouteImport
+      parentRoute: typeof AuthenticatedTestIdRoute
+    }
   }
 }
+
+interface AuthenticatedTestIdRouteChildren {
+  AuthenticatedTestIdResultsRoute: typeof AuthenticatedTestIdResultsRoute
+}
+
+const AuthenticatedTestIdRouteChildren: AuthenticatedTestIdRouteChildren = {
+  AuthenticatedTestIdResultsRoute: AuthenticatedTestIdResultsRoute,
+}
+
+const AuthenticatedTestIdRouteWithChildren =
+  AuthenticatedTestIdRoute._addFileChildren(AuthenticatedTestIdRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBookmarksRoute: typeof AuthenticatedBookmarksRoute
@@ -484,7 +515,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSelfAssessmentsReportRoute: typeof AuthenticatedSelfAssessmentsReportRoute
   AuthenticatedSelfAssessmentsScorePredictorRoute: typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   AuthenticatedTestResultsIdRoute: typeof AuthenticatedTestResultsIdRoute
-  AuthenticatedTestIdRoute: typeof AuthenticatedTestIdRoute
+  AuthenticatedTestIdRoute: typeof AuthenticatedTestIdRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -513,7 +544,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSelfAssessmentsScorePredictorRoute:
     AuthenticatedSelfAssessmentsScorePredictorRoute,
   AuthenticatedTestResultsIdRoute: AuthenticatedTestResultsIdRoute,
-  AuthenticatedTestIdRoute: AuthenticatedTestIdRoute,
+  AuthenticatedTestIdRoute: AuthenticatedTestIdRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
