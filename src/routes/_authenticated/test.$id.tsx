@@ -863,6 +863,7 @@ function TestRunner() {
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
 
+        const examUI = !tutorMode && !isReview;
         if (examUI) {
           return (
             <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
