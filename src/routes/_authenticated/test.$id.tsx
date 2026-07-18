@@ -743,8 +743,8 @@ function TestRunner() {
 
             {/* Primary action button — directly below answer choices */}
             {!isReview && (
-              <div className={`mt-4 ${!tutorMode ? "flex justify-center max-w-[520px]" : ""}`}>
-                {!tutorMode ? (
+              <div className={`mt-4 ${createdExam ? "flex justify-center max-w-[520px]" : ""}`}>
+                {createdExam ? (
                   <button
                     onClick={proceedExam}
                     className="px-4 py-1.5 rounded-sm text-white text-[12px] font-semibold disabled:opacity-40"
@@ -764,6 +764,7 @@ function TestRunner() {
                 ) : null}
               </div>
             )}
+
 
 
 
