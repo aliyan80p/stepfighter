@@ -29,7 +29,9 @@ function NewTest() {
   const getTestIdsFn = useServerFn(getTestQuestionIds);
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
-  const { data } = useQuery({ queryKey: ["filters", "all-questions-v2"], queryFn: () => getFn() });
+  const qbankId = useActiveQbankId();
+  const { data } = useQuery({ queryKey: ["filters", qbankId], queryFn: () => getFn({ data: { qbankId } }) });
+
 
   const [openTab, setOpenTab] = useState<Tab>("courses");
   const [courseIds, setCourseIds] = useState<string[]>([]);
