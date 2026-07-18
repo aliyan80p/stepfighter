@@ -157,18 +157,40 @@ function NewTest() {
   const hasSubject = subjectIds.length > 0;
   const hasSystem = systemIds.length > 0;
 
+  // CMS forms are single-specialty: restrict Subjects to that specialty and hide Systems/Topics
+  const cmsSpecialtyNames = useMemo(() => {
+    if (!qbankIds.length) return null;
+    const names = new Set<string>();
+    for (const id of qbankIds) {
+      const opt = QBANK_OPTIONS.find((o) => o.id === id);
+      if (!opt || !opt.source.startsWith("CMS_")) return null; // any non-CMS -> not CMS mode
+      const entry = STEP2_CMS.find((c) => opt.source.startsWith(`CMS_${c.tag}`));
+      if (entry) names.add(CMS_SPECIALTY_TO_SUBJECT[entry.specialty] ?? entry.specialty);
+    }
+    return names;
+  }, [qbankIds]);
+  const cmsMode = !!cmsSpecialtyNames;
+
   const availableTabs: Record<Tab, boolean> = {
     courses: true,
     qbank: hasCourse,
     subjects: hasQbank,
-    systems: hasSubject,
-    topics: hasSystem,
+    systems: hasSubject && !cmsMode,
+    topics: hasSystem && !cmsMode,
   };
 
   const questionMeta = data?.questionMeta ?? [];
   const totalStep2 = data?.totalQuestions ?? questionMeta.length;
 
-  // Systems narrowed by selected subjects, counted from individual question rows
+  // If user switches to a CMS-only selection while on systems/topics tab, bounce them
+  useEffect(() => {
+    if (cmsMode && (openTab === "systems" || openTab === "topics")) setOpenTab("subjects");
+    if (cmsMode) {
+      if (systemIds.length) setSystemIds([]);
+      if (topicNames.length) setTopicNames([]);
+    }
+  }, [cmsMode]);
+
   const filteredSystems = useMemo(() => {
     if (!data) return [];
     const counts = new Map<number, number>();
