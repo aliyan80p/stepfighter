@@ -521,6 +521,7 @@ function QuestionModal({
             )}
           </div>
         </div>
+        </div>
 
         {/* Bottom nav */}
         <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs shrink-0" style={{ background: NAV_BG }}>
