@@ -175,8 +175,10 @@ export const getPoolCount = createServerFn({ method: "POST" })
     subjectIds: z.array(z.number()).default([]),
     systemIds: z.array(z.number()).default([]),
     topicNames: z.array(z.string()).default([]),
+    sources: z.array(z.string()).default([]),
     scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
   }).parse(d))
+
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rows = await fetchAllQuestionRows(supabase, "id", data);
