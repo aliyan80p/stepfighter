@@ -125,4 +125,19 @@
 .qbank-explanation ul, .qbank-explanation ol { padding-left: 1.75rem; margin: 0.75rem 0; }
 .qbank-explanation li { margin: 0.35rem 0; line-height: 1.7; }
 
+/* Theme overrides — qbank content follows the wrapper theme */
+.qbank-theme-dark, .qbank-theme-dark .qbank-html, .qbank-theme-dark .qbank-explanation,
+.qbank-theme-dark .qbank-explanation p, .qbank-theme-dark .qbank-explanation li,
+.qbank-theme-dark .qbank-html p, .qbank-theme-dark .qbank-html li,
+.qbank-theme-dark .qbank-html td, .qbank-theme-dark .qbank-html th { color: #e5e7eb !important; }
+.qbank-theme-dark .qbank-explanation strong, .qbank-theme-dark .qbank-explanation b,
+.qbank-theme-dark .qbank-html strong, .qbank-theme-dark .qbank-html b { color: #f9fafb !important; }
+.qbank-theme-dark .qbank-html a { color: #93c5fd !important; }
+.qbank-theme-dark .qbank-html table td, .qbank-theme-dark .qbank-html table th { border-color: #334155 !important; }
+
+.qbank-theme-sepia, .qbank-theme-sepia .qbank-html, .qbank-theme-sepia .qbank-explanation,
+.qbank-theme-sepia .qbank-explanation p, .qbank-theme-sepia .qbank-explanation li,
+.qbank-theme-sepia .qbank-html p, .qbank-theme-sepia .qbank-html li { color: #3b2f1e !important; }
+.qbank-theme-sepia .qbank-explanation strong, .qbank-theme-sepia .qbank-explanation b { color: #2a2010 !important; }
+
 
