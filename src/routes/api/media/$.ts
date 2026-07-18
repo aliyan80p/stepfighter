@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { contentTypeFromBytes, decryptImdMedia, looksLikePlainMedia } from "@/lib/imd-media-crypto";
 
 const BUCKET = "qbank-media";
+const PLAIN_BUCKET = "qbank-media-plain";
+// URL cache in worker memory (per-instance)
+const plainUrlCache = new Map<string, { url: string; exp: number }>();
 
 // Cache which name variant exists per Worker instance
 const nameCache = new Map<string, string | null>();
