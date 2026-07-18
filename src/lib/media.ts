@@ -6,16 +6,19 @@ for (const [k, v] of Object.entries({ ...imgManifest, ...vidManifest } as Record
   map[k.toLowerCase()] = v;
 }
 
-function resolve(src: string): string | null {
+const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1" };
+
+function resolve(src: string, qbankId = 1): string | null {
   if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
+  const slug = QBANK_SLUG[qbankId] ?? "";
+  const prefix = slug ? `/api/media/${slug}/` : `/api/media/`;
   const original = src.split("/").pop() ?? src;
   const base = original.toLowerCase();
-  if (map[base]) return `/api/media/${encodeURIComponent(base)}`;
+  if (qbankId === 1 && map[base]) return `${prefix}${encodeURIComponent(base)}`;
   const strippedLower = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
-  if (strippedLower !== base && map[strippedLower]) return `/api/media/${encodeURIComponent(strippedLower)}`;
-  // Fallback: preserve original casing since Supabase Storage is case-sensitive.
+  if (qbankId === 1 && strippedLower !== base && map[strippedLower]) return `${prefix}${encodeURIComponent(strippedLower)}`;
   const strippedOriginal = original.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
-  return `/api/media/${encodeURIComponent(strippedOriginal)}`;
+  return `${prefix}${encodeURIComponent(strippedOriginal)}`;
 }
 
 function stripTags(html: string): string {
@@ -32,6 +35,7 @@ function escapeAttr(value: string): string {
 
 type RewriteMediaOptions = {
   deferMedia?: boolean;
+  qbankId?: number;
 };
 
 function renderImage(url: string, alt: string): string {
@@ -46,19 +50,15 @@ function renderVideo(url: string): string {
 /** Rewrite media URLs in question HTML to point to the decrypting media route. */
 export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): string {
   if (!html) return html;
+  const qb = options.qbankId ?? 1;
   let out = html.replace(
     /(<(?:img|source|video|audio)\b[^>]*\bsrc=)(["'])([^"']+)\2/gi,
     (full, prefix, q, src) => {
-      const url = resolve(src);
+      const url = resolve(src, qb);
       return url ? `${prefix}${q}${url}${q}` : full;
     },
   );
 
-  // The imported qbank stores explanation media as text links like
-  // <a href="media/L20387.png">erosions</a>. We keep the label inline where
-  // the author put it, but insert the actual <img>/<video> AFTER the
-  // containing block element (p, li, div, td, ...) so it doesn't split
-  // the sentence.
   const parked: string[] = [];
   const parkMedia = (mediaHtml: string, labelHtml: string) => {
     const idx = parked.push(mediaHtml) - 1;
@@ -69,7 +69,7 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
     /<a\b([^>]*?)\bhref=["']([^"']+\.(?:png|jpe?g|gif|webp|bmp|svg))["']([^>]*)>(.*?)<\/a>/gis,
     (full, _before, href, _after, labelHtml) => {
       if (/<img\b/i.test(labelHtml)) return full;
-      const url = resolve(href);
+      const url = resolve(href, qb);
       if (!url) return full;
       const label = stripTags(labelHtml);
       const media = renderImage(url, label || "Related image");
@@ -80,7 +80,7 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
   out = out.replace(
     /<a\b[^>]*\bhref=["']([^"']+\.(?:mp4|webm|mov|m4v))["'][^>]*>(.*?)<\/a>/gis,
     (full, href, labelHtml) => {
-      const url = resolve(href);
+      const url = resolve(href, qb);
       if (!url) return full;
       const media = renderVideo(url);
       if (options.deferMedia) return parkMedia(media, labelHtml);

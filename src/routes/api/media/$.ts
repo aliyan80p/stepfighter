@@ -3,11 +3,13 @@ import { contentTypeFromBytes, decryptImdMedia } from "@/lib/imd-media-crypto";
 
 const BUCKET = "qbank-media";
 const PLAIN_BUCKET = "qbank-media-plain";
-// URL cache in worker memory (per-instance)
-const plainUrlCache = new Map<string, { url: string; exp: number }>();
 
-// Cache which name variant exists per Worker instance
+// Per-worker caches
+const plainUrlCache = new Map<string, { url: string; exp: number }>();
 const nameCache = new Map<string, string | null>();
+const driveIdCache = new Map<string, string | null>();
+
+const QBANK_SLUGS: Record<string, number> = { step1: 2, step2: 1 };
 
 function stripPrefix(name: string): string {
   return name.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
@@ -31,7 +33,6 @@ function candidateNames(name: string): string[] {
   const bases = [name, stripPrefix(name)];
   for (const b of bases) {
     set.add(b);
-    // Case variants for the leading letter (l<->L, u<->U)
     if (/^[a-z]/.test(b)) set.add(b[0].toUpperCase() + b.slice(1));
     if (/^[A-Z]/.test(b)) set.add(b[0].toLowerCase() + b.slice(1));
     if (/^[LlUu]\d/.test(b)) {
@@ -39,7 +40,6 @@ function candidateNames(name: string): string[] {
       set.add("L" + rest); set.add("U" + rest);
       set.add("l" + rest); set.add("u" + rest);
     }
-    // If no known CDN prefix, also try prefixed variants that live in the bucket
     const lower = b.toLowerCase();
     if (!HIGHRES_PREFIXES.some((p) => lower.startsWith(p))) {
       for (const p of HIGHRES_PREFIXES) set.add(p + b);
@@ -48,31 +48,52 @@ function candidateNames(name: string): string[] {
   return Array.from(set);
 }
 
-
-async function resolveObject(
-  name: string,
-  supaUrl: string,
-  srk: string,
-  range: string | null,
+async function resolveEncryptedFromBucket(
+  name: string, supaUrl: string, srk: string,
 ): Promise<Response | null> {
   const cached = nameCache.get(name);
   const tryNames = cached === undefined ? candidateNames(name) : cached ? [cached] : [];
   for (const n of tryNames) {
     const url = `${supaUrl}/storage/v1/object/${BUCKET}/${encodeURIComponent(n)}`;
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${srk}`,
-        apikey: srk,
-        ...(range ? { Range: range } : {}),
-      },
-    });
-    if (res.ok || res.status === 206) {
-      nameCache.set(name, n);
-      return res;
-    }
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${srk}`, apikey: srk } });
+    if (res.ok) { nameCache.set(name, n); return res; }
   }
   if (cached === undefined) nameCache.set(name, null);
   return null;
+}
+
+async function resolveEncryptedFromDrive(
+  qbankId: number, name: string, supaUrl: string, srk: string,
+): Promise<{ bytes: Buffer; resolvedName: string } | null> {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const driveKey = process.env.GOOGLE_DRIVE_API_KEY;
+  if (!lovableKey || !driveKey) return null;
+
+  const cacheKey = `${qbankId}:${name}`;
+  let fileId: string | null | undefined = driveIdCache.get(cacheKey);
+  let resolvedName = name;
+
+  if (fileId === undefined) {
+    // Lookup by exact name or case-insensitive candidates via PostgREST
+    const candidates = candidateNames(name);
+    const orExpr = candidates.map((c) => `name.eq.${encodeURIComponent(c)}`).join(",");
+    const url = `${supaUrl}/rest/v1/qbank_media?select=name,drive_file_id&qbank_id=eq.${qbankId}&or=(${orExpr})&limit=1`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${srk}`, apikey: srk } });
+    if (res.ok) {
+      const rows = (await res.json()) as Array<{ name: string; drive_file_id: string }>;
+      if (rows[0]) { fileId = rows[0].drive_file_id; resolvedName = rows[0].name; }
+      else fileId = null;
+    } else fileId = null;
+    driveIdCache.set(cacheKey, fileId);
+  }
+  if (!fileId) return null;
+
+  const dl = await fetch(
+    `https://connector-gateway.lovable.dev/google_drive/drive/v3/files/${fileId}?alt=media`,
+    { headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": driveKey } },
+  );
+  if (!dl.ok) return null;
+  return { bytes: Buffer.from(await dl.arrayBuffer()), resolvedName };
 }
 
 function rangeResponse(data: Buffer, contentType: string, range: string | null): Response {
@@ -81,19 +102,16 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
   headers.set("Accept-Ranges", "bytes");
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   headers.set("Content-Disposition", "inline");
-
   const bodyFrom = (chunk: Uint8Array): ArrayBuffer => {
     const copy = new Uint8Array(chunk.byteLength);
     copy.set(chunk);
     return copy.buffer as ArrayBuffer;
   };
-
   const match = range?.match(/^bytes=(\d*)-(\d*)$/);
   if (!match) {
     headers.set("Content-Length", String(data.byteLength));
     return new Response(bodyFrom(data), { headers });
   }
-
   const total = data.byteLength;
   const start = match[1] ? Number(match[1]) : 0;
   const end = match[2] ? Math.min(Number(match[2]), total - 1) : total - 1;
@@ -101,20 +119,29 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
     headers.set("Content-Range", `bytes */${total}`);
     return new Response(null, { status: 416, headers });
   }
-
   const slice = data.subarray(start, end + 1);
   headers.set("Content-Length", String(slice.byteLength));
   headers.set("Content-Range", `bytes ${start}-${end}/${total}`);
   return new Response(bodyFrom(slice), { status: 206, headers });
 }
 
-async function getPlainSignedUrl(name: string, supaUrl: string, srk: string): Promise<string | null> {
+async function getPlainSignedUrl(
+  storagePath: string, cacheKey: string, supaUrl: string, srk: string,
+): Promise<string | null> {
   const now = Date.now();
-  const cached = plainUrlCache.get(name);
+  const cached = plainUrlCache.get(cacheKey);
   if (cached && cached.exp > now + 60_000) return cached.url;
-  for (const candidate of candidateNames(name)) {
+
+  // Try direct path first
+  const paths = new Set<string>([storagePath]);
+  // Also try case variants for the leaf name
+  const dir = storagePath.includes("/") ? storagePath.slice(0, storagePath.lastIndexOf("/") + 1) : "";
+  const leaf = storagePath.slice(dir.length);
+  for (const c of candidateNames(leaf)) paths.add(dir + c);
+
+  for (const p of paths) {
     const res = await fetch(
-      `${supaUrl}/storage/v1/object/sign/${PLAIN_BUCKET}/${encodeURIComponent(candidate)}`,
+      `${supaUrl}/storage/v1/object/sign/${PLAIN_BUCKET}/${p.split("/").map(encodeURIComponent).join("/")}`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Content-Type": "application/json" },
@@ -126,15 +153,15 @@ async function getPlainSignedUrl(name: string, supaUrl: string, srk: string): Pr
     const path = json.signedURL || json.signedUrl;
     if (!path) continue;
     const url = `${supaUrl}/storage/v1${path}`;
-    plainUrlCache.set(name, { url, exp: now + 1000 * 60 * 60 * 24 * 300 });
+    plainUrlCache.set(cacheKey, { url, exp: now + 1000 * 60 * 60 * 24 * 300 });
     return url;
   }
   return null;
 }
 
-async function uploadPlain(name: string, data: Buffer, contentType: string, supaUrl: string, srk: string) {
+async function uploadPlain(storagePath: string, data: Buffer, contentType: string, supaUrl: string, srk: string) {
   try {
-    await fetch(`${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${encodeURIComponent(name)}`, {
+    await fetch(`${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${storagePath.split("/").map(encodeURIComponent).join("/")}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${srk}`,
@@ -153,39 +180,58 @@ export const Route = createFileRoute("/api/media/$")({
     handlers: {
       GET: async ({ params, request }) => {
         const raw = (params as any)._splat as string;
-        const name = decodeURIComponent(raw.split("/").pop() ?? "");
+        if (!raw) return new Response("Bad request", { status: 400 });
+        const segments = raw.split("/").filter(Boolean).map((s) => decodeURIComponent(s));
+        let qbankId = 1;
+        let qbankSlug = "";
+        let name = segments[segments.length - 1] ?? "";
+        if (segments.length >= 2 && QBANK_SLUGS[segments[0]] !== undefined) {
+          qbankSlug = segments[0];
+          qbankId = QBANK_SLUGS[qbankSlug];
+        }
         if (!name) return new Response("Bad request", { status: 400 });
 
         const supaUrl = process.env.SUPABASE_URL;
         const srk = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (!supaUrl || !srk) {
-          return new Response("Media service not configured", { status: 500 });
-        }
+        if (!supaUrl || !srk) return new Response("Media service not configured", { status: 500 });
 
-        // Fast path: redirect to signed URL from plaintext bucket (served by Supabase CDN).
-        const signed = await getPlainSignedUrl(name, supaUrl, srk);
+        const storagePrefix = qbankSlug ? `${qbankSlug}/` : "";
+        const cacheKey = `${qbankId}:${name}`;
+
+        // Fast path: signed URL from plain bucket
+        const signed = await getPlainSignedUrl(`${storagePrefix}${name}`, cacheKey, supaUrl, srk);
         if (signed) {
           return new Response(null, {
             status: 302,
-            headers: {
-              Location: signed,
-              "Cache-Control": "public, max-age=86400",
-            },
+            headers: { Location: signed, "Cache-Control": "public, max-age=86400" },
           });
         }
 
-        // Slow path: fetch encrypted, decrypt, respond, cache to plaintext bucket.
         const range = request.headers.get("range");
-        const upstream = await resolveObject(name, supaUrl, srk, null);
-        if (!upstream) return new Response("Not found", { status: 404 });
 
-        const source = Buffer.from(await upstream.arrayBuffer());
-        const resolvedName = nameCache.get(name) ?? name;
-        const data = decryptImdMedia(source, [name, resolvedName, stripPrefix(name), stripPrefix(resolvedName)]);
+        // Slow path: get encrypted source
+        let encrypted: { bytes: Buffer; resolvedName: string } | null = null;
+        if (qbankId === 1) {
+          // Legacy: bucket-hosted
+          const upstream = await resolveEncryptedFromBucket(name, supaUrl, srk);
+          if (upstream) {
+            encrypted = {
+              bytes: Buffer.from(await upstream.arrayBuffer()),
+              resolvedName: nameCache.get(name) ?? name,
+            };
+          }
+        }
+        if (!encrypted) {
+          // Fallback / step1: fetch from Google Drive via connector
+          encrypted = await resolveEncryptedFromDrive(qbankId, name, supaUrl, srk);
+        }
+        if (!encrypted) return new Response("Not found", { status: 404 });
+
+        const { bytes, resolvedName } = encrypted;
+        const data = decryptImdMedia(bytes, [name, resolvedName, stripPrefix(name), stripPrefix(resolvedName)]);
         const type = contentTypeFromBytes(data, contentTypeFor(resolvedName));
 
-        // Write-through cache to plain bucket for future requests (fire-and-forget).
-        void uploadPlain(name, data, type, supaUrl, srk);
+        void uploadPlain(`${storagePrefix}${resolvedName}`, data, type, supaUrl, srk);
 
         return rangeResponse(data, type, range);
       },
