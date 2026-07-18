@@ -172,6 +172,8 @@ function TestRunner() {
     });
   }, [question?.id, submitted]);
 
+  const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
+
   const persistHighlights = () => {
     if (!question || !contentRef.current) return;
     const snap: Record<string, string> = {};
@@ -182,12 +184,12 @@ function TestRunner() {
   };
 
   const handleSelection = () => {
-    if (!(multicolor || highlightOnly)) { setHlBar(null); return; }
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); return; }
     const range = sel.getRangeAt(0);
-    const container = range.commonAncestorContainer.parentElement;
-    if (!container?.closest(".qbank-html")) { setHlBar(null); return; }
+    const anchor = range.commonAncestorContainer;
+    const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
+    if (!el?.closest("[data-hlkey]")) { setHlBar(null); return; }
     savedRangeRef.current = range.cloneRange();
     const rect = range.getBoundingClientRect();
     setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
@@ -195,14 +197,24 @@ function TestRunner() {
 
   const wrapSelection = (styler: (m: HTMLElement) => void) => {
     const range = savedRangeRef.current;
-    if (!range) return;
+    if (!range || range.collapsed) return;
     const mark = document.createElement("mark");
     mark.className = "qbank-hl";
     mark.style.color = "inherit";
     mark.style.backgroundColor = "transparent";
     styler(mark);
-    try { range.surroundContents(mark); } catch { /* cross-node */ }
+    try {
+      range.surroundContents(mark);
+    } catch {
+      // Cross-node selection: extract + wrap
+      try {
+        const frag = range.extractContents();
+        mark.appendChild(frag);
+        range.insertNode(mark);
+      } catch { /* give up silently */ }
+    }
     window.getSelection()?.removeAllRanges();
+    savedRangeRef.current = null;
     setHlBar(null);
     persistHighlights();
   };
@@ -215,14 +227,20 @@ function TestRunner() {
   const eraseHighlight = () => {
     const range = savedRangeRef.current;
     if (!range) return;
-    const container = range.commonAncestorContainer.parentElement;
-    container?.closest(".qbank-html")?.querySelectorAll("mark.qbank-hl").forEach(m => {
+    const anchor = range.commonAncestorContainer;
+    const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
+    el?.closest("[data-hlkey]")?.querySelectorAll("mark.qbank-hl").forEach(m => {
       if (range.intersectsNode(m)) {
         const parent = m.parentNode!;
         while (m.firstChild) parent.insertBefore(m.firstChild, m);
         parent.removeChild(m);
       }
     });
+    window.getSelection()?.removeAllRanges();
+    setHlBar(null);
+    persistHighlights();
+  };
+
     window.getSelection()?.removeAllRanges();
     setHlBar(null);
     persistHighlights();
