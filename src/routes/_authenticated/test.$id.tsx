@@ -193,6 +193,12 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [submitted, startedAt]);
 
+  useEffect(() => {
+    const t = setInterval(() => setBlockElapsed(Math.round((Date.now() - blockStartedAt) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [blockStartedAt]);
+
+
   // Restore saved highlights per question (must run before early returns to keep hook order stable)
   useEffect(() => {
     if (!question) return;
