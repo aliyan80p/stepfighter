@@ -702,7 +702,7 @@ function TestRunner() {
               </div>
             )}
 
-            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (!tutorMode && !isReview && !showAnswers) ? (theme === "dark" ? "#475569" : "#c9c9c9") : (theme === "dark" ? "#475569" : "#5b8fc9"), borderWidth: (!tutorMode && !isReview && !showAnswers) ? 1 : 2, background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
+            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (isRealExam && !isReview && !showAnswers) ? (theme === "dark" ? "#475569" : "#c9c9c9") : (theme === "dark" ? "#475569" : "#5b8fc9"), borderWidth: (isRealExam && !isReview && !showAnswers) ? 1 : 2, background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
@@ -743,7 +743,7 @@ function TestRunner() {
 
             {/* Primary action button — directly below answer choices */}
             {!isReview && (
-              <div className={`mt-4 ${!tutorMode ? "flex justify-center max-w-[520px]" : ""}`}>
+              <div className={`mt-4 ${isRealExam ? "flex justify-center max-w-[520px]" : ""}`}>
                 {!tutorMode ? (
                   <button
                     onClick={proceedExam}
