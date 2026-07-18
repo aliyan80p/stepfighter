@@ -291,12 +291,13 @@ function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onCl
 }
 
 function QuestionModal({
-  items, index, setIndex, onClose,
+  items, index, setIndex, onClose, qbankId,
 }: {
   items: SearchResult[];
   index: number;
   setIndex: (i: number) => void;
   onClose: () => void;
+  qbankId: number;
 }) {
   const r = items[index];
   const total = items.length;
