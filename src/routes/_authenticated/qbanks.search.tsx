@@ -302,10 +302,56 @@ function QuestionModal({
     if (next >= 0 && next < total) setIndex(next);
   };
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [showCalc, setShowCalc] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [marked, setMarked] = useState<Record<number, boolean>>({});
+
+  // Settings state (matches test runner)
+  const [fontSize, setFontSize] = useState(15);
+  const [fontWeight, setFontWeight] = useState(400);
+  const [theme, setTheme] = useState<"light" | "dark" | "sepia">("light");
+  const [transparentExpl, setTransparentExpl] = useState(false);
+  const [largeImages, setLargeImages] = useState(false);
+  const [highlightOnly, setHighlightOnly] = useState(false);
+  const [multicolor, setMulticolor] = useState(true);
+  const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
+  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>({
+    "#ffeb3b": true, "#4ade80": true, "#38bdf8": true,
+    "#f472b6": true, "#fb923c": true, "#c084fc": true,
+  });
+
+  const themeStyles =
+    theme === "dark"
+      ? { text: "#e5e7eb", bg: "#0f172a", border: "#334155" }
+      : theme === "sepia"
+      ? { text: "#3b2f1c", bg: "#f4ecd8", border: "#d6c9a8" }
+      : { text: "#1f2937", bg: "#ffffff", border: "#d1d9e6" };
+
+  const goFullscreen = () => {
+    if (!document.fullscreenElement) rootRef.current?.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  };
+
+  const bookmarkFn = useServerFn(toggleBookmark);
+  const toggleMark = async () => {
+    const prev = !!marked[r.id];
+    setMarked((m) => ({ ...m, [r.id]: !prev }));
+    try {
+      await bookmarkFn({ data: { questionId: r.id } });
+    } catch {
+      setMarked((m) => ({ ...m, [r.id]: prev }));
+      toast.error("Failed to update flag");
+    }
+  };
+  const isMarked = !!marked[r.id];
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center" onClick={onClose}>
       <div
-        className="bg-white w-full h-full md:w-[95vw] md:h-[95vh] md:rounded-lg overflow-hidden shadow-2xl flex flex-col"
+        ref={rootRef}
+        className="w-full h-full md:w-[95vw] md:h-[95vh] md:rounded-lg overflow-hidden shadow-2xl flex flex-col"
+        style={{ background: themeStyles.bg }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top nav */}
@@ -319,12 +365,12 @@ function QuestionModal({
               <div className="text-[11px] text-white/75">Question Id: {r.id}</div>
             </div>
             <button
-              onClick={notImpl("Mark")}
-              className="flex flex-col items-center px-2 py-1 rounded hover:bg-white/10 text-white/90"
-              title="Mark question"
+              onClick={toggleMark}
+              className={`flex flex-col items-center px-2 py-1 rounded hover:bg-white/10 ${isMarked ? "text-yellow-300" : "text-white/90"}`}
+              title={isMarked ? "Remove flag" : "Flag question"}
             >
-              <Flag className="h-5 w-5" />
-              <span className="text-[11px]">Mark</span>
+              <Flag className="h-5 w-5" fill={isMarked ? "currentColor" : "none"} />
+              <span className="text-[11px]">Flag</span>
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -332,30 +378,40 @@ function QuestionModal({
             <TopBtn icon={ChevronRight} label="Next" onClick={() => go(1)} />
           </div>
           <div className="flex items-center gap-1">
-            <TopBtn icon={Maximize2} label="Full Screen" onClick={notImpl("Full Screen")} />
+            <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
             <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
             <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
             <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />
-            <TopBtn icon={Calculator} label="Calculator" onClick={notImpl("Calculator")} />
-            <TopBtn icon={Settings} label="Settings" onClick={notImpl("Settings")} />
+            <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
+            <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings((v) => !v)} />
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-auto">
-          <div className="w-full mx-auto px-6 py-3 qbank-theme-light" style={{ color: "#1f2937" }}>
+          <div
+            className={`w-full mx-auto px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`}
+            style={{ fontSize, fontWeight, color: themeStyles.text }}
+          >
             <div
               data-hlkey="q"
-              className="qbank-html qbank-light text-[15px]"
+              className="qbank-html qbank-light"
               dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "") }}
             />
 
-            <div className="mt-3 inline-block rounded border-2 px-4 py-2" style={{ borderColor: "#5b8fc9", background: "#ffffff" }}>
+            <div
+              className="mt-3 inline-block rounded border-2 px-4 py-2"
+              style={{
+                borderColor: theme === "dark" ? "#475569" : "#5b8fc9",
+                background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff",
+                color: themeStyles.text,
+              }}
+            >
               {r.answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + a.answer_index);
                 const isCorrect = a.answer_index === r.correctAnswer;
                 return (
-                  <div key={i} className="w-full text-left flex items-center gap-2 py-1.5 text-[15px]">
+                  <div key={i} className="w-full text-left flex items-center gap-2 py-1.5" style={{ fontSize }}>
                     <span className="w-4 flex justify-center shrink-0">
                       {isCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
                     </span>
@@ -413,7 +469,16 @@ function QuestionModal({
                     <FileText className="h-4 w-4" /> Explanation
                   </div>
                 </div>
-                <div className="pt-3 pb-6" style={{ lineHeight: 1.7, color: "#1f2937" }}>
+                <div
+                  className="pt-3 pb-6"
+                  style={{
+                    background: transparentExpl ? "transparent" : "transparent",
+                    lineHeight: 1.7,
+                    fontSize,
+                    fontWeight,
+                    color: themeStyles.text,
+                  }}
+                >
                   <div
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
@@ -428,7 +493,7 @@ function QuestionModal({
         {/* Bottom nav */}
         <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs shrink-0" style={{ background: NAV_BG }}>
           <div className="font-semibold tracking-wide" />
-          <div className="font-semibold tracking-wide hidden md:block">USMLE Fighter</div>
+          <div className="font-semibold tracking-wide hidden md:block">IMD QBank</div>
           <div className="flex items-center gap-3">
             <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
             <TopBtn icon={FileText} label="NBME Library" onClick={notImpl("NBME Library")} />
@@ -437,6 +502,22 @@ function QuestionModal({
             <TopBtn icon={ArrowLeft} label="Go Back" onClick={onClose} />
           </div>
         </div>
+
+        {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+        {showSettings && (
+          <SettingsPanel
+            onClose={() => setShowSettings(false)}
+            fontSize={fontSize} setFontSize={setFontSize}
+            fontWeight={fontWeight} setFontWeight={setFontWeight}
+            theme={theme} setTheme={setTheme}
+            transparentExpl={transparentExpl} setTransparentExpl={setTransparentExpl}
+            largeImages={largeImages} setLargeImages={setLargeImages}
+            highlightOnly={highlightOnly} setHighlightOnly={setHighlightOnly}
+            multicolor={multicolor} setMulticolor={setMulticolor}
+            activeHighlight={activeHighlight} setActiveHighlight={setActiveHighlight}
+            enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
+          />
+        )}
       </div>
     </div>
   );
