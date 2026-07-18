@@ -129,6 +129,8 @@
 .qbank-explanation strong, .qbank-explanation b { color: #111827; font-weight: 700; }
 .qbank-explanation ul, .qbank-explanation ol { padding-left: 1.75rem; margin: 0.75rem 0; }
 .qbank-explanation li { margin: 0.35rem 0; line-height: 1.7; }
+.qbank-deferred-media { display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-top: 1rem; }
+.qbank-deferred-media img, .qbank-deferred-media video, .qbank-deferred-media audio { display: block; max-width: 100%; }
 
 /* Theme overrides — qbank content follows the wrapper theme */
 .qbank-theme-dark, .qbank-theme-dark .qbank-html, .qbank-theme-dark .qbank-explanation,

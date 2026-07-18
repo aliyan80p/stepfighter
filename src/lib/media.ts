@@ -30,10 +30,23 @@ function escapeAttr(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
+type RewriteMediaOptions = {
+  deferMedia?: boolean;
+};
+
+function renderImage(url: string, alt: string): string {
+  return `<img src="${url}" alt="${escapeAttr(alt)}" class="qbank-inline-media" loading="lazy" decoding="async" />`;
+}
+
+function renderVideo(url: string): string {
+  return `<video controls preload="metadata" class="qbank-inline-media" style="max-width:100%"><source src="${url}"></video>`;
+}
+
 
 /** Rewrite media URLs in question HTML to point to the decrypting media route. */
-export function rewriteMedia(html: string): string {
+export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): string {
   if (!html) return html;
+  const deferredMedia: string[] = [];
   let out = html.replace(
     /(<(?:img|source|video|audio)\b[^>]*\bsrc=)(["'])([^"']+)\2/gi,
     (full, prefix, q, src) => {
@@ -51,21 +64,49 @@ export function rewriteMedia(html: string): string {
       const url = resolve(href);
       if (!url) return full;
       const label = stripTags(labelHtml);
-      const alt = escapeAttr(label || "Related image");
-      return `${labelHtml}<img src="${url}" alt="${alt}" class="qbank-inline-media" loading="lazy" decoding="async" />`;
+      const media = renderImage(url, label || "Related image");
+      if (options.deferMedia) {
+        deferredMedia.push(media);
+        return labelHtml;
+      }
+      return `${labelHtml}${media}`;
     },
   );
   // Convert bare <a href="...mp4"> to inline video players
   out = out.replace(
-    /<a\b[^>]*\bhref=["']([^"']+\.(?:mp4|webm|mov|m4v))["'][^>]*>.*?<\/a>/gi,
-    (full, href) => {
+    /<a\b[^>]*\bhref=["']([^"']+\.(?:mp4|webm|mov|m4v))["'][^>]*>(.*?)<\/a>/gis,
+    (full, href, labelHtml) => {
       const url = resolve(href);
-      return url
-        ? `<video controls preload="metadata" style="max-width:100%"><source src="${url}"></video>`
-        : full;
+      if (!url) return full;
+      const media = renderVideo(url);
+      if (options.deferMedia) {
+        deferredMedia.push(media);
+        return labelHtml;
+      }
+      return media;
     },
   );
+  if (options.deferMedia) {
+    out = out.replace(/<img\b[^>]*>/gi, (tag) => {
+      deferredMedia.push(tag);
+      return "";
+    });
+    out = out.replace(/<video\b[\s\S]*?<\/video>/gi, (tag) => {
+      deferredMedia.push(tag);
+      return "";
+    });
+    out = out.replace(/<audio\b[\s\S]*?<\/audio>/gi, (tag) => {
+      deferredMedia.push(tag);
+      return "";
+    });
+  }
   // Add lazy loading + async decoding hints to <img> tags for faster perceived load.
   out = out.replace(/<img\b(?![^>]*\bloading=)([^>]*)>/gi, '<img loading="lazy" decoding="async"$1>');
+  if (deferredMedia.length > 0) {
+    const mediaHtml = deferredMedia
+      .join("")
+      .replace(/<img\b(?![^>]*\bloading=)([^>]*)>/gi, '<img loading="lazy" decoding="async"$1>');
+    out = `${out}<div class="qbank-deferred-media">${mediaHtml}</div>`;
+  }
   return out;
 }
