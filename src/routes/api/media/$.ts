@@ -31,8 +31,14 @@ function candidateNames(name: string): string[] {
   const bases = [name, stripPrefix(name)];
   for (const b of bases) {
     set.add(b);
-    if (/^L\d/.test(b)) set.add("U" + b.slice(1));
-    else if (/^U\d/.test(b)) set.add("L" + b.slice(1));
+    // Case variants for the leading letter (l<->L, u<->U)
+    if (/^[a-z]/.test(b)) set.add(b[0].toUpperCase() + b.slice(1));
+    if (/^[A-Z]/.test(b)) set.add(b[0].toLowerCase() + b.slice(1));
+    if (/^[LlUu]\d/.test(b)) {
+      const rest = b.slice(1);
+      set.add("L" + rest); set.add("U" + rest);
+      set.add("l" + rest); set.add("u" + rest);
+    }
     // If no known CDN prefix, also try prefixed variants that live in the bucket
     const lower = b.toLowerCase();
     if (!HIGHRES_PREFIXES.some((p) => lower.startsWith(p))) {
@@ -41,6 +47,7 @@ function candidateNames(name: string): string[] {
   }
   return Array.from(set);
 }
+
 
 async function resolveObject(
   name: string,
