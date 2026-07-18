@@ -122,7 +122,7 @@ function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
-  const [viewing, setViewing] = useState<SearchResult | null>(null);
+  const [viewingIdx, setViewingIdx] = useState<number | null>(null);
   const pageSize = 20;
 
   const sorted = useMemo(() => {
