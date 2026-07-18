@@ -845,7 +845,7 @@ function TestRunner() {
                 >
                   {idx === total - 1 ? "Finish Review" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
                 </button>
-              ) : !tutorMode ? null : !submitted ? null : (
+              ) : createdExam ? null : !submitted ? null : (
                 <button
                   onClick={() => {
                     if (idx === total - 1) {
