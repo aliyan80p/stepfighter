@@ -267,9 +267,6 @@ function TestRunner() {
           <button onClick={eraseHighlight} className="p-1 hover:bg-white/10 rounded" title="Remove highlight">
             <Eraser className="h-4 w-4" />
           </button>
-          <button onClick={() => toast("AI note — coming soon")} className="p-1 hover:bg-white/10 rounded" title="AI">
-            <Sparkles className="h-4 w-4" />
-          </button>
           <button onClick={copySel} className="p-1 hover:bg-white/10 rounded" title="Copy">
             <Copy className="h-4 w-4" />
           </button>
