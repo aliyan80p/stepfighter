@@ -739,7 +739,13 @@ function TestRunner() {
                 </button>
               ) : (
                 <button
-                  onClick={() => idx === total - 1 ? finish() : goToQuestion(idx + 1)}
+                  onClick={() => {
+                    if (idx === total - 1) {
+                      if (window.confirm("End the test and submit your answers? This cannot be undone.")) finish();
+                    } else {
+                      goToQuestion(idx + 1);
+                    }
+                  }}
                   className="px-6 py-2 rounded text-white text-sm font-semibold"
                   style={{ background: NAV_BG }}
                 >
@@ -770,8 +776,8 @@ function TestRunner() {
               <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
               <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
               <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
-              <TopBtn icon={Clock} label="Suspend" onClick={() => nav({ to: "/tests" })} />
-              <TopBtn icon={ArrowLeft} label="End Block" onClick={finish} />
+              <TopBtn icon={Clock} label="Suspend" onClick={() => { if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" }); }} />
+              <TopBtn icon={ArrowLeft} label="End Block" onClick={() => { if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish(); }} />
             </div>
           </div>
         );
