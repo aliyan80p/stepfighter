@@ -126,7 +126,7 @@ function AuthedLayout() {
           <span className="font-semibold">QBank</span>
         </Link>
 
-        <QbankSwitcher />
+        
 
 
 
