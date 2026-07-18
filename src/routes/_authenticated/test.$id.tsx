@@ -459,21 +459,45 @@ function TestRunner() {
     setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
   };
 
-  const wrapRangeWithin = (root: HTMLElement, range: Range, styler: (m: HTMLElement) => void) => {
-    // Walk text nodes inside `root` that intersect `range` and wrap each intersecting slice.
+  const textOffsetIn = (root: HTMLElement, container: Node, offset: number) => {
+    try {
+      const before = document.createRange();
+      before.selectNodeContents(root);
+      before.setEnd(container, offset);
+      return before.toString().length;
+    } catch {
+      return null;
+    }
+  };
+
+  const wrapOffsetsWithin = (root: HTMLElement, start: number, end: number, styler: (m: HTMLElement) => void) => {
+    const from = Math.max(0, Math.min(start, end));
+    const to = Math.max(from, Math.max(start, end));
+    if (to <= from) return;
+
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const nodes: Text[] = [];
+    const slices: Array<{ node: Text; start: number; end: number }> = [];
+    let pos = 0;
     let n = walker.nextNode() as Text | null;
-    while (n) { nodes.push(n); n = walker.nextNode() as Text | null; }
-    for (const node of nodes) {
-      if (!node.textContent) continue;
-      if (!range.intersectsNode(node)) continue;
-      const startOffset = node === range.startContainer ? range.startOffset : 0;
-      const endOffset = node === range.endContainer ? range.endOffset : node.textContent.length;
-      if (endOffset <= startOffset) continue;
+
+    while (n) {
+      const len = n.textContent?.length ?? 0;
+      const next = pos + len;
+      const localStart = Math.max(0, from - pos);
+      const localEnd = Math.min(len, to - pos);
+      if (len > 0 && next > from && pos < to && localEnd > localStart) {
+        slices.push({ node: n, start: localStart, end: localEnd });
+      }
+      pos = next;
+      n = walker.nextNode() as Text | null;
+    }
+
+    // Apply from the end backward so splitting/wrapping one text node cannot
+    // shift the offsets of text nodes that are still waiting to be wrapped.
+    for (const sliceInfo of slices.reverse()) {
       const slice = document.createRange();
-      slice.setStart(node, startOffset);
-      slice.setEnd(node, endOffset);
+      slice.setStart(sliceInfo.node, sliceInfo.start);
+      slice.setEnd(sliceInfo.node, sliceInfo.end);
       const mark = document.createElement("mark");
       mark.className = "qbank-hl";
       mark.style.color = "inherit";
@@ -491,16 +515,35 @@ function TestRunner() {
     const container = contentRef.current;
     if (!startRoot || !endRoot || !container) return;
 
+    const plans: Array<{ root: HTMLElement; start: number; end: number }> = [];
     if (startRoot === endRoot) {
-      wrapRangeWithin(startRoot, range, styler);
+      const saved = savedSelectionRef.current;
+      const offsets = saved && saved.key === startRoot.dataset.hlkey
+        ? { start: saved.start, end: saved.end }
+        : getSelectionOffsets(startRoot, range);
+      plans.push({ root: startRoot, start: offsets.start, end: offsets.end });
     } else {
-      // Multi-root selection: apply to every hlkey block that intersects the range.
       const roots = Array.from(container.querySelectorAll<HTMLElement>("[data-hlkey]"));
-      for (const root of roots) {
-        if (!range.intersectsNode(root)) continue;
-        wrapRangeWithin(root, range, styler);
+      const startIndex = roots.indexOf(startRoot);
+      const endIndex = roots.indexOf(endRoot);
+      if (startIndex === -1 || endIndex === -1) return;
+      const first = Math.min(startIndex, endIndex);
+      const last = Math.max(startIndex, endIndex);
+      const startOffset = textOffsetIn(startRoot, range.startContainer, range.startOffset);
+      const endOffset = textOffsetIn(endRoot, range.endContainer, range.endOffset);
+      if (startOffset == null || endOffset == null) return;
+
+      for (let i = first; i <= last; i += 1) {
+        const root = roots[i];
+        const length = root.textContent?.length ?? 0;
+        if (i === startIndex && i === endIndex) plans.push({ root, start: startOffset, end: endOffset });
+        else if (i === startIndex) plans.push({ root, start: startOffset, end: length });
+        else if (i === endIndex) plans.push({ root, start: 0, end: endOffset });
+        else plans.push({ root, start: 0, end: length });
       }
     }
+
+    for (const plan of plans.reverse()) wrapOffsetsWithin(plan.root, plan.start, plan.end, styler);
     window.getSelection()?.removeAllRanges();
     savedRangeRef.current = null;
     savedSelectionRef.current = null;
