@@ -341,6 +341,7 @@ function TestRunner() {
       {/* Main */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left navigator */}
+        {sidebarOpen && (
         <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
