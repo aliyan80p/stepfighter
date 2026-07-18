@@ -302,7 +302,7 @@ function TestRunner() {
   if (data.test.done) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
-  const showAnswers = submitted && isPractice && tutorMode;
+  const showAnswers = isReview || (submitted && isPractice && tutorMode);
   const isBookmarked = data.bookmarkedIds.has(question.id);
   const isCorrect = submitted && selected === correctIdx;
   const correctLetter = correctIdx != null ? String.fromCharCode(65 + correctIdx) : "";
