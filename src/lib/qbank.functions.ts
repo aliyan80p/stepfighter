@@ -484,3 +484,98 @@ export const searchQuestions = createServerFn({ method: "POST" })
     }));
     return { results, total: results.length, truncated };
   });
+
+// ==================== Self Assessments ====================
+const BLOCK_SIZE = 20;
+
+export const listAssessmentBlocks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb(), source: z.string().min(1) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const rows = await fetchAllQuestionRows(supabase, "id", { qbankId: data.qbankId, sources: [data.source] });
+    const ids = rows.map((r) => r.id as number).sort((a, b) => a - b);
+    const blocks: { blockIndex: number; questionIds: number[] }[] = [];
+    for (let i = 0; i < ids.length; i += BLOCK_SIZE) {
+      blocks.push({ blockIndex: blocks.length + 1, questionIds: ids.slice(i, i + BLOCK_SIZE) });
+    }
+    const namePrefix = `${data.source} Block #`;
+    const { data: tests } = await supabase
+      .from("tests")
+      .select("id,name,done,right_count,wrong_count,current_index,created_at,question_ids")
+      .eq("user_id", userId)
+      .eq("qbank_id", data.qbankId)
+      .like("name", `${namePrefix}%`)
+      .order("created_at", { ascending: false });
+    const byBlock = new Map<number, any>();
+    for (const t of tests ?? []) {
+      const m = (t.name ?? "").match(/#(\d+)$/);
+      if (!m) continue;
+      const b = parseInt(m[1], 10);
+      if (!byBlock.has(b)) byBlock.set(b, t);
+    }
+    return blocks.map((b) => ({
+      ...b,
+      test: byBlock.get(b.blockIndex)
+        ? {
+            id: byBlock.get(b.blockIndex).id as number,
+            done: !!byBlock.get(b.blockIndex).done,
+            right: byBlock.get(b.blockIndex).right_count as number,
+            wrong: byBlock.get(b.blockIndex).wrong_count as number,
+            createdAt: byBlock.get(b.blockIndex).created_at as string,
+          }
+        : null,
+    }));
+  });
+
+export const startAssessmentBlock = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb(), source: z.string().min(1), blockIndex: z.number().int().positive() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const name = `${data.source} Block #${data.blockIndex}`;
+    const { data: existing } = await supabase
+      .from("tests")
+      .select("id,done")
+      .eq("user_id", userId)
+      .eq("qbank_id", data.qbankId)
+      .eq("name", name)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existing && !existing.done) return { id: existing.id as number };
+    if (existing && existing.done) return { id: existing.id as number, review: true };
+
+    const rows = await fetchAllQuestionRows(supabase, "id", { qbankId: data.qbankId, sources: [data.source] });
+    const ids = rows.map((r) => r.id as number).sort((a, b) => a - b);
+    const start = (data.blockIndex - 1) * BLOCK_SIZE;
+    const slice = ids.slice(start, start + BLOCK_SIZE);
+    if (!slice.length) throw new Error("Block is empty");
+    const { data: inserted, error } = await supabase
+      .from("tests")
+      .insert({ user_id: userId, qbank_id: data.qbankId, question_ids: slice, mode: "test", name })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { id: inserted.id as number };
+  });
+
+export const resetAssessment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb(), source: z.string().min(1) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const namePrefix = `${data.source} Block #`;
+    const { data: tests } = await supabase
+      .from("tests").select("id,question_ids")
+      .eq("user_id", userId).eq("qbank_id", data.qbankId).like("name", `${namePrefix}%`);
+    const testIds = (tests ?? []).map((t: any) => t.id);
+    const qIds = Array.from(new Set((tests ?? []).flatMap((t: any) => t.question_ids ?? []))) as number[];
+    if (qIds.length) {
+      await supabase.from("attempts").delete().eq("user_id", userId).eq("qbank_id", data.qbankId).in("question_id", qIds);
+    }
+    if (testIds.length) {
+      await supabase.from("tests").delete().in("id", testIds);
+    }
+    return { ok: true, deleted: testIds.length };
+  });
