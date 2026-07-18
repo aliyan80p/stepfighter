@@ -1,20 +1,43 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.functions";
 import { rewriteMedia } from "@/lib/media";
-import { Button } from "@/components/ui/button";
-import { Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import {
+  Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
+  Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
+  ArrowLeft, Clock, CheckCircle2, FileText,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
 });
 
+// USMLE-Fighter palette
+const NAV_BG = "#1e3a8a";       // deep blue top/bottom bars
+const NAV_ACCENT = "#2a4ba0";
+const PAGE_BG = "#ffffff";
+const SIDE_BG = "#eef2f9";
+const TEXT = "#1f2937";
+
+function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center justify-center px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px]"
+    >
+      <Icon className="h-5 w-5" />
+      <span className="text-[11px] mt-0.5">{label}</span>
+    </button>
+  );
+}
+
 function TestRunner() {
   const { id } = Route.useParams();
   const testId = Number(id);
+  const nav = useNavigate();
   const getFn = useServerFn(getTest);
   const subFn = useServerFn(submitAnswer);
   const bmFn = useServerFn(toggleBookmark);
@@ -30,6 +53,9 @@ function TestRunner() {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [startedAt, setStartedAt] = useState(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+  const [showCalc, setShowCalc] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const question = data?.questions[idx];
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
@@ -41,7 +67,14 @@ function TestRunner() {
     setSelected(priorAttempt?.selected_answer ?? null);
     setSubmitted(!!priorAttempt);
     setStartedAt(Date.now());
-  }, [idx, question?.id, priorAttempt?.selected_answer]);
+    setElapsed(priorAttempt?.time_seconds ?? 0);
+  }, [idx, question?.id, priorAttempt?.selected_answer, priorAttempt?.time_seconds]);
+
+  useEffect(() => {
+    if (submitted) return;
+    const t = setInterval(() => setElapsed(Math.round((Date.now() - startedAt) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [submitted, startedAt]);
 
   const submit = async () => {
     if (selected == null || !question) return;
@@ -64,134 +97,252 @@ function TestRunner() {
   const finish = async () => {
     await finFn({ data: { testId } });
     qc.invalidateQueries({ queryKey: ["test", testId] });
-    toast.success("Test finished");
+    nav({ to: "/test-results/$id", params: { id } });
   };
 
-  const correctIdx = question?.correct_answer;
-  const showAnswers = submitted && isPractice;
-  const isBookmarked = question ? data!.bookmarkedIds.has(question.id) : false;
+  const goFullscreen = () => {
+    if (!document.fullscreenElement) rootRef.current?.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  };
 
   if (isLoading || !data || !question) return <div className="p-8">Loading…</div>;
-
   if (data.test.done) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
+  const correctIdx = question.correct_answer;
+  const showAnswers = submitted && isPractice;
+  const isBookmarked = data.bookmarkedIds.has(question.id);
+  const isCorrect = submitted && selected === correctIdx;
+  const correctLetter = correctIdx != null ? String.fromCharCode(65 + correctIdx) : "";
+  const correctText = correctIdx != null ? answers[correctIdx]?.answer_text ?? "" : "";
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  const timeLabel = `${mins}min: ${secs}sec`;
+
+  // stub peer % (would come from analytics)
+  const peerPct = 73;
+
+  const notImpl = (n: string) => () => toast(`${n} — coming soon`);
+
   return (
-    <div className="flex h-screen">
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="border-b border-border p-4 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3 text-sm flex-wrap">
-            <span className="font-semibold">Question {idx + 1} <span className="text-muted-foreground font-normal">of {total}</span></span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono">ID {question.id}</span>
-            {question.subject_id != null && data.subjectMap[question.subject_id] && (
-              <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{data.subjectMap[question.subject_id]}</span>
-            )}
-            {question.system_id != null && data.systemMap[question.system_id] && (
-              <span className="text-xs px-2 py-0.5 rounded bg-accent text-accent-foreground">{data.systemMap[question.system_id]}</span>
-            )}
+    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: PAGE_BG, color: TEXT }}>
+      {/* Top nav */}
+      <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
+        <div className="flex items-center gap-4">
+          <button className="p-1 hover:bg-white/10 rounded" onClick={notImpl("Menu")}>
+            <span className="block w-5 h-0.5 bg-white mb-1" />
+            <span className="block w-5 h-0.5 bg-white mb-1" />
+            <span className="block w-5 h-0.5 bg-white" />
+          </button>
+          <div className="text-sm leading-tight">
+            <div className="font-semibold">Item {idx + 1} of {total}</div>
+            <div className="text-[11px] text-white/75">Question Id: {question.id}</div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={bookmark}>
-              {isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
-            </Button>
-            <Button size="sm" variant="outline" onClick={finish}>End Test</Button>
-          </div>
+          <button
+            onClick={bookmark}
+            className={`flex flex-col items-center px-2 py-1 rounded hover:bg-white/10 ${isBookmarked ? "text-yellow-300" : "text-white/90"}`}
+          >
+            <Flag className="h-5 w-5" fill={isBookmarked ? "currentColor" : "none"} />
+            <span className="text-[11px]">Mark</span>
+          </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-8">
-          <div className="max-w-3xl mx-auto">
-            {question.title && <div className="text-xs uppercase text-muted-foreground mb-2">{question.title}</div>}
-            <div className="prose prose-invert max-w-none qbank-html" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
+        <div className="flex items-center gap-2">
+          <TopBtn icon={ChevronLeft} label="Previous" onClick={() => setIdx(Math.max(0, idx - 1))} />
+          <TopBtn icon={ChevronRight} label="Next" onClick={() => setIdx(Math.min(total - 1, idx + 1))} />
+        </div>
 
+        <div className="flex items-center gap-1">
+          <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
+          <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
+          <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
+          <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />
+          <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+          <TopBtn icon={Settings} label="Settings" onClick={notImpl("Settings")} />
+        </div>
+      </div>
+
+      {/* Main */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left navigator */}
+        <aside className="w-14 overflow-auto border-r" style={{ background: SIDE_BG, borderColor: "#d1d9e6" }}>
+          {data.questions.map((q, i) => {
+            const att = data.attemptsByQ[q.id];
+            const status = att ? (att.is_correct ? "correct" : "wrong") : "none";
+            const active = i === idx;
+            return (
+              <button
+                key={q.id}
+                onClick={() => setIdx(i)}
+                className={`w-full flex items-center gap-1 px-2 py-1 text-xs border-b hover:bg-white/60 ${active ? "bg-white font-semibold" : ""}`}
+                style={{ borderColor: "#d1d9e6", color: TEXT }}
+              >
+                {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
+                {status === "wrong" && <span className="text-red-600 font-bold">✕</span>}
+                {status === "none" && <span className="w-3.5" />}
+                <span>{i + 1}</span>
+                {data.bookmarkedIds.has(q.id) && <Flag className="h-3 w-3 ml-auto text-red-500" fill="currentColor" />}
+              </button>
+            );
+          })}
+        </aside>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-4xl mx-auto px-8 py-6">
+            {/* Answered banner */}
+            {submitted && (
+              <div className={`rounded-md border-l-4 p-4 mb-6 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
+                <div>
+                  <div className={`font-semibold ${isCorrect ? "text-green-700" : "text-red-700"}`}>
+                    {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
+                  <div className="font-semibold text-gray-800 mt-1" dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }} />
+                </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-blue-700" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">{timeLabel}</div>
+                      <div className="text-[11px] text-gray-500">Time Taken</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle2 className="h-4 w-4 text-green-700" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">{peerPct}%</div>
+                      <div className="text-[11px] text-gray-500">Answered Correctly</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {question.title && <div className="text-xs uppercase text-gray-500 mb-2">{question.title}</div>}
+            <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
             <div className="mt-6 space-y-2">
               {answers.map((a, i) => {
-                const isCorrect = showAnswers && i === correctIdx;
-                const isWrong = showAnswers && selected === i && i !== correctIdx;
+                const letter = String.fromCharCode(65 + i);
+                const isThisCorrect = showAnswers && i === correctIdx;
+                const isThisWrong = showAnswers && selected === i && i !== correctIdx;
+                const pct = a.percentage ?? null;
                 return (
                   <button
                     key={a.id}
                     disabled={submitted}
                     onClick={() => setSelected(i)}
-                    className={`w-full text-left rounded-lg border p-4 transition-colors flex items-start gap-3 ${
-                      isCorrect ? "border-green-500 bg-green-500/10" :
-                      isWrong ? "border-red-500 bg-red-500/10" :
-                      selected === i ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
+                    className={`w-full text-left rounded border px-3 py-2 flex items-start gap-3 transition-colors ${
+                      isThisCorrect ? "border-green-500 bg-green-50" :
+                      isThisWrong ? "border-red-500 bg-red-50" :
+                      selected === i ? "border-blue-600 bg-blue-50" : "border-gray-300 hover:bg-gray-50"
                     }`}
                   >
-                    <div className={`h-6 w-6 shrink-0 rounded-full border flex items-center justify-center text-xs font-semibold ${
-                      isCorrect ? "bg-green-500 border-green-500 text-white" :
-                      isWrong ? "bg-red-500 border-red-500 text-white" :
-                      selected === i ? "border-primary text-primary" : "border-border"
-                    }`}>
-                      {isCorrect ? <Check className="h-3.5 w-3.5" /> : isWrong ? <X className="h-3.5 w-3.5" /> : String.fromCharCode(65 + i)}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {isThisCorrect && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+                      {isThisWrong && <span className="text-red-600 font-bold">✕</span>}
+                      <div className={`h-4 w-4 rounded-full border ${selected === i ? "border-blue-600 bg-blue-600" : "border-gray-400"}`} />
                     </div>
-                    <div className="flex-1 qbank-html" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
+                    <div className="flex-1 flex items-baseline gap-2">
+                      <span className="font-medium">{letter}.</span>
+                      <span className="flex-1 qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
+                      {submitted && pct != null && <span className="text-xs text-gray-500">({pct}%)</span>}
+                    </div>
                   </button>
                 );
               })}
             </div>
 
             {showAnswers && question.explanation && (
-              <div className="mt-8 rounded-lg border border-border p-5 bg-card">
-                <h3 className="font-semibold mb-3">Explanation</h3>
-                <div className="qbank-html prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }} />
+              <div className="mt-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-t-md border border-b-0 border-gray-300 bg-white font-medium">
+                  <FileText className="h-4 w-4 text-blue-700" /> Explanation
+                </div>
+                <div className="border border-gray-300 rounded-b-md rounded-tr-md p-5 bg-white">
+                  <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }} />
+                </div>
               </div>
             )}
-          </div>
-        </div>
 
-        <div className="border-t border-border p-4 flex items-center justify-between">
-          <Button variant="outline" onClick={() => setIdx(Math.max(0, idx - 1))} disabled={idx === 0}>
-            <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-          </Button>
-          {!submitted ? (
-            <Button onClick={submit} disabled={selected == null}>Submit</Button>
-          ) : (
-            <Button onClick={() => setIdx(Math.min(total - 1, idx + 1))} disabled={idx === total - 1}>
-              Next <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          )}
+            <div className="mt-6 flex justify-between items-center">
+              <button
+                onClick={() => setIdx(Math.max(0, idx - 1))}
+                disabled={idx === 0}
+                className="px-4 py-2 rounded border border-gray-300 text-sm disabled:opacity-40 hover:bg-gray-50"
+              >
+                <ChevronLeft className="h-4 w-4 inline -mt-0.5" /> Previous
+              </button>
+              {!submitted ? (
+                <button
+                  onClick={submit}
+                  disabled={selected == null}
+                  className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40"
+                  style={{ background: NAV_BG }}
+                >
+                  Submit
+                </button>
+              ) : (
+                <button
+                  onClick={() => idx === total - 1 ? finish() : setIdx(idx + 1)}
+                  className="px-6 py-2 rounded text-white text-sm font-semibold"
+                  style={{ background: NAV_BG }}
+                >
+                  {idx === total - 1 ? "End Test" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <aside className="w-56 border-l border-border p-4 overflow-auto">
-        <div className="text-xs uppercase text-muted-foreground mb-2">Questions</div>
-        <div className="grid grid-cols-5 gap-1.5">
-          {data.questions.map((q, i) => {
-            const att = data.attemptsByQ[q.id];
-            const cls = att ? (att.is_correct ? "bg-green-500/20 border-green-500 text-green-500" : "bg-red-500/20 border-red-500 text-red-500")
-              : i === idx ? "bg-primary text-primary-foreground border-primary" : "border-border";
-            return (
-              <button key={q.id} onClick={() => setIdx(i)} className={`h-8 rounded border text-xs font-medium ${cls}`}>
-                {i + 1}
-              </button>
-            );
-          })}
+      {/* Bottom nav */}
+      <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+        <div className="font-semibold tracking-wide">IMD QBank</div>
+        <div className="flex items-center gap-1">
+          <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
+          <TopBtn icon={BookOpen} label="NBME Library" onClick={notImpl("NBME Library")} />
+          <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
+          <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
+          <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/tests" })} />
         </div>
-        <div className="mt-4 text-xs text-muted-foreground space-y-1">
-          <div>Right: {data.test.right_count}</div>
-          <div>Wrong: {data.test.wrong_count}</div>
-        </div>
-      </aside>
+      </div>
+
+      {showCalc && <MiniCalculator onClose={() => setShowCalc(false)} />}
     </div>
   );
 }
 
-function ResultsView({ data }: { data: any; onReview: () => void }) {
-  const total = data.questions.length;
-  const right = data.test.right_count;
-  const pct = total ? Math.round((right / total) * 100) : 0;
+function MiniCalculator({ onClose }: { onClose: () => void }) {
+  const [expr, setExpr] = useState("");
+  const push = (t: string) => setExpr(e => e + t);
+  const evalIt = () => {
+    try {
+      // eslint-disable-next-line no-new-func
+      setExpr(String(Function(`"use strict";return (${expr.replace(/x/g, "*").replace(/÷/g, "/")})`)()));
+    } catch { setExpr("Error"); }
+  };
+  const keys = [["C","⌫","(",")"],["7","8","9","÷"],["4","5","6","x"],["1","2","3","-"],["0",".","=","+"]];
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold">Test Complete</h1>
-      <div className="mt-6 rounded-lg border border-border p-8 text-center">
-        <div className="text-6xl font-bold text-primary">{pct}%</div>
-        <div className="text-muted-foreground mt-2">{right} of {total} correct</div>
+    <div className="fixed top-24 right-8 bg-white border border-gray-300 rounded-md shadow-xl z-50 w-64 text-gray-800">
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-gray-50">
+        <span className="font-semibold text-sm">Calculator</span>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-800">✕</button>
       </div>
-      <div className="mt-6 flex gap-3">
-        <Button asChild><Link to="/tests">Back to tests</Link></Button>
-        <Button variant="outline" asChild><Link to="/new-test">New test</Link></Button>
+      <div className="p-3">
+        <input value={expr} readOnly className="w-full border border-gray-300 rounded px-2 py-2 text-right text-sm mb-2 bg-gray-50" />
+        <div className="grid grid-cols-4 gap-1">
+          {keys.flat().map(k => (
+            <button
+              key={k}
+              onClick={() => k === "C" ? setExpr("") : k === "⌫" ? setExpr(expr.slice(0, -1)) : k === "=" ? evalIt() : push(k)}
+              className="h-9 rounded bg-blue-50 hover:bg-blue-100 text-sm font-medium"
+            >{k}</button>
+          ))}
+        </div>
       </div>
     </div>
   );
