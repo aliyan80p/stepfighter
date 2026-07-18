@@ -864,49 +864,61 @@ function TestRunner() {
         const bs = String(blockSec % 60).padStart(2, "0");
 
         const examUI = !tutorMode && !isReview;
+        if (examUI) {
+          return (
+            <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+              <div className="font-semibold tracking-wide tabular-nums">
+                {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
+              </div>
+              <button
+                type="button"
+                onClick={() => setBreakModal("suspend")}
+                title="Unauthorized Break"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500 text-[11px] text-black shadow hover:brightness-110 transition"
+              >
+                🔒
+              </button>
+              <button
+                type="button"
+                onClick={() => setBreakModal("end")}
+                className="inline-flex items-center gap-2 rounded-sm bg-red-600 hover:bg-red-700 px-3 py-1 text-white text-xs font-semibold shadow"
+              >
+                <span className="h-2 w-2 rounded-full bg-white/90 shadow-[0_0_6px_rgba(255,255,255,0.9)]" />
+                End Block
+              </button>
+            </div>
+          );
+        }
         return (
           <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
-              {isReview ? "" : examUI ? `Block Time Remaining:  ${bh}:${bm}:${bs}` : `Block Time: ${bh}:${bm}:${bs}`}
+              {isReview ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
             <div className="font-semibold tracking-wide hidden md:flex items-center gap-3">
-              <span>{examUI ? "USMLE Fighter" : "IMD QBank"}</span>
-              {examUI && (
-                <span title="Exam locked" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500/90 text-[10px] text-black">🔒</span>
-              )}
+              <span>IMD QBank</span>
             </div>
             <div className="flex items-center gap-3">
-              {!isReview && !examUI && (
+              {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
                   <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
                   <div className="w-px h-6 bg-white/20 mx-1" />
                 </>
               )}
-              {!examUI && <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />}
-              {!examUI && <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />}
-              {!examUI && <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />}
+              <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
+              <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
+              <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
               {isReview ? (
                 <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
                   <TopBtn icon={Clock} label="Suspend" onClick={() => {
-                    if (examUI) setBreakModal("suspend");
-                    else if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" });
+                    if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" });
                   }} />
                   <TopBtn icon={ArrowLeft} label="End Block" onClick={() => {
-                    if (examUI) setBreakModal("end");
-                    else if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish();
+                    if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish();
                   }} />
                 </>
-              )}
-              {examUI && (
-                <button
-                  type="button"
-                  onClick={() => setBreakModal("end")}
-                  title="End Block"
-                  className="inline-block h-3 w-3 rounded-full bg-red-500 ml-1 shadow-[0_0_6px_rgba(239,68,68,0.9)] cursor-pointer hover:scale-110 transition-transform"
-                />
               )}
             </div>
           </div>
