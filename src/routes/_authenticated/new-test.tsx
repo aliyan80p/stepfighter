@@ -144,10 +144,11 @@ function NewTest() {
 
   // pool count
   const { data: pool } = useQuery({
-    queryKey: ["pool", qbankId, subjectIds, systemIds, topicNames, scope],
-    queryFn: () => poolFn({ data: { qbankId, subjectIds, systemIds, topicNames, scope } }),
+    queryKey: ["pool", qbankId, selectedSources, subjectIds, systemIds, topicNames, scope],
+    queryFn: () => poolFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope } }),
     enabled: !!data,
   });
+
 
   const poolCount = pool?.count ?? 0;
 
