@@ -132,7 +132,7 @@ export const createCustomTest = createServerFn({ method: "POST" })
     const ordered = uniq.filter((id) => validIds.includes(id));
     const { data: inserted, error: e2 } = await supabase
       .from("tests")
-      .insert({ user_id: userId, question_ids: ordered, mode: data.mode })
+      .insert({ user_id: userId, question_ids: ordered, mode: data.mode, qbank_id: 1 })
       .select("id")
       .single();
     if (e2) throw e2;
