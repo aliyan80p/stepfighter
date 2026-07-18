@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
-import { useActiveQbankId } from "@/lib/active-qbank";
+import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 
@@ -32,12 +32,12 @@ type SearchResult = {
 
 function SearchPage() {
   const searchFn = useServerFn(searchQuestions);
-  const qbankId = useActiveQbankId();
+  const activeQbankId = useActiveQbankId();
+  const [selectedQbankId, setSelectedQbankId] = useState<number>(activeQbankId);
   const [query, setQuery] = useState("");
-  const [course, setCourse] = useState("USMLE Step 2 CK");
 
   const mutation = useMutation({
-    mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
+    mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId: selectedQbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
   });
 
 
@@ -82,11 +82,13 @@ function SearchPage() {
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Course</label>
             <select
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
+              value={selectedQbankId}
+              onChange={(e) => setSelectedQbankId(Number(e.target.value))}
               className="w-full mt-1 py-2.5 px-3 border rounded-md bg-white"
             >
-              <option>USMLE Step 2 CK</option>
+              {QBANKS.map((qb) => (
+                <option key={qb.id} value={qb.id}>{qb.name}</option>
+              ))}
             </select>
           </div>
           <button
@@ -116,14 +118,14 @@ function SearchPage() {
         <div className="text-center py-12 text-slate-500">No questions found.</div>
       )}
 
-      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} />}
+      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} qbankId={selectedQbankId} />}
     </div>
   );
 }
 
 type SortKey = "id" | "subject" | "system" | "topic";
 
-function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void }) {
+function ResultsTable({ results, truncated, onCopyIds, qbankId }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void; qbankId: number }) {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
@@ -255,6 +257,7 @@ function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult
           index={viewingIdx}
           setIndex={setViewingIdx}
           onClose={() => setViewingIdx(null)}
+          qbankId={qbankId}
         />
       )}
     </>
@@ -288,12 +291,13 @@ function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onCl
 }
 
 function QuestionModal({
-  items, index, setIndex, onClose,
+  items, index, setIndex, onClose, qbankId,
 }: {
   items: SearchResult[];
   index: number;
   setIndex: (i: number) => void;
   onClose: () => void;
+  qbankId: number;
 }) {
   const r = items[index];
   const total = items.length;
@@ -339,7 +343,7 @@ function QuestionModal({
   };
 
   const bookmarkFn = useServerFn(toggleBookmark);
-  const modalQbankId = useActiveQbankId();
+  const modalQbankId = qbankId;
   const toggleMark = async () => {
     const prev = !!marked[r.id];
     setMarked((m) => ({ ...m, [r.id]: !prev }));
