@@ -658,7 +658,7 @@ function TestRunner() {
 
 
             
-            <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: htmlFor("q", question.question) }} />
+            <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: htmlFor("q", question.question, true) }} />
 
             {mediaItems.length > 0 && (
               <div className="mt-3 flex flex-wrap items-start gap-3">
