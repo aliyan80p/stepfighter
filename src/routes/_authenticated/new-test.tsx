@@ -177,19 +177,12 @@ function NewTest() {
   const hasSubject = subjectIds.length > 0;
   const hasSystem = systemIds.length > 0;
 
-  // CMS forms are single-specialty: restrict Subjects to that specialty and hide Systems/Topics
-  const cmsSpecialtyNames = useMemo(() => {
-    if (!qbankIds.length) return null;
-    const names = new Set<string>();
-    for (const id of qbankIds) {
-      const opt = QBANK_OPTIONS.find((o) => o.id === id);
-      if (!opt || !opt.source.startsWith("CMS_")) return null; // any non-CMS -> not CMS mode
-      const entry = STEP2_CMS.find((c) => opt.source.startsWith(`CMS_${c.tag}`));
-      if (entry) names.add(CMS_SPECIALTY_TO_SUBJECT[entry.specialty] ?? entry.specialty);
-    }
-    return names;
-  }, [qbankIds]);
-  const cmsMode = !!cmsSpecialtyNames;
+  // CMS aggregates surface forms in the Subjects tab and hide Systems/Topics
+  const cmsSelectedOptions = useMemo(
+    () => selectedQbankOptions.filter((o) => o.cmsForms && o.cmsSpecialty),
+    [selectedQbankOptions],
+  );
+  const cmsMode = cmsSelectedOptions.length > 0 && cmsSelectedOptions.length === selectedQbankOptions.length;
 
   const availableTabs: Record<Tab, boolean> = {
     courses: true,
@@ -202,14 +195,25 @@ function NewTest() {
   const questionMeta = data?.questionMeta ?? [];
   const totalStep2 = data?.totalQuestions ?? questionMeta.length;
 
-  // If user switches to a CMS-only selection while on systems/topics tab, bounce them
+  // Bounce off hidden tabs & clear irrelevant selections when entering CMS mode
   useEffect(() => {
     if (cmsMode && (openTab === "systems" || openTab === "topics")) setOpenTab("subjects");
     if (cmsMode) {
       if (systemIds.length) setSystemIds([]);
       if (topicNames.length) setTopicNames([]);
+      if (subjectIds.length) setSubjectIds([]);
+    } else {
+      if (cmsFormSources.length) setCmsFormSources([]);
     }
   }, [cmsMode]);
+
+  // Prune cmsFormSources when the underlying CMS selection changes
+  useEffect(() => {
+    if (!cmsMode) return;
+    const valid = new Set(cmsSelectedOptions.flatMap((o) => o.cmsForms!.map((f) => f.source)));
+    setCmsFormSources((v) => v.filter((s) => valid.has(s)));
+  }, [cmsMode, cmsSelectedOptions]);
+
 
   const filteredSystems = useMemo(() => {
     if (!data) return [];
