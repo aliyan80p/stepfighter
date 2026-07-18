@@ -34,6 +34,7 @@ function TestResults() {
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
+  const [showQList, setShowQList] = useState(false);
 
   const rows = useMemo(() => {
     if (!data) return [];
