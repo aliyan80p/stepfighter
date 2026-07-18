@@ -2,16 +2,23 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listTests, deleteTest, suspendTest } from "@/lib/qbank.functions";
+import { listTests, deleteTest, suspendTest, renameTest } from "@/lib/qbank.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  FileText, BarChart3, Trash2, Pause, Pencil, ArrowUpDown, Search, Filter, ListOrdered,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
+import logo from "@/assets/imd-qbank-logo.png";
 
 export const Route = createFileRoute("/_authenticated/tests")({
   component: TestsList,
