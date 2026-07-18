@@ -296,13 +296,49 @@ export const finishTest = createServerFn({ method: "POST" })
 export const listTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
+    const { data: tests } = await context.supabase
       .from("tests")
       .select("id,mode,question_ids,right_count,wrong_count,done,created_at")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
-      .limit(100);
-    return (data ?? []).map((t) => ({ ...t, total: (t.question_ids as number[]).length }));
+      .limit(500);
+    const allQIds = Array.from(new Set((tests ?? []).flatMap((t) => t.question_ids as number[])));
+    const [qsRes, subjRes] = await Promise.all([
+      allQIds.length
+        ? context.supabase.from("questions").select("id,subject_id").in("id", allQIds)
+        : Promise.resolve({ data: [] as { id: number; subject_id: number | null }[] }),
+      context.supabase.from("subjects").select("id,name"),
+    ]);
+    const subjMap = new Map<number, string>(((subjRes.data ?? []) as { id: number; name: string }[]).map((s) => [s.id, s.name]));
+    const qSubj = new Map<number, number | null>(((qsRes.data ?? []) as { id: number; subject_id: number | null }[]).map((q) => [q.id, q.subject_id]));
+    return (tests ?? []).map((t) => {
+      const ids = t.question_ids as number[];
+      const subjIds = new Set<number>();
+      for (const id of ids) {
+        const s = qSubj.get(id);
+        if (s != null) subjIds.add(s);
+      }
+      const subjectNames = Array.from(subjIds).map((id) => subjMap.get(id) ?? "").filter(Boolean);
+      return { ...t, total: ids.length, subjectNames };
+    });
+  });
+
+export const deleteTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ testId: z.number() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await supabase.from("attempts").delete().eq("user_id", userId).eq("test_id", data.testId);
+    await supabase.from("tests").delete().eq("user_id", userId).eq("id", data.testId);
+    return { ok: true };
+  });
+
+export const suspendTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ testId: z.number() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await context.supabase.from("tests").update({ done: false }).eq("id", data.testId).eq("user_id", context.userId);
+    return { ok: true };
   });
 
 export const listBookmarks = createServerFn({ method: "GET" })
