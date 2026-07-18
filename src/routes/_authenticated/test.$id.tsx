@@ -81,6 +81,8 @@ function TestRunner() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [timedMode, setTimedMode] = useState(true);
   const [tutorMode, setTutorMode] = useState(true);
+  const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
+  const [exhibitZoom, setExhibitZoom] = useState(1);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
