@@ -23,6 +23,8 @@ const QBANKS = [{ id: "step2", name: "USMLE World Step 2 CK" }];
 function NewTest() {
   const getFn = useServerFn(getFilters);
   const createFn = useServerFn(createTest);
+  const createCustomFn = useServerFn(createCustomTest);
+  const getTestIdsFn = useServerFn(getTestQuestionIds);
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
   const { data } = useQuery({ queryKey: ["filters", "all-questions-v2"], queryFn: () => getFn() });
