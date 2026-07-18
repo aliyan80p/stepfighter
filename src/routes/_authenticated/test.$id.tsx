@@ -616,7 +616,7 @@ function TestRunner() {
         <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
-            const hideResult = !isReview && !tutorMode;
+            const hideResult = !isReview && createdExam;
             const status = att
               ? (hideResult ? "attempted" : att.is_correct ? "correct" : "wrong")
               : "none";
@@ -743,8 +743,8 @@ function TestRunner() {
 
             {/* Primary action button — directly below answer choices */}
             {!isReview && (
-              <div className={`mt-4 ${!tutorMode ? "flex justify-center max-w-[520px]" : ""}`}>
-                {!tutorMode ? (
+              <div className={`mt-4 ${createdExam ? "flex justify-center max-w-[520px]" : ""}`}>
+                {createdExam ? (
                   <button
                     onClick={proceedExam}
                     className="px-4 py-1.5 rounded-sm text-white text-[12px] font-semibold disabled:opacity-40"
@@ -764,6 +764,7 @@ function TestRunner() {
                 ) : null}
               </div>
             )}
+
 
 
 
@@ -844,7 +845,7 @@ function TestRunner() {
                 >
                   {idx === total - 1 ? "Finish Review" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
                 </button>
-              ) : !tutorMode ? null : !submitted ? null : (
+              ) : createdExam ? null : !submitted ? null : (
                 <button
                   onClick={() => {
                     if (idx === total - 1) {
