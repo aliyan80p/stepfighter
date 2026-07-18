@@ -709,6 +709,33 @@ function TestRunner() {
               })}
             </div>
 
+            {/* Primary action button — directly below answer choices */}
+            {!isReview && (
+              <div className="mt-4">
+                {!tutorMode ? (
+                  <button
+                    onClick={proceedExam}
+                    disabled={selected == null && !submitted}
+                    className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40 uppercase tracking-wide"
+                    style={{ background: NAV_BG }}
+                  >
+                    {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
+                  </button>
+                ) : !submitted ? (
+                  <button
+                    onClick={submit}
+                    disabled={selected == null}
+                    className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40 uppercase tracking-wide"
+                    style={{ background: NAV_BG }}
+                  >
+                    Submit
+                  </button>
+                ) : null}
+              </div>
+            )}
+
+
+
             {/* Answered banner — placed just above the explanation */}
             {submitted && showAnswers && (
               <div className={`mt-4 rounded-md border-l-4 p-3 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
