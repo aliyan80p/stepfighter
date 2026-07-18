@@ -278,11 +278,12 @@ function TestRunner() {
   if (data.test.done) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
-  const showAnswers = submitted && isPractice;
+  const showAnswers = submitted && isPractice && tutorMode;
   const isBookmarked = data.bookmarkedIds.has(question.id);
   const isCorrect = submitted && selected === correctIdx;
   const correctLetter = correctIdx != null ? String.fromCharCode(65 + correctIdx) : "";
   const correctText = correctIdx != null ? answers[correctIdx]?.answer_text ?? "" : "";
+
   const embeddedMediaKeys = new Set<string>();
   getEmbeddedMediaKeys(question.question).forEach((key) => embeddedMediaKeys.add(key));
   answers.forEach((answer) => getEmbeddedMediaKeys(answer.answer_text).forEach((key) => embeddedMediaKeys.add(key)));
