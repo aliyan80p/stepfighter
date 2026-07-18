@@ -835,7 +835,9 @@ function TestRunner() {
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
-                  <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
+                  {showAnswers && (
+                    <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
+                  )}
                   <div className="w-px h-6 bg-white/20 mx-1" />
                 </>
               )}
