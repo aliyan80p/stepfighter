@@ -257,6 +257,7 @@ function ResultsTable({ results, truncated, onCopyIds, qbankId }: { results: Sea
           index={viewingIdx}
           setIndex={setViewingIdx}
           onClose={() => setViewingIdx(null)}
+          qbankId={qbankId}
         />
       )}
     </>
