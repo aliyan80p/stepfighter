@@ -190,8 +190,12 @@ function TestsList() {
                         <DropdownMenuItem onSelect={() => setRenaming({ id: r.id, name: r.name })}>
                           <Pencil className="h-3.5 w-3.5 mr-2" /> Edit quiz name
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => { navigator.clipboard.writeText(String(r.id)); toast.success(`Copied quiz ID ${r.id}`); }}>
-                          <Copy className="h-3.5 w-3.5 mr-2" /> Copy quiz ID
+                        <DropdownMenuItem onSelect={() => {
+                          const ids = (r.question_ids as number[]) ?? [];
+                          navigator.clipboard.writeText(ids.join(", "));
+                          toast.success(`Copied ${ids.length} question IDs`);
+                        }}>
+                          <Copy className="h-3.5 w-3.5 mr-2" /> Copy question IDs
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => onDelete(r.id)}>
