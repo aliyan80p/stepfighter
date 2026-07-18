@@ -140,4 +140,10 @@
 .qbank-theme-sepia .qbank-html p, .qbank-theme-sepia .qbank-html li { color: #3b2f1e !important; }
 .qbank-theme-sepia .qbank-explanation strong, .qbank-theme-sepia .qbank-explanation b { color: #2a2010 !important; }
 
+/* Highlighted text always uses dark ink so it stays readable on light highlight colors in any theme */
+mark.qbank-hl, .qbank-theme-dark mark.qbank-hl, .qbank-theme-sepia mark.qbank-hl,
+mark.qbank-hl *, .qbank-theme-dark mark.qbank-hl *, .qbank-theme-sepia mark.qbank-hl * {
+  color: #111827 !important;
+}
+
 
