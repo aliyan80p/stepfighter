@@ -308,6 +308,18 @@ function TestRunner() {
     nav({ to: "/test-results/$id", params: { id } });
   };
 
+  // Auto-end exam mode when block time runs out
+  const autoEndedRef = useRef(false);
+  useEffect(() => {
+    if (isReview || tutorMode || !timedMode) return;
+    const allowed = total * 90;
+    if (blockElapsed >= allowed && !autoEndedRef.current) {
+      autoEndedRef.current = true;
+      toast.message("Time's up — submitting your block.");
+      finish();
+    }
+  }, [blockElapsed, timedMode, tutorMode, isReview, total]);
+
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
     setIdx(bounded);
