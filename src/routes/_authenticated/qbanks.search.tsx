@@ -343,7 +343,7 @@ function QuestionModal({
   };
 
   const bookmarkFn = useServerFn(toggleBookmark);
-  const modalQbankId = useActiveQbankId();
+  const modalQbankId = qbankId;
   const toggleMark = async () => {
     const prev = !!marked[r.id];
     setMarked((m) => ({ ...m, [r.id]: !prev }));
