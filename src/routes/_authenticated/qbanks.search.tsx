@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
-import { useActiveQbankId } from "@/lib/active-qbank";
+import { useActiveQbankId, setActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 
@@ -34,7 +34,7 @@ function SearchPage() {
   const searchFn = useServerFn(searchQuestions);
   const qbankId = useActiveQbankId();
   const [query, setQuery] = useState("");
-  const [course, setCourse] = useState("USMLE Step 2 CK");
+  const currentBank = QBANKS.find((q) => q.id === qbankId) ?? QBANKS[0];
 
   const mutation = useMutation({
     mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
@@ -82,11 +82,13 @@ function SearchPage() {
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Course</label>
             <select
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
+              value={currentBank.id}
+              onChange={(e) => setActiveQbankId(Number(e.target.value))}
               className="w-full mt-1 py-2.5 px-3 border rounded-md bg-white"
             >
-              <option>USMLE Step 2 CK</option>
+              {QBANKS.map((q) => (
+                <option key={q.id} value={q.id}>{q.name}</option>
+              ))}
             </select>
           </div>
           <button
