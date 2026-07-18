@@ -463,7 +463,7 @@ function TestRunner() {
                     fontSize: `${fontSize}px`,
                     fontWeight,
                     lineHeight: 1.7,
-                    color: theme === "light" ? "#1f2937" : themeStyles.text,
+                    color: themeStyles.text,
                     WebkitFontSmoothing: "antialiased",
                     MozOsxFontSmoothing: "grayscale",
                     textRendering: "optimizeLegibility",
