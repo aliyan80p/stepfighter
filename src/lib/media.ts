@@ -37,5 +37,7 @@ export function rewriteMedia(html: string): string {
         : full;
     },
   );
+  // Add lazy loading + async decoding hints to <img> tags for faster perceived load.
+  out = out.replace(/<img\b(?![^>]*\bloading=)([^>]*)>/gi, '<img loading="lazy" decoding="async"$1>');
   return out;
 }
