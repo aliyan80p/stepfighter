@@ -303,7 +303,7 @@ function TestRunner() {
     setHighlightHtml(snap);
   };
 
-  const htmlFor = (key: string, html: string) => rewriteMedia(highlightHtml[key] ?? html);
+  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia });
 
   const getHighlightRoot = (node: Node) => {
     const el = (node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement) as Element | null;
@@ -714,7 +714,7 @@ function TestRunner() {
                   <div
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
-                    dangerouslySetInnerHTML={{ __html: htmlFor("e", question.explanation) }}
+                    dangerouslySetInnerHTML={{ __html: htmlFor("e", question.explanation, true) }}
                   />
                 </div>
               </div>
