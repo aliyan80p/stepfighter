@@ -257,7 +257,7 @@ function TestRunner() {
 
   return (
     <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }} onMouseUp={handleSelection}>
-      {hlBar && (multicolor || highlightOnly) && (
+      {hlBar && (
         <div
           className="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-full shadow-xl px-2 py-1.5 -translate-x-1/2 -translate-y-full"
           style={{ left: hlBar.x, top: hlBar.y }}
