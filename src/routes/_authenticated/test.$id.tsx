@@ -652,7 +652,7 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`w-full mx-auto px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+          <div className={`${(!tutorMode && !isReview) ? "max-w-[900px]" : "w-full"} mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
             {(() => null)()}
 
 
@@ -701,7 +701,7 @@ function TestRunner() {
               </div>
             )}
 
-            <div className="mt-3 inline-block rounded border-2 px-4 py-2" style={{ borderColor: theme === "dark" ? "#475569" : "#5b8fc9", background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
+            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (!tutorMode && !isReview && !showAnswers) ? (theme === "dark" ? "#475569" : "#c9c9c9") : (theme === "dark" ? "#475569" : "#5b8fc9"), borderWidth: (!tutorMode && !isReview && !showAnswers) ? 1 : 2, background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
@@ -742,12 +742,12 @@ function TestRunner() {
 
             {/* Primary action button — directly below answer choices */}
             {!isReview && (
-              <div className="mt-4">
+              <div className={`mt-4 ${!tutorMode ? "flex justify-center max-w-[520px]" : ""}`}>
                 {!tutorMode ? (
                   <button
                     onClick={proceedExam}
                     disabled={selected == null && !submitted}
-                    className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40 uppercase tracking-wide"
+                    className="px-4 py-1.5 rounded-sm text-white text-[12px] font-semibold disabled:opacity-40"
                     style={{ background: NAV_BG }}
                   >
                     {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
