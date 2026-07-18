@@ -870,7 +870,7 @@ function TestRunner() {
               {isReview ? "" : examUI ? `Block Time Remaining:  ${bh}:${bm}:${bs}` : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
             <div className="font-semibold tracking-wide hidden md:flex items-center gap-3">
-              <span>{examUI ? "USMLE Fighter" : "IMD QBank"}</span>
+              {!examUI && <span>IMD QBank</span>}
               {examUI && (
                 <span title="Exam locked" className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500/90 text-[10px] text-black">🔒</span>
               )}
