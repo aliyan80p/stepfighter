@@ -695,7 +695,7 @@ function TestRunner() {
             </div>
 
             {/* Answered banner — placed just above the explanation */}
-            {submitted && (
+            {submitted && showAnswers && (
               <div className={`mt-4 rounded-md border-l-4 p-3 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
                 <div>
                   <div className={`font-semibold ${isCorrect ? "text-green-700" : "text-red-700"}`}>
