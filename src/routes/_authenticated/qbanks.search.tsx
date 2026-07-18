@@ -125,7 +125,7 @@ function SearchPage() {
 
 type SortKey = "id" | "subject" | "system" | "topic";
 
-function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void }) {
+function ResultsTable({ results, truncated, onCopyIds, qbankId }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void; qbankId: number }) {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
