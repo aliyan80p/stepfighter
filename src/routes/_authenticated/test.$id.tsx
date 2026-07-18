@@ -67,8 +67,8 @@ function TestRunner() {
     setSelected(priorAttempt?.selected_answer ?? null);
     setSubmitted(!!priorAttempt);
     setStartedAt(Date.now());
-    setElapsed(priorAttempt?.time_seconds ?? 0);
-  }, [idx, question?.id, priorAttempt?.selected_answer, priorAttempt?.time_seconds]);
+    setElapsed(0);
+  }, [idx, question?.id, priorAttempt?.selected_answer]);
 
   useEffect(() => {
     if (submitted) return;
