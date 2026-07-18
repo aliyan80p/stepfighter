@@ -75,7 +75,7 @@ const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
         return {
           id: `step2:CMS_${tag}`,
           qbankId: q.id,
-          name: `CMS ${specialty}`,
+          name: `CMS ${specialty} Forms`,
           source: `CMS_${tag}`,
           count: cmsForms.reduce((s, f) => s + f.count, 0),
           cmsSpecialty: specialty,
