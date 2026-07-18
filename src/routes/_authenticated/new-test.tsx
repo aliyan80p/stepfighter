@@ -42,6 +42,17 @@ const STEP2_CMS: Array<{ specialty: string; tag: string; forms: number[] }> = [
   { specialty: "Emergency Medicine", tag: "EM",   forms: [1, 2, 3] },
 ];
 const CMS_COUNTS: Record<string, number> = { CMS_IM6: 49 };
+// Map CMS specialty display names → subjects table names (Step 2 CK)
+const CMS_SPECIALTY_TO_SUBJECT: Record<string, string> = {
+  "Psychiatry": "Psychiatry",
+  "Pediatrics": "Pediatrics",
+  "Surgery": "Surgery",
+  "Neurology": "Neurology",
+  "Internal Medicine": "Medicine",
+  "Ob/Gyn": "Obstetrics & Gynecology",
+  "Family Medicine": "Family Medicine",
+  "Emergency Medicine": "Emergency Medicine",
+};
 const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
   if (q.slug === "step1") {
     return [
@@ -146,18 +157,40 @@ function NewTest() {
   const hasSubject = subjectIds.length > 0;
   const hasSystem = systemIds.length > 0;
 
+  // CMS forms are single-specialty: restrict Subjects to that specialty and hide Systems/Topics
+  const cmsSpecialtyNames = useMemo(() => {
+    if (!qbankIds.length) return null;
+    const names = new Set<string>();
+    for (const id of qbankIds) {
+      const opt = QBANK_OPTIONS.find((o) => o.id === id);
+      if (!opt || !opt.source.startsWith("CMS_")) return null; // any non-CMS -> not CMS mode
+      const entry = STEP2_CMS.find((c) => opt.source.startsWith(`CMS_${c.tag}`));
+      if (entry) names.add(CMS_SPECIALTY_TO_SUBJECT[entry.specialty] ?? entry.specialty);
+    }
+    return names;
+  }, [qbankIds]);
+  const cmsMode = !!cmsSpecialtyNames;
+
   const availableTabs: Record<Tab, boolean> = {
     courses: true,
     qbank: hasCourse,
     subjects: hasQbank,
-    systems: hasSubject,
-    topics: hasSystem,
+    systems: hasSubject && !cmsMode,
+    topics: hasSystem && !cmsMode,
   };
 
   const questionMeta = data?.questionMeta ?? [];
   const totalStep2 = data?.totalQuestions ?? questionMeta.length;
 
-  // Systems narrowed by selected subjects, counted from individual question rows
+  // If user switches to a CMS-only selection while on systems/topics tab, bounce them
+  useEffect(() => {
+    if (cmsMode && (openTab === "systems" || openTab === "topics")) setOpenTab("subjects");
+    if (cmsMode) {
+      if (systemIds.length) setSystemIds([]);
+      if (topicNames.length) setTopicNames([]);
+    }
+  }, [cmsMode]);
+
   const filteredSystems = useMemo(() => {
     if (!data) return [];
     const counts = new Map<number, number>();
@@ -429,7 +462,7 @@ function NewTest() {
 
         {openTab === "subjects" && (
           <SelectionList
-            items={subjectItems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+            items={subjectItems.filter((s) => (s.count ?? 0) > 0 && (!cmsSpecialtyNames || cmsSpecialtyNames.has(s.name))).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
             selected={subjectIds}
             onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
             search={subjectSearch}
