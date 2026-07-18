@@ -179,6 +179,7 @@ function TestRunner() {
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
+  const isRealExam = data?.test.mode === "exam";
   const isReview = !!data?.test.done;
   const total = data?.questions.length ?? 0;
 
@@ -311,14 +312,14 @@ function TestRunner() {
   // Auto-end exam mode when block time runs out
   const autoEndedRef = useRef(false);
   useEffect(() => {
-    if (isReview || tutorMode || !timedMode) return;
+    if (isReview || !isRealExam || !timedMode) return;
     const allowed = total * 90;
     if (blockElapsed >= allowed && !autoEndedRef.current) {
       autoEndedRef.current = true;
       toast.message("Time's up — submitting your block.");
       finish();
     }
-  }, [blockElapsed, timedMode, tutorMode, isReview, total]);
+  }, [blockElapsed, timedMode, isRealExam, isReview, total]);
 
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
@@ -566,7 +567,7 @@ function TestRunner() {
       {/* Top nav */}
       <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
         <div className="flex items-center gap-4">
-          {!(!tutorMode && !isReview) && (
+          {!(isRealExam && !isReview) && (
             <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
               <span className="block w-5 h-0.5 bg-white mb-1" />
               <span className="block w-5 h-0.5 bg-white mb-1" />
@@ -575,7 +576,7 @@ function TestRunner() {
           )}
           <div className="text-[12px] leading-tight">
             <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
-            {(!tutorMode && !isReview)
+            {(isRealExam && !isReview)
               ? <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
               : <div className="text-[11px] text-white/75">Question Id: {question.id}</div>}
           </div>
@@ -596,15 +597,15 @@ function TestRunner() {
         </div>
 
         <div className="flex items-center gap-1">
-          {(tutorMode || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
+          {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
           {mediaItems.length > 0 && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
           <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
           <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
-          {(tutorMode || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
+          {(!isRealExam || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
           <TopBtn icon={Eraser} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />
           <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
-          {(tutorMode || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
+          {(!isRealExam || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
         </div>
       </div>
 
@@ -652,7 +653,7 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`${(!tutorMode && !isReview) ? "max-w-[900px]" : "w-full"} mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+          <div className={`${(isRealExam && !isReview) ? "max-w-[900px]" : "w-full"} mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
             {(() => null)()}
 
 
@@ -872,7 +873,7 @@ function TestRunner() {
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
 
-        const examUI = !tutorMode && !isReview;
+        const examUI = isRealExam && !isReview;
         if (examUI) {
           return (
             <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
