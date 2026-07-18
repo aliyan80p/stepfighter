@@ -28,6 +28,8 @@ export function useActiveQbankId(): number {
 }
 
 export const QBANKS: { id: number; slug: string; name: string }[] = [
-  { id: 1, slug: "step2", name: "Step 2" },
-  { id: 2, slug: "step1", name: "Step 1" },
+  { id: 2, slug: "step1", name: "USMLE Step 1" },
+  { id: 1, slug: "step2", name: "USMLE Step 2 CK" },
+  { id: 3, slug: "step3", name: "USMLE Step 3" },
 ];
+
