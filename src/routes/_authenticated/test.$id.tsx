@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
@@ -73,7 +73,7 @@ function TestRunner() {
 
   if (isLoading || !data || !question) return <div className="p-8">Loading…</div>;
 
-  if (data.test.done) return <ResultsView data={data} onReview={() => {}} />;
+  if (data.test.done) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   return (
     <div className="flex h-screen">
