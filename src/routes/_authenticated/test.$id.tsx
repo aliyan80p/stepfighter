@@ -832,14 +832,7 @@ function TestRunner() {
               </div>
             )}
 
-            <div className="mt-6 flex justify-between items-center">
-              <button
-                onClick={() => goToQuestion(idx - 1)}
-                disabled={idx === 0}
-                className="px-4 py-2 rounded border border-gray-300 text-sm disabled:opacity-40 hover:bg-gray-50"
-              >
-                <ChevronLeft className="h-4 w-4 inline -mt-0.5" /> Previous
-              </button>
+            <div className="mt-6 flex justify-end items-center">
               {isReview ? (
                 <button
                   onClick={() => {
