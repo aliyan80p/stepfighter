@@ -20,7 +20,21 @@ type Tab = "courses" | "qbank" | "subjects" | "systems" | "topics";
 type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
 
 const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name }));
-const QBANKS = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: `UWorld ${q.name}` }));
+
+type QbankOption = { id: string; qbankId: number; name: string; source: string };
+const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
+  const main: QbankOption = { id: `${q.slug}:main`, qbankId: q.id, name: `UWorld ${q.name}`, source: "main" };
+  if (q.slug === "step1") {
+    return [
+      main,
+      { id: "step1:SA1", qbankId: q.id, name: "UWorld Self Assessment 1", source: "SA1" },
+      { id: "step1:SA2", qbankId: q.id, name: "UWorld Self Assessment 2", source: "SA2" },
+      { id: "step1:SA3", qbankId: q.id, name: "UWorld Self Assessment 3", source: "SA3" },
+    ];
+  }
+  return [main];
+});
+
 
 
 function NewTest() {
@@ -31,8 +45,6 @@ function NewTest() {
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
   const qbankId = useActiveQbankId();
-  const { data } = useQuery({ queryKey: ["filters", qbankId], queryFn: () => getFn({ data: { qbankId } }) });
-
 
   const [openTab, setOpenTab] = useState<Tab>("courses");
   const [courseIds, setCourseIds] = useState<string[]>([]);
@@ -40,6 +52,18 @@ function NewTest() {
   const [subjectIds, setSubjectIds] = useState<number[]>([]);
   const [systemIds, setSystemIds] = useState<number[]>([]);
   const [topicNames, setTopicNames] = useState<string[]>([]);
+
+  const selectedSources = useMemo(
+    () => qbankIds
+      .map((id) => QBANK_OPTIONS.find((o) => o.id === id)?.source)
+      .filter((s): s is string => !!s),
+    [qbankIds],
+  );
+  const { data } = useQuery({
+    queryKey: ["filters", qbankId, selectedSources],
+    queryFn: () => getFn({ data: { qbankId, sources: selectedSources } }),
+  });
+
 
   const [scope, setScope] = useState<Scope>("unused");
   const [difficulty, setDifficulty] = useState<number[]>([1, 2, 3, 4, 5]);
@@ -120,10 +144,11 @@ function NewTest() {
 
   // pool count
   const { data: pool } = useQuery({
-    queryKey: ["pool", qbankId, subjectIds, systemIds, topicNames, scope],
-    queryFn: () => poolFn({ data: { qbankId, subjectIds, systemIds, topicNames, scope } }),
+    queryKey: ["pool", qbankId, selectedSources, subjectIds, systemIds, topicNames, scope],
+    queryFn: () => poolFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope } }),
     enabled: !!data,
   });
+
 
   const poolCount = pool?.count ?? 0;
 
@@ -166,7 +191,7 @@ function NewTest() {
     if (count < 1) return toast.error("Enter a question count");
     setLoading(true);
     try {
-      const r = await createFn({ data: { qbankId, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
+      const r = await createFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
       navigate({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to create test");
@@ -338,7 +363,7 @@ function NewTest() {
         )}
         {openTab === "qbank" && (
           <SelectionList
-            items={QBANKS.filter((q) => courseIds.includes(q.id)).map((q) => ({ id: q.id, label: q.name, count: totalStep2 }))}
+            items={QBANK_OPTIONS.filter((q) => courseIds.some((cid) => q.qbankId === COURSES.find((c) => c.id === cid)?.qbankId)).map((q) => ({ id: q.id, label: q.name, count: totalStep2 }))}
             selected={qbankIds}
             onToggle={(id) => setQbankIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
             columns={3}

@@ -52,14 +52,15 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 
 export const getFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ qbankId: qb(), sources: z.array(z.string()).default([]) }).parse(d))
   .handler(async ({ data, context }) => {
     const qbankId = data.qbankId;
     const [{ data: subjectsRaw }, { data: systemsRaw }, qs] = await Promise.all([
       context.supabase.from("subjects").select("id,name").eq("qbank_id", qbankId).order("name"),
       context.supabase.from("systems").select("id,name").eq("qbank_id", qbankId).order("name"),
-      fetchAllQuestionRows(context.supabase, "id,title,subject_id,system_id", { qbankId }),
+      fetchAllQuestionRows(context.supabase, "id,title,subject_id,system_id", { qbankId, sources: data.sources }),
     ]);
+
     const subjectCounts = new Map<number, number>();
     const systemCounts = new Map<number, number>();
     const topicMap = new Map<string, { name: string; count: number; subjectIds: Set<number>; systemIds: Set<number> }>();
@@ -93,11 +94,13 @@ const CreateTestInput = z.object({
   subjectIds: z.array(z.number()).default([]),
   systemIds: z.array(z.number()).default([]),
   topicNames: z.array(z.string()).default([]),
+  sources: z.array(z.string()).default([]),
   count: z.number().min(1).max(50).default(20),
   mode: z.enum(["practice", "test"]).default("practice"),
   timed: z.boolean().default(false),
   scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
 });
+
 
 export const createTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -173,8 +176,10 @@ export const getPoolCount = createServerFn({ method: "POST" })
     subjectIds: z.array(z.number()).default([]),
     systemIds: z.array(z.number()).default([]),
     topicNames: z.array(z.string()).default([]),
+    sources: z.array(z.string()).default([]),
     scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
   }).parse(d))
+
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rows = await fetchAllQuestionRows(supabase, "id", data);
@@ -222,6 +227,7 @@ type QuestionFilters = {
   subjectIds?: number[];
   systemIds?: number[];
   topicNames?: string[];
+  sources?: string[];
 };
 
 async function fetchAllQuestionRows(supabase: any, columns: string, filters: QuestionFilters) {
@@ -237,6 +243,7 @@ async function fetchAllQuestionRows(supabase: any, columns: string, filters: Que
     if (filters.subjectIds?.length) query = query.in("subject_id", filters.subjectIds);
     if (filters.systemIds?.length) query = query.in("system_id", filters.systemIds);
     if (filters.topicNames?.length) query = query.in("title", filters.topicNames);
+    if (filters.sources?.length) query = query.in("source", filters.sources);
     const { data, error } = await query;
     if (error) throw error;
     const page = data ?? [];
@@ -245,6 +252,7 @@ async function fetchAllQuestionRows(supabase: any, columns: string, filters: Que
   }
   return rows;
 }
+
 
 export const getTest = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

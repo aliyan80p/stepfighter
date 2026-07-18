@@ -230,6 +230,7 @@ export type Database = {
           question: string
           question_format_type: number | null
           question_type: number | null
+          source: string
           subject_id: number | null
           system_id: number | null
           title: string | null
@@ -246,6 +247,7 @@ export type Database = {
           question: string
           question_format_type?: number | null
           question_type?: number | null
+          source?: string
           subject_id?: number | null
           system_id?: number | null
           title?: string | null
@@ -262,6 +264,7 @@ export type Database = {
           question?: string
           question_format_type?: number | null
           question_type?: number | null
+          source?: string
           subject_id?: number | null
           system_id?: number | null
           title?: string | null
