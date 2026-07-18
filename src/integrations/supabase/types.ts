@@ -20,6 +20,7 @@ export type Database = {
           answer_text: string
           correct_percentage: number | null
           id: number
+          qbank_id: number
           question_id: number
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           answer_text: string
           correct_percentage?: number | null
           id: number
+          qbank_id: number
           question_id: number
         }
         Update: {
@@ -34,15 +36,23 @@ export type Database = {
           answer_text?: string
           correct_percentage?: number | null
           id?: number
+          qbank_id?: number
           question_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "answers_question_id_fkey"
-            columns: ["question_id"]
+            foreignKeyName: "answers_qbank_id_fkey"
+            columns: ["qbank_id"]
+            isOneToOne: false
+            referencedRelation: "qbanks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "answers_question_fkey"
+            columns: ["qbank_id", "question_id"]
             isOneToOne: false
             referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedColumns: ["qbank_id", "id"]
           },
         ]
       }
@@ -51,6 +61,7 @@ export type Database = {
           created_at: string
           id: number
           is_correct: boolean | null
+          qbank_id: number
           question_id: number
           selected_answer: number | null
           test_id: number | null
@@ -61,6 +72,7 @@ export type Database = {
           created_at?: string
           id?: number
           is_correct?: boolean | null
+          qbank_id: number
           question_id: number
           selected_answer?: number | null
           test_id?: number | null
@@ -71,6 +83,7 @@ export type Database = {
           created_at?: string
           id?: number
           is_correct?: boolean | null
+          qbank_id?: number
           question_id?: number
           selected_answer?: number | null
           test_id?: number | null
@@ -79,37 +92,54 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "attempts_question_id_fkey"
-            columns: ["question_id"]
+            foreignKeyName: "attempts_qbank_id_fkey"
+            columns: ["qbank_id"]
+            isOneToOne: false
+            referencedRelation: "qbanks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attempts_question_fkey"
+            columns: ["qbank_id", "question_id"]
             isOneToOne: false
             referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedColumns: ["qbank_id", "id"]
           },
         ]
       }
       bookmarks: {
         Row: {
           created_at: string
+          qbank_id: number
           question_id: number
           user_id: string
         }
         Insert: {
           created_at?: string
+          qbank_id: number
           question_id: number
           user_id: string
         }
         Update: {
           created_at?: string
+          qbank_id?: number
           question_id?: number
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "bookmarks_question_id_fkey"
-            columns: ["question_id"]
+            foreignKeyName: "bookmarks_qbank_id_fkey"
+            columns: ["qbank_id"]
+            isOneToOne: false
+            referencedRelation: "qbanks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_question_fkey"
+            columns: ["qbank_id", "question_id"]
             isOneToOne: false
             referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedColumns: ["qbank_id", "id"]
           },
         ]
       }
@@ -131,6 +161,30 @@ export type Database = {
         }
         Relationships: []
       }
+      qbanks: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           corr_taken: number | null
@@ -140,6 +194,7 @@ export type Database = {
           media_name: string | null
           other_medias: string | null
           ppl_taken: number | null
+          qbank_id: number
           question: string
           question_format_type: number | null
           question_type: number | null
@@ -155,6 +210,7 @@ export type Database = {
           media_name?: string | null
           other_medias?: string | null
           ppl_taken?: number | null
+          qbank_id: number
           question: string
           question_format_type?: number | null
           question_type?: number | null
@@ -170,6 +226,7 @@ export type Database = {
           media_name?: string | null
           other_medias?: string | null
           ppl_taken?: number | null
+          qbank_id?: number
           question?: string
           question_format_type?: number | null
           question_type?: number | null
@@ -179,17 +236,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "questions_subject_id_fkey"
-            columns: ["subject_id"]
+            foreignKeyName: "questions_qbank_id_fkey"
+            columns: ["qbank_id"]
             isOneToOne: false
-            referencedRelation: "subjects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "questions_system_id_fkey"
-            columns: ["system_id"]
-            isOneToOne: false
-            referencedRelation: "systems"
+            referencedRelation: "qbanks"
             referencedColumns: ["id"]
           },
         ]
@@ -197,6 +247,7 @@ export type Database = {
       refs: {
         Row: {
           id: number
+          qbank_id: number
           question_id: number
           ref_link: string | null
           ref_title: string | null
@@ -204,6 +255,7 @@ export type Database = {
         }
         Insert: {
           id: number
+          qbank_id: number
           question_id: number
           ref_link?: string | null
           ref_title?: string | null
@@ -211,6 +263,7 @@ export type Database = {
         }
         Update: {
           id?: number
+          qbank_id?: number
           question_id?: number
           ref_link?: string | null
           ref_title?: string | null
@@ -218,11 +271,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "refs_question_id_fkey"
-            columns: ["question_id"]
+            foreignKeyName: "refs_qbank_id_fkey"
+            columns: ["qbank_id"]
+            isOneToOne: false
+            referencedRelation: "qbanks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refs_question_fkey"
+            columns: ["qbank_id", "question_id"]
             isOneToOne: false
             referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedColumns: ["qbank_id", "id"]
           },
         ]
       }
@@ -231,36 +291,58 @@ export type Database = {
           count: number | null
           id: number
           name: string
+          qbank_id: number
         }
         Insert: {
           count?: number | null
           id: number
           name: string
+          qbank_id: number
         }
         Update: {
           count?: number | null
           id?: number
           name?: string
+          qbank_id?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subjects_qbank_id_fkey"
+            columns: ["qbank_id"]
+            isOneToOne: false
+            referencedRelation: "qbanks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       systems: {
         Row: {
           count: number | null
           id: number
           name: string
+          qbank_id: number
         }
         Insert: {
           count?: number | null
           id: number
           name: string
+          qbank_id: number
         }
         Update: {
           count?: number | null
           id?: number
           name?: string
+          qbank_id?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "systems_qbank_id_fkey"
+            columns: ["qbank_id"]
+            isOneToOne: false
+            referencedRelation: "qbanks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tests: {
         Row: {
@@ -270,6 +352,7 @@ export type Database = {
           id: number
           mode: string
           name: string | null
+          qbank_id: number
           question_ids: number[]
           right_count: number
           subject_label: string | null
@@ -284,6 +367,7 @@ export type Database = {
           id?: number
           mode?: string
           name?: string | null
+          qbank_id: number
           question_ids: number[]
           right_count?: number
           subject_label?: string | null
@@ -298,6 +382,7 @@ export type Database = {
           id?: number
           mode?: string
           name?: string | null
+          qbank_id?: number
           question_ids?: number[]
           right_count?: number
           subject_label?: string | null
@@ -305,7 +390,15 @@ export type Database = {
           user_id?: string
           wrong_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tests_qbank_id_fkey"
+            columns: ["qbank_id"]
+            isOneToOne: false
+            referencedRelation: "qbanks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -132,7 +132,7 @@ export const createCustomTest = createServerFn({ method: "POST" })
     const ordered = uniq.filter((id) => validIds.includes(id));
     const { data: inserted, error: e2 } = await supabase
       .from("tests")
-      .insert({ user_id: userId, question_ids: ordered, mode: data.mode })
+      .insert({ user_id: userId, question_ids: ordered, mode: data.mode, qbank_id: 1 })
       .select("id")
       .single();
     if (e2) throw e2;
@@ -190,7 +190,7 @@ export const getPoolCount = createServerFn({ method: "POST" })
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
   const { data: inserted, error } = await supabase
     .from("tests")
-    .insert({ user_id: userId, question_ids: ids, mode: data.mode })
+    .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: 1 })
     .select("id")
     .single();
   if (error) throw error;
@@ -298,7 +298,7 @@ export const submitAnswer = createServerFn({ method: "POST" })
     // Upsert attempt: delete prior then insert
     await supabase.from("attempts").delete().eq("user_id", userId).eq("test_id", data.testId).eq("question_id", data.questionId);
     await supabase.from("attempts").insert({
-      user_id: userId, test_id: data.testId, question_id: data.questionId,
+      user_id: userId, test_id: data.testId, question_id: data.questionId, qbank_id: 1,
       selected_answer: data.selectedIndex, is_correct: isCorrect, time_seconds: data.timeSeconds,
     });
     // Update tallies
@@ -319,7 +319,7 @@ export const toggleBookmark = createServerFn({ method: "POST" })
       await supabase.from("bookmarks").delete().eq("user_id", userId).eq("question_id", data.questionId);
       return { bookmarked: false };
     }
-    await supabase.from("bookmarks").insert({ user_id: userId, question_id: data.questionId });
+    await supabase.from("bookmarks").insert({ user_id: userId, question_id: data.questionId, qbank_id: 1 });
     return { bookmarked: true };
   });
 
