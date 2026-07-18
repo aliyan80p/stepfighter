@@ -151,8 +151,10 @@ function TestRunner() {
 
   const question = data?.questions[idx];
   const allMediaItems = getQuestionMedia(question);
-  const embeddedHtml = [question?.question, question?.explanation, question?.title].filter(Boolean).join(" ").toLowerCase();
-  const mediaItems = allMediaItems.filter((m) => !embeddedHtml.includes(m.name.toLowerCase()));
+  // Only skip items already embedded in the QUESTION HTML (not explanation),
+  // otherwise media referenced only in the explanation would disappear before submission.
+  const questionHtmlLower = (question?.question ?? "").toLowerCase();
+  const mediaItems = allMediaItems.filter((m) => !questionHtmlLower.includes(m.name.toLowerCase()));
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
