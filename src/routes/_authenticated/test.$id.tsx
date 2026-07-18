@@ -56,6 +56,7 @@ function TestRunner() {
   const [elapsed, setElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -303,7 +304,7 @@ function TestRunner() {
       {/* Top nav */}
       <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
         <div className="flex items-center gap-4">
-          <button className="p-1 hover:bg-white/10 rounded" onClick={notImpl("Menu")}>
+          <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
             <span className="block w-5 h-0.5 bg-white mb-1" />
             <span className="block w-5 h-0.5 bg-white mb-1" />
             <span className="block w-5 h-0.5 bg-white" />
@@ -340,6 +341,7 @@ function TestRunner() {
       {/* Main */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left navigator */}
+        {sidebarOpen && (
         <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
@@ -361,17 +363,18 @@ function TestRunner() {
             );
           })}
         </aside>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`max-w-4xl mx-auto px-8 py-6 ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight }}>
+          <div className={`max-w-4xl mx-auto px-8 py-6 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
             {(() => null)()}
 
 
             
             <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
-            <div className="mt-6 inline-block rounded border bg-white px-4 py-3" style={{ borderColor: "#b8c6de" }}>
+            <div className="mt-6 inline-block rounded border px-4 py-3" style={{ borderColor: theme === "dark" ? "#334155" : "#b8c6de", background: themeStyles.cardBg }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
@@ -387,7 +390,7 @@ function TestRunner() {
                     disabled={submitted}
                     onClick={() => setSelected(i)}
                     className="w-full text-left flex items-center gap-2 py-1.5 text-[15px]"
-                    style={{ color: "#1f2937" }}
+                    style={{ color: themeStyles.text }}
                   >
                     <span className="w-4 flex justify-center shrink-0">
                       {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
@@ -460,7 +463,7 @@ function TestRunner() {
                     fontSize: `${fontSize}px`,
                     fontWeight,
                     lineHeight: 1.7,
-                    color: theme === "light" ? "#1f2937" : themeStyles.text,
+                    color: themeStyles.text,
                     WebkitFontSmoothing: "antialiased",
                     MozOsxFontSmoothing: "grayscale",
                     textRendering: "optimizeLegibility",
