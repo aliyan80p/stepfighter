@@ -16,7 +16,6 @@ import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticated/new-test'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBookmarksRouteImport } from './routes/_authenticated/bookmarks'
-import { Route as ApiPublicWarmStep3RouteImport } from './routes/api/public/warm-step3'
 import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
 import { Route as AuthenticatedTestIdRouteImport } from './routes/_authenticated/test.$id'
 import { Route as AuthenticatedTestResultsIdRouteImport } from './routes/_authenticated/test-results.$id'
@@ -68,11 +67,6 @@ const AuthenticatedBookmarksRoute = AuthenticatedBookmarksRouteImport.update({
   id: '/bookmarks',
   path: '/bookmarks',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const ApiPublicWarmStep3Route = ApiPublicWarmStep3RouteImport.update({
-  id: '/api/public/warm-step3',
-  path: '/api/public/warm-step3',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMediaSplatRoute = ApiMediaSplatRouteImport.update({
   id: '/api/media/$',
@@ -198,7 +192,6 @@ export interface FileRoutesByFullPath {
   '/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/test/$id': typeof AuthenticatedTestIdRouteWithChildren
   '/api/media/$': typeof ApiMediaSplatRoute
-  '/api/public/warm-step3': typeof ApiPublicWarmStep3Route
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRoutesByTo {
@@ -224,7 +217,6 @@ export interface FileRoutesByTo {
   '/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/test/$id': typeof AuthenticatedTestIdRouteWithChildren
   '/api/media/$': typeof ApiMediaSplatRoute
-  '/api/public/warm-step3': typeof ApiPublicWarmStep3Route
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRoutesById {
@@ -252,7 +244,6 @@ export interface FileRoutesById {
   '/_authenticated/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/_authenticated/test/$id': typeof AuthenticatedTestIdRouteWithChildren
   '/api/media/$': typeof ApiMediaSplatRoute
-  '/api/public/warm-step3': typeof ApiPublicWarmStep3Route
   '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRouteTypes {
@@ -280,7 +271,6 @@ export interface FileRouteTypes {
     | '/test-results/$id'
     | '/test/$id'
     | '/api/media/$'
-    | '/api/public/warm-step3'
     | '/test/$id/results'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -306,7 +296,6 @@ export interface FileRouteTypes {
     | '/test-results/$id'
     | '/test/$id'
     | '/api/media/$'
-    | '/api/public/warm-step3'
     | '/test/$id/results'
   id:
     | '__root__'
@@ -333,7 +322,6 @@ export interface FileRouteTypes {
     | '/_authenticated/test-results/$id'
     | '/_authenticated/test/$id'
     | '/api/media/$'
-    | '/api/public/warm-step3'
     | '/_authenticated/test/$id/results'
   fileRoutesById: FileRoutesById
 }
@@ -342,7 +330,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiMediaSplatRoute: typeof ApiMediaSplatRoute
-  ApiPublicWarmStep3Route: typeof ApiPublicWarmStep3Route
 }
 
 declare module '@tanstack/react-router' {
@@ -395,13 +382,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/bookmarks'
       preLoaderRoute: typeof AuthenticatedBookmarksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/public/warm-step3': {
-      id: '/api/public/warm-step3'
-      path: '/api/public/warm-step3'
-      fullPath: '/api/public/warm-step3'
-      preLoaderRoute: typeof ApiPublicWarmStep3RouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/media/$': {
       id: '/api/media/$'
@@ -595,7 +575,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiMediaSplatRoute: ApiMediaSplatRoute,
-  ApiPublicWarmStep3Route: ApiPublicWarmStep3Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
