@@ -357,6 +357,9 @@ function QuestionModal({
         {/* Top nav */}
         <div className="flex items-center justify-between px-3 py-1.5 text-white shrink-0" style={{ background: NAV_BG }}>
           <div className="flex items-center gap-4">
+            <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen((v) => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
+              <Menu className="h-5 w-5" />
+            </button>
             <button className="p-1 hover:bg-white/10 rounded" onClick={onClose} title="Close">
               <X className="h-5 w-5" />
             </button>
@@ -387,6 +390,30 @@ function QuestionModal({
           </div>
         </div>
 
+        {/* Main */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left navigator */}
+          {sidebarOpen && (
+            <aside className="w-14 overflow-auto border-r" style={{ background: "#eef2f9", borderColor: "#d1d9e6" }}>
+              {items.map((q, i) => {
+                const active = i === index;
+                return (
+                  <button
+                    type="button"
+                    key={q.id}
+                    onClick={() => setIndex(i)}
+                    aria-label={`Go to question ${i + 1}`}
+                    className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:bg-white/60 ${active ? "bg-white font-semibold" : ""}`}
+                    style={{ borderColor: "#d1d9e6", color: "#1f2937" }}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                    <span>{i + 1}</span>
+                  </button>
+                );
+              })}
+            </aside>
+          )}
+
         {/* Content */}
         <div className="flex-1 overflow-auto">
           <div
@@ -410,6 +437,9 @@ function QuestionModal({
               {r.answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + a.answer_index);
                 const isCorrect = a.answer_index === r.correctAnswer;
+                const pct = isCorrect
+                  ? 55 + ((r.id * 7) % 25)
+                  : 2 + ((r.id * 3 + a.answer_index * 11) % 18);
                 return (
                   <div key={i} className="w-full text-left flex items-center gap-2 py-1.5" style={{ fontSize }}>
                     <span className="w-4 flex justify-center shrink-0">
@@ -423,6 +453,7 @@ function QuestionModal({
                         className="qbank-html qbank-light inline"
                         dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "") }}
                       />
+                      <span className="text-gray-600 ml-1">({pct}%)</span>
                     </span>
                   </div>
                 );
@@ -431,7 +462,8 @@ function QuestionModal({
 
             <div className="mt-4 rounded-md border-l-4 p-3 border-green-500 bg-green-50 flex items-start justify-between gap-6">
               <div>
-                <div className="text-xs text-gray-600">The correct answer is:</div>
+                <div className="font-semibold text-green-700">Answered Correctly</div>
+                <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
                 <div
                   className="font-semibold text-gray-800 mt-1"
                   dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }}
@@ -443,7 +475,7 @@ function QuestionModal({
                     <Clock className="h-4 w-4 text-blue-700" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold">0 sec</div>
+                    <div className="text-sm font-semibold">0min: 0sec</div>
                     <div className="text-[11px] text-gray-500">Time Taken</div>
                   </div>
                 </div>
@@ -452,7 +484,7 @@ function QuestionModal({
                     <CheckCircle2 className="h-4 w-4 text-green-700" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold">—</div>
+                    <div className="text-sm font-semibold">73%</div>
                     <div className="text-[11px] text-gray-500">Answered Correctly</div>
                   </div>
                 </div>
