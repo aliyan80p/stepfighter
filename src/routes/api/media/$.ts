@@ -9,7 +9,7 @@ const plainUrlCache = new Map<string, { url: string; exp: number }>();
 const nameCache = new Map<string, string | null>();
 const driveIdCache = new Map<string, string | null>();
 
-const QBANK_SLUGS: Record<string, number> = { step1: 2, step2: 1 };
+const QBANK_SLUGS: Record<string, number> = { step1: 2, step2: 1, step3: 3 };
 
 function stripPrefix(name: string): string {
   return name.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
