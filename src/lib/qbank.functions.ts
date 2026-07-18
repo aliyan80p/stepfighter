@@ -398,6 +398,7 @@ export const searchQuestions = createServerFn({ method: "POST" })
       id: r.id as number,
       title: r.title as string,
       question: r.question as string,
+      explanation: (r.explanation ?? "") as string,
       correctAnswer: r.correct_answer as number,
       subject: r.subject_id != null ? subjMap[r.subject_id] ?? "" : "",
       system: r.system_id != null ? sysMap[r.system_id] ?? "" : "",
