@@ -34,7 +34,7 @@ function SearchPage() {
   const searchFn = useServerFn(searchQuestions);
   const qbankId = useActiveQbankId();
   const [query, setQuery] = useState("");
-  const [course, setCourse] = useState("USMLE Step 2 CK");
+  const currentBank = QBANKS.find((q) => q.id === qbankId) ?? QBANKS[0];
 
   const mutation = useMutation({
     mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
