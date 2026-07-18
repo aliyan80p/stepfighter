@@ -110,9 +110,13 @@ function AuthedLayout() {
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
 
+  const hideSidebar = /^\/test\//.test(pathname);
+
   return (
     <div className="flex min-h-screen bg-background text-foreground">
+      {!hideSidebar && (
       <aside className="w-64 border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground">
+
         <Link to="/dashboard" className="flex items-center gap-2 px-4 h-14 border-b border-sidebar-border">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
             IMD
