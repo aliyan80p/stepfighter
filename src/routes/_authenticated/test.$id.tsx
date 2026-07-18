@@ -55,7 +55,28 @@ function TestRunner() {
   const [startedAt, setStartedAt] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  // Settings
+  const [fontSize, setFontSize] = useState(16);
+  const [fontWeight, setFontWeight] = useState(400);
+  const [theme, setTheme] = useState<"light" | "dark" | "sepia">("light");
+  const [transparentExpl, setTransparentExpl] = useState(false);
+  const [largeImages, setLargeImages] = useState(false);
+  const [highlightOnly, setHighlightOnly] = useState(false);
+  const [multicolor, setMulticolor] = useState(true);
+  const [activeHighlight, setActiveHighlight] = useState<string>("#fff59d");
+  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>({
+    "#fff59d": true, "#a5d6a7": true, "#81d4fa": true,
+    "#f8bbd0": true, "#ffcc80": true, "#ce93d8": true,
+  });
+
+  const themeStyles = theme === "dark"
+    ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
+    : theme === "sepia"
+    ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
+    : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
 
   const question = data?.questions[idx];
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
