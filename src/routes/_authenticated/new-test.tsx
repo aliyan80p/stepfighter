@@ -45,15 +45,6 @@ function NewTest() {
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
   const qbankId = useActiveQbankId();
-  const selectedSources = useMemo(
-    () => qbankIds
-      .map((id) => QBANK_OPTIONS.find((o) => o.id === id)?.source)
-      .filter((s): s is string => !!s),
-    [qbankIds],
-  );
-  const { data } = useQuery({ queryKey: ["filters", qbankId, selectedSources], queryFn: () => getFn({ data: { qbankId, sources: selectedSources } }) });
-
-
 
   const [openTab, setOpenTab] = useState<Tab>("courses");
   const [courseIds, setCourseIds] = useState<string[]>([]);
@@ -61,6 +52,18 @@ function NewTest() {
   const [subjectIds, setSubjectIds] = useState<number[]>([]);
   const [systemIds, setSystemIds] = useState<number[]>([]);
   const [topicNames, setTopicNames] = useState<string[]>([]);
+
+  const selectedSources = useMemo(
+    () => qbankIds
+      .map((id) => QBANK_OPTIONS.find((o) => o.id === id)?.source)
+      .filter((s): s is string => !!s),
+    [qbankIds],
+  );
+  const { data } = useQuery({
+    queryKey: ["filters", qbankId, selectedSources],
+    queryFn: () => getFn({ data: { qbankId, sources: selectedSources } }),
+  });
+
 
   const [scope, setScope] = useState<Scope>("unused");
   const [difficulty, setDifficulty] = useState<number[]>([1, 2, 3, 4, 5]);
