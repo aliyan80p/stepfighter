@@ -44,7 +44,7 @@ export function rewriteMedia(html: string): string {
   // where the source explanation placed the link instead of grouping them above.
   out = out.replace(
     /<a\b([^>]*?)\bhref=["']([^"']+\.(?:png|jpe?g|gif|webp|bmp|svg))["']([^>]*)>(.*?)<\/a>/gis,
-    (full, before, href, after, labelHtml) => {
+    (full, _before, href, _after, labelHtml) => {
       if (/<img\b/i.test(labelHtml)) return full;
       const url = resolve(href);
       if (!url) return full;
