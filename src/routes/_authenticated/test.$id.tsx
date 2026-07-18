@@ -1082,7 +1082,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function SettingsPanel(props: any) {
+export function SettingsPanel(props: any) {
   const {
     onClose, fontSize, setFontSize, fontWeight, setFontWeight, theme, setTheme,
     transparentExpl, setTransparentExpl, largeImages, setLargeImages,
@@ -1159,7 +1159,7 @@ function SettingsPanel(props: any) {
 
 /* ---------------- Scientific Calculator ---------------- */
 
-function SciCalculator({ onClose }: { onClose: () => void }) {
+export function SciCalculator({ onClose }: { onClose: () => void }) {
   const [expr, setExpr] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const push = (t: string) => setExpr(e => e + t);
