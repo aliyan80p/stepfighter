@@ -374,7 +374,7 @@ function TestRunner() {
             
             <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
-            <div className="mt-6 inline-block rounded border px-4 py-3" style={{ borderColor: theme === "dark" ? "#334155" : "#b8c6de", background: themeStyles.cardBg }}>
+            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: theme === "dark" ? "#334155" : "#b8c6de", background: themeStyles.cardBg }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
