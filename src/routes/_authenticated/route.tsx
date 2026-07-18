@@ -112,13 +112,14 @@ function AuthedLayout() {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      <aside className="w-64 border-r border-border flex flex-col bg-card/40">
-        <Link to="/dashboard" className="flex items-center gap-2 px-4 h-14 border-b border-border">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-sm">
+      <aside className="w-64 border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground">
+        <Link to="/dashboard" className="flex items-center gap-2 px-4 h-14 border-b border-sidebar-border">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
             IMD
           </div>
           <span className="font-semibold">QBank</span>
         </Link>
+
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {/* Welcome / Dashboard */}
@@ -127,8 +128,8 @@ function AuthedLayout() {
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               isActive("/dashboard")
-                ? "bg-primary/15 text-primary border-l-2 border-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-sidebar-primary"
+                : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
             )}
           >
             <Gauge className="h-4 w-4" />
@@ -145,7 +146,7 @@ function AuthedLayout() {
                   onClick={() => setOpen((o) => ({ ...o, [g.key]: !o[g.key] }))}
                   className={cn(
                     "w-full flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
-                    groupActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                    groupActive ? "text-sidebar-foreground" : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
                   )}
                 >
                   <span className="flex items-center gap-3">
@@ -155,7 +156,7 @@ function AuthedLayout() {
                   <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen ? "" : "-rotate-90")} />
                 </button>
                 {isOpen && (
-                  <div className="mt-1 ml-3 pl-3 border-l border-border space-y-0.5">
+                  <div className="mt-1 ml-3 pl-3 border-l border-sidebar-border space-y-0.5">
                     {g.items.map((i) => (
                       <Link
                         key={i.to}
@@ -163,8 +164,8 @@ function AuthedLayout() {
                         className={cn(
                           "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                           isActive(i.to)
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground hover:bg-accent/60 hover:text-accent-foreground",
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
                         )}
                       >
                         <i.icon className="h-4 w-4" />
@@ -178,13 +179,14 @@ function AuthedLayout() {
           })}
         </nav>
 
-        <div className="p-3 border-t border-border">
-          <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start">
+        <div className="p-3 border-t border-sidebar-border">
+          <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
             <LogOut className="h-4 w-4 mr-2" /> Logout
           </Button>
         </div>
 
       </aside>
+
 
       <main className="flex-1 overflow-auto">
         <Outlet />
