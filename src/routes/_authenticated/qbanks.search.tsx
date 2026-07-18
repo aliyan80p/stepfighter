@@ -118,7 +118,7 @@ function SearchPage() {
         <div className="text-center py-12 text-slate-500">No questions found.</div>
       )}
 
-      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} />}
+      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} qbankId={selectedQbankId} />}
     </div>
   );
 }
