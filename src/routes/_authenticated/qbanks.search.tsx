@@ -339,16 +339,18 @@ function QuestionModal({
   };
 
   const bookmarkFn = useServerFn(toggleBookmark);
+  const modalQbankId = useActiveQbankId();
   const toggleMark = async () => {
     const prev = !!marked[r.id];
     setMarked((m) => ({ ...m, [r.id]: !prev }));
     try {
-      await bookmarkFn({ data: { questionId: r.id } });
+      await bookmarkFn({ data: { questionId: r.id, qbankId: modalQbankId } });
     } catch {
       setMarked((m) => ({ ...m, [r.id]: prev }));
       toast.error("Failed to update flag");
     }
   };
+
   const isMarked = !!marked[r.id];
 
   return (
