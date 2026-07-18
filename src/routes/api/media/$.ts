@@ -101,6 +101,43 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
   return new Response(bodyFrom(slice), { status: 206, headers });
 }
 
+async function getPlainSignedUrl(name: string, supaUrl: string, srk: string): Promise<string | null> {
+  const now = Date.now();
+  const cached = plainUrlCache.get(name);
+  if (cached && cached.exp > now + 60_000) return cached.url;
+  const res = await fetch(
+    `${supaUrl}/storage/v1/object/sign/${PLAIN_BUCKET}/${encodeURIComponent(name)}`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn: 60 * 60 * 24 * 365 }),
+    },
+  );
+  if (!res.ok) return null;
+  const json = (await res.json()) as { signedURL?: string; signedUrl?: string };
+  const path = json.signedURL || json.signedUrl;
+  if (!path) return null;
+  const url = `${supaUrl}/storage/v1${path}`;
+  plainUrlCache.set(name, { url, exp: now + 1000 * 60 * 60 * 24 * 300 });
+  return url;
+}
+
+async function uploadPlain(name: string, data: Buffer, contentType: string, supaUrl: string, srk: string) {
+  try {
+    await fetch(`${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${encodeURIComponent(name)}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${srk}`,
+        apikey: srk,
+        "Content-Type": contentType,
+        "x-upsert": "true",
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+      body: data as any,
+    });
+  } catch {}
+}
+
 export const Route = createFileRoute("/api/media/$")({
   server: {
     handlers: {
@@ -115,6 +152,19 @@ export const Route = createFileRoute("/api/media/$")({
           return new Response("Media service not configured", { status: 500 });
         }
 
+        // Fast path: redirect to signed URL from plaintext bucket (served by Supabase CDN).
+        const signed = await getPlainSignedUrl(name, supaUrl, srk);
+        if (signed) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: signed,
+              "Cache-Control": "public, max-age=86400",
+            },
+          });
+        }
+
+        // Slow path: fetch encrypted, decrypt, respond, cache to plaintext bucket.
         const range = request.headers.get("range");
         const upstream = await resolveObject(name, supaUrl, srk, null);
         if (!upstream) return new Response("Not found", { status: 404 });
@@ -124,19 +174,10 @@ export const Route = createFileRoute("/api/media/$")({
         const data = decryptImdMedia(source, [name, resolvedName, stripPrefix(name), stripPrefix(resolvedName)]);
         const type = contentTypeFromBytes(data, contentTypeFor(resolvedName));
 
-        if (!looksLikePlainMedia(source) || range) {
-          return rangeResponse(data, type, range);
-        }
+        // Write-through cache to plain bucket for future requests (fire-and-forget).
+        void uploadPlain(name, data, type, supaUrl, srk);
 
-        const headers = new Headers();
-        headers.set("Content-Type", upstream.headers.get("content-type") ?? type);
-        const len = upstream.headers.get("content-length");
-        if (len) headers.set("Content-Length", len);
-        const cr = upstream.headers.get("content-range");
-        if (cr) headers.set("Content-Range", cr);
-        headers.set("Accept-Ranges", "bytes");
-        headers.set("Cache-Control", "public, max-age=31536000, immutable");
-        return new Response(upstream.body, { status: upstream.status, headers });
+        return rangeResponse(data, type, range);
       },
     },
   },
