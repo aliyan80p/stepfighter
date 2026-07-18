@@ -18,7 +18,7 @@ import {
   FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy, PlayCircle, Rocket, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import logo from "@/assets/imd-qbank-logo.png";
+
 
 export const Route = createFileRoute("/_authenticated/tests")({
   component: TestsList,
@@ -107,8 +107,13 @@ function TestsList() {
       <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm ring-1 ring-border bg-card">
-              <img src={logo} alt="IMD QBank" width={56} height={56} className="h-full w-full object-cover" />
+            <div className="relative h-14 w-14 rounded-2xl overflow-hidden shadow-lg shadow-fuchsia-500/30 ring-1 ring-white/10">
+              <div className="absolute inset-0 bg-[conic-gradient(from_140deg_at_50%_50%,#f43f5e_0deg,#f97316_80deg,#facc15_150deg,#22d3ee_230deg,#8b5cf6_310deg,#f43f5e_360deg)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.55),transparent_55%)]" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-white font-black text-lg tracking-tighter drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">iMD</span>
+              </div>
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1.5 w-8 rounded-full bg-white/40 blur-sm" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Previous Tests</h1>
