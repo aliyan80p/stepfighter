@@ -776,8 +776,8 @@ function TestRunner() {
               <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
               <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
               <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
-              <TopBtn icon={Clock} label="Suspend" onClick={() => nav({ to: "/tests" })} />
-              <TopBtn icon={ArrowLeft} label="End Block" onClick={finish} />
+              <TopBtn icon={Clock} label="Suspend" onClick={() => { if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" }); }} />
+              <TopBtn icon={ArrowLeft} label="End Block" onClick={() => { if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish(); }} />
             </div>
           </div>
         );
