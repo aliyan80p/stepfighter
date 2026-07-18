@@ -208,11 +208,84 @@ function NewTest() {
       {/* Quiz Type */}
       <Card>
         <h2 className="font-semibold mb-3">Quiz Type</h2>
-        <div className="rounded-lg border border-border p-3">
+        <div className="rounded-lg border border-border p-3 mb-4">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">Edit Quiz Name</div>
           <Input value={quizName} onChange={(e) => setQuizName(e.target.value)} className="border-0 shadow-none p-0 focus-visible:ring-0 h-auto text-sm" />
         </div>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { v: "standard", l: "Standard" },
+            { v: "custom", l: "Custom" },
+          ] as const).map((o) => {
+            const active = quizType === o.v;
+            return (
+              <button
+                key={o.v}
+                onClick={() => setQuizType(o.v)}
+                className={cn(
+                  "px-5 py-1.5 rounded-full text-sm font-medium border transition-colors",
+                  active
+                    ? "bg-primary text-primary-foreground border-primary shadow"
+                    : "bg-background text-primary border-primary/40 hover:bg-primary/5",
+                )}
+              >
+                {o.l}
+              </button>
+            );
+          })}
+        </div>
       </Card>
+
+      {quizType === "custom" && (
+        <Card>
+          <h2 className="font-semibold mb-4">Question ID's</h2>
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4 items-start">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Retrieve from a Test ID</label>
+              <div className="flex gap-2">
+                <Input
+                  value={customTestId}
+                  onChange={(e) => setCustomTestId(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="Test Id"
+                  className="h-10"
+                />
+                <Button onClick={retrieveFromTestId} disabled={retrieving} className="h-10">
+                  {retrieving ? "…" : "Retrieve"}
+                </Button>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center justify-center pt-6">
+              <span className="text-sm font-semibold text-muted-foreground">OR</span>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Paste Question IDs <span className="text-muted-foreground/70">(comma separated)</span>
+              </label>
+              <textarea
+                value={customIds}
+                onChange={(e) => setCustomIds(e.target.value)}
+                placeholder="e.g. 1024, 1025, 1026"
+                rows={5}
+                className="w-full rounded-md border border-border bg-background p-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <div className="text-xs text-muted-foreground mt-1">
+                {parseIds(customIds).length} valid ID{parseIds(customIds).length === 1 ? "" : "s"}
+              </div>
+            </div>
+          </div>
+          <Button
+            size="lg"
+            onClick={start}
+            disabled={loading || parseIds(customIds).length === 0}
+            className="mt-6"
+          >
+            {loading ? "Generating…" : "Generate Test"}
+          </Button>
+        </Card>
+      )}
+
+      {quizType === "standard" && (<>
+
 
       {/* Tabs / Selection */}
       <Card>
