@@ -473,7 +473,7 @@ function QuestionModal({
                 <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
                 <div
                   className="font-semibold text-gray-800 mt-1"
-                  dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }}
+                  dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: modalQbankId })}` }}
                 />
               </div>
               <div className="flex items-center gap-4 shrink-0">
