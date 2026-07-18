@@ -144,8 +144,22 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
+  // Apply highlight to current selection
+  const applyHighlight = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const container = range.commonAncestorContainer.parentElement;
+    if (!container?.closest(".qbank-html")) return;
+    const mark = document.createElement("mark");
+    mark.style.backgroundColor = activeHighlight;
+    mark.style.color = "inherit";
+    mark.className = "qbank-hl";
+    try { range.surroundContents(mark); sel.removeAllRanges(); } catch { /* cross-node */ }
+  };
+
   return (
-    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: PAGE_BG, color: TEXT }}>
+    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }} onMouseUp={multicolor || highlightOnly ? applyHighlight : undefined}>
       {/* Top nav */}
       <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
         <div className="flex items-center gap-4">
