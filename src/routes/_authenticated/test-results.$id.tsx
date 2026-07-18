@@ -142,7 +142,7 @@ function TestResults() {
           <div className="font-medium">Quiz tools and shortcuts</div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm"><ListOrdered className="h-4 w-4 mr-1.5" /> Questions List</Button>
+          <Button variant="outline" size="sm" onClick={() => setShowQList(true)}><ListOrdered className="h-4 w-4 mr-1.5" /> Questions List</Button>
           <Button variant="outline" size="sm"><StickyNote className="h-4 w-4 mr-1.5" /> Notes</Button>
           <Button size="sm" onClick={() => navigate({ to: "/test/$id", params: { id } })}>
             <CheckCircle2 className="h-4 w-4 mr-1.5" /> Review
