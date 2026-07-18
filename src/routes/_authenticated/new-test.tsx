@@ -21,7 +21,8 @@ type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
 
 const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name }));
 
-type QbankOption = { id: string; qbankId: number; name: string; source: string; count: number };
+type CmsForm = { source: string; formNumber: number; count: number };
+type QbankOption = { id: string; qbankId: number; name: string; source: string; count: number; cmsSpecialty?: string; cmsForms?: CmsForm[] };
 const STEP1_NBMES = [25, 26, 27, 28, 30, 31, 32, 33];
 const STEP2_NBMES = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 const NBME_COUNTS: Record<string, number> = {
@@ -42,17 +43,6 @@ const STEP2_CMS: Array<{ specialty: string; tag: string; forms: number[] }> = [
   { specialty: "Emergency Medicine", tag: "EM",   forms: [1, 2, 3] },
 ];
 const CMS_COUNTS: Record<string, number> = { CMS_IM6: 49 };
-// Map CMS specialty display names → subjects table names (Step 2 CK)
-const CMS_SPECIALTY_TO_SUBJECT: Record<string, string> = {
-  "Psychiatry": "Psychiatry",
-  "Pediatrics": "Pediatrics",
-  "Surgery": "Surgery",
-  "Neurology": "Neurology",
-  "Internal Medicine": "Medicine",
-  "Ob/Gyn": "Obstetrics & Gynecology",
-  "Family Medicine": "Family Medicine",
-  "Emergency Medicine": "Emergency Medicine",
-};
 const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
   if (q.slug === "step1") {
     return [
@@ -76,16 +66,22 @@ const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
         id: `step2:NBME${n}`, qbankId: q.id, name: `NBME ${n}`,
         source: `NBME${n}`, count: NBME_COUNTS[`NBME${n}`] ?? 200,
       })),
-      ...STEP2_CMS.flatMap(({ specialty, tag, forms }) =>
-        forms.map((n) => {
-          const source = `CMS_${tag}${n}`;
-          return {
-            id: `step2:${source}`, qbankId: q.id,
-            name: `CMS ${specialty} Form ${n}`,
-            source, count: CMS_COUNTS[source] ?? 50,
-          };
-        }),
-      ),
+      ...STEP2_CMS.map(({ specialty, tag, forms }) => {
+        const cmsForms: CmsForm[] = forms.map((n) => ({
+          source: `CMS_${tag}${n}`,
+          formNumber: n,
+          count: CMS_COUNTS[`CMS_${tag}${n}`] ?? 50,
+        }));
+        return {
+          id: `step2:CMS_${tag}`,
+          qbankId: q.id,
+          name: `CMS ${specialty}`,
+          source: `CMS_${tag}`,
+          count: cmsForms.reduce((s, f) => s + f.count, 0),
+          cmsSpecialty: specialty,
+          cmsForms,
+        };
+      }),
     ];
   }
   if (q.slug === "step3") {
@@ -120,13 +116,26 @@ function NewTest() {
   const [subjectIds, setSubjectIds] = useState<number[]>([]);
   const [systemIds, setSystemIds] = useState<number[]>([]);
   const [topicNames, setTopicNames] = useState<string[]>([]);
+  // For CMS aggregates: which form sources are picked (empty = all forms of the selected specialty)
+  const [cmsFormSources, setCmsFormSources] = useState<string[]>([]);
 
-  const selectedSources = useMemo(
-    () => qbankIds
-      .map((id) => QBANK_OPTIONS.find((o) => o.id === id)?.source)
-      .filter((s): s is string => !!s),
+  const selectedQbankOptions = useMemo(
+    () => qbankIds.map((id) => QBANK_OPTIONS.find((o) => o.id === id)).filter((o): o is QbankOption => !!o),
     [qbankIds],
   );
+  const selectedSources = useMemo(() => {
+    const out: string[] = [];
+    for (const opt of selectedQbankOptions) {
+      if (opt.cmsForms) {
+        const picked = opt.cmsForms.filter((f) => cmsFormSources.includes(f.source));
+        const use = picked.length ? picked : opt.cmsForms;
+        for (const f of use) out.push(f.source);
+      } else {
+        out.push(opt.source);
+      }
+    }
+    return out;
+  }, [selectedQbankOptions, cmsFormSources]);
   const { data } = useQuery({
     queryKey: ["filters", qbankId, selectedSources],
     queryFn: () => getFn({ data: { qbankId, sources: selectedSources } }),
@@ -157,19 +166,12 @@ function NewTest() {
   const hasSubject = subjectIds.length > 0;
   const hasSystem = systemIds.length > 0;
 
-  // CMS forms are single-specialty: restrict Subjects to that specialty and hide Systems/Topics
-  const cmsSpecialtyNames = useMemo(() => {
-    if (!qbankIds.length) return null;
-    const names = new Set<string>();
-    for (const id of qbankIds) {
-      const opt = QBANK_OPTIONS.find((o) => o.id === id);
-      if (!opt || !opt.source.startsWith("CMS_")) return null; // any non-CMS -> not CMS mode
-      const entry = STEP2_CMS.find((c) => opt.source.startsWith(`CMS_${c.tag}`));
-      if (entry) names.add(CMS_SPECIALTY_TO_SUBJECT[entry.specialty] ?? entry.specialty);
-    }
-    return names;
-  }, [qbankIds]);
-  const cmsMode = !!cmsSpecialtyNames;
+  // CMS aggregates surface forms in the Subjects tab and hide Systems/Topics
+  const cmsSelectedOptions = useMemo(
+    () => selectedQbankOptions.filter((o) => o.cmsForms && o.cmsSpecialty),
+    [selectedQbankOptions],
+  );
+  const cmsMode = cmsSelectedOptions.length > 0 && cmsSelectedOptions.length === selectedQbankOptions.length;
 
   const availableTabs: Record<Tab, boolean> = {
     courses: true,
@@ -182,14 +184,25 @@ function NewTest() {
   const questionMeta = data?.questionMeta ?? [];
   const totalStep2 = data?.totalQuestions ?? questionMeta.length;
 
-  // If user switches to a CMS-only selection while on systems/topics tab, bounce them
+  // Bounce off hidden tabs & clear irrelevant selections when entering CMS mode
   useEffect(() => {
     if (cmsMode && (openTab === "systems" || openTab === "topics")) setOpenTab("subjects");
     if (cmsMode) {
       if (systemIds.length) setSystemIds([]);
       if (topicNames.length) setTopicNames([]);
+      if (subjectIds.length) setSubjectIds([]);
+    } else {
+      if (cmsFormSources.length) setCmsFormSources([]);
     }
   }, [cmsMode]);
+
+  // Prune cmsFormSources when the underlying CMS selection changes
+  useEffect(() => {
+    if (!cmsMode) return;
+    const valid = new Set(cmsSelectedOptions.flatMap((o) => o.cmsForms!.map((f) => f.source)));
+    setCmsFormSources((v) => v.filter((s) => valid.has(s)));
+  }, [cmsMode, cmsSelectedOptions]);
+
 
   const filteredSystems = useMemo(() => {
     if (!data) return [];
@@ -460,9 +473,32 @@ function NewTest() {
           />
         )}
 
-        {openTab === "subjects" && (
+        {openTab === "subjects" && cmsMode && (() => {
+          const formItems = cmsSelectedOptions.flatMap((o) =>
+            o.cmsForms!.map((f) => ({
+              id: f.source,
+              label: cmsSelectedOptions.length > 1
+                ? `${o.cmsSpecialty} — Form ${f.formNumber}`
+                : `Form ${f.formNumber}`,
+              count: f.count,
+            })),
+          );
+          return (
+            <SelectionList
+              items={formItems}
+              selected={cmsFormSources}
+              onToggle={(id) => setCmsFormSources((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+              search={subjectSearch}
+              onSearch={setSubjectSearch}
+              selectAll={() => setCmsFormSources(formItems.map((i) => i.id))}
+              clearAll={() => setCmsFormSources([])}
+              columns={3}
+            />
+          );
+        })()}
+        {openTab === "subjects" && !cmsMode && (
           <SelectionList
-            items={subjectItems.filter((s) => (s.count ?? 0) > 0 && (!cmsSpecialtyNames || cmsSpecialtyNames.has(s.name))).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+            items={subjectItems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
             selected={subjectIds}
             onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
             search={subjectSearch}
