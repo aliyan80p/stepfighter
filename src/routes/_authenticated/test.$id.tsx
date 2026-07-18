@@ -299,12 +299,13 @@ function TestRunner() {
   };
 
   if (isLoading || !data || !question) return <div className="p-8">Loading…</div>;
-  if (data.test.done) return <Navigate to="/test-results/$id" params={{ id }} replace />;
+  if (data.test.done && !isReview) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
-  const showAnswers = isReview || (submitted && isPractice && tutorMode);
+  const answered = submitted || selected != null;
+  const showAnswers = isReview || (answered && isPractice && tutorMode);
   const isBookmarked = data.bookmarkedIds.has(question.id);
-  const isCorrect = submitted && selected === correctIdx;
+  const isCorrect = answered && selected === correctIdx;
   const correctLetter = correctIdx != null ? String.fromCharCode(65 + correctIdx) : "";
   const correctText = correctIdx != null ? answers[correctIdx]?.answer_text ?? "" : "";
 
