@@ -186,22 +186,25 @@ function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {pageRows.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
-                  <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
-                  <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
-                  <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setViewing(r)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600"
-                    >
-                      <Eye className="h-3.5 w-3.5" /> View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {pageRows.map((r) => {
+                const absIdx = sorted.findIndex((x) => x.id === r.id);
+                return (
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
+                    <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => setViewingIdx(absIdx)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600"
+                      >
+                        <Eye className="h-3.5 w-3.5" /> View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
