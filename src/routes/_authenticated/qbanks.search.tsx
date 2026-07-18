@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import {
   Search, Copy, Info, Loader2, Eye, ArrowUpDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, FileText,
+  Maximize2, FlaskConical, StickyNote, Notebook, Calculator, Settings,
+  Library, Zap, MessageSquare, ArrowLeft, Flag, Clock, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions } from "@/lib/qbank.functions";
