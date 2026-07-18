@@ -613,12 +613,12 @@ function TestRunner() {
 /* ---------------- Settings Panel ---------------- */
 
 const HIGHLIGHTS = [
-  { color: "#fff59d", label: "Yellow" },
-  { color: "#a5d6a7", label: "Green" },
-  { color: "#81d4fa", label: "Cyan" },
-  { color: "#f8bbd0", label: "Pink" },
-  { color: "#ffcc80", label: "Orange" },
-  { color: "#ce93d8", label: "Purple" },
+  { color: "#ffeb3b", label: "Yellow" },
+  { color: "#4ade80", label: "Green" },
+  { color: "#38bdf8", label: "Blue" },
+  { color: "#f472b6", label: "Pink" },
+  { color: "#fb923c", label: "Orange" },
+  { color: "#c084fc", label: "Purple" },
 ];
 
 function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
