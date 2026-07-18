@@ -7,7 +7,7 @@ import { rewriteMedia } from "@/lib/media";
 import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
-  ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon,
+  ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon, Lock as LockIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
