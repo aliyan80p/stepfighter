@@ -368,14 +368,14 @@ export const searchQuestions = createServerFn({ method: "POST" })
     if (isPureIds) {
       const { data: r } = await supabase
         .from("questions")
-        .select("id,title,question,correct_answer,subject_id,system_id")
+        .select("id,title,question,explanation,correct_answer,subject_id,system_id")
         .in("id", idTokens.slice(0, LIMIT));
       rows = r ?? [];
     } else {
       const like = `%${q.replace(/[%_]/g, (m) => "\\" + m)}%`;
       const { data: r } = await supabase
         .from("questions")
-        .select("id,title,question,correct_answer,subject_id,system_id")
+        .select("id,title,question,explanation,correct_answer,subject_id,system_id")
         .or(`title.ilike.${like},question.ilike.${like}`)
         .limit(LIMIT + 1);
       rows = r ?? [];
@@ -398,6 +398,7 @@ export const searchQuestions = createServerFn({ method: "POST" })
       id: r.id as number,
       title: r.title as string,
       question: r.question as string,
+      explanation: (r.explanation ?? "") as string,
       correctAnswer: r.correct_answer as number,
       subject: r.subject_id != null ? subjMap[r.subject_id] ?? "" : "",
       system: r.system_id != null ? sysMap[r.system_id] ?? "" : "",
