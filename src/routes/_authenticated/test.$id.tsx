@@ -143,6 +143,23 @@ function TestRunner() {
     setHighlightHtml(saved && typeof saved === "object" ? saved : {});
   }, [question?.id, submitted]);
 
+  // Click-to-open exhibit modal for any image in the question/explanation
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const img = target.closest?.("img") as HTMLImageElement | null;
+      if (!img || !root.contains(img)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setExhibitSrc(img.currentSrc || img.src);
+      setExhibitZoom(1);
+    };
+    root.addEventListener("click", onClick);
+    return () => root.removeEventListener("click", onClick);
+  }, [question?.id, submitted]);
+
 
   const submit = async () => {
     if (selected == null || !question) return;
