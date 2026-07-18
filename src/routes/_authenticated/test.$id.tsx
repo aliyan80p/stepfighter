@@ -222,7 +222,7 @@ function TestRunner() {
               </div>
             )}
 
-            {question.title && <div className="text-xs uppercase text-gray-500 mb-2">{question.title}</div>}
+            
             <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
             <div className="mt-6 space-y-2">
