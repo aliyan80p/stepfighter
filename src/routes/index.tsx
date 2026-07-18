@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Target, TrendingUp, Bookmark } from "lucide-react";
+import { BookOpen, Target, TrendingUp, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -43,7 +43,7 @@ function LandingPage() {
             { icon: BookOpen, title: "4,089 Questions", desc: "Full Step 2 pool" },
             { icon: Target, title: "Custom Tests", desc: "By subject or system" },
             { icon: TrendingUp, title: "Track Progress", desc: "Per subject stats" },
-            { icon: Bookmark, title: "Flag & Review", desc: "Save for later" },
+            { icon: Flag, title: "Flag & Review", desc: "Save for later" },
           ].map((f) => (
             <div key={f.title} className="rounded-lg border border-border p-5">
               <f.icon className="h-6 w-6 text-primary" />

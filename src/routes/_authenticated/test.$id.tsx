@@ -76,6 +76,7 @@ function TestRunner() {
   // Highlight toolbar state (hooks must live above early returns)
   const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const savedTextRef = useRef("");
 
   const themeStyles = theme === "dark"
     ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
@@ -127,7 +128,13 @@ function TestRunner() {
 
   const bookmark = async () => {
     if (!question) return;
-    await bmFn({ data: { questionId: question.id } });
+    try {
+      const result = await bmFn({ data: { questionId: question.id } });
+      toast(result.bookmarked ? "Question flagged" : "Flag removed");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update flag");
+      return;
+    }
     qc.invalidateQueries({ queryKey: ["test", testId] });
   };
 
@@ -173,12 +180,13 @@ function TestRunner() {
 
   const handleSelection = () => {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); return; }
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); savedTextRef.current = ""; return; }
     const range = sel.getRangeAt(0);
     const anchor = range.commonAncestorContainer;
     const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
-    if (!el?.closest("[data-hlkey]")) { setHlBar(null); return; }
+    if (!el?.closest("[data-hlkey]")) { setHlBar(null); savedTextRef.current = ""; return; }
     savedRangeRef.current = range.cloneRange();
+    savedTextRef.current = range.toString();
     const rect = range.getBoundingClientRect();
     setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
   };
@@ -202,6 +210,7 @@ function TestRunner() {
     }
     window.getSelection()?.removeAllRanges();
     savedRangeRef.current = null;
+    savedTextRef.current = "";
     setHlBar(null);
     persistHighlights();
   };
@@ -224,14 +233,19 @@ function TestRunner() {
       }
     });
     window.getSelection()?.removeAllRanges();
+    savedTextRef.current = "";
     setHlBar(null);
     persistHighlights();
   };
 
   const copySel = async () => {
     const range = savedRangeRef.current;
-    if (!range) return;
-    const text = range.toString();
+    const text = (savedTextRef.current || range?.toString() || "").trim();
+    if (!text) {
+      toast.error("Select text first");
+      setHlBar(null);
+      return;
+    }
     let ok = false;
     try {
       if (navigator.clipboard?.writeText) {
@@ -245,7 +259,9 @@ function TestRunner() {
         ta.value = text;
         ta.style.position = "fixed";
         ta.style.opacity = "0";
+        ta.style.pointerEvents = "none";
         document.body.appendChild(ta);
+        ta.focus();
         ta.select();
         ok = document.execCommand("copy");
         document.body.removeChild(ta);
@@ -299,9 +315,10 @@ function TestRunner() {
           <button
             onClick={bookmark}
             className={`flex flex-col items-center px-2 py-1 rounded hover:bg-white/10 ${isBookmarked ? "text-yellow-300" : "text-white/90"}`}
+            title={isBookmarked ? "Remove flag" : "Flag question"}
           >
             <Flag className="h-5 w-5" fill={isBookmarked ? "currentColor" : "none"} />
-            <span className="text-[11px]">Mark</span>
+            <span className="text-[11px]">Flag</span>
           </button>
         </div>
 

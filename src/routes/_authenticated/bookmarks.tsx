@@ -27,13 +27,13 @@ function Bookmarks() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Bookmarks</h1>
+        <h1 className="text-3xl font-bold">Flagged Questions</h1>
         {(data?.length ?? 0) > 0 && <Button onClick={startReview}>Review as Test</Button>}
       </div>
 
       <div className="mt-6 space-y-2">
         {isLoading && <div className="text-muted-foreground">Loading…</div>}
-        {data?.length === 0 && <div className="text-muted-foreground">No bookmarks yet. Tap the bookmark icon on any question.</div>}
+        {data?.length === 0 && <div className="text-muted-foreground">No flagged questions yet. Tap the flag icon on any question.</div>}
         {(data ?? []).map((b) => (
           <div key={b.question_id} className="rounded-lg border border-border p-4">
             <div className="font-medium">Question #{b.question_id}{b.question?.title ? ` — ${b.question.title}` : ""}</div>
