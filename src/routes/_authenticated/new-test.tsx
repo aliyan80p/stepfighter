@@ -125,7 +125,37 @@ function NewTest() {
     if (count > poolCount && poolCount > 0) setCount(Math.min(poolCount, 50));
   }, [poolCount]);
 
+  const parseIds = (raw: string) =>
+    Array.from(new Set(raw.split(/[^0-9]+/).map((s) => parseInt(s, 10)).filter((n) => Number.isFinite(n) && n > 0)));
+
+  const retrieveFromTestId = async () => {
+    const tid = parseInt(customTestId.trim(), 10);
+    if (!Number.isFinite(tid) || tid <= 0) return toast.error("Enter a valid Test ID");
+    setRetrieving(true);
+    try {
+      const r = await getTestIdsFn({ data: { testId: tid } });
+      if (!r.ids.length) return toast.error("That test has no questions");
+      setCustomIds(r.ids.join(","));
+      toast.success(`Retrieved ${r.ids.length} question IDs`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to retrieve");
+    } finally { setRetrieving(false); }
+  };
+
   const start = async () => {
+    if (quizType === "custom") {
+      const ids = parseIds(customIds);
+      if (!ids.length) return toast.error("Enter at least one question ID");
+      setLoading(true);
+      try {
+        const r = await createCustomFn({ data: { questionIds: ids, mode, timed } });
+        if (r.skipped > 0) toast.message(`${r.skipped} ID(s) were not found and skipped`);
+        navigate({ to: "/test/$id", params: { id: String(r.id) } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to create test");
+      } finally { setLoading(false); }
+      return;
+    }
     if (!hasCourse || !hasQbank) return toast.error("Select a course and QBank");
     if (count < 1) return toast.error("Enter a question count");
     setLoading(true);
@@ -136,6 +166,7 @@ function NewTest() {
       toast.error(e instanceof Error ? e.message : "Failed to create test");
     } finally { setLoading(false); }
   };
+
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
