@@ -169,31 +169,40 @@ function TestResults() {
 
       {/* Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 rounded-2xl border border-border bg-gradient-to-br from-indigo-600/40 via-purple-700/30 to-slate-900 p-6 text-white">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <div className="inline-block text-[10px] uppercase tracking-wider bg-white/10 rounded-full px-2.5 py-1 mb-3">Performance Overview</div>
-              <div className="text-xs uppercase tracking-wider text-white/70">Overall Score</div>
-              <div className="text-5xl font-bold">
-                {totals.score.toFixed(1)}<span className="text-2xl">%</span>
+        <div className="lg:col-span-2 relative overflow-hidden rounded-3xl p-6 text-white shadow-xl shadow-fuchsia-500/20">
+          {/* Vivid background */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#f472b6_0%,transparent_50%),radial-gradient(circle_at_bottom_right,#38bdf8_0%,transparent_55%),linear-gradient(135deg,#7c3aed_0%,#4f46e5_50%,#0ea5e9_100%)]" />
+          <div className="absolute -top-16 -right-16 h-56 w-56 rounded-full bg-yellow-300/30 blur-3xl" />
+          <div className="absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-emerald-300/20 blur-3xl" />
+
+          <div className="relative">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold bg-white/15 backdrop-blur-md rounded-full px-3 py-1 mb-3 border border-white/20">
+                  ✨ Performance Overview
+                </div>
+                <div className="text-xs uppercase tracking-wider text-white/80 font-medium">Overall Score</div>
+                <div className="text-6xl font-black bg-gradient-to-br from-white via-yellow-100 to-amber-200 bg-clip-text text-transparent drop-shadow-lg">
+                  {totals.score.toFixed(1)}<span className="text-3xl">%</span>
+                </div>
+                <div className="text-sm text-white/85 mt-2 max-w-md">
+                  {belowPeer
+                    ? `You are ${(totals.peer - totals.score).toFixed(1)}% behind the peer average. Revisit weaker subjects first.`
+                    : `You are ${(totals.score - totals.peer).toFixed(1)}% above the peer average. Keep going.`}
+                </div>
+                <div className={`mt-3 inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 border ${belowPeer ? "bg-rose-500/25 border-rose-200/40 text-rose-50" : "bg-emerald-500/25 border-emerald-200/40 text-emerald-50"}`}>
+                  {belowPeer ? "😤 Keep Practicing" : "🎯 On Track"}
+                </div>
               </div>
-              <div className="text-sm text-white/70 mt-2 max-w-md">
-                {belowPeer
-                  ? `You are ${(totals.peer - totals.score).toFixed(1)}% behind the peer average. Revisit weaker subjects first.`
-                  : `You are ${(totals.score - totals.peer).toFixed(1)}% above the peer average. Keep going.`}
-              </div>
-              <div className="mt-3 inline-flex items-center gap-1.5 text-xs bg-white/10 rounded-full px-2.5 py-1">
-                {belowPeer ? "😤 Keep Practicing" : "🎯 On Track"}
-              </div>
+              <Donut value={totals.score} label="Score" />
             </div>
-            <Donut value={totals.score} label="Score" />
-          </div>
-          <BarLine label="Your Score" value={totals.score} tone="mine" />
-          <BarLine label="Peer Average" value={totals.peer} tone="peer" />
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            <MiniStat label="You" value={`${totals.score.toFixed(1)}%`} />
-            <MiniStat label="Average" value={`${totals.peer.toFixed(1)}%`} />
-            <MiniStat label="Gap to Close" value={`${Math.abs(totals.peer - totals.score).toFixed(1)}%`} />
+            <BarLine label="Your Score" value={totals.score} tone="mine" />
+            <BarLine label="Peer Average" value={totals.peer} tone="peer" />
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              <MiniStat label="You" value={`${totals.score.toFixed(1)}%`} />
+              <MiniStat label="Average" value={`${totals.peer.toFixed(1)}%`} />
+              <MiniStat label="Gap to Close" value={`${Math.abs(totals.peer - totals.score).toFixed(1)}%`} />
+            </div>
           </div>
         </div>
 
