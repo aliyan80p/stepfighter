@@ -2,16 +2,27 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-export const getDashboardStats = createServerFn({ method: "GET" })
+const qb = () => z.number().int().positive().default(1);
+
+export const listQbanks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { data } = await context.supabase.from("qbanks").select("id,slug,name").order("id");
+    return data ?? [];
+  });
+
+export const getDashboardStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const qbankId = data.qbankId;
     const [{ count: totalQ }, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }] = await Promise.all([
-      supabase.from("questions").select("*", { count: "exact", head: true }),
-      supabase.from("subjects").select("id,name,count").order("id"),
-      fetchAllQuestionRows(supabase, "id,subject_id"),
-      supabase.from("attempts").select("is_correct,question_id,selected_answer").eq("user_id", userId),
-      supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId),
+      supabase.from("subjects").select("id,name,count").eq("qbank_id", qbankId).order("id"),
+      fetchAllQuestionRows(supabase, "id,subject_id", { qbankId }),
+      supabase.from("attempts").select("is_correct,question_id,selected_answer").eq("user_id", userId).eq("qbank_id", qbankId),
+      supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("qbank_id", qbankId),
     ]);
     const subjectCounts = new Map<number, number>();
     for (const q of questionMeta) {
@@ -41,11 +52,13 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 
 export const getFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const qbankId = data.qbankId;
     const [{ data: subjectsRaw }, { data: systemsRaw }, qs] = await Promise.all([
-      context.supabase.from("subjects").select("id,name").order("name"),
-      context.supabase.from("systems").select("id,name").order("name"),
-      fetchAllQuestionRows(context.supabase, "id,title,subject_id,system_id"),
+      context.supabase.from("subjects").select("id,name").eq("qbank_id", qbankId).order("name"),
+      context.supabase.from("systems").select("id,name").eq("qbank_id", qbankId).order("name"),
+      fetchAllQuestionRows(context.supabase, "id,title,subject_id,system_id", { qbankId }),
     ]);
     const subjectCounts = new Map<number, number>();
     const systemCounts = new Map<number, number>();
@@ -76,6 +89,7 @@ export const getFilters = createServerFn({ method: "GET" })
   });
 
 const CreateTestInput = z.object({
+  qbankId: qb(),
   subjectIds: z.array(z.number()).default([]),
   systemIds: z.array(z.number()).default([]),
   topicNames: z.array(z.string()).default([]),
@@ -94,7 +108,7 @@ export const createTest = createServerFn({ method: "POST" })
     let ids = rows.map((r) => r.id as number);
 
     if (data.scope !== "all") {
-      const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId);
+      const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId).eq("qbank_id", data.qbankId);
       const attempted = new Set((att ?? []).map((a) => a.question_id));
       const correctIds = new Set((att ?? []).filter((a) => a.is_correct).map((a) => a.question_id));
       const incorrectIds = new Set((att ?? []).filter((a) => a.selected_answer != null && !a.is_correct).map((a) => a.question_id));
@@ -104,7 +118,7 @@ export const createTest = createServerFn({ method: "POST" })
       else if (data.scope === "incorrect") ids = ids.filter((id) => incorrectIds.has(id));
       else if (data.scope === "omitted") ids = ids.filter((id) => omittedIds.has(id));
       else if (data.scope === "marked") {
-        const { data: bm } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId);
+        const { data: bm } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("qbank_id", data.qbankId);
         const bmIds = new Set((bm ?? []).map((b) => b.question_id));
         ids = ids.filter((id) => bmIds.has(id));
       }
@@ -117,6 +131,7 @@ export const createTest = createServerFn({ method: "POST" })
 export const createCustomTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
+    qbankId: qb(),
     questionIds: z.array(z.number().int().positive()).min(1).max(500),
     mode: z.enum(["practice", "test"]).default("practice"),
     timed: z.boolean().default(false),
@@ -124,15 +139,14 @@ export const createCustomTest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const uniq = Array.from(new Set(data.questionIds));
-    const { data: found, error } = await supabase.from("questions").select("id").in("id", uniq);
+    const { data: found, error } = await supabase.from("questions").select("id").eq("qbank_id", data.qbankId).in("id", uniq);
     if (error) throw error;
     const validIds = (found ?? []).map((r: any) => r.id as number);
     if (!validIds.length) throw new Error("None of the provided question IDs were found.");
-    // preserve user's ordering, dropping invalid ids
     const ordered = uniq.filter((id) => validIds.includes(id));
     const { data: inserted, error: e2 } = await supabase
       .from("tests")
-      .insert({ user_id: userId, question_ids: ordered, mode: data.mode, qbank_id: 1 })
+      .insert({ user_id: userId, question_ids: ordered, mode: data.mode, qbank_id: data.qbankId })
       .select("id")
       .single();
     if (e2) throw e2;
@@ -145,17 +159,17 @@ export const getTestQuestionIds = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: t, error } = await supabase
-      .from("tests").select("question_ids,user_id").eq("id", data.testId).maybeSingle();
+      .from("tests").select("question_ids,user_id,qbank_id").eq("id", data.testId).maybeSingle();
     if (error) throw error;
     if (!t) throw new Error("Test not found");
     if (t.user_id !== userId) throw new Error("You don't have access to this test.");
-    return { ids: (t.question_ids as number[]) ?? [] };
+    return { ids: (t.question_ids as number[]) ?? [], qbankId: (t.qbank_id ?? 1) as number };
   });
-
 
 export const getPoolCount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
+    qbankId: qb(),
     subjectIds: z.array(z.number()).default([]),
     systemIds: z.array(z.number()).default([]),
     topicNames: z.array(z.string()).default([]),
@@ -166,7 +180,7 @@ export const getPoolCount = createServerFn({ method: "POST" })
     const rows = await fetchAllQuestionRows(supabase, "id", data);
     let ids = rows.map((r) => r.id as number);
     if (data.scope !== "all") {
-      const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId);
+      const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId).eq("qbank_id", data.qbankId);
       const attempted = new Set((att ?? []).map((a) => a.question_id));
       const correctIds = new Set((att ?? []).filter((a) => a.is_correct).map((a) => a.question_id));
       const incorrectIds = new Set((att ?? []).filter((a) => a.selected_answer != null && !a.is_correct).map((a) => a.question_id));
@@ -176,7 +190,7 @@ export const getPoolCount = createServerFn({ method: "POST" })
       else if (data.scope === "incorrect") ids = ids.filter((id) => incorrectIds.has(id));
       else if (data.scope === "omitted") ids = ids.filter((id) => omittedIds.has(id));
       else if (data.scope === "marked") {
-        const { data: bm } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId);
+        const { data: bm } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("qbank_id", data.qbankId);
         const bmIds = new Set((bm ?? []).map((b) => b.question_id));
         ids = ids.filter((id) => bmIds.has(id));
       }
@@ -184,13 +198,10 @@ export const getPoolCount = createServerFn({ method: "POST" })
     return { count: ids.length };
   });
 
-
-
-
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
   const { data: inserted, error } = await supabase
     .from("tests")
-    .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: 1 })
+    .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: data.qbankId })
     .select("id")
     .single();
   if (error) throw error;
@@ -207,18 +218,20 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 type QuestionFilters = {
+  qbankId: number;
   subjectIds?: number[];
   systemIds?: number[];
   topicNames?: string[];
 };
 
-async function fetchAllQuestionRows(supabase: any, columns: string, filters: QuestionFilters = {}) {
+async function fetchAllQuestionRows(supabase: any, columns: string, filters: QuestionFilters) {
   const pageSize = 1000;
   const rows: any[] = [];
   for (let from = 0; ; from += pageSize) {
     let query = supabase
       .from("questions")
       .select(columns)
+      .eq("qbank_id", filters.qbankId)
       .order("id", { ascending: true })
       .range(from, from + pageSize - 1);
     if (filters.subjectIds?.length) query = query.in("subject_id", filters.subjectIds);
@@ -240,13 +253,16 @@ export const getTest = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: test, error } = await supabase.from("tests").select("*").eq("id", data.id).eq("user_id", userId).single();
     if (error || !test) throw new Error("Test not found");
+    const qbankId = (test.qbank_id ?? 1) as number;
     const { data: questions } = await supabase
       .from("questions")
       .select("id,title,question,explanation,correct_answer,subject_id,system_id,media_name,other_medias")
+      .eq("qbank_id", qbankId)
       .in("id", test.question_ids);
     const { data: answers } = await supabase
       .from("answers")
       .select("id,question_id,answer_index,answer_text")
+      .eq("qbank_id", qbankId)
       .in("question_id", test.question_ids)
       .order("answer_index");
     const { data: attempts } = await supabase
@@ -254,15 +270,16 @@ export const getTest = createServerFn({ method: "GET" })
       .select("question_id,selected_answer,is_correct")
       .eq("user_id", userId)
       .eq("test_id", data.id);
-    const { data: bookmarks } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).in("question_id", test.question_ids);
+    const { data: bookmarks } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("qbank_id", qbankId).in("question_id", test.question_ids);
     const [{ data: subjects }, { data: systems }] = await Promise.all([
-      supabase.from("subjects").select("id,name"),
-      supabase.from("systems").select("id,name"),
+      supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
+      supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
     ]);
     const subjectMap: Record<number, string> = Object.fromEntries((subjects ?? []).map((s) => [s.id, s.name]));
     const systemMap: Record<number, string> = Object.fromEntries((systems ?? []).map((s) => [s.id, s.name]));
     return {
       test,
+      qbankId,
       questions: (test.question_ids as number[]).map((id) => (questions ?? []).find((q) => q.id === id)!).filter(Boolean),
       answersByQ: groupBy(answers ?? [], (a) => a.question_id),
       attemptsByQ: Object.fromEntries((attempts ?? []).map((a) => [a.question_id, a])),
@@ -271,7 +288,6 @@ export const getTest = createServerFn({ method: "GET" })
       systemMap,
     };
   });
-
 
 function groupBy<T, K extends string | number>(arr: T[], fn: (x: T) => K): Record<K, T[]> {
   const out: Record<string, T[]> = {};
@@ -292,16 +308,16 @@ export const submitAnswer = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: q } = await supabase.from("questions").select("correct_answer").eq("id", data.questionId).single();
+    const { data: t } = await supabase.from("tests").select("qbank_id").eq("id", data.testId).eq("user_id", userId).single();
+    const qbankId = ((t?.qbank_id ?? 1) as number);
+    const { data: q } = await supabase.from("questions").select("correct_answer").eq("qbank_id", qbankId).eq("id", data.questionId).single();
     if (!q) throw new Error("Question not found");
     const isCorrect = q.correct_answer === data.selectedIndex;
-    // Upsert attempt: delete prior then insert
     await supabase.from("attempts").delete().eq("user_id", userId).eq("test_id", data.testId).eq("question_id", data.questionId);
     await supabase.from("attempts").insert({
-      user_id: userId, test_id: data.testId, question_id: data.questionId, qbank_id: 1,
+      user_id: userId, test_id: data.testId, question_id: data.questionId, qbank_id: qbankId,
       selected_answer: data.selectedIndex, is_correct: isCorrect, time_seconds: data.timeSeconds,
     });
-    // Update tallies
     const { data: attempts } = await supabase.from("attempts").select("is_correct").eq("test_id", data.testId).eq("user_id", userId);
     const right = (attempts ?? []).filter((a) => a.is_correct).length;
     const wrong = (attempts ?? []).filter((a) => a.is_correct === false).length;
@@ -311,15 +327,15 @@ export const submitAnswer = createServerFn({ method: "POST" })
 
 export const toggleBookmark = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ questionId: z.number() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ questionId: z.number(), qbankId: qb() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: existing } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("question_id", data.questionId).maybeSingle();
+    const { data: existing } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("qbank_id", data.qbankId).eq("question_id", data.questionId).maybeSingle();
     if (existing) {
-      await supabase.from("bookmarks").delete().eq("user_id", userId).eq("question_id", data.questionId);
+      await supabase.from("bookmarks").delete().eq("user_id", userId).eq("qbank_id", data.qbankId).eq("question_id", data.questionId);
       return { bookmarked: false };
     }
-    await supabase.from("bookmarks").insert({ user_id: userId, question_id: data.questionId, qbank_id: 1 });
+    await supabase.from("bookmarks").insert({ user_id: userId, question_id: data.questionId, qbank_id: data.qbankId });
     return { bookmarked: true };
   });
 
@@ -334,19 +350,22 @@ export const finishTest = createServerFn({ method: "POST" })
 
 export const listTests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const qbankId = data.qbankId;
     const { data: tests } = await context.supabase
       .from("tests")
-      .select("id,mode,question_ids,right_count,wrong_count,done,created_at,name")
+      .select("id,mode,question_ids,right_count,wrong_count,done,created_at,name,qbank_id")
       .eq("user_id", context.userId)
+      .eq("qbank_id", qbankId)
       .order("created_at", { ascending: false })
       .limit(500);
     const allQIds = Array.from(new Set((tests ?? []).flatMap((t) => t.question_ids as number[])));
     const [qsRes, subjRes] = await Promise.all([
       allQIds.length
-        ? context.supabase.from("questions").select("id,subject_id").in("id", allQIds)
+        ? context.supabase.from("questions").select("id,subject_id").eq("qbank_id", qbankId).in("id", allQIds)
         : Promise.resolve({ data: [] as { id: number; subject_id: number | null }[] }),
-      context.supabase.from("subjects").select("id,name"),
+      context.supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
     ]);
     const subjMap = new Map<number, string>(((subjRes.data ?? []) as { id: number; name: string }[]).map((s) => [s.id, s.name]));
     const qSubj = new Map<number, number | null>(((qsRes.data ?? []) as { id: number; subject_id: number | null }[]).map((q) => [q.id, q.subject_id]));
@@ -390,24 +409,26 @@ export const renameTest = createServerFn({ method: "POST" })
 
 export const listBookmarks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data: bm } = await context.supabase.from("bookmarks").select("question_id,created_at").eq("user_id", context.userId).order("created_at", { ascending: false });
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const qbankId = data.qbankId;
+    const { data: bm } = await context.supabase.from("bookmarks").select("question_id,created_at").eq("user_id", context.userId).eq("qbank_id", qbankId).order("created_at", { ascending: false });
     const ids = (bm ?? []).map((b) => b.question_id);
     if (!ids.length) return [];
-    const { data: qs } = await context.supabase.from("questions").select("id,title,subject_id,system_id").in("id", ids);
+    const { data: qs } = await context.supabase.from("questions").select("id,title,subject_id,system_id").eq("qbank_id", qbankId).in("id", ids);
     return (bm ?? []).map((b) => ({ ...b, question: (qs ?? []).find((q) => q.id === b.question_id) }));
   });
 
 export const searchQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ query: z.string().default("") }).parse(d))
+  .inputValidator((d: unknown) => z.object({ query: z.string().default(""), qbankId: qb() }).parse(d))
   .handler(async ({ data, context }) => {
     const q = data.query.trim();
     if (!q) return { results: [], total: 0, truncated: false };
     const { supabase } = context;
+    const qbankId = data.qbankId;
     const LIMIT = 200;
 
-    // ID search: comma/space separated numbers
     const idTokens = q.split(/[\s,]+/).map((s) => Number(s)).filter((n) => Number.isFinite(n) && n > 0);
     const isPureIds = idTokens.length > 0 && q.split(/[\s,]+/).every((s) => /^\d+$/.test(s.trim()) || s.trim() === "");
 
@@ -416,6 +437,7 @@ export const searchQuestions = createServerFn({ method: "POST" })
       const { data: r } = await supabase
         .from("questions")
         .select("id,title,question,explanation,correct_answer,subject_id,system_id")
+        .eq("qbank_id", qbankId)
         .in("id", idTokens.slice(0, LIMIT));
       rows = r ?? [];
     } else {
@@ -423,6 +445,7 @@ export const searchQuestions = createServerFn({ method: "POST" })
       const { data: r } = await supabase
         .from("questions")
         .select("id,title,question,explanation,correct_answer,subject_id,system_id")
+        .eq("qbank_id", qbankId)
         .or(`title.ilike.${like},question.ilike.${like}`)
         .limit(LIMIT + 1);
       rows = r ?? [];
@@ -432,10 +455,10 @@ export const searchQuestions = createServerFn({ method: "POST" })
     const ids = rows.map((r) => r.id);
     const [{ data: answers }, { data: subjects }, { data: systems }] = await Promise.all([
       ids.length
-        ? supabase.from("answers").select("question_id,answer_index,answer_text").in("question_id", ids).order("answer_index")
+        ? supabase.from("answers").select("question_id,answer_index,answer_text").eq("qbank_id", qbankId).in("question_id", ids).order("answer_index")
         : Promise.resolve({ data: [] as any[] }),
-      supabase.from("subjects").select("id,name"),
-      supabase.from("systems").select("id,name"),
+      supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
+      supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
     ]);
     const subjMap: Record<number, string> = Object.fromEntries((subjects ?? []).map((s: any) => [s.id, s.name]));
     const sysMap: Record<number, string> = Object.fromEntries((systems ?? []).map((s: any) => [s.id, s.name]));
