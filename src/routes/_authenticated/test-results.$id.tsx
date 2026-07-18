@@ -13,7 +13,7 @@ import {
   TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/test/$id/results")({
+export const Route = createFileRoute("/_authenticated/test-results/$id")({
   component: TestResults,
 });
 
