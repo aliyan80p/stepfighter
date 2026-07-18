@@ -616,7 +616,7 @@ function TestRunner() {
         <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
-            const hideResult = !isReview && !tutorMode;
+            const hideResult = !isReview && createdExam;
             const status = att
               ? (hideResult ? "attempted" : att.is_correct ? "correct" : "wrong")
               : "none";
