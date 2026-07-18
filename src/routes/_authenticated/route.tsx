@@ -207,26 +207,3 @@ function AuthedLayout() {
   );
 }
 
-function QbankSwitcher() {
-  const active = useActiveQbankId();
-  return (
-    <div className="px-3 pt-3">
-      <label className="block text-[10px] uppercase tracking-wider text-sidebar-foreground/50 mb-1 px-1">
-        Active QBank
-      </label>
-      <select
-        value={active}
-        onChange={(e) => {
-          setActiveQbankId(Number(e.target.value));
-          // full reload so all cached queries reset cleanly
-          window.location.reload();
-        }}
-        className="w-full rounded-md bg-sidebar-accent/60 text-sidebar-accent-foreground text-sm px-2 py-1.5 border border-sidebar-border focus:outline-none focus:ring-1 focus:ring-sidebar-primary"
-      >
-        {QBANKS.map((q) => (
-          <option key={q.id} value={q.id}>{q.name}</option>
-        ))}
-      </select>
-    </div>
-  );
-}
