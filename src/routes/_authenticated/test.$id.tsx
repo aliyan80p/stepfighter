@@ -739,7 +739,13 @@ function TestRunner() {
                 </button>
               ) : (
                 <button
-                  onClick={() => idx === total - 1 ? finish() : goToQuestion(idx + 1)}
+                  onClick={() => {
+                    if (idx === total - 1) {
+                      if (window.confirm("End the test and submit your answers? This cannot be undone.")) finish();
+                    } else {
+                      goToQuestion(idx + 1);
+                    }
+                  }}
                   className="px-6 py-2 rounded text-white text-sm font-semibold"
                   style={{ background: NAV_BG }}
                 >
