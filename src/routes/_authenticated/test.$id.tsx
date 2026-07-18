@@ -603,7 +603,7 @@ function TestRunner() {
           <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
           {(!isRealExam || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          <TopBtn icon={Eraser} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />
+          {isRealExam && !isReview && <TopBtn icon={Eraser} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
           <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
           {(!isRealExam || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
         </div>
