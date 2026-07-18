@@ -360,9 +360,6 @@ function TestRunner() {
             />
           ))}
           <div className="w-px h-5 bg-white/20 mx-1" />
-          <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyStrike(); }} className="p-1 hover:bg-white/10 rounded" title="Strike-through">
-            <Strikethrough className="h-4 w-4" />
-          </button>
           <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); eraseHighlight(); }} className="p-1 hover:bg-white/10 rounded" title="Remove highlight">
             <Eraser className="h-4 w-4" />
           </button>
