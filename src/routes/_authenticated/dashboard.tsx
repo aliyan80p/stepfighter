@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats } from "@/lib/qbank.functions";
 import { Button } from "@/components/ui/button";
-import { BookOpen, CheckCircle2, XCircle, MinusCircle, HelpCircle, User, Percent, BarChart3, Bookmark } from "lucide-react";
+import { BookOpen, CheckCircle2, XCircle, MinusCircle, HelpCircle, User, Percent, BarChart3, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -121,7 +121,7 @@ function Dashboard() {
         <div className="flex flex-wrap gap-3">
           <Button asChild size="lg"><Link to="/new-test">Start New Test</Link></Button>
           <Button asChild size="lg" variant="outline"><Link to="/tests">Test History</Link></Button>
-          <Button asChild size="lg" variant="outline"><Link to="/bookmarks"><Bookmark className="h-4 w-4 mr-2" />Bookmarks ({data?.bookmarks ?? 0})</Link></Button>
+          <Button asChild size="lg" variant="outline"><Link to="/bookmarks"><Flag className="h-4 w-4 mr-2" />Flagged ({data?.bookmarks ?? 0})</Link></Button>
         </div>
       </div>
     </div>
