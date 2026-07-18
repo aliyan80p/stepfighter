@@ -322,21 +322,29 @@ function NewTest() {
 
         {openTab === "courses" && (
           <SelectionList
-            items={COURSES.map((c) => ({ id: c.id, label: c.name, count: totalStep2 }))}
+            items={COURSES.map((c) => ({ id: c.id, label: c.name, count: c.qbankId === qbankId ? totalStep2 : 0 }))}
             selected={courseIds}
-            onToggle={(id) => setCourseIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+            onToggle={(id) => {
+              const c = COURSES.find((x) => x.id === id);
+              if (!c) return;
+              setCourseIds([c.id]);
+              setQbankIds([]);
+              setSubjectIds([]); setSystemIds([]); setTopicNames([]);
+              if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
+            }}
             columns={3}
             radio
           />
         )}
         {openTab === "qbank" && (
           <SelectionList
-            items={QBANKS.map((q) => ({ id: q.id, label: q.name, count: totalStep2 }))}
+            items={QBANKS.filter((q) => courseIds.includes(q.id)).map((q) => ({ id: q.id, label: q.name, count: totalStep2 }))}
             selected={qbankIds}
             onToggle={(id) => setQbankIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
             columns={3}
           />
         )}
+
         {openTab === "subjects" && (
           <SelectionList
             items={subjectItems.map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
