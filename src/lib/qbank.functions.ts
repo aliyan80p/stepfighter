@@ -114,6 +114,45 @@ export const createTest = createServerFn({ method: "POST" })
     return await insertTest(supabase, userId, ids, data);
   });
 
+export const createCustomTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    questionIds: z.array(z.number().int().positive()).min(1).max(500),
+    mode: z.enum(["practice", "test"]).default("practice"),
+    timed: z.boolean().default(false),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const uniq = Array.from(new Set(data.questionIds));
+    const { data: found, error } = await supabase.from("questions").select("id").in("id", uniq);
+    if (error) throw error;
+    const validIds = (found ?? []).map((r: any) => r.id as number);
+    if (!validIds.length) throw new Error("None of the provided question IDs were found.");
+    // preserve user's ordering, dropping invalid ids
+    const ordered = uniq.filter((id) => validIds.includes(id));
+    const { data: inserted, error: e2 } = await supabase
+      .from("tests")
+      .insert({ user_id: userId, question_ids: ordered, mode: data.mode })
+      .select("id")
+      .single();
+    if (e2) throw e2;
+    return { id: inserted.id as number, count: ordered.length, skipped: uniq.length - ordered.length };
+  });
+
+export const getTestQuestionIds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ testId: z.number().int().positive() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: t, error } = await supabase
+      .from("tests").select("question_ids,user_id").eq("id", data.testId).maybeSingle();
+    if (error) throw error;
+    if (!t) throw new Error("Test not found");
+    if (t.user_id !== userId) throw new Error("You don't have access to this test.");
+    return { ids: (t.question_ids as number[]) ?? [] };
+  });
+
+
 export const getPoolCount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
