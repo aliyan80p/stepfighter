@@ -274,37 +274,58 @@ function QuestionModal({ r, onClose }: { r: SearchResult; onClose: () => void })
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-5">
+        <div className="p-5 qbank-theme-light">
           <div
-            className="qbank-html text-sm text-slate-800 mb-4"
+            data-hlkey="q"
+            className="qbank-html qbank-light text-[15px] text-slate-800"
             dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "") }}
           />
-          <div className="space-y-1.5">
-            {r.answers.map((a) => {
+
+          <div
+            className="mt-3 inline-block rounded border-2 px-4 py-2"
+            style={{ borderColor: "#5b8fc9", background: "#ffffff" }}
+          >
+            {r.answers.map((a, i) => {
+              const letter = String.fromCharCode(65 + a.answer_index);
               const isCorrect = a.answer_index === r.correctAnswer;
               return (
-                <div
-                  key={a.answer_index}
-                  className={`flex gap-2 items-start p-2 rounded border text-sm ${
-                    isCorrect ? "bg-green-50 border-green-300" : "bg-slate-50 border-slate-200"
-                  }`}
-                >
-                  <span className={`font-semibold ${isCorrect ? "text-green-700" : "text-slate-500"}`}>
-                    {String.fromCharCode(65 + a.answer_index)}.
+                <div key={i} className="w-full text-left flex items-center gap-2 py-1.5 text-[15px] text-slate-800">
+                  <span className="w-4 flex justify-center shrink-0">
+                    {isCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
                   </span>
-                  <span
-                    className={`qbank-html flex-1 ${isCorrect ? "text-green-900 font-medium" : "text-slate-700"}`}
-                    dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "") }}
-                  />
-                  {isCorrect && <span className="text-green-700 text-xs font-semibold">✓ Correct</span>}
+                  <span className="h-4 w-4 rounded-full border border-gray-400 flex items-center justify-center shrink-0" />
+                  <span className="flex-1">
+                    <span className="font-normal">{letter}. </span>
+                    <span
+                      data-hlkey={`a${i}`}
+                      className="qbank-html qbank-light inline"
+                      dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "") }}
+                    />
+                  </span>
                 </div>
               );
             })}
           </div>
 
+          {(() => {
+            const correctAns = r.answers.find((a) => a.answer_index === r.correctAnswer);
+            const correctLetter = correctAns ? String.fromCharCode(65 + correctAns.answer_index) : "";
+            const correctText = correctAns?.answer_text ?? "";
+            return (
+              <div className="mt-4 rounded-md border-l-4 p-3 border-green-500 bg-green-50">
+                <div className="font-semibold text-green-700">Correct Answer</div>
+                <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
+                <div
+                  className="font-semibold text-gray-800 mt-1"
+                  dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }}
+                />
+              </div>
+            );
+          })()}
+
           {r.explanation && (
-            <div className="mt-6">
-              <div className="border-b border-slate-200">
+            <div className="mt-4">
+              <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
                 <div
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
                   style={{ color: "#1e3a8a", boxShadow: "inset 0 -3px 0 #1e3a8a" }}
@@ -313,10 +334,15 @@ function QuestionModal({ r, onClose }: { r: SearchResult; onClose: () => void })
                 </div>
               </div>
               <div
-                className="qbank-html qbank-light qbank-explanation pt-3 pb-2 text-sm text-slate-800"
-                style={{ lineHeight: 1.7 }}
-                dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true }) }}
-              />
+                className="pt-3 pb-2"
+                style={{ lineHeight: 1.7, color: "#1f2937" }}
+              >
+                <div
+                  data-hlkey="e"
+                  className="qbank-html qbank-light qbank-explanation"
+                  dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true }) }}
+                />
+              </div>
             </div>
           )}
         </div>
