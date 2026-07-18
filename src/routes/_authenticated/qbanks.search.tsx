@@ -301,6 +301,24 @@ function QuestionModal({ r, onClose }: { r: SearchResult; onClose: () => void })
               );
             })}
           </div>
+
+          {r.explanation && (
+            <div className="mt-6">
+              <div className="border-b border-slate-200">
+                <div
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
+                  style={{ color: "#1e3a8a", boxShadow: "inset 0 -3px 0 #1e3a8a" }}
+                >
+                  <FileText className="h-4 w-4" /> Explanation
+                </div>
+              </div>
+              <div
+                className="qbank-html qbank-light qbank-explanation pt-3 pb-2 text-sm text-slate-800"
+                style={{ lineHeight: 1.7 }}
+                dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true }) }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
