@@ -15,7 +15,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy,
+  FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy, PlayCircle, Rocket, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/imd-qbank-logo.png";
@@ -231,24 +231,24 @@ function TestsList() {
                   <div className="font-bold">{r.total}</div>
                   <div className="text-xs text-muted-foreground">questions</div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {r.status !== "completed" && r.answered > 0 && (
-                    <Button size="sm" variant="outline" onClick={() => navigate({ to: "/test/$id", params: { id: String(r.id) } })}>
-                      Resume
+                    <Button size="sm" className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-md shadow-orange-500/30 border-0" onClick={() => navigate({ to: "/test/$id", params: { id: String(r.id) } })}>
+                      <PlayCircle className="h-3.5 w-3.5 mr-1" /> Resume
                     </Button>
                   )}
                   {r.status === "not_started" && (
-                    <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/test/$id", params: { id: String(r.id) } })}>
-                      <FileText className="h-3.5 w-3.5 mr-1" /> Start
+                    <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-md shadow-emerald-500/30 border-0" onClick={() => navigate({ to: "/test/$id", params: { id: String(r.id) } })}>
+                      <Rocket className="h-3.5 w-3.5 mr-1" /> Start
                     </Button>
                   )}
                   {r.answered > 0 && (
-                    <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/test-results/$id", params: { id: String(r.id) } })}>
+                    <Button size="sm" className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-md shadow-blue-500/30 border-0" onClick={() => navigate({ to: "/test-results/$id", params: { id: String(r.id) } })}>
                       <FileText className="h-3.5 w-3.5 mr-1" /> Results
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => toast.info("Test analysis coming soon")}>
-                    <BarChart3 className="h-3.5 w-3.5 mr-1" /> Analysis
+                  <Button size="sm" className="bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 hover:from-fuchsia-600 hover:via-purple-600 hover:to-indigo-600 text-white shadow-md shadow-purple-500/30 border-0" onClick={() => navigate({ to: "/test-results/$id", params: { id: String(r.id) }, search: { tab: "analysis" } as any })}>
+                    <Sparkles className="h-3.5 w-3.5 mr-1" /> Analysis
                   </Button>
                 </div>
               </div>
