@@ -65,10 +65,16 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   headers.set("Content-Disposition", "inline");
 
+  const bodyFrom = (chunk: Uint8Array): ArrayBuffer => {
+    const copy = new Uint8Array(chunk.byteLength);
+    copy.set(chunk);
+    return copy.buffer as ArrayBuffer;
+  };
+
   const match = range?.match(/^bytes=(\d*)-(\d*)$/);
   if (!match) {
     headers.set("Content-Length", String(data.byteLength));
-    return new Response(data, { headers });
+    return new Response(bodyFrom(data), { headers });
   }
 
   const total = data.byteLength;
@@ -82,7 +88,7 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
   const slice = data.subarray(start, end + 1);
   headers.set("Content-Length", String(slice.byteLength));
   headers.set("Content-Range", `bytes ${start}-${end}/${total}`);
-  return new Response(slice, { status: 206, headers });
+  return new Response(bodyFrom(slice), { status: 206, headers });
 }
 
 export const Route = createFileRoute("/api/media/$")({
