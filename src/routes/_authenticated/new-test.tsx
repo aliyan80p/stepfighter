@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
-import { getFilters, createTest, getPoolCount } from "@/lib/qbank.functions";
+import { getFilters, createTest, getPoolCount, createCustomTest, getTestQuestionIds } from "@/lib/qbank.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +23,8 @@ const QBANKS = [{ id: "step2", name: "USMLE World Step 2 CK" }];
 function NewTest() {
   const getFn = useServerFn(getFilters);
   const createFn = useServerFn(createTest);
+  const createCustomFn = useServerFn(createCustomTest);
+  const getTestIdsFn = useServerFn(getTestQuestionIds);
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
   const { data } = useQuery({ queryKey: ["filters", "all-questions-v2"], queryFn: () => getFn() });
@@ -41,6 +43,12 @@ function NewTest() {
   const [count, setCount] = useState(20);
   const [quizName, setQuizName] = useState(() => `Custom Quiz ${new Date().toLocaleString()}`);
   const [loading, setLoading] = useState(false);
+
+  // Quiz Type: standard vs custom
+  const [quizType, setQuizType] = useState<"standard" | "custom">("standard");
+  const [customTestId, setCustomTestId] = useState("");
+  const [customIds, setCustomIds] = useState("");
+  const [retrieving, setRetrieving] = useState(false);
 
   const [subjectSearch, setSubjectSearch] = useState("");
   const [systemSearch, setSystemSearch] = useState("");
@@ -117,7 +125,37 @@ function NewTest() {
     if (count > poolCount && poolCount > 0) setCount(Math.min(poolCount, 50));
   }, [poolCount]);
 
+  const parseIds = (raw: string) =>
+    Array.from(new Set(raw.split(/[^0-9]+/).map((s) => parseInt(s, 10)).filter((n) => Number.isFinite(n) && n > 0)));
+
+  const retrieveFromTestId = async () => {
+    const tid = parseInt(customTestId.trim(), 10);
+    if (!Number.isFinite(tid) || tid <= 0) return toast.error("Enter a valid Test ID");
+    setRetrieving(true);
+    try {
+      const r = await getTestIdsFn({ data: { testId: tid } });
+      if (!r.ids.length) return toast.error("That test has no questions");
+      setCustomIds(r.ids.join(","));
+      toast.success(`Retrieved ${r.ids.length} question IDs`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to retrieve");
+    } finally { setRetrieving(false); }
+  };
+
   const start = async () => {
+    if (quizType === "custom") {
+      const ids = parseIds(customIds);
+      if (!ids.length) return toast.error("Enter at least one question ID");
+      setLoading(true);
+      try {
+        const r = await createCustomFn({ data: { questionIds: ids, mode, timed } });
+        if (r.skipped > 0) toast.message(`${r.skipped} ID(s) were not found and skipped`);
+        navigate({ to: "/test/$id", params: { id: String(r.id) } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to create test");
+      } finally { setLoading(false); }
+      return;
+    }
     if (!hasCourse || !hasQbank) return toast.error("Select a course and QBank");
     if (count < 1) return toast.error("Enter a question count");
     setLoading(true);
@@ -128,6 +166,7 @@ function NewTest() {
       toast.error(e instanceof Error ? e.message : "Failed to create test");
     } finally { setLoading(false); }
   };
+
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
@@ -169,11 +208,84 @@ function NewTest() {
       {/* Quiz Type */}
       <Card>
         <h2 className="font-semibold mb-3">Quiz Type</h2>
-        <div className="rounded-lg border border-border p-3">
+        <div className="rounded-lg border border-border p-3 mb-4">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">Edit Quiz Name</div>
           <Input value={quizName} onChange={(e) => setQuizName(e.target.value)} className="border-0 shadow-none p-0 focus-visible:ring-0 h-auto text-sm" />
         </div>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { v: "standard", l: "Standard" },
+            { v: "custom", l: "Custom" },
+          ] as const).map((o) => {
+            const active = quizType === o.v;
+            return (
+              <button
+                key={o.v}
+                onClick={() => setQuizType(o.v)}
+                className={cn(
+                  "px-5 py-1.5 rounded-full text-sm font-medium border transition-colors",
+                  active
+                    ? "bg-primary text-primary-foreground border-primary shadow"
+                    : "bg-background text-primary border-primary/40 hover:bg-primary/5",
+                )}
+              >
+                {o.l}
+              </button>
+            );
+          })}
+        </div>
       </Card>
+
+      {quizType === "custom" && (
+        <Card>
+          <h2 className="font-semibold mb-4">Question ID's</h2>
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4 items-start">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Retrieve from a Test ID</label>
+              <div className="flex gap-2">
+                <Input
+                  value={customTestId}
+                  onChange={(e) => setCustomTestId(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="Test Id"
+                  className="h-10"
+                />
+                <Button onClick={retrieveFromTestId} disabled={retrieving} className="h-10">
+                  {retrieving ? "…" : "Retrieve"}
+                </Button>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center justify-center pt-6">
+              <span className="text-sm font-semibold text-muted-foreground">OR</span>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Paste Question IDs <span className="text-muted-foreground/70">(comma separated)</span>
+              </label>
+              <textarea
+                value={customIds}
+                onChange={(e) => setCustomIds(e.target.value)}
+                placeholder="e.g. 1024, 1025, 1026"
+                rows={5}
+                className="w-full rounded-md border border-border bg-background p-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <div className="text-xs text-muted-foreground mt-1">
+                {parseIds(customIds).length} valid ID{parseIds(customIds).length === 1 ? "" : "s"}
+              </div>
+            </div>
+          </div>
+          <Button
+            size="lg"
+            onClick={start}
+            disabled={loading || parseIds(customIds).length === 0}
+            className="mt-6"
+          >
+            {loading ? "Generating…" : "Generate Test"}
+          </Button>
+        </Card>
+      )}
+
+      {quizType === "standard" && (<>
+
 
       {/* Tabs / Selection */}
       <Card>
@@ -325,7 +437,9 @@ function NewTest() {
           {loading ? "Generating…" : "Generate Test"}
         </Button>
       </Card>
+      </>)}
     </div>
+
   );
 }
 
