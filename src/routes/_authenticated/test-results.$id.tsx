@@ -150,22 +150,6 @@ function TestResults() {
         </div>
       </div>
 
-      {/* Momentum banner */}
-      <div className="rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="flex items-start gap-4">
-          <div className="h-11 w-11 rounded-xl bg-primary/25 flex items-center justify-center text-primary">
-            <Flame className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-primary/80 mb-1">Daily Momentum</div>
-            <div className="font-semibold">
-              {Math.round(totals.score)}% today — {totals.score < 50 ? "keep going, consistency builds scores." : "great pace, keep it steady."}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">🔥 1-day streak · 6 more days to earn 100 Credits</div>
-          </div>
-        </div>
-        
-      </div>
 
       {/* Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
