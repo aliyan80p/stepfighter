@@ -200,12 +200,21 @@ function TestsList() {
                   <div className="text-xs text-muted-foreground">questions</div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => navigate({
-                    to: r.status === "completed" ? "/test/$id/results" : "/test/$id",
-                    params: { id: String(r.id) },
-                  })}>
-                    <FileText className="h-3.5 w-3.5 mr-1" /> {r.status === "completed" ? "Results" : "Resume"}
-                  </Button>
+                  {r.status !== "completed" && r.answered > 0 && (
+                    <Button size="sm" variant="outline" onClick={() => navigate({ to: "/test/$id", params: { id: String(r.id) } })}>
+                      Resume
+                    </Button>
+                  )}
+                  {r.status === "not_started" && (
+                    <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/test/$id", params: { id: String(r.id) } })}>
+                      <FileText className="h-3.5 w-3.5 mr-1" /> Start
+                    </Button>
+                  )}
+                  {r.answered > 0 && (
+                    <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/test/$id/results", params: { id: String(r.id) } })}>
+                      <FileText className="h-3.5 w-3.5 mr-1" /> Results
+                    </Button>
+                  )}
                   <Button size="sm" variant="outline" onClick={() => toast.info("Test analysis coming soon")}>
                     <BarChart3 className="h-3.5 w-3.5 mr-1" /> Analysis
                   </Button>
