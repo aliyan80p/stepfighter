@@ -140,6 +140,8 @@ function TestRunner() {
   const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
   const [exhibitZoom, setExhibitZoom] = useState(1);
   const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
+  const [breakModal, setBreakModal] = useState<null | "suspend" | "end">(null);
+  const [modeInitFor, setModeInitFor] = useState<number | null>(null);
 
 
   const rootRef = useRef<HTMLDivElement>(null);
