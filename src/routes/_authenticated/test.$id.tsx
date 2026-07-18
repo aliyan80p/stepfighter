@@ -192,7 +192,7 @@ function TestRunner() {
           <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
           <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />
           <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          <TopBtn icon={Settings} label="Settings" onClick={notImpl("Settings")} />
+          <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
         </div>
       </div>
 
