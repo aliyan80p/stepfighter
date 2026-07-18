@@ -44,6 +44,12 @@ function NewTest() {
   const [quizName, setQuizName] = useState(() => `Custom Quiz ${new Date().toLocaleString()}`);
   const [loading, setLoading] = useState(false);
 
+  // Quiz Type: standard vs custom
+  const [quizType, setQuizType] = useState<"standard" | "custom">("standard");
+  const [customTestId, setCustomTestId] = useState("");
+  const [customIds, setCustomIds] = useState("");
+  const [retrieving, setRetrieving] = useState(false);
+
   const [subjectSearch, setSubjectSearch] = useState("");
   const [systemSearch, setSystemSearch] = useState("");
   const [topicSearch, setTopicSearch] = useState("");
