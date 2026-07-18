@@ -36,7 +36,9 @@ function TestsList() {
   const renFn = useServerFn(renameTest);
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { data, isLoading } = useQuery({ queryKey: ["tests"], queryFn: () => fn() });
+  const qbankId = useActiveQbankId();
+  const { data, isLoading } = useQuery({ queryKey: ["tests", qbankId], queryFn: () => fn({ data: { qbankId } }) });
+
 
   const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null);
 
