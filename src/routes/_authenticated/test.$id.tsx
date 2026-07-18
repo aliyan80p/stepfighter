@@ -569,7 +569,10 @@ function TestRunner() {
         <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
-            const status = att ? (att.is_correct ? "correct" : "wrong") : "none";
+            const hideResult = !isReview && !tutorMode;
+            const status = att
+              ? (hideResult ? "attempted" : att.is_correct ? "correct" : "wrong")
+              : "none";
             const active = i === idx;
             return (
               <button
@@ -591,6 +594,7 @@ function TestRunner() {
               >
                 {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
                 {status === "wrong" && <span className="text-red-600 font-bold">✕</span>}
+                {status === "attempted" && <span className="inline-block h-2 w-2 rounded-full bg-slate-700" />}
                 {status === "none" && <span className="w-3.5" />}
                 <span>{i + 1}</span>
                 {data.bookmarkedIds.has(q.id) && <Flag className="h-3 w-3 ml-auto text-red-500" fill="currentColor" />}
@@ -831,7 +835,7 @@ function TestRunner() {
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
-                  <ToggleSwitch label="Tutor" rightLabel="Exam" checked={tutorMode} onChange={setTutorMode} />
+                  <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
                   <div className="w-px h-6 bg-white/20 mx-1" />
                 </>
               )}
