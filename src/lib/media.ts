@@ -16,6 +16,18 @@ function resolve(src: string): string | null {
   return `/api/media/${encodeURIComponent(stripped)}`;
 }
 
+function stripTags(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function escapeAttr(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 
 /** Rewrite media URLs in question HTML to point to the decrypting media route. */
 export function rewriteMedia(html: string): string {
@@ -25,6 +37,20 @@ export function rewriteMedia(html: string): string {
     (full, prefix, q, src) => {
       const url = resolve(src);
       return url ? `${prefix}${q}${url}${q}` : full;
+    },
+  );
+  // The imported qbank often stores explanation images as text links like
+  // <a href="media/L20387.png">erosions</a>. Render those media files exactly
+  // where the source explanation placed the link instead of grouping them above.
+  out = out.replace(
+    /<a\b([^>]*?)\bhref=["']([^"']+\.(?:png|jpe?g|gif|webp|bmp|svg))["']([^>]*)>(.*?)<\/a>/gis,
+    (full, before, href, after, labelHtml) => {
+      if (/<img\b/i.test(labelHtml)) return full;
+      const url = resolve(href);
+      if (!url) return full;
+      const label = stripTags(labelHtml);
+      const alt = escapeAttr(label || "Related image");
+      return `${labelHtml}<img src="${url}" alt="${alt}" class="qbank-inline-media" loading="lazy" decoding="async" />`;
     },
   );
   // Convert bare <a href="...mp4"> to inline video players
