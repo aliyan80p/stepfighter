@@ -457,6 +457,9 @@ function TestRunner() {
     savedTextRef.current = range.toString();
     const rect = range.getBoundingClientRect();
     setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
+    // Keep the toolbar, but remove the browser's native blue selection overlay.
+    // The exact text/range is already saved above for highlight/copy actions.
+    sel.removeAllRanges();
   };
 
   const textOffsetIn = (root: HTMLElement, container: Node, offset: number) => {
