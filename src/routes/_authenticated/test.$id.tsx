@@ -175,6 +175,11 @@ function TestRunner() {
     });
     try { localStorage.setItem(`qbank-hl-${question.id}`, JSON.stringify(snap)); } catch {}
   };
+
+  const handleSelection = () => {
+    if (!(multicolor || highlightOnly)) { setHlBar(null); return; }
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); return; }
     const range = sel.getRangeAt(0);
     const container = range.commonAncestorContainer.parentElement;
     if (!container?.closest(".qbank-html")) { setHlBar(null); return; }
@@ -194,6 +199,7 @@ function TestRunner() {
     try { range.surroundContents(mark); } catch { /* cross-node */ }
     window.getSelection()?.removeAllRanges();
     setHlBar(null);
+    persistHighlights();
   };
 
   const applyColor = (c: string) => {
@@ -214,11 +220,32 @@ function TestRunner() {
     });
     window.getSelection()?.removeAllRanges();
     setHlBar(null);
+    persistHighlights();
   };
   const copySel = async () => {
     const range = savedRangeRef.current;
     if (!range) return;
-    try { await navigator.clipboard.writeText(range.toString()); toast("Copied"); } catch {}
+    const text = range.toString();
+    let ok = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      }
+    } catch {}
+    if (!ok) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {}
+    }
+    toast(ok ? "Copied to clipboard" : "Copy failed");
     setHlBar(null);
   };
 
