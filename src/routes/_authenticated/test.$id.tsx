@@ -567,7 +567,7 @@ function TestRunner() {
       {/* Top nav */}
       <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
         <div className="flex items-center gap-4">
-          {!(!tutorMode && !isReview) && (
+          {!(isRealExam && !isReview) && (
             <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
               <span className="block w-5 h-0.5 bg-white mb-1" />
               <span className="block w-5 h-0.5 bg-white mb-1" />
@@ -576,7 +576,7 @@ function TestRunner() {
           )}
           <div className="text-[12px] leading-tight">
             <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
-            {(!tutorMode && !isReview)
+            {(isRealExam && !isReview)
               ? <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
               : <div className="text-[11px] text-white/75">Question Id: {question.id}</div>}
           </div>
