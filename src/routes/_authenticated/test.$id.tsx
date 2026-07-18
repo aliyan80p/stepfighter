@@ -547,20 +547,44 @@ function TestRunner() {
             <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: htmlFor("q", question.question) }} />
 
             {mediaItems.length > 0 && (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                {mediaItems.map((item, mediaIndex) => (
-                  <button
-                    key={`${item.name}-${mediaIndex}`}
-                    type="button"
-                    onClick={() => setMediaModalIndex(mediaIndex)}
-                    className="inline-flex items-center gap-2 rounded border bg-white px-3 py-2 text-sm font-semibold shadow-sm hover:bg-gray-50"
-                    style={{ borderColor: "#b8c6de", color: "#1e3a8a" }}
-                  >
-                    <ImageIcon className="h-4 w-4" />
-                    {item.kind === "image" ? "Exhibit" : item.kind === "video" ? "Video" : "Audio"}
-                    {mediaItems.length > 1 && <span className="text-xs font-normal text-gray-500">{mediaIndex + 1}/{mediaItems.length}</span>}
-                  </button>
-                ))}
+              <div className="mt-3 flex flex-wrap items-start gap-3">
+                {mediaItems.map((item, mediaIndex) => {
+                  const src = `/api/media/${encodeURIComponent(item.name)}`;
+                  if (item.kind === "image") {
+                    return (
+                      <img
+                        key={`${item.name}-${mediaIndex}`}
+                        src={src}
+                        alt="Exhibit"
+                        loading="lazy"
+                        decoding="async"
+                        onClick={() => { setExhibitSrc(src); setExhibitZoom(1); }}
+                        className="max-w-full rounded border cursor-zoom-in bg-white"
+                        style={{ borderColor: "#b8c6de", maxHeight: "70vh" }}
+                      />
+                    );
+                  }
+                  if (item.kind === "video") {
+                    return (
+                      <video
+                        key={`${item.name}-${mediaIndex}`}
+                        src={src}
+                        controls
+                        preload="metadata"
+                        className="max-w-full rounded border bg-black"
+                        style={{ borderColor: "#b8c6de", maxHeight: "70vh" }}
+                      />
+                    );
+                  }
+                  return (
+                    <audio
+                      key={`${item.name}-${mediaIndex}`}
+                      src={src}
+                      controls
+                      preload="metadata"
+                    />
+                  );
+                })}
               </div>
             )}
 
