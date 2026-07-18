@@ -20,7 +20,21 @@ type Tab = "courses" | "qbank" | "subjects" | "systems" | "topics";
 type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
 
 const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name }));
-const QBANKS = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: `UWorld ${q.name}` }));
+
+type QbankOption = { id: string; qbankId: number; name: string; source: string };
+const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
+  const main: QbankOption = { id: `${q.slug}:main`, qbankId: q.id, name: `UWorld ${q.name}`, source: "main" };
+  if (q.slug === "step1") {
+    return [
+      main,
+      { id: "step1:SA1", qbankId: q.id, name: "UWorld Self Assessment 1", source: "SA1" },
+      { id: "step1:SA2", qbankId: q.id, name: "UWorld Self Assessment 2", source: "SA2" },
+      { id: "step1:SA3", qbankId: q.id, name: "UWorld Self Assessment 3", source: "SA3" },
+    ];
+  }
+  return [main];
+});
+
 
 
 function NewTest() {
