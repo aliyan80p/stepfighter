@@ -884,9 +884,11 @@ function TestRunner() {
                 type="button"
                 onClick={() => setBreakModal("suspend")}
                 title="Unauthorized Break"
-                className="flex flex-col items-center justify-center leading-none bg-yellow-400 hover:bg-yellow-300 text-black border border-yellow-600 shadow px-2 py-1 rounded-sm"
+                className="flex flex-col items-center leading-none text-white"
               >
-                <LockIcon className="h-4 w-4" fill="currentColor" />
+                <span className="flex items-center justify-center bg-yellow-400 border border-yellow-600 rounded-[3px] h-6 w-6">
+                  <LockIcon className="h-4 w-4 text-red-600" fill="currentColor" strokeWidth={2.5} />
+                </span>
                 <span className="text-[10px] font-semibold mt-0.5">Lock</span>
               </button>
               <button
