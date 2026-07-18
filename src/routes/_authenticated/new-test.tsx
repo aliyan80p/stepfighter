@@ -21,19 +21,28 @@ type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
 
 const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name }));
 
-type QbankOption = { id: string; qbankId: number; name: string; source: string };
+type QbankOption = { id: string; qbankId: number; name: string; source: string; count: number };
 const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
-  const main: QbankOption = { id: `${q.slug}:main`, qbankId: q.id, name: `UWorld ${q.name}`, source: "main" };
   if (q.slug === "step1") {
     return [
-      main,
-      { id: "step1:SA1", qbankId: q.id, name: "UWorld Self Assessment 1", source: "SA1" },
-      { id: "step1:SA2", qbankId: q.id, name: "UWorld Self Assessment 2", source: "SA2" },
-      { id: "step1:SA3", qbankId: q.id, name: "UWorld Self Assessment 3", source: "SA3" },
+      { id: "step1:main", qbankId: q.id, name: `UWorld ${q.name}`, source: "main", count: 3659 },
+      { id: "step1:SA1", qbankId: q.id, name: "UWorld Self Assessment 1", source: "SA1", count: 160 },
+      { id: "step1:SA2", qbankId: q.id, name: "UWorld Self Assessment 2", source: "SA2", count: 159 },
+      { id: "step1:SA3", qbankId: q.id, name: "UWorld Self Assessment 3", source: "SA3", count: 158 },
     ];
   }
-  return [main];
+  if (q.slug === "step2") {
+    return [{ id: "step2:main", qbankId: q.id, name: `UWorld ${q.name}`, source: "main", count: 4089 }];
+  }
+  if (q.slug === "step3") {
+    return [{ id: "step3:main", qbankId: q.id, name: `UWorld ${q.name}`, source: "main", count: 2136 }];
+  }
+  return [{ id: `${q.slug}:main`, qbankId: q.id, name: `UWorld ${q.name}`, source: "main", count: 0 }];
 });
+const COURSE_TOTALS: Record<number, number> = QBANK_OPTIONS.reduce((acc, o) => {
+  acc[o.qbankId] = (acc[o.qbankId] ?? 0) + o.count;
+  return acc;
+}, {} as Record<number, number>);
 
 
 
