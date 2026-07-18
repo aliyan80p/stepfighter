@@ -742,12 +742,12 @@ function TestRunner() {
 
             {/* Primary action button — directly below answer choices */}
             {!isReview && (
-              <div className="mt-4">
+              <div className={`mt-4 ${!tutorMode ? "flex justify-center max-w-[520px]" : ""}`}>
                 {!tutorMode ? (
                   <button
                     onClick={proceedExam}
                     disabled={selected == null && !submitted}
-                    className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40 uppercase tracking-wide"
+                    className="px-4 py-1.5 rounded-sm text-white text-[12px] font-semibold disabled:opacity-40"
                     style={{ background: NAV_BG }}
                   >
                     {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
