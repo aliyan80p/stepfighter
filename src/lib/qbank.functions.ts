@@ -319,7 +319,7 @@ export const toggleBookmark = createServerFn({ method: "POST" })
       await supabase.from("bookmarks").delete().eq("user_id", userId).eq("question_id", data.questionId);
       return { bookmarked: false };
     }
-    await supabase.from("bookmarks").insert({ user_id: userId, question_id: data.questionId });
+    await supabase.from("bookmarks").insert({ user_id: userId, question_id: data.questionId, qbank_id: 1 });
     return { bookmarked: true };
   });
 
