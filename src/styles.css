@@ -113,3 +113,16 @@
 .qbank-html ul, .qbank-html ol { padding-left: 1.5rem; margin: 0.5rem 0; }
 .qbank-html li { margin: 0.25rem 0; }
 
+.qbank-html, .qbank-light {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern", "liga";
+}
+.qbank-explanation { font-size: 15px; line-height: 1.75; color: #1f2937; }
+.qbank-explanation p { margin: 0.75rem 0; line-height: 1.75; }
+.qbank-explanation strong, .qbank-explanation b { color: #111827; font-weight: 700; }
+.qbank-explanation ul, .qbank-explanation ol { padding-left: 1.75rem; margin: 0.75rem 0; }
+.qbank-explanation li { margin: 0.35rem 0; line-height: 1.7; }
+
+
