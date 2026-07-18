@@ -18,6 +18,7 @@ type SearchResult = {
   id: number;
   title: string;
   question: string;
+  explanation: string;
   correctAnswer: number;
   subject: string;
   system: string;
