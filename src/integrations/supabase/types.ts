@@ -161,6 +161,38 @@ export type Database = {
         }
         Relationships: []
       }
+      qbank_media: {
+        Row: {
+          created_at: string
+          drive_file_id: string
+          name: string
+          qbank_id: number
+          size_bytes: number | null
+        }
+        Insert: {
+          created_at?: string
+          drive_file_id: string
+          name: string
+          qbank_id: number
+          size_bytes?: number | null
+        }
+        Update: {
+          created_at?: string
+          drive_file_id?: string
+          name?: string
+          qbank_id?: number
+          size_bytes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qbank_media_qbank_id_fkey"
+            columns: ["qbank_id"]
+            isOneToOne: false
+            referencedRelation: "qbanks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qbanks: {
         Row: {
           created_at: string
