@@ -457,7 +457,7 @@ function TestRunner() {
                   </div>
                 </div>
                 <div
-                  className="pt-6 pb-4"
+                  className="pt-3 pb-2"
                   style={{
                     background: transparentExpl ? "transparent" : "transparent",
                     fontSize: `${fontSize}px`,
