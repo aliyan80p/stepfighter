@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Search, Copy, Info, Loader2, Eye, ArrowUpDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, FileText,
@@ -9,8 +9,9 @@ import {
   Library, Zap, MessageSquare, ArrowLeft, Flag, Clock, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { searchQuestions } from "@/lib/qbank.functions";
+import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
 import { rewriteMedia } from "@/lib/media";
+import { SciCalculator, SettingsPanel } from "./test.$id";
 
 export const Route = createFileRoute("/_authenticated/qbanks/search")({
   component: SearchPage,
