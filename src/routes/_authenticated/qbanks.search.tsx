@@ -244,7 +244,14 @@ function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult
         </div>
       </div>
 
-      {viewing && <QuestionModal r={viewing} onClose={() => setViewing(null)} />}
+      {viewingIdx != null && sorted[viewingIdx] && (
+        <QuestionModal
+          items={sorted}
+          index={viewingIdx}
+          setIndex={setViewingIdx}
+          onClose={() => setViewingIdx(null)}
+        />
+      )}
     </>
   );
 }
