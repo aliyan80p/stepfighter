@@ -164,7 +164,7 @@ function TestResults() {
             <div className="text-xs text-muted-foreground mt-1">🔥 1-day streak · 6 more days to earn 100 Credits</div>
           </div>
         </div>
-        <Button variant="secondary" size="sm">Leaderboard <ChevronRight className="h-4 w-4 ml-1" /></Button>
+        
       </div>
 
       {/* Performance */}
