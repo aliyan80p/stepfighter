@@ -179,7 +179,7 @@ function TestRunner() {
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
-  const isRealExam = data?.test.mode === "exam";
+  const isRealExam = data?.test.mode === "test";
   const isReview = !!data?.test.done;
   const total = data?.questions.length ?? 0;
 
