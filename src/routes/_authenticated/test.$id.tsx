@@ -201,6 +201,16 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [blockStartedAt]);
 
+  // Initialize tutor/exam toggle from test.mode once per test
+  useEffect(() => {
+    if (!data?.test) return;
+    if (modeInitFor === data.test.id) return;
+    setTutorMode(data.test.mode === "practice");
+    setModeInitFor(data.test.id);
+  }, [data?.test?.id, data?.test?.mode, modeInitFor]);
+
+
+
 
   // Restore saved highlights per question (must run before early returns to keep hook order stable)
   useEffect(() => {
