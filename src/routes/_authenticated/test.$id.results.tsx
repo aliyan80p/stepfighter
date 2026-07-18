@@ -47,8 +47,8 @@ function TestResults() {
       return {
         index: idx + 1,
         id: q.id,
-        subject: data.subjectMap[q.subject_id] ?? "—",
-        system: data.systemMap[q.system_id] ?? "—",
+        subject: (q.subject_id != null && data.subjectMap[q.subject_id]) || "—",
+        system: (q.system_id != null && data.systemMap[q.system_id]) || "—",
         topic: q.title ?? "—",
         status,
         others,
