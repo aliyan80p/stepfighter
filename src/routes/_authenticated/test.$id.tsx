@@ -294,7 +294,7 @@ function TestRunner() {
   const bookmark = async () => {
     if (!question) return;
     try {
-      const result = await bmFn({ data: { questionId: question.id } });
+      const result = await bmFn({ data: { questionId: question.id, qbankId: data?.qbankId ?? 1 } });
       toast(result.bookmarked ? "Question flagged" : "Flag removed");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to update flag");
