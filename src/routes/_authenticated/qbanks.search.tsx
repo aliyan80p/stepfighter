@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import { Search, Copy, Info, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Search, Copy, Info, Loader2, Eye, ArrowUpDown,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions } from "@/lib/qbank.functions";
 import { rewriteMedia } from "@/lib/media";
