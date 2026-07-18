@@ -567,7 +567,7 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`${sidebarOpen ? "max-w-5xl" : "max-w-7xl"} mx-auto px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+          <div className={`w-full mx-auto px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
             {(() => null)()}
 
 
