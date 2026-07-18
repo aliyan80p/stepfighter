@@ -7,7 +7,7 @@ import { rewriteMedia } from "@/lib/media";
 import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
-  ArrowLeft, Clock, CheckCircle2, FileText, Strikethrough, Eraser, Copy,
+  ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -145,6 +145,18 @@ function TestRunner() {
     await finFn({ data: { testId } });
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
+  };
+
+  const goToQuestion = (nextIndex: number) => {
+    const bounded = Math.max(0, Math.min(total - 1, nextIndex));
+    setIdx(bounded);
+    setHlBar(null);
+    savedRangeRef.current = null;
+    savedSelectionRef.current = null;
+    savedTextRef.current = "";
+    requestAnimationFrame(() => {
+      contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
   };
 
   const goFullscreen = () => {
@@ -391,8 +403,8 @@ function TestRunner() {
         </div>
 
         <div className="flex items-center gap-2">
-          <TopBtn icon={ChevronLeft} label="Previous" onClick={() => setIdx(Math.max(0, idx - 1))} />
-          <TopBtn icon={ChevronRight} label="Next" onClick={() => setIdx(Math.min(total - 1, idx + 1))} />
+          <TopBtn icon={ChevronLeft} label="Previous" onClick={() => goToQuestion(idx - 1)} />
+          <TopBtn icon={ChevronRight} label="Next" onClick={() => goToQuestion(idx + 1)} />
         </div>
 
         <div className="flex items-center gap-1">
@@ -416,9 +428,20 @@ function TestRunner() {
             const active = i === idx;
             return (
               <button
+                type="button"
                 key={q.id}
-                onClick={() => setIdx(i)}
-                className={`w-full flex items-center gap-1 px-2 py-1 text-xs border-b hover:bg-white/60 ${active ? "bg-white font-semibold" : ""}`}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  goToQuestion(i);
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToQuestion(i);
+                }}
+                onMouseUp={(e) => e.stopPropagation()}
+                aria-label={`Go to question ${i + 1}`}
+                className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:bg-white/60 ${active ? "bg-white font-semibold" : ""}`}
                 style={{ borderColor: "#d1d9e6", color: TEXT }}
               >
                 {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
@@ -547,7 +570,7 @@ function TestRunner() {
 
             <div className="mt-6 flex justify-between items-center">
               <button
-                onClick={() => setIdx(Math.max(0, idx - 1))}
+                onClick={() => goToQuestion(idx - 1)}
                 disabled={idx === 0}
                 className="px-4 py-2 rounded border border-gray-300 text-sm disabled:opacity-40 hover:bg-gray-50"
               >
@@ -564,7 +587,7 @@ function TestRunner() {
                 </button>
               ) : (
                 <button
-                  onClick={() => idx === total - 1 ? finish() : setIdx(idx + 1)}
+                  onClick={() => idx === total - 1 ? finish() : goToQuestion(idx + 1)}
                   className="px-6 py-2 rounded text-white text-sm font-semibold"
                   style={{ background: NAV_BG }}
                 >
