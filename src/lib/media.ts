@@ -9,15 +9,15 @@ for (const [k, v] of Object.entries({ ...imgManifest, ...vidManifest } as Record
 function resolve(src: string): string | null {
   if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
   const base = (src.split("/").pop() ?? src).toLowerCase();
-  if (map[base]) return map[base];
+  if (map[base]) return `/api/media/${encodeURIComponent(base)}`;
   const stripped = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
-  if (stripped !== base && map[stripped]) return map[stripped];
-  // Fallback: proxy from Google Drive media-E folder via server route
+  if (stripped !== base && map[stripped]) return `/api/media/${encodeURIComponent(stripped)}`;
+  // Fallback: proxy media through the server route, which decrypts app media.
   return `/api/media/${encodeURIComponent(stripped)}`;
 }
 
 
-/** Rewrite media URLs in question HTML to point to CDN-hosted assets. */
+/** Rewrite media URLs in question HTML to point to the decrypting media route. */
 export function rewriteMedia(html: string): string {
   if (!html) return html;
   let out = html.replace(
