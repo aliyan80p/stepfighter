@@ -230,7 +230,7 @@ function TestRunner() {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
                 const isThisWrong = showAnswers && selected === i && i !== correctIdx;
-                const pct = a.percentage ?? null;
+                const pct: number | null = null;
                 return (
                   <button
                     key={a.id}
