@@ -55,7 +55,28 @@ function TestRunner() {
   const [startedAt, setStartedAt] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  // Settings
+  const [fontSize, setFontSize] = useState(16);
+  const [fontWeight, setFontWeight] = useState(400);
+  const [theme, setTheme] = useState<"light" | "dark" | "sepia">("light");
+  const [transparentExpl, setTransparentExpl] = useState(false);
+  const [largeImages, setLargeImages] = useState(false);
+  const [highlightOnly, setHighlightOnly] = useState(false);
+  const [multicolor, setMulticolor] = useState(true);
+  const [activeHighlight, setActiveHighlight] = useState<string>("#fff59d");
+  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>({
+    "#fff59d": true, "#a5d6a7": true, "#81d4fa": true,
+    "#f8bbd0": true, "#ffcc80": true, "#ce93d8": true,
+  });
+
+  const themeStyles = theme === "dark"
+    ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
+    : theme === "sepia"
+    ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
+    : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
 
   const question = data?.questions[idx];
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
@@ -123,8 +144,22 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
+  // Apply highlight to current selection
+  const applyHighlight = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const container = range.commonAncestorContainer.parentElement;
+    if (!container?.closest(".qbank-html")) return;
+    const mark = document.createElement("mark");
+    mark.style.backgroundColor = activeHighlight;
+    mark.style.color = "inherit";
+    mark.className = "qbank-hl";
+    try { range.surroundContents(mark); sel.removeAllRanges(); } catch { /* cross-node */ }
+  };
+
   return (
-    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: PAGE_BG, color: TEXT }}>
+    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }} onMouseUp={multicolor || highlightOnly ? applyHighlight : undefined}>
       {/* Top nav */}
       <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
         <div className="flex items-center gap-4">
@@ -157,14 +192,14 @@ function TestRunner() {
           <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
           <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />
           <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          <TopBtn icon={Settings} label="Settings" onClick={notImpl("Settings")} />
+          <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
         </div>
       </div>
 
       {/* Main */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left navigator */}
-        <aside className="w-14 overflow-auto border-r" style={{ background: SIDE_BG, borderColor: "#d1d9e6" }}>
+        <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
             const status = att ? (att.is_correct ? "correct" : "wrong") : "none";
@@ -188,7 +223,7 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto">
-          <div className="max-w-4xl mx-auto px-8 py-6">
+          <div className={`max-w-4xl mx-auto px-8 py-6 ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight }}>
             {/* Answered banner */}
             {submitted && (
               <div className={`rounded-md border-l-4 p-4 mb-6 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
@@ -259,10 +294,16 @@ function TestRunner() {
 
             {showAnswers && question.explanation && (
               <div className="mt-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-t-md border border-b-0 border-gray-300 bg-white font-medium">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-t-md border border-b-0 font-medium" style={{ borderColor: themeStyles.border, background: themeStyles.cardBg }}>
                   <FileText className="h-4 w-4 text-blue-700" /> Explanation
                 </div>
-                <div className="border border-gray-300 rounded-b-md rounded-tr-md p-5 bg-white">
+                <div
+                  className="border rounded-b-md rounded-tr-md p-5"
+                  style={{
+                    borderColor: themeStyles.border,
+                    background: transparentExpl ? "transparent" : themeStyles.cardBg,
+                  }}
+                >
                   <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }} />
                 </div>
               </div>
@@ -311,36 +352,215 @@ function TestRunner() {
         </div>
       </div>
 
-      {showCalc && <MiniCalculator onClose={() => setShowCalc(false)} />}
+      {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+      {showSettings && (
+        <SettingsPanel
+          onClose={() => setShowSettings(false)}
+          fontSize={fontSize} setFontSize={setFontSize}
+          fontWeight={fontWeight} setFontWeight={setFontWeight}
+          theme={theme} setTheme={setTheme}
+          transparentExpl={transparentExpl} setTransparentExpl={setTransparentExpl}
+          largeImages={largeImages} setLargeImages={setLargeImages}
+          highlightOnly={highlightOnly} setHighlightOnly={setHighlightOnly}
+          multicolor={multicolor} setMulticolor={setMulticolor}
+          activeHighlight={activeHighlight} setActiveHighlight={setActiveHighlight}
+          enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
+        />
+      )}
     </div>
   );
 }
 
-function MiniCalculator({ onClose }: { onClose: () => void }) {
+/* ---------------- Settings Panel ---------------- */
+
+const HIGHLIGHTS = [
+  { color: "#fff59d", label: "Yellow" },
+  { color: "#a5d6a7", label: "Green" },
+  { color: "#81d4fa", label: "Cyan" },
+  { color: "#f8bbd0", label: "Pink" },
+  { color: "#ffcc80", label: "Orange" },
+  { color: "#ce93d8", label: "Purple" },
+];
+
+function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!on)}
+      className={`relative w-10 h-6 rounded-full transition-colors ${on ? "bg-blue-600" : "bg-gray-300"}`}
+    >
+      <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-4" : ""}`} />
+    </button>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <span className="text-sm text-gray-700">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function SettingsPanel(props: any) {
+  const {
+    onClose, fontSize, setFontSize, fontWeight, setFontWeight, theme, setTheme,
+    transparentExpl, setTransparentExpl, largeImages, setLargeImages,
+    highlightOnly, setHighlightOnly, multicolor, setMulticolor,
+    activeHighlight, setActiveHighlight, enabledHighlights, setEnabledHighlights,
+  } = props;
+  return (
+    <div className="fixed top-16 right-4 w-80 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 text-gray-800 max-h-[80vh] overflow-auto">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gray-100 sticky top-0">
+        <span className="font-semibold">Settings</span>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-800">✕</button>
+      </div>
+
+      <div className="p-4 border-b">
+        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Appearance</div>
+        <Row label="Font Size">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setFontSize(Math.max(12, fontSize - 1))} className="h-7 w-7 rounded border hover:bg-gray-50">−</button>
+            <span className="w-6 text-center font-semibold">A</span>
+            <button onClick={() => setFontSize(Math.min(28, fontSize + 1))} className="h-7 w-7 rounded border hover:bg-gray-50">+</button>
+          </div>
+        </Row>
+        <Row label="Font Weight">
+          <input type="range" min={300} max={700} step={100} value={fontWeight}
+            onChange={e => setFontWeight(Number(e.target.value))} className="w-32" />
+        </Row>
+        <Row label="Color Theme">
+          <div className="flex items-center gap-2">
+            {[
+              { k: "light", bg: "#ffffff", border: "#d1d5db" },
+              { k: "dark", bg: "#0f172a", border: "#0f172a" },
+              { k: "sepia", bg: "#f4ecd8", border: "#d6c9a8" },
+            ].map(t => (
+              <button key={t.k} onClick={() => setTheme(t.k as any)}
+                className={`h-7 w-7 rounded-full border-2 ${theme === t.k ? "ring-2 ring-blue-500" : ""}`}
+                style={{ background: t.bg, borderColor: t.border }} />
+            ))}
+          </div>
+        </Row>
+      </div>
+
+      <div className="p-4 border-b">
+        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Highlight Features</div>
+        <Row label="Highlight-Only Mode"><Toggle on={highlightOnly} onChange={setHighlightOnly} /></Row>
+        <Row label="Multicolor Highlighting"><Toggle on={multicolor} onChange={setMulticolor} /></Row>
+      </div>
+
+      <div className="p-4 border-b">
+        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Customize Highlight</div>
+        {HIGHLIGHTS.map(h => (
+          <div key={h.color} className="flex items-center justify-between py-1.5">
+            <button
+              onClick={() => setActiveHighlight(h.color)}
+              className={`flex items-center gap-2 ${activeHighlight === h.color ? "font-semibold" : ""}`}
+            >
+              <span className="h-4 w-4 rounded-full border" style={{ background: h.color }} />
+              <span className="text-sm">{h.label} Highlight</span>
+              {activeHighlight === h.color && <span className="text-[10px] text-blue-600">(active)</span>}
+            </button>
+            <Toggle on={!!enabledHighlights[h.color]} onChange={v => setEnabledHighlights({ ...enabledHighlights, [h.color]: v })} />
+          </div>
+        ))}
+      </div>
+
+      <div className="p-4">
+        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Content</div>
+        <Row label="Transparent Background in Explanations">
+          <Toggle on={transparentExpl} onChange={setTransparentExpl} />
+        </Row>
+        <Row label="Large Image Size"><Toggle on={largeImages} onChange={setLargeImages} /></Row>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Scientific Calculator ---------------- */
+
+function SciCalculator({ onClose }: { onClose: () => void }) {
   const [expr, setExpr] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
   const push = (t: string) => setExpr(e => e + t);
+
   const evalIt = () => {
     try {
-      // eslint-disable-next-line no-new-func
-      setExpr(String(Function(`"use strict";return (${expr.replace(/x/g, "*").replace(/÷/g, "/")})`)()));
+      const js = expr
+        .replace(/π/g, "Math.PI")
+        .replace(/(?<![a-zA-Z])e(?![a-zA-Z])/g, "Math.E")
+        .replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-")
+        .replace(/(\d+(?:\.\d+)?|\))\^(\d+(?:\.\d+)?|\()/g, "Math.pow($1,$2)")
+        .replace(/√\(/g, "Math.sqrt(")
+        .replace(/√(\d+(?:\.\d+)?)/g, "Math.sqrt($1)")
+        .replace(/ln\(/g, "Math.log(")
+        .replace(/log\(/g, "Math.log10(")
+        .replace(/sin\(/g, "Math.sin(")
+        .replace(/cos\(/g, "Math.cos(")
+        .replace(/tan\(/g, "Math.tan(")
+        .replace(/(\d+(?:\.\d+)?|\))!/g, "fact($1)")
+        .replace(/%/g, "/100");
+      const fn = new Function("fact", `"use strict";return (${js})`);
+      const fact = (n: number): number => n <= 1 ? 1 : n * fact(n - 1);
+      const result = String(fn(fact));
+      setHistory(h => [`${expr} = ${result}`, ...h].slice(0, 5));
+      setExpr(result);
     } catch { setExpr("Error"); }
   };
-  const keys = [["C","⌫","(",")"],["7","8","9","÷"],["4","5","6","x"],["1","2","3","-"],["0",".","=","+"]];
+
+  const onKey = (k: string) => {
+    if (k === "C") setExpr("");
+    else if (k === "⌫") setExpr(expr.slice(0, -1));
+    else if (k === "=") evalIt();
+    else push(k);
+  };
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (/^[0-9.+\-*/()%]$/.test(e.key)) push(e.key);
+      else if (e.key === "Enter") { e.preventDefault(); evalIt(); }
+      else if (e.key === "Backspace") setExpr(x => x.slice(0, -1));
+      else if (e.key === "Escape") setExpr("");
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [expr]);
+
+  const rows: { k: string; c?: string }[][] = [
+    [{ k: "C", c: "bg-pink-100" }, { k: "⌫", c: "bg-pink-100" }, { k: "(", c: "bg-pink-100" }, { k: ")", c: "bg-pink-100" }, { k: "π", c: "bg-yellow-100" }, { k: "%", c: "bg-gray-100" }],
+    [{ k: "7", c: "bg-sky-100" }, { k: "8", c: "bg-sky-100" }, { k: "9", c: "bg-sky-100" }, { k: "^", c: "bg-yellow-100" }, { k: "√(", c: "bg-yellow-100" }, { k: "÷", c: "bg-gray-100" }],
+    [{ k: "4", c: "bg-sky-100" }, { k: "5", c: "bg-sky-100" }, { k: "6", c: "bg-sky-100" }, { k: "ln(", c: "bg-yellow-100" }, { k: "log(", c: "bg-yellow-100" }, { k: "×", c: "bg-gray-100" }],
+    [{ k: "1", c: "bg-sky-100" }, { k: "2", c: "bg-sky-100" }, { k: "3", c: "bg-sky-100" }, { k: "sin(", c: "bg-yellow-100" }, { k: "cos(", c: "bg-yellow-100" }, { k: "−", c: "bg-gray-100" }],
+    [{ k: "0", c: "bg-sky-100" }, { k: ".", c: "bg-sky-100" }, { k: "!", c: "bg-yellow-100" }, { k: "tan(", c: "bg-yellow-100" }, { k: "=", c: "bg-blue-600 text-white" }, { k: "+", c: "bg-gray-100" }],
+  ];
+
   return (
-    <div className="fixed top-24 right-8 bg-white border border-gray-300 rounded-md shadow-xl z-50 w-64 text-gray-800">
-      <div className="flex items-center justify-between px-3 py-2 border-b bg-gray-50">
+    <div className="fixed top-20 right-4 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 w-[300px] text-gray-800">
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-gray-100">
         <span className="font-semibold text-sm">Calculator</span>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-800">✕</button>
       </div>
       <div className="p-3">
-        <input value={expr} readOnly className="w-full border border-gray-300 rounded px-2 py-2 text-right text-sm mb-2 bg-gray-50" />
-        <div className="grid grid-cols-4 gap-1">
-          {keys.flat().map(k => (
+        {history.length > 0 && (
+          <div className="text-[11px] text-gray-400 mb-1 max-h-12 overflow-auto text-right font-mono">
+            {history.map((h, i) => <div key={i}>{h}</div>)}
+          </div>
+        )}
+        <input
+          value={expr}
+          onChange={e => setExpr(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && evalIt()}
+          placeholder="0"
+          className="w-full border border-gray-300 rounded px-2 py-2.5 text-right text-lg mb-2 bg-gray-50 font-mono"
+        />
+        <div className="grid grid-cols-6 gap-1">
+          {rows.flat().map((k, i) => (
             <button
-              key={k}
-              onClick={() => k === "C" ? setExpr("") : k === "⌫" ? setExpr(expr.slice(0, -1)) : k === "=" ? evalIt() : push(k)}
-              className="h-9 rounded bg-blue-50 hover:bg-blue-100 text-sm font-medium"
-            >{k}</button>
+              key={i}
+              onClick={() => onKey(k.k)}
+              className={`h-9 rounded text-sm font-medium hover:brightness-95 active:scale-95 transition ${k.c ?? "bg-gray-100"}`}
+            >{k.k}</button>
           ))}
         </div>
       </div>
