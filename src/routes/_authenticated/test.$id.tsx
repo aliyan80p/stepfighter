@@ -334,13 +334,13 @@ function TestRunner() {
         </aside>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto" ref={contentRef}>
           <div className={`max-w-4xl mx-auto px-8 py-6 ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight }}>
             {(() => null)()}
 
 
             
-            <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
+            <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
             <div className="mt-6 rounded border bg-white px-4 py-3" style={{ borderColor: "#b8c6de" }}>
               {answers.map((a, i) => {
