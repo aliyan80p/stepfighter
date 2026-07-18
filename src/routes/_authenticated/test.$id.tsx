@@ -223,7 +223,7 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto">
-          <div className="max-w-4xl mx-auto px-8 py-6">
+          <div className={`max-w-4xl mx-auto px-8 py-6 ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight }}>
             {/* Answered banner */}
             {submitted && (
               <div className={`rounded-md border-l-4 p-4 mb-6 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
