@@ -373,7 +373,7 @@ function TestRunner() {
                     </span>
                     <span className="flex-1">
                       <span className="font-normal">{letter}. </span>
-                      <span className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
+                      <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
                       {submitted && pct != null && <span className="text-gray-600 ml-1">({pct}%)</span>}
                     </span>
                   </button>
