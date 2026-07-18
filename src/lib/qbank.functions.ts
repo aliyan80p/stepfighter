@@ -226,6 +226,7 @@ type QuestionFilters = {
   subjectIds?: number[];
   systemIds?: number[];
   topicNames?: string[];
+  sources?: string[];
 };
 
 async function fetchAllQuestionRows(supabase: any, columns: string, filters: QuestionFilters) {
@@ -241,6 +242,7 @@ async function fetchAllQuestionRows(supabase: any, columns: string, filters: Que
     if (filters.subjectIds?.length) query = query.in("subject_id", filters.subjectIds);
     if (filters.systemIds?.length) query = query.in("system_id", filters.systemIds);
     if (filters.topicNames?.length) query = query.in("title", filters.topicNames);
+    if (filters.sources?.length) query = query.in("source", filters.sources);
     const { data, error } = await query;
     if (error) throw error;
     const page = data ?? [];
@@ -249,6 +251,7 @@ async function fetchAllQuestionRows(supabase: any, columns: string, filters: Que
   }
   return rows;
 }
+
 
 export const getTest = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
