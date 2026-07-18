@@ -68,10 +68,10 @@ function TestRunner() {
   const [largeImages, setLargeImages] = useState(false);
   const [highlightOnly, setHighlightOnly] = useState(false);
   const [multicolor, setMulticolor] = useState(true);
-  const [activeHighlight, setActiveHighlight] = useState<string>("#fff59d");
+  const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
   const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>({
-    "#fff59d": true, "#a5d6a7": true, "#81d4fa": true,
-    "#f8bbd0": true, "#ffcc80": true, "#ce93d8": true,
+    "#ffeb3b": true, "#4ade80": true, "#38bdf8": true,
+    "#f472b6": true, "#fb923c": true, "#c084fc": true,
   });
 
   // Highlight toolbar state (hooks must live above early returns)
