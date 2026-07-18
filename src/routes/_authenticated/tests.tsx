@@ -200,7 +200,10 @@ function TestsList() {
                   <div className="text-xs text-muted-foreground">questions</div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/test/$id", params: { id: String(r.id) } })}>
+                  <Button size="sm" variant="secondary" onClick={() => navigate({
+                    to: r.status === "completed" ? "/test/$id/results" : "/test/$id",
+                    params: { id: String(r.id) },
+                  })}>
                     <FileText className="h-3.5 w-3.5 mr-1" /> {r.status === "completed" ? "Results" : "Resume"}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => toast.info("Test analysis coming soon")}>
