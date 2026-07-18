@@ -437,7 +437,9 @@ function NewTest() {
           {loading ? "Generating…" : "Generate Test"}
         </Button>
       </Card>
+      </>)}
     </div>
+
   );
 }
 
