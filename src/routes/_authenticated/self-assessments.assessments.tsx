@@ -18,6 +18,9 @@ const ASSESSMENTS: Assessment[] = [
   { id: "step1:SA1", label: "UWorld Self Assessment 1", source: "SA1", qbankId: 2, total: 160 },
   { id: "step1:SA2", label: "UWorld Self Assessment 2", source: "SA2", qbankId: 2, total: 159 },
   { id: "step1:SA3", label: "UWorld Self Assessment 3", source: "SA3", qbankId: 2, total: 158 },
+  { id: "step2:SA1", label: "UWorld Self Assessment 1", source: "SA1", qbankId: 1, total: 157 },
+  { id: "step2:SA2", label: "UWorld Self Assessment 2", source: "SA2", qbankId: 1, total: 159 },
+  { id: "step2:SA3", label: "UWorld Self Assessment 3", source: "SA3", qbankId: 1, total: 160 },
 ];
 
 function AssessmentsPage() {

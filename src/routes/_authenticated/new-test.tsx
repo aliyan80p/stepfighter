@@ -32,7 +32,12 @@ const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
     ];
   }
   if (q.slug === "step2") {
-    return [{ id: "step2:main", qbankId: q.id, name: `UWorld ${q.name}`, source: "main", count: 4089 }];
+    return [
+      { id: "step2:main", qbankId: q.id, name: `UWorld ${q.name}`, source: "main", count: 4089 },
+      { id: "step2:SA1", qbankId: q.id, name: "UWorld Self Assessment 1", source: "SA1", count: 157 },
+      { id: "step2:SA2", qbankId: q.id, name: "UWorld Self Assessment 2", source: "SA2", count: 159 },
+      { id: "step2:SA3", qbankId: q.id, name: "UWorld Self Assessment 3", source: "SA3", count: 160 },
+    ];
   }
   if (q.slug === "step3") {
     return [{ id: "step3:main", qbankId: q.id, name: `UWorld ${q.name}`, source: "main", count: 2136 }];
