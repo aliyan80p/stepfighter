@@ -31,9 +31,12 @@ function TestsList() {
   const fn = useServerFn(listTests);
   const delFn = useServerFn(deleteTest);
   const susFn = useServerFn(suspendTest);
+  const renFn = useServerFn(renameTest);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["tests"], queryFn: () => fn() });
+
+  const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null);
 
   const [pageSize, setPageSize] = useState(5);
   const [status, setStatus] = useState<StatusFilter>("all");
