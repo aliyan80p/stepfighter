@@ -56,6 +56,26 @@ function getQuestionMedia(question: { media_name?: string | null; other_medias?:
     .map((item) => ({ ...item, url: mediaUrl(item.name) }));
 }
 
+function mediaKeys(name: string): string[] {
+  const base = (name.split("/").pop() ?? name).trim().toLowerCase();
+  const stripped = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
+  return Array.from(new Set([base, stripped]));
+}
+
+function getEmbeddedMediaKeys(html: string | null | undefined): Set<string> {
+  const keys = new Set<string>();
+  if (!html) return keys;
+  const matches = html.matchAll(/(?:src|href)=["']([^"']+\.(?:png|jpe?g|gif|webp|bmp|svg|mp4|webm|mov|m4v|mp3|wav|ogg))["']/gi);
+  for (const match of matches) {
+    for (const key of mediaKeys(match[1])) keys.add(key);
+  }
+  return keys;
+}
+
+function isEmbeddedMedia(item: MediaItem, embeddedKeys: Set<string>) {
+  return mediaKeys(item.name).some((key) => embeddedKeys.has(key));
+}
+
 function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
   return (
     <button
@@ -151,10 +171,11 @@ function TestRunner() {
 
   const question = data?.questions[idx];
   const allMediaItems = getQuestionMedia(question);
-  // Only skip items already embedded in the QUESTION HTML (not explanation),
-  // otherwise media referenced only in the explanation would disappear before submission.
-  const questionHtmlLower = (question?.question ?? "").toLowerCase();
-  const mediaItems = allMediaItems.filter((m) => !questionHtmlLower.includes(m.name.toLowerCase()));
+  const embeddedMediaKeys = new Set([
+    ...getEmbeddedMediaKeys(question?.question),
+    ...getEmbeddedMediaKeys(question?.explanation),
+  ]);
+  const mediaItems = allMediaItems.filter((m) => !isEmbeddedMedia(m, embeddedMediaKeys));
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
