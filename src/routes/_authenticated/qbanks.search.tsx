@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   Search, Copy, Info, Loader2, Eye, ArrowUpDown,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions } from "@/lib/qbank.functions";
