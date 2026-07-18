@@ -127,13 +127,26 @@ function NewTest() {
   const [subjectIds, setSubjectIds] = useState<number[]>([]);
   const [systemIds, setSystemIds] = useState<number[]>([]);
   const [topicNames, setTopicNames] = useState<string[]>([]);
+  // For CMS aggregates: which form sources are picked (empty = all forms of the selected specialty)
+  const [cmsFormSources, setCmsFormSources] = useState<string[]>([]);
 
-  const selectedSources = useMemo(
-    () => qbankIds
-      .map((id) => QBANK_OPTIONS.find((o) => o.id === id)?.source)
-      .filter((s): s is string => !!s),
+  const selectedQbankOptions = useMemo(
+    () => qbankIds.map((id) => QBANK_OPTIONS.find((o) => o.id === id)).filter((o): o is QbankOption => !!o),
     [qbankIds],
   );
+  const selectedSources = useMemo(() => {
+    const out: string[] = [];
+    for (const opt of selectedQbankOptions) {
+      if (opt.cmsForms) {
+        const picked = opt.cmsForms.filter((f) => cmsFormSources.includes(f.source));
+        const use = picked.length ? picked : opt.cmsForms;
+        for (const f of use) out.push(f.source);
+      } else {
+        out.push(opt.source);
+      }
+    }
+    return out;
+  }, [selectedQbankOptions, cmsFormSources]);
   const { data } = useQuery({
     queryKey: ["filters", qbankId, selectedSources],
     queryFn: () => getFn({ data: { qbankId, sources: selectedSources } }),
