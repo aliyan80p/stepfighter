@@ -294,17 +294,31 @@ function TestRunner() {
 
             {showAnswers && question.explanation && (
               <div className="mt-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-t-md border border-b-0 font-medium" style={{ borderColor: themeStyles.border, background: themeStyles.cardBg }}>
-                  <FileText className="h-4 w-4 text-blue-700" /> Explanation
+                <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
+                  <div
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
+                    style={{ color: "#1e3a8a", boxShadow: "inset 0 -3px 0 #1e3a8a" }}
+                  >
+                    <FileText className="h-4 w-4" /> Explanation
+                  </div>
                 </div>
                 <div
-                  className="border rounded-b-md rounded-tr-md p-5"
+                  className="pt-6 pb-4"
                   style={{
-                    borderColor: themeStyles.border,
-                    background: transparentExpl ? "transparent" : themeStyles.cardBg,
+                    background: transparentExpl ? "transparent" : "transparent",
+                    fontSize: `${fontSize}px`,
+                    fontWeight,
+                    lineHeight: 1.7,
+                    color: theme === "light" ? "#1f2937" : themeStyles.text,
+                    WebkitFontSmoothing: "antialiased",
+                    MozOsxFontSmoothing: "grayscale",
+                    textRendering: "optimizeLegibility",
                   }}
                 >
-                  <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }} />
+                  <div
+                    className="qbank-html qbank-light qbank-explanation"
+                    dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }}
+                  />
                 </div>
               </div>
             )}
