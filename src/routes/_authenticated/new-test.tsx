@@ -191,7 +191,7 @@ function NewTest() {
     if (count < 1) return toast.error("Enter a question count");
     setLoading(true);
     try {
-      const r = await createFn({ data: { qbankId, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
+      const r = await createFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
       navigate({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to create test");
