@@ -8,12 +8,14 @@ for (const [k, v] of Object.entries({ ...imgManifest, ...vidManifest } as Record
 
 function resolve(src: string): string | null {
   if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
-  const base = (src.split("/").pop() ?? src).toLowerCase();
+  const original = src.split("/").pop() ?? src;
+  const base = original.toLowerCase();
   if (map[base]) return `/api/media/${encodeURIComponent(base)}`;
-  const stripped = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
-  if (stripped !== base && map[stripped]) return `/api/media/${encodeURIComponent(stripped)}`;
-  // Fallback: proxy media through the server route, which decrypts app media.
-  return `/api/media/${encodeURIComponent(stripped)}`;
+  const strippedLower = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
+  if (strippedLower !== base && map[strippedLower]) return `/api/media/${encodeURIComponent(strippedLower)}`;
+  // Fallback: preserve original casing since Supabase Storage is case-sensitive.
+  const strippedOriginal = original.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
+  return `/api/media/${encodeURIComponent(strippedOriginal)}`;
 }
 
 function stripTags(html: string): string {
