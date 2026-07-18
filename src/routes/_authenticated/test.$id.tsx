@@ -171,11 +171,6 @@ function TestRunner() {
 
   const question = data?.questions[idx];
   const allMediaItems = getQuestionMedia(question);
-  const embeddedMediaKeys = new Set([
-    ...getEmbeddedMediaKeys(question?.question),
-    ...getEmbeddedMediaKeys(question?.explanation),
-  ]);
-  const mediaItems = allMediaItems.filter((m) => !isEmbeddedMedia(m, embeddedMediaKeys));
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
@@ -279,6 +274,14 @@ function TestRunner() {
   const isCorrect = submitted && selected === correctIdx;
   const correctLetter = correctIdx != null ? String.fromCharCode(65 + correctIdx) : "";
   const correctText = correctIdx != null ? answers[correctIdx]?.answer_text ?? "" : "";
+  const embeddedMediaKeys = new Set<string>();
+  getEmbeddedMediaKeys(question.question).forEach((key) => embeddedMediaKeys.add(key));
+  answers.forEach((answer) => getEmbeddedMediaKeys(answer.answer_text).forEach((key) => embeddedMediaKeys.add(key)));
+  if (showAnswers) {
+    getEmbeddedMediaKeys(question.explanation).forEach((key) => embeddedMediaKeys.add(key));
+    getEmbeddedMediaKeys(correctText).forEach((key) => embeddedMediaKeys.add(key));
+  }
+  const mediaItems = allMediaItems.filter((m) => !isEmbeddedMedia(m, embeddedMediaKeys));
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
   const timeLabel = `${mins}min: ${secs}sec`;
@@ -300,7 +303,7 @@ function TestRunner() {
     setHighlightHtml(snap);
   };
 
-  const htmlFor = (key: string, html: string) => highlightHtml[key] ?? rewriteMedia(html);
+  const htmlFor = (key: string, html: string) => rewriteMedia(highlightHtml[key] ?? html);
 
   const getHighlightRoot = (node: Node) => {
     const el = (node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement) as Element | null;
