@@ -93,11 +93,13 @@ const CreateTestInput = z.object({
   subjectIds: z.array(z.number()).default([]),
   systemIds: z.array(z.number()).default([]),
   topicNames: z.array(z.string()).default([]),
+  sources: z.array(z.string()).default([]),
   count: z.number().min(1).max(50).default(20),
   mode: z.enum(["practice", "test"]).default("practice"),
   timed: z.boolean().default(false),
   scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
 });
+
 
 export const createTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
