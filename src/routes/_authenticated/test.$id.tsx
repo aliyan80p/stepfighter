@@ -7,7 +7,7 @@ import { rewriteMedia } from "@/lib/media";
 import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
-  ArrowLeft, Clock, CheckCircle2, FileText,
+  ArrowLeft, Clock, CheckCircle2, FileText, Strikethrough, Eraser, Copy, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -144,22 +144,95 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
-  // Apply highlight to current selection
-  const applyHighlight = () => {
+  // Floating highlight toolbar state
+  const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
+  const savedRangeRef = useRef<Range | null>(null);
+
+  const HL_COLORS = ["#fde047", "#86efac", "#67e8f9", "#f9a8d4", "#fdba74", "#c4b5fd"];
+
+  const handleSelection = () => {
+    if (!(multicolor || highlightOnly)) { setHlBar(null); return; }
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); return; }
     const range = sel.getRangeAt(0);
     const container = range.commonAncestorContainer.parentElement;
-    if (!container?.closest(".qbank-html")) return;
+    if (!container?.closest(".qbank-html")) { setHlBar(null); return; }
+    savedRangeRef.current = range.cloneRange();
+    const rect = range.getBoundingClientRect();
+    setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
+  };
+
+  const wrapSelection = (styler: (m: HTMLElement) => void) => {
+    const range = savedRangeRef.current;
+    if (!range) return;
     const mark = document.createElement("mark");
-    mark.style.backgroundColor = activeHighlight;
-    mark.style.color = "inherit";
     mark.className = "qbank-hl";
-    try { range.surroundContents(mark); sel.removeAllRanges(); } catch { /* cross-node */ }
+    mark.style.color = "inherit";
+    mark.style.backgroundColor = "transparent";
+    styler(mark);
+    try { range.surroundContents(mark); } catch { /* cross-node */ }
+    window.getSelection()?.removeAllRanges();
+    setHlBar(null);
+  };
+
+  const applyColor = (c: string) => {
+    setActiveHighlight(c);
+    wrapSelection(m => { m.style.backgroundColor = c; });
+  };
+  const applyStrike = () => wrapSelection(m => { m.style.textDecoration = "line-through"; m.style.textDecorationColor = "#ef4444"; });
+  const eraseHighlight = () => {
+    const range = savedRangeRef.current;
+    if (!range) return;
+    const container = range.commonAncestorContainer.parentElement;
+    container?.closest(".qbank-html")?.querySelectorAll("mark.qbank-hl").forEach(m => {
+      if (range.intersectsNode(m)) {
+        const parent = m.parentNode!;
+        while (m.firstChild) parent.insertBefore(m.firstChild, m);
+        parent.removeChild(m);
+      }
+    });
+    window.getSelection()?.removeAllRanges();
+    setHlBar(null);
+  };
+  const copySel = async () => {
+    const range = savedRangeRef.current;
+    if (!range) return;
+    try { await navigator.clipboard.writeText(range.toString()); toast("Copied"); } catch {}
+    setHlBar(null);
   };
 
   return (
-    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }} onMouseUp={multicolor || highlightOnly ? applyHighlight : undefined}>
+    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }} onMouseUp={handleSelection}>
+      {hlBar && (multicolor || highlightOnly) && (
+        <div
+          className="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-full shadow-xl px-2 py-1.5 -translate-x-1/2 -translate-y-full"
+          style={{ left: hlBar.x, top: hlBar.y }}
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          {HL_COLORS.filter(c => enabledHighlights[c]).map(c => (
+            <button
+              key={c}
+              onClick={() => applyColor(c)}
+              className="h-5 w-5 rounded-full border border-white/20 hover:scale-110 transition-transform"
+              style={{ background: c }}
+              title="Highlight"
+            />
+          ))}
+          <div className="w-px h-5 bg-white/20 mx-1" />
+          <button onClick={applyStrike} className="p-1 hover:bg-white/10 rounded" title="Strike-through">
+            <Strikethrough className="h-4 w-4" />
+          </button>
+          <button onClick={eraseHighlight} className="p-1 hover:bg-white/10 rounded" title="Remove highlight">
+            <Eraser className="h-4 w-4" />
+          </button>
+          <button onClick={() => toast("AI note — coming soon")} className="p-1 hover:bg-white/10 rounded" title="AI">
+            <Sparkles className="h-4 w-4" />
+          </button>
+          <button onClick={copySel} className="p-1 hover:bg-white/10 rounded" title="Copy">
+            <Copy className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       {/* Top nav */}
       <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
         <div className="flex items-center gap-4">
