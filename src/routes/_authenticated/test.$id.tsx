@@ -130,6 +130,8 @@ function TestRunner() {
   const [submitted, setSubmitted] = useState(false);
   const [startedAt, setStartedAt] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
+  const [blockStartedAt] = useState(Date.now());
+  const [blockElapsed, setBlockElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -138,6 +140,7 @@ function TestRunner() {
   const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
   const [exhibitZoom, setExhibitZoom] = useState(1);
   const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
+
 
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
