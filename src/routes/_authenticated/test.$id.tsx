@@ -715,7 +715,7 @@ function TestRunner() {
                   <button
                     key={a.id}
                     disabled={isReview}
-                    onClick={() => setSelected(i)}
+                    onClick={() => { setSelected(i); setSubmitted(false); }}
                     className="w-full text-left flex items-center gap-2 py-1.5 text-[15px]"
                     style={{ color: themeStyles.text }}
                   >
