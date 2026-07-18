@@ -350,7 +350,7 @@ function TestRunner() {
           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
-          {HL_COLORS.filter(c => enabledHighlights[c]).map(c => (
+          {(multicolor ? HL_COLORS.filter(c => enabledHighlights[c]) : [HL_COLORS[0]]).map(c => (
             <button
               key={c}
               onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyColor(c); }}
