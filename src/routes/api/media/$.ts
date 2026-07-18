@@ -105,21 +105,24 @@ async function getPlainSignedUrl(name: string, supaUrl: string, srk: string): Pr
   const now = Date.now();
   const cached = plainUrlCache.get(name);
   if (cached && cached.exp > now + 60_000) return cached.url;
-  const res = await fetch(
-    `${supaUrl}/storage/v1/object/sign/${PLAIN_BUCKET}/${encodeURIComponent(name)}`,
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Content-Type": "application/json" },
-      body: JSON.stringify({ expiresIn: 60 * 60 * 24 * 365 }),
-    },
-  );
-  if (!res.ok) return null;
-  const json = (await res.json()) as { signedURL?: string; signedUrl?: string };
-  const path = json.signedURL || json.signedUrl;
-  if (!path) return null;
-  const url = `${supaUrl}/storage/v1${path}`;
-  plainUrlCache.set(name, { url, exp: now + 1000 * 60 * 60 * 24 * 300 });
-  return url;
+  for (const candidate of candidateNames(name)) {
+    const res = await fetch(
+      `${supaUrl}/storage/v1/object/sign/${PLAIN_BUCKET}/${encodeURIComponent(candidate)}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Content-Type": "application/json" },
+        body: JSON.stringify({ expiresIn: 60 * 60 * 24 * 365 }),
+      },
+    );
+    if (!res.ok) continue;
+    const json = (await res.json()) as { signedURL?: string; signedUrl?: string };
+    const path = json.signedURL || json.signedUrl;
+    if (!path) continue;
+    const url = `${supaUrl}/storage/v1${path}`;
+    plainUrlCache.set(name, { url, exp: now + 1000 * 60 * 60 * 24 * 300 });
+    return url;
+  }
+  return null;
 }
 
 async function uploadPlain(name: string, data: Buffer, contentType: string, supaUrl: string, srk: string) {

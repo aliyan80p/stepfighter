@@ -7,7 +7,7 @@ import { rewriteMedia } from "@/lib/media";
 import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
-  ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy,
+  ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,6 +21,40 @@ const NAV_ACCENT = "#2a4ba0";
 const PAGE_BG = "#f3f4f6";
 const SIDE_BG = "#eef2f9";
 const TEXT = "#1f2937";
+
+type MediaKind = "image" | "video" | "audio";
+type MediaItem = { name: string; url: string; kind: MediaKind };
+
+function mediaKind(name: string): MediaKind | null {
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext)) return "image";
+  if (["mp4", "webm", "mov", "m4v"].includes(ext)) return "video";
+  if (["mp3", "wav", "ogg"].includes(ext)) return "audio";
+  return null;
+}
+
+function mediaUrl(name: string) {
+  return `/api/media/${encodeURIComponent(name.trim())}`;
+}
+
+function getQuestionMedia(question: { media_name?: string | null; other_medias?: string | null } | null | undefined): MediaItem[] {
+  if (!question) return [];
+  const seen = new Set<string>();
+  return [question.media_name, question.other_medias]
+    .filter(Boolean)
+    .flatMap((value) => String(value).split(/[;,|\n\r\t ]+/))
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .map((name) => ({ name, kind: mediaKind(name) }))
+    .filter((item): item is { name: string; kind: MediaKind } => !!item.kind)
+    .filter((item) => {
+      const key = item.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((item) => ({ ...item, url: mediaUrl(item.name) }));
+}
 
 function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
   return (
@@ -83,6 +117,7 @@ function TestRunner() {
   const [tutorMode, setTutorMode] = useState(true);
   const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
   const [exhibitZoom, setExhibitZoom] = useState(1);
+  const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -115,6 +150,7 @@ function TestRunner() {
     : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
 
   const question = data?.questions[idx];
+  const mediaItems = getQuestionMedia(question);
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
@@ -125,6 +161,7 @@ function TestRunner() {
     setSubmitted(!!priorAttempt);
     setStartedAt(Date.now());
     setElapsed(0);
+    setMediaModalIndex(null);
   }, [idx, question?.id, priorAttempt?.selected_answer]);
 
   useEffect(() => {
@@ -453,6 +490,7 @@ function TestRunner() {
 
         <div className="flex items-center gap-1">
           <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
+          {mediaItems.length > 0 && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
           <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
           <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
           <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />
@@ -507,6 +545,24 @@ function TestRunner() {
 
             
             <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: htmlFor("q", question.question) }} />
+
+            {mediaItems.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {mediaItems.map((item, mediaIndex) => (
+                  <button
+                    key={`${item.name}-${mediaIndex}`}
+                    type="button"
+                    onClick={() => setMediaModalIndex(mediaIndex)}
+                    className="inline-flex items-center gap-2 rounded border bg-white px-3 py-2 text-sm font-semibold shadow-sm hover:bg-gray-50"
+                    style={{ borderColor: "#b8c6de", color: "#1e3a8a" }}
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    {item.kind === "image" ? "Exhibit" : item.kind === "video" ? "Video" : "Audio"}
+                    {mediaItems.length > 1 && <span className="text-xs font-normal text-gray-500">{mediaIndex + 1}/{mediaItems.length}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: theme === "dark" ? "#334155" : "#b8c6de", background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
               {answers.map((a, i) => {
@@ -694,6 +750,92 @@ function TestRunner() {
           onClose={() => setExhibitSrc(null)}
         />
       )}
+
+      {mediaModalIndex != null && mediaItems[mediaModalIndex] && (
+        <MediaModal
+          items={mediaItems}
+          index={mediaModalIndex}
+          setIndex={setMediaModalIndex}
+          onClose={() => setMediaModalIndex(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MediaModal({
+  items, index, setIndex, onClose,
+}: { items: MediaItem[]; index: number; setIndex: (v: number) => void; onClose: () => void }) {
+  const item = items[index];
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    setZoom(1);
+  }, [index]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") setIndex(Math.max(0, index - 1));
+      if (e.key === "ArrowRight") setIndex(Math.min(items.length - 1, index + 1));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [index, items.length, onClose, setIndex]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-4" onClick={onClose}>
+      <div className="flex h-[92vh] w-[92vw] max-w-5xl flex-col overflow-hidden rounded bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
+          <span className="text-sm font-semibold">Media Display {items.length > 1 ? `${index + 1} of ${items.length}` : ""}</span>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded" title="Close">
+            <span className="text-lg leading-none">✕</span>
+          </button>
+        </div>
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-white p-4">
+          {item.kind === "image" && (
+            <img
+              src={item.url}
+              alt="Question exhibit"
+              className="max-h-full max-w-full object-contain"
+              style={{ transform: `scale(${zoom})`, transformOrigin: "center", transition: "transform 0.15s" }}
+            />
+          )}
+          {item.kind === "video" && (
+            <video key={item.url} controls preload="metadata" className="max-h-full max-w-full">
+              <source src={item.url} />
+            </video>
+          )}
+          {item.kind === "audio" && (
+            <audio key={item.url} controls preload="metadata" className="w-full max-w-xl">
+              <source src={item.url} />
+            </audio>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-3 border-t bg-gray-50 px-3 py-2">
+          <button
+            onClick={() => setIndex(Math.max(0, index - 1))}
+            disabled={index === 0}
+            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm disabled:opacity-40"
+          >
+            Previous
+          </button>
+          {item.kind === "image" && (
+            <div className="flex items-center gap-2">
+              <button onClick={() => setZoom(Math.max(0.5, zoom - 0.25))} className="h-7 w-7 rounded-full border border-gray-300 bg-white">−</button>
+              <span className="w-12 text-center text-xs text-gray-600">{Math.round(zoom * 100)}%</span>
+              <button onClick={() => setZoom(Math.min(4, zoom + 0.25))} className="h-7 w-7 rounded-full border border-gray-300 bg-white">+</button>
+            </div>
+          )}
+          <button
+            onClick={() => setIndex(Math.min(items.length - 1, index + 1))}
+            disabled={index === items.length - 1}
+            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

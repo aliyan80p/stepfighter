@@ -203,7 +203,7 @@ export const getTest = createServerFn({ method: "GET" })
     if (error || !test) throw new Error("Test not found");
     const { data: questions } = await supabase
       .from("questions")
-      .select("id,title,question,explanation,correct_answer,subject_id,system_id")
+      .select("id,title,question,explanation,correct_answer,subject_id,system_id,media_name,other_medias")
       .in("id", test.question_ids);
     const { data: answers } = await supabase
       .from("answers")
