@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import {
   BarChart3, ListOrdered, StickyNote, CheckCircle2, ChevronRight, Flame,
-  TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2,
+  TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2, X, Copy, Check,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/test-results/$id")({
