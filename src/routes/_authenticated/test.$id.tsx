@@ -153,12 +153,28 @@ function TestRunner() {
   const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
-  const HL_COLORS = ["#fde047", "#86efac", "#67e8f9", "#f9a8d4", "#fdba74", "#c4b5fd"];
+  const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
 
-  const handleSelection = () => {
-    if (!(multicolor || highlightOnly)) { setHlBar(null); return; }
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); return; }
+  const hlStorageKey = question ? `qbank-hl-${question.id}` : "";
+
+  // Restore saved highlights per question
+  useEffect(() => {
+    if (!question || !contentRef.current) return;
+    const saved = (() => { try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); } catch { return {}; } })();
+    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
+      const k = el.dataset.hlkey!;
+      if (typeof saved[k] === "string") el.innerHTML = saved[k];
+    });
+  }, [question?.id, submitted]);
+
+  const persistHighlights = () => {
+    if (!question || !contentRef.current) return;
+    const snap: Record<string, string> = {};
+    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
+      if (el.querySelector("mark.qbank-hl")) snap[el.dataset.hlkey!] = el.innerHTML;
+    });
+    try { localStorage.setItem(`qbank-hl-${question.id}`, JSON.stringify(snap)); } catch {}
+  };
     const range = sel.getRangeAt(0);
     const container = range.commonAncestorContainer.parentElement;
     if (!container?.closest(".qbank-html")) { setHlBar(null); return; }
