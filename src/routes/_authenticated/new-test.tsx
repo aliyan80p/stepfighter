@@ -119,10 +119,11 @@ function NewTest() {
 
   // pool count
   const { data: pool } = useQuery({
-    queryKey: ["pool", subjectIds, systemIds, topicNames, scope],
-    queryFn: () => poolFn({ data: { subjectIds, systemIds, topicNames, scope } }),
+    queryKey: ["pool", qbankId, subjectIds, systemIds, topicNames, scope],
+    queryFn: () => poolFn({ data: { qbankId, subjectIds, systemIds, topicNames, scope } }),
     enabled: !!data,
   });
+
   const poolCount = pool?.count ?? 0;
 
   useEffect(() => {
