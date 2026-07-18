@@ -37,7 +37,8 @@ function TestsList() {
   const rows = useMemo(() => {
     return (data ?? []).map((t) => {
       const answered = t.right_count + t.wrong_count;
-      const scorePct = answered ? Math.round((t.right_count / answered) * 100) : 0;
+      const total = (t.question_ids as number[])?.length ?? answered;
+      const scorePct = total ? Math.round((t.right_count / total) * 100) : 0;
       const st: "completed" | "suspended" | "not_started" =
         t.done ? "completed" : answered > 0 ? "suspended" : "not_started";
       const name = `Custom Quiz ${new Date(t.created_at).toLocaleString()}`;
