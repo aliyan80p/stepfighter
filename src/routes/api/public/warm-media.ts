@@ -19,6 +19,25 @@ function contentTypeFor(name: string): string {
   return map[ext] ?? "application/octet-stream";
 }
 
+async function listAllStorageNames(prefix: string, supaUrl: string, srk: string): Promise<Set<string>> {
+  const out = new Set<string>();
+  const limit = 1000;
+  let offset = 0;
+  for (let i = 0; i < 40; i++) {
+    const res = await fetch(`${supaUrl}/storage/v1/object/list/${PLAIN_BUCKET}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Content-Type": "application/json" },
+      body: JSON.stringify({ prefix, limit, offset, sortBy: { column: "name", order: "asc" } }),
+    });
+    if (!res.ok) break;
+    const rows = (await res.json()) as Array<{ name: string }>;
+    for (const r of rows) out.add(prefix + r.name);
+    if (rows.length < limit) break;
+    offset += limit;
+  }
+  return out;
+}
+
 async function fetchEncrypted(
   qbankId: number, name: string, driveFileId: string | null,
   supaUrl: string, srk: string,
@@ -87,35 +106,44 @@ export const Route = createFileRoute("/api/public/warm-media")({
         const srk = process.env.SUPABASE_SERVICE_ROLE_KEY!;
         const url = new URL(request.url);
         const qbankId = Number(url.searchParams.get("qbank_id") ?? "0");
-        const limit = Math.min(Number(url.searchParams.get("limit") ?? "40"), 100);
-        const concurrency = Math.min(Number(url.searchParams.get("concurrency") ?? "8"), 16);
+        if (!qbankId || !(qbankId in SLUGS)) {
+          return new Response("qbank_id required (1|2|3)", { status: 400 });
+        }
+        const limit = Math.min(Number(url.searchParams.get("limit") ?? "40"), 200);
+        const offset = Number(url.searchParams.get("offset") ?? "0");
+        const concurrency = Math.min(Number(url.searchParams.get("concurrency") ?? "8"), 24);
+        const prefix = SLUGS[qbankId];
 
-        // Pull missing rows: qbank_media rows whose plain-bucket object is absent.
-        // Use PostgREST RPC via a raw SQL through storage? Simpler: fetch a page of
-        // qbank_media, check storage presence per-name.
-        const qFilter = qbankId ? `&qbank_id=eq.${qbankId}` : "";
-        const listRes = await fetch(
-          `${supaUrl}/rest/v1/qbank_media?select=qbank_id,name,drive_file_id${qFilter}&limit=${limit * 6}`,
-          { headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Range-Unit": "items", Prefer: "count=none" } },
-        );
-        if (!listRes.ok) return new Response(`List failed: ${await listRes.text()}`, { status: 500 });
-        const candidates = (await listRes.json()) as Array<{
-          qbank_id: number; name: string; drive_file_id: string | null;
-        }>;
+        // Load existing storage names for this qbank prefix
+        const existing = await listAllStorageNames(prefix, supaUrl, srk);
 
-        // Filter to missing by HEAD-checking storage (cheap)
-        const missing: typeof candidates = [];
-        await Promise.all(candidates.map(async (row) => {
-          if (missing.length >= limit) return;
-          const path = `${SLUGS[row.qbank_id] ?? ""}${row.name}`;
-          const head = await fetch(
-            `${supaUrl}/storage/v1/object/info/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
+        // Paginate qbank_media rows for this qbank, filter to missing
+        const missing: Array<{ qbank_id: number; name: string; drive_file_id: string | null }> = [];
+        let pgOffset = offset;
+        const pageSize = 1000;
+        let scanned = 0;
+        while (missing.length < limit && scanned < 20000) {
+          const listRes = await fetch(
+            `${supaUrl}/rest/v1/qbank_media?select=qbank_id,name,drive_file_id&qbank_id=eq.${qbankId}&order=name&limit=${pageSize}&offset=${pgOffset}`,
             { headers: { Authorization: `Bearer ${srk}`, apikey: srk } },
           );
-          if (!head.ok && missing.length < limit) missing.push(row);
-        }));
+          if (!listRes.ok) return new Response(`List failed: ${await listRes.text()}`, { status: 500 });
+          const rows = (await listRes.json()) as Array<{
+            qbank_id: number; name: string; drive_file_id: string | null;
+          }>;
+          if (rows.length === 0) break;
+          scanned += rows.length;
+          for (const r of rows) {
+            if (!existing.has(prefix + r.name)) {
+              missing.push(r);
+              if (missing.length >= limit) break;
+            }
+          }
+          pgOffset += rows.length;
+          if (rows.length < pageSize) break;
+        }
 
-        // Process with limited concurrency
+        // Process
         const queue = missing.slice(0, limit);
         const results: Array<{ name: string; ok: boolean; err?: string }> = [];
         let idx = 0;
@@ -130,7 +158,7 @@ export const Route = createFileRoute("/api/public/warm-media")({
         const ok = results.filter((r) => r.ok).length;
         return new Response(
           JSON.stringify({
-            scanned: candidates.length, missing_found: missing.length,
+            existing_count: existing.size, scanned, missing_selected: queue.length,
             processed: results.length, uploaded: ok,
             errors: results.filter((r) => !r.ok).slice(0, 10),
           }, null, 2),
