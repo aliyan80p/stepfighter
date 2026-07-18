@@ -149,7 +149,7 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
-  const hlStorageKey = question ? `qbank-hl-${question.id}` : "";
+  const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
 
   // Restore saved highlights per question
   useEffect(() => {
