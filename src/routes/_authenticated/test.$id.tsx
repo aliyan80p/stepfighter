@@ -57,6 +57,7 @@ function TestRunner() {
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Settings
   const [fontSize, setFontSize] = useState(16);
@@ -71,6 +72,10 @@ function TestRunner() {
     "#fff59d": true, "#a5d6a7": true, "#81d4fa": true,
     "#f8bbd0": true, "#ffcc80": true, "#ce93d8": true,
   });
+
+  // Highlight toolbar state (hooks must live above early returns)
+  const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
+  const savedRangeRef = useRef<Range | null>(null);
 
   const themeStyles = theme === "dark"
     ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
