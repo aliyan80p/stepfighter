@@ -107,8 +107,8 @@ function TestsList() {
       <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-              <FileText className="h-6 w-6" />
+            <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm ring-1 ring-border bg-card">
+              <img src={logo} alt="IMD QBank" width={56} height={56} className="h-full w-full object-cover" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Previous Tests</h1>
