@@ -242,26 +242,25 @@ function TestRunner() {
 
   const proceedExam = async () => {
     if (!question) return;
-    const isLast = idx === total - 1;
-    if (isLast) {
-      if (!window.confirm("End the block and submit your answers? This cannot be undone.")) return;
-    }
-    // Fire-and-forget submission so UI advances instantly
     if (selected != null && !submitted) {
       const secs = Math.round((Date.now() - startedAt) / 1000);
-      const qid = question.id;
-      const sel = selected;
-      void subFn({ data: { testId, questionId: qid, selectedIndex: sel, timeSeconds: secs } })
-        .then(() => qc.invalidateQueries({ queryKey: ["test", testId] }))
-        .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
+      try {
+        await subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to submit");
+        return;
+      }
     }
-    if (isLast) {
-      await finish();
+    if (idx === total - 1) {
+      if (window.confirm("End the block and submit your answers? This cannot be undone.")) {
+        qc.invalidateQueries({ queryKey: ["test", testId] });
+        await finish();
+      }
     } else {
+      qc.invalidateQueries({ queryKey: ["test", testId] });
       goToQuestion(idx + 1);
     }
   };
-
 
 
   const bookmark = async () => {
@@ -836,9 +835,7 @@ function TestRunner() {
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
-                  {showAnswers && (
-                    <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
-                  )}
+                  <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
                   <div className="w-px h-6 bg-white/20 mx-1" />
                 </>
               )}
