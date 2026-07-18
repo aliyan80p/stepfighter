@@ -35,6 +35,7 @@ function escapeAttr(value: string): string {
 
 type RewriteMediaOptions = {
   deferMedia?: boolean;
+  qbankId?: number;
 };
 
 function renderImage(url: string, alt: string): string {
