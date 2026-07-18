@@ -298,7 +298,7 @@ export const submitAnswer = createServerFn({ method: "POST" })
     // Upsert attempt: delete prior then insert
     await supabase.from("attempts").delete().eq("user_id", userId).eq("test_id", data.testId).eq("question_id", data.questionId);
     await supabase.from("attempts").insert({
-      user_id: userId, test_id: data.testId, question_id: data.questionId,
+      user_id: userId, test_id: data.testId, question_id: data.questionId, qbank_id: 1,
       selected_answer: data.selectedIndex, is_correct: isCorrect, time_seconds: data.timeSeconds,
     });
     // Update tallies
