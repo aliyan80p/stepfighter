@@ -77,16 +77,22 @@ const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
         id: `step2:NBME${n}`, qbankId: q.id, name: `NBME ${n}`,
         source: `NBME${n}`, count: NBME_COUNTS[`NBME${n}`] ?? 200,
       })),
-      ...STEP2_CMS.flatMap(({ specialty, tag, forms }) =>
-        forms.map((n) => {
-          const source = `CMS_${tag}${n}`;
-          return {
-            id: `step2:${source}`, qbankId: q.id,
-            name: `CMS ${specialty} Form ${n}`,
-            source, count: CMS_COUNTS[source] ?? 50,
-          };
-        }),
-      ),
+      ...STEP2_CMS.map(({ specialty, tag, forms }) => {
+        const cmsForms: CmsForm[] = forms.map((n) => ({
+          source: `CMS_${tag}${n}`,
+          formNumber: n,
+          count: CMS_COUNTS[`CMS_${tag}${n}`] ?? 50,
+        }));
+        return {
+          id: `step2:CMS_${tag}`,
+          qbankId: q.id,
+          name: `CMS ${specialty}`,
+          source: `CMS_${tag}`,
+          count: cmsForms.reduce((s, f) => s + f.count, 0),
+          cmsSpecialty: specialty,
+          cmsForms,
+        };
+      }),
     ];
   }
   if (q.slug === "step3") {
