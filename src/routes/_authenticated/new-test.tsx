@@ -42,6 +42,17 @@ const STEP2_CMS: Array<{ specialty: string; tag: string; forms: number[] }> = [
   { specialty: "Emergency Medicine", tag: "EM",   forms: [1, 2, 3] },
 ];
 const CMS_COUNTS: Record<string, number> = { CMS_IM6: 49 };
+// Map CMS specialty display names → subjects table names (Step 2 CK)
+const CMS_SPECIALTY_TO_SUBJECT: Record<string, string> = {
+  "Psychiatry": "Psychiatry",
+  "Pediatrics": "Pediatrics",
+  "Surgery": "Surgery",
+  "Neurology": "Neurology",
+  "Internal Medicine": "Medicine",
+  "Ob/Gyn": "Obstetrics & Gynecology",
+  "Family Medicine": "Family Medicine",
+  "Emergency Medicine": "Emergency Medicine",
+};
 const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
   if (q.slug === "step1") {
     return [
