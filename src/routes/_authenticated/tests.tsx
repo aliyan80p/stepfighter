@@ -110,9 +110,6 @@ function TestsList() {
             <div className="relative h-14 w-14 rounded-2xl overflow-hidden shadow-lg shadow-fuchsia-500/30 ring-1 ring-white/10">
               <div className="absolute inset-0 bg-[conic-gradient(from_140deg_at_50%_50%,#f43f5e_0deg,#f97316_80deg,#facc15_150deg,#22d3ee_230deg,#8b5cf6_310deg,#f43f5e_360deg)]" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.55),transparent_55%)]" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white font-black text-lg tracking-tighter drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">iMD</span>
-              </div>
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1.5 w-8 rounded-full bg-white/40 blur-sm" />
             </div>
             <div>
