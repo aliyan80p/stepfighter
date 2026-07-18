@@ -46,7 +46,6 @@ function renderVideo(url: string): string {
 /** Rewrite media URLs in question HTML to point to the decrypting media route. */
 export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): string {
   if (!html) return html;
-  const deferredMedia: string[] = [];
   let out = html.replace(
     /(<(?:img|source|video|audio)\b[^>]*\bsrc=)(["'])([^"']+)\2/gi,
     (full, prefix, q, src) => {
@@ -54,9 +53,18 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
       return url ? `${prefix}${q}${url}${q}` : full;
     },
   );
-  // The imported qbank often stores explanation images as text links like
-  // <a href="media/L20387.png">erosions</a>. Render those media files exactly
-  // where the source explanation placed the link instead of grouping them above.
+
+  // The imported qbank stores explanation media as text links like
+  // <a href="media/L20387.png">erosions</a>. We keep the label inline where
+  // the author put it, but insert the actual <img>/<video> AFTER the
+  // containing block element (p, li, div, td, ...) so it doesn't split
+  // the sentence.
+  const parked: string[] = [];
+  const parkMedia = (mediaHtml: string, labelHtml: string) => {
+    const idx = parked.push(mediaHtml) - 1;
+    return `${labelHtml}<!--QBM:${idx}-->`;
+  };
+
   out = out.replace(
     /<a\b([^>]*?)\bhref=["']([^"']+\.(?:png|jpe?g|gif|webp|bmp|svg))["']([^>]*)>(.*?)<\/a>/gis,
     (full, _before, href, _after, labelHtml) => {
@@ -65,48 +73,49 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
       if (!url) return full;
       const label = stripTags(labelHtml);
       const media = renderImage(url, label || "Related image");
-      if (options.deferMedia) {
-        deferredMedia.push(media);
-        return labelHtml;
-      }
+      if (options.deferMedia) return parkMedia(media, labelHtml);
       return `${labelHtml}${media}`;
     },
   );
-  // Convert bare <a href="...mp4"> to inline video players
   out = out.replace(
     /<a\b[^>]*\bhref=["']([^"']+\.(?:mp4|webm|mov|m4v))["'][^>]*>(.*?)<\/a>/gis,
     (full, href, labelHtml) => {
       const url = resolve(href);
       if (!url) return full;
       const media = renderVideo(url);
-      if (options.deferMedia) {
-        deferredMedia.push(media);
-        return labelHtml;
-      }
+      if (options.deferMedia) return parkMedia(media, labelHtml);
       return media;
     },
   );
+
   if (options.deferMedia) {
-    out = out.replace(/<img\b[^>]*>/gi, (tag) => {
-      deferredMedia.push(tag);
-      return "";
-    });
-    out = out.replace(/<video\b[\s\S]*?<\/video>/gi, (tag) => {
-      deferredMedia.push(tag);
-      return "";
-    });
-    out = out.replace(/<audio\b[\s\S]*?<\/audio>/gi, (tag) => {
-      deferredMedia.push(tag);
-      return "";
-    });
+    // Also park any raw <img>/<video>/<audio> tags in the explanation.
+    out = out.replace(/<img\b[^>]*>/gi, (tag) => parkMedia(tag, ""));
+    out = out.replace(/<video\b[\s\S]*?<\/video>/gi, (tag) => parkMedia(tag, ""));
+    out = out.replace(/<audio\b[\s\S]*?<\/audio>/gi, (tag) => parkMedia(tag, ""));
+
+    // Move each parked marker to just after its containing block element.
+    const blockClose = /<\/(?:p|li|div|td|tr|section|article|blockquote|figure)>/i;
+    let guard = 0;
+    while (guard++ < parked.length + 5) {
+      const m = out.match(/<!--QBM:(\d+)-->/);
+      if (!m) break;
+      const idx = Number(m[1]);
+      const start = m.index!;
+      const afterMarker = start + m[0].length;
+      const rest = out.slice(afterMarker);
+      const close = rest.match(blockClose);
+      const media = `<div class="qbank-inline-media-wrap">${parked[idx]}</div>`;
+      if (close) {
+        const insertAt = afterMarker + close.index! + close[0].length;
+        out = out.slice(0, start) + out.slice(afterMarker, insertAt) + media + out.slice(insertAt);
+      } else {
+        out = out.slice(0, start) + out.slice(afterMarker) + media;
+      }
+    }
+    out = out.replace(/<!--QBM:\d+-->/g, "");
   }
-  // Add lazy loading + async decoding hints to <img> tags for faster perceived load.
+
   out = out.replace(/<img\b(?![^>]*\bloading=)([^>]*)>/gi, '<img loading="lazy" decoding="async"$1>');
-  if (deferredMedia.length > 0) {
-    const mediaHtml = deferredMedia
-      .join("")
-      .replace(/<img\b(?![^>]*\bloading=)([^>]*)>/gi, '<img loading="lazy" decoding="async"$1>');
-    out = `${out}<div class="qbank-deferred-media">${mediaHtml}</div>`;
-  }
   return out;
 }
