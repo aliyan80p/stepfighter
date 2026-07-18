@@ -305,6 +305,7 @@ function QuestionModal({
   const rootRef = useRef<HTMLDivElement>(null);
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [marked, setMarked] = useState<Record<number, boolean>>({});
 
   // Settings state (matches test runner)
