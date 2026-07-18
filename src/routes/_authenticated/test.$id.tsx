@@ -294,10 +294,16 @@ function TestRunner() {
 
             {showAnswers && question.explanation && (
               <div className="mt-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-t-md border border-b-0 border-gray-300 bg-white font-medium">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-t-md border border-b-0 font-medium" style={{ borderColor: themeStyles.border, background: themeStyles.cardBg }}>
                   <FileText className="h-4 w-4 text-blue-700" /> Explanation
                 </div>
-                <div className="border border-gray-300 rounded-b-md rounded-tr-md p-5 bg-white">
+                <div
+                  className="border rounded-b-md rounded-tr-md p-5"
+                  style={{
+                    borderColor: themeStyles.border,
+                    background: transparentExpl ? "transparent" : themeStyles.cardBg,
+                  }}
+                >
                   <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }} />
                 </div>
               </div>
