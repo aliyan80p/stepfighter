@@ -900,7 +900,14 @@ function TestRunner() {
                   }} />
                 </>
               )}
-              {examUI && <span className="inline-block h-3 w-3 rounded-full bg-red-500 ml-1 shadow-[0_0_6px_rgba(239,68,68,0.9)]" title="Recording" />}
+              {examUI && (
+                <button
+                  type="button"
+                  onClick={() => setBreakModal("end")}
+                  title="End Block"
+                  className="inline-block h-3 w-3 rounded-full bg-red-500 ml-1 shadow-[0_0_6px_rgba(239,68,68,0.9)] cursor-pointer hover:scale-110 transition-transform"
+                />
+              )}
             </div>
           </div>
         );
