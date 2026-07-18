@@ -22,6 +22,14 @@ type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
 const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name }));
 
 type QbankOption = { id: string; qbankId: number; name: string; source: string; count: number };
+const STEP1_NBMES = [25, 26, 27, 28, 30, 31, 32, 33];
+const STEP2_NBMES = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+const NBME_COUNTS: Record<string, number> = {
+  NBME25: 200, NBME26: 200, NBME27: 198, NBME28: 200,
+  NBME30: 200, NBME31: 200, NBME32: 200, NBME33: 199,
+  NBME8: 200, NBME9: 200, NBME10: 200, NBME11: 200, NBME12: 200,
+  NBME13: 200, NBME14: 200, NBME15: 200, NBME16: 200,
+};
 const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
   if (q.slug === "step1") {
     return [
@@ -29,6 +37,10 @@ const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
       { id: "step1:SA1", qbankId: q.id, name: "UWorld Self Assessment 1", source: "SA1", count: 160 },
       { id: "step1:SA2", qbankId: q.id, name: "UWorld Self Assessment 2", source: "SA2", count: 159 },
       { id: "step1:SA3", qbankId: q.id, name: "UWorld Self Assessment 3", source: "SA3", count: 158 },
+      ...STEP1_NBMES.map((n) => ({
+        id: `step1:NBME${n}`, qbankId: q.id, name: `NBME ${n}`,
+        source: `NBME${n}`, count: NBME_COUNTS[`NBME${n}`] ?? 200,
+      })),
     ];
   }
   if (q.slug === "step2") {
@@ -37,6 +49,10 @@ const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
       { id: "step2:SA1", qbankId: q.id, name: "UWorld Self Assessment 1", source: "SA1", count: 157 },
       { id: "step2:SA2", qbankId: q.id, name: "UWorld Self Assessment 2", source: "SA2", count: 159 },
       { id: "step2:SA3", qbankId: q.id, name: "UWorld Self Assessment 3", source: "SA3", count: 160 },
+      ...STEP2_NBMES.map((n) => ({
+        id: `step2:NBME${n}`, qbankId: q.id, name: `NBME ${n}`,
+        source: `NBME${n}`, count: NBME_COUNTS[`NBME${n}`] ?? 200,
+      })),
     ];
   }
   if (q.slug === "step3") {
@@ -48,6 +64,7 @@ const QBANK_OPTIONS: QbankOption[] = ALL_QBANKS.flatMap((q) => {
   }
   return [{ id: `${q.slug}:main`, qbankId: q.id, name: `UWorld ${q.name}`, source: "main", count: 0 }];
 });
+
 const COURSE_TOTALS: Record<number, number> = QBANK_OPTIONS.reduce((acc, o) => {
   acc[o.qbankId] = (acc[o.qbankId] ?? 0) + o.count;
   return acc;
