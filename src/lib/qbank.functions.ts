@@ -190,7 +190,7 @@ export const getPoolCount = createServerFn({ method: "POST" })
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
   const { data: inserted, error } = await supabase
     .from("tests")
-    .insert({ user_id: userId, question_ids: ids, mode: data.mode })
+    .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: 1 })
     .select("id")
     .single();
   if (error) throw error;
