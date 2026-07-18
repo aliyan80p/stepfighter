@@ -297,38 +297,8 @@ function TestRunner() {
         {/* Content */}
         <div className="flex-1 overflow-auto">
           <div className={`max-w-4xl mx-auto px-8 py-6 ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight }}>
-            {/* Answered banner */}
-            {submitted && (
-              <div className={`rounded-md border-l-4 p-4 mb-6 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
-                <div>
-                  <div className={`font-semibold ${isCorrect ? "text-green-700" : "text-red-700"}`}>
-                    {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
-                  <div className="font-semibold text-gray-800 mt-1" dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }} />
-                </div>
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Clock className="h-4 w-4 text-blue-700" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">{timeLabel}</div>
-                      <div className="text-[11px] text-gray-500">Time Taken</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 text-green-700" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">{peerPct}%</div>
-                      <div className="text-[11px] text-gray-500">Answered Correctly</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {(() => null)()}
+
 
             
             <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
