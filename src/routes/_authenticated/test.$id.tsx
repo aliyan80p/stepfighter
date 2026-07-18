@@ -497,10 +497,7 @@ function TestRunner() {
       // Multi-root selection: apply to every hlkey block that intersects the range.
       const roots = Array.from(container.querySelectorAll<HTMLElement>("[data-hlkey]"));
       for (const root of roots) {
-        const rootRange = document.createRange();
-        rootRange.selectNodeContents(root);
-        if (range.compareBoundaryPoints(Range.END_TO_START, rootRange) >= 0) continue;
-        if (range.compareBoundaryPoints(Range.START_TO_END, rootRange) <= 0) continue;
+        if (!range.intersectsNode(root)) continue;
         wrapRangeWithin(root, range, styler);
       }
     }
