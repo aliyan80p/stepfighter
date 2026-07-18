@@ -82,11 +82,13 @@ function SearchPage() {
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Course</label>
             <select
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
+              value={selectedQbankId}
+              onChange={(e) => setSelectedQbankId(Number(e.target.value))}
               className="w-full mt-1 py-2.5 px-3 border rounded-md bg-white"
             >
-              <option>USMLE Step 2 CK</option>
+              {QBANKS.map((qb) => (
+                <option key={qb.id} value={qb.id}>{qb.name}</option>
+              ))}
             </select>
           </div>
           <button
