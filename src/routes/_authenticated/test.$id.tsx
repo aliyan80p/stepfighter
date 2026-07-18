@@ -150,7 +150,9 @@ function TestRunner() {
     : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
 
   const question = data?.questions[idx];
-  const mediaItems = getQuestionMedia(question);
+  const allMediaItems = getQuestionMedia(question);
+  const embeddedHtml = [question?.question, question?.explanation, question?.title].filter(Boolean).join(" ").toLowerCase();
+  const mediaItems = allMediaItems.filter((m) => !embeddedHtml.includes(m.name.toLowerCase()));
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
