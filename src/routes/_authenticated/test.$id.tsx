@@ -162,18 +162,6 @@ function TestRunner() {
 
   const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
 
-  // Restore saved highlights per question
-  useEffect(() => {
-    if (!question || !contentRef.current) return;
-    const saved = (() => { try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); } catch { return {}; } })();
-    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
-      const k = el.dataset.hlkey!;
-      if (typeof saved[k] === "string") el.innerHTML = saved[k];
-    });
-  }, [question?.id, submitted]);
-
-  const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
-
   const persistHighlights = () => {
     if (!question || !contentRef.current) return;
     const snap: Record<string, string> = {};
@@ -206,7 +194,6 @@ function TestRunner() {
     try {
       range.surroundContents(mark);
     } catch {
-      // Cross-node selection: extract + wrap
       try {
         const frag = range.extractContents();
         mark.appendChild(frag);
@@ -241,10 +228,6 @@ function TestRunner() {
     persistHighlights();
   };
 
-    window.getSelection()?.removeAllRanges();
-    setHlBar(null);
-    persistHighlights();
-  };
   const copySel = async () => {
     const range = savedRangeRef.current;
     if (!range) return;
