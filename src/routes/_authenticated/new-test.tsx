@@ -19,8 +19,9 @@ export const Route = createFileRoute("/_authenticated/new-test")({
 type Tab = "courses" | "qbank" | "subjects" | "systems" | "topics";
 type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
 
-const COURSES = [{ id: "step2", name: "USMLE Step 2 CK" }];
-const QBANKS = [{ id: "step2", name: "USMLE World Step 2 CK" }];
+const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name }));
+const QBANKS = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: `UWorld ${q.name}` }));
+
 
 function NewTest() {
   const getFn = useServerFn(getFilters);
