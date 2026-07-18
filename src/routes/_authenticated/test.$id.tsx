@@ -685,7 +685,6 @@ function SettingsPanel(props: any) {
 
       <div className="p-4 border-b">
         <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Highlight Features</div>
-        <Row label="Highlight-Only Mode"><Toggle on={highlightOnly} onChange={setHighlightOnly} /></Row>
         <Row label="Multicolor Highlighting"><Toggle on={multicolor} onChange={setMulticolor} /></Row>
       </div>
 
