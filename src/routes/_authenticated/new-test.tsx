@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { getFilters, createTest, getPoolCount, createCustomTest, getTestQuestionIds } from "@/lib/qbank.functions";
+import { useActiveQbankId } from "@/lib/active-qbank";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,7 +29,9 @@ function NewTest() {
   const getTestIdsFn = useServerFn(getTestQuestionIds);
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
-  const { data } = useQuery({ queryKey: ["filters", "all-questions-v2"], queryFn: () => getFn() });
+  const qbankId = useActiveQbankId();
+  const { data } = useQuery({ queryKey: ["filters", qbankId], queryFn: () => getFn({ data: { qbankId } }) });
+
 
   const [openTab, setOpenTab] = useState<Tab>("courses");
   const [courseIds, setCourseIds] = useState<string[]>([]);
@@ -115,10 +119,11 @@ function NewTest() {
 
   // pool count
   const { data: pool } = useQuery({
-    queryKey: ["pool", subjectIds, systemIds, topicNames, scope],
-    queryFn: () => poolFn({ data: { subjectIds, systemIds, topicNames, scope } }),
+    queryKey: ["pool", qbankId, subjectIds, systemIds, topicNames, scope],
+    queryFn: () => poolFn({ data: { qbankId, subjectIds, systemIds, topicNames, scope } }),
     enabled: !!data,
   });
+
   const poolCount = pool?.count ?? 0;
 
   useEffect(() => {
@@ -148,7 +153,7 @@ function NewTest() {
       if (!ids.length) return toast.error("Enter at least one question ID");
       setLoading(true);
       try {
-        const r = await createCustomFn({ data: { questionIds: ids, mode, timed } });
+        const r = await createCustomFn({ data: { qbankId, questionIds: ids, mode, timed } });
         if (r.skipped > 0) toast.message(`${r.skipped} ID(s) were not found and skipped`);
         navigate({ to: "/test/$id", params: { id: String(r.id) } });
       } catch (e) {
@@ -160,7 +165,7 @@ function NewTest() {
     if (count < 1) return toast.error("Enter a question count");
     setLoading(true);
     try {
-      const r = await createFn({ data: { subjectIds, systemIds, topicNames, count, mode, timed, scope } });
+      const r = await createFn({ data: { qbankId, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
       navigate({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to create test");

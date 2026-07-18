@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listTests, deleteTest, suspendTest, renameTest } from "@/lib/qbank.functions";
+import { useActiveQbankId } from "@/lib/active-qbank";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,7 +36,9 @@ function TestsList() {
   const renFn = useServerFn(renameTest);
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { data, isLoading } = useQuery({ queryKey: ["tests"], queryFn: () => fn() });
+  const qbankId = useActiveQbankId();
+  const { data, isLoading } = useQuery({ queryKey: ["tests", qbankId], queryFn: () => fn({ data: { qbankId } }) });
+
 
   const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null);
 

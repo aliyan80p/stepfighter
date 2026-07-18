@@ -10,8 +10,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
+import { useActiveQbankId } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
+
 
 export const Route = createFileRoute("/_authenticated/qbanks/search")({
   component: SearchPage,
@@ -30,12 +32,14 @@ type SearchResult = {
 
 function SearchPage() {
   const searchFn = useServerFn(searchQuestions);
+  const qbankId = useActiveQbankId();
   const [query, setQuery] = useState("");
   const [course, setCourse] = useState("USMLE Step 2 CK");
 
   const mutation = useMutation({
-    mutationFn: async (q: string) => searchFn({ data: { query: q } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
+    mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
   });
+
 
   const results = mutation.data?.results ?? [];
 
@@ -335,16 +339,18 @@ function QuestionModal({
   };
 
   const bookmarkFn = useServerFn(toggleBookmark);
+  const modalQbankId = useActiveQbankId();
   const toggleMark = async () => {
     const prev = !!marked[r.id];
     setMarked((m) => ({ ...m, [r.id]: !prev }));
     try {
-      await bookmarkFn({ data: { questionId: r.id } });
+      await bookmarkFn({ data: { questionId: r.id, qbankId: modalQbankId } });
     } catch {
       setMarked((m) => ({ ...m, [r.id]: prev }));
       toast.error("Failed to update flag");
     }
   };
+
   const isMarked = !!marked[r.id];
 
   return (
@@ -424,7 +430,7 @@ function QuestionModal({
             <div
               data-hlkey="q"
               className="qbank-html qbank-light"
-              dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "") }}
+              dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "", { qbankId: modalQbankId }) }}
             />
 
             <div
@@ -452,7 +458,7 @@ function QuestionModal({
                       <span
                         data-hlkey={`a${i}`}
                         className="qbank-html qbank-light inline"
-                        dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "") }}
+                        dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "", { qbankId: modalQbankId }) }}
                       />
                       <span className="text-gray-600 ml-1">({pct}%)</span>
                     </span>
@@ -467,7 +473,7 @@ function QuestionModal({
                 <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
                 <div
                   className="font-semibold text-gray-800 mt-1"
-                  dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }}
+                  dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: modalQbankId })}` }}
                 />
               </div>
               <div className="flex items-center gap-4 shrink-0">
@@ -515,7 +521,7 @@ function QuestionModal({
                   <div
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
-                    dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true }) }}
+                    dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true, qbankId: modalQbankId }) }}
                   />
                 </div>
               </div>

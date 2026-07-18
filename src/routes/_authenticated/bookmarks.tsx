@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listBookmarks, createTest } from "@/lib/qbank.functions";
+import { useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -13,16 +14,18 @@ function Bookmarks() {
   const listFn = useServerFn(listBookmarks);
   const createFn = useServerFn(createTest);
   const navigate = useNavigate();
-  const { data, isLoading } = useQuery({ queryKey: ["bookmarks"], queryFn: () => listFn() });
+  const qbankId = useActiveQbankId();
+  const { data, isLoading } = useQuery({ queryKey: ["bookmarks", qbankId], queryFn: () => listFn({ data: { qbankId } }) });
 
   const startReview = async () => {
     try {
-      const r = await createFn({ data: { count: Math.min(data?.length ?? 20, 40), mode: "practice", scope: "bookmarked" } });
+      const r = await createFn({ data: { qbankId, count: Math.min(data?.length ?? 20, 40), mode: "practice", scope: "marked" } });
       navigate({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
   };
+
 
   return (
     <div className="p-8 max-w-4xl mx-auto">

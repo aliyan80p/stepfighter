@@ -294,7 +294,7 @@ function TestRunner() {
   const bookmark = async () => {
     if (!question) return;
     try {
-      const result = await bmFn({ data: { questionId: question.id } });
+      const result = await bmFn({ data: { questionId: question.id, qbankId: data?.qbankId ?? 1 } });
       toast(result.bookmarked ? "Question flagged" : "Flag removed");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to update flag");
@@ -378,7 +378,7 @@ function TestRunner() {
     setHighlightHtml(snap);
   };
 
-  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia });
+  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1 });
 
   const getHighlightRoot = (node: Node) => {
     const el = (node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement) as Element | null;
@@ -853,7 +853,7 @@ function TestRunner() {
                     {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
                   </div>
                   <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
-                  <div className="font-semibold text-gray-800 mt-1" dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText)}` }} />
+                  <div className="font-semibold text-gray-800 mt-1" dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1 })}` }} />
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="flex items-center gap-2">

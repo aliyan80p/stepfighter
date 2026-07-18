@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats } from "@/lib/qbank.functions";
+import { useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
 import { BookOpen, CheckCircle2, XCircle, MinusCircle, HelpCircle, User, Percent, BarChart3, Flag } from "lucide-react";
 
@@ -11,7 +12,9 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const fn = useServerFn(getDashboardStats);
-  const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: () => fn() });
+  const qbankId = useActiveQbankId();
+  const { data, isLoading } = useQuery({ queryKey: ["dashboard", qbankId], queryFn: () => fn({ data: { qbankId } }) });
+
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
