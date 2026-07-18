@@ -484,9 +484,32 @@ function NewTest() {
           />
         )}
 
-        {openTab === "subjects" && (
+        {openTab === "subjects" && cmsMode && (() => {
+          const formItems = cmsSelectedOptions.flatMap((o) =>
+            o.cmsForms!.map((f) => ({
+              id: f.source,
+              label: cmsSelectedOptions.length > 1
+                ? `${o.cmsSpecialty} — Form ${f.formNumber}`
+                : `Form ${f.formNumber}`,
+              count: f.count,
+            })),
+          );
+          return (
+            <SelectionList
+              items={formItems}
+              selected={cmsFormSources}
+              onToggle={(id) => setCmsFormSources((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+              search={subjectSearch}
+              onSearch={setSubjectSearch}
+              selectAll={() => setCmsFormSources(formItems.map((i) => i.id))}
+              clearAll={() => setCmsFormSources([])}
+              columns={3}
+            />
+          );
+        })()}
+        {openTab === "subjects" && !cmsMode && (
           <SelectionList
-            items={subjectItems.filter((s) => (s.count ?? 0) > 0 && (!cmsSpecialtyNames || cmsSpecialtyNames.has(s.name))).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+            items={subjectItems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
             selected={subjectIds}
             onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
             search={subjectSearch}
