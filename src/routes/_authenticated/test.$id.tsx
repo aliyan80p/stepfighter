@@ -802,10 +802,12 @@ function TestRunner() {
 
       {/* Bottom nav */}
       {(() => {
-        const blockSec = Math.max(0, 30 * 60 - elapsed);
+        const allowed = total * 90;
+        const blockSec = timedMode ? Math.max(0, allowed - blockElapsed) : blockElapsed;
         const bh = String(Math.floor(blockSec / 3600)).padStart(2, "0");
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
+
         return (
           <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
