@@ -51,7 +51,7 @@ function TestsList() {
       const scorePct = total ? Math.round((t.right_count / total) * 100) : 0;
       const st: "completed" | "suspended" | "not_started" =
         t.done ? "completed" : answered > 0 ? "suspended" : "not_started";
-      const name = `Custom Quiz ${new Date(t.created_at).toLocaleString()}`;
+      const name = (t as any).name && String((t as any).name).trim() ? String((t as any).name) : `Custom Quiz ${new Date(t.created_at).toLocaleString()}`;
       return { ...t, answered, scorePct, status: st, name };
     });
   }, [data]);
