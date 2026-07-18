@@ -179,10 +179,27 @@ function TestsList() {
               <div key={r.id} className="grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] gap-4 px-4 py-4 items-center hover:bg-muted/30 transition-colors">
                 <div>
                   <div className="font-medium text-sm">{r.name}</div>
-                  <div className="mt-2 flex gap-1.5">
-                    <IconBtn title="Rename" onClick={() => toast.info("Rename coming soon")}><Pencil className="h-3.5 w-3.5" /></IconBtn>
-                    <IconBtn title="Suspend" onClick={() => onSuspend(r.id)}><Pause className="h-3.5 w-3.5" /></IconBtn>
-                    <IconBtn title="Delete" tone="danger" onClick={() => onDelete(r.id)}><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+                  <div className="mt-2 flex gap-1.5 items-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button title="More" className="h-7 w-7 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors">
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onSelect={() => setRenaming({ id: r.id, name: r.name })}>
+                          <Pencil className="h-3.5 w-3.5 mr-2" /> Edit quiz name
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => { navigator.clipboard.writeText(String(r.id)); toast.success(`Copied quiz ID ${r.id}`); }}>
+                          <Copy className="h-3.5 w-3.5 mr-2" /> Copy quiz ID
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => onDelete(r.id)}>
+                          <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete quiz
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <span className="text-[11px] text-muted-foreground">ID {r.id}</span>
                   </div>
                 </div>
                 <div>
