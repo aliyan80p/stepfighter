@@ -130,6 +130,8 @@ function TestRunner() {
   const [submitted, setSubmitted] = useState(false);
   const [startedAt, setStartedAt] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
+  const [blockStartedAt] = useState(Date.now());
+  const [blockElapsed, setBlockElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -138,6 +140,7 @@ function TestRunner() {
   const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
   const [exhibitZoom, setExhibitZoom] = useState(1);
   const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
+
 
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -190,6 +193,12 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [submitted, startedAt]);
 
+  useEffect(() => {
+    const t = setInterval(() => setBlockElapsed(Math.round((Date.now() - blockStartedAt) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [blockStartedAt]);
+
+
   // Restore saved highlights per question (must run before early returns to keep hook order stable)
   useEffect(() => {
     if (!question) return;
@@ -230,6 +239,29 @@ function TestRunner() {
     }
   };
 
+  const proceedExam = async () => {
+    if (!question) return;
+    if (selected != null && !submitted) {
+      const secs = Math.round((Date.now() - startedAt) / 1000);
+      try {
+        await subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to submit");
+        return;
+      }
+    }
+    if (idx === total - 1) {
+      if (window.confirm("End the block and submit your answers? This cannot be undone.")) {
+        qc.invalidateQueries({ queryKey: ["test", testId] });
+        await finish();
+      }
+    } else {
+      qc.invalidateQueries({ queryKey: ["test", testId] });
+      goToQuestion(idx + 1);
+    }
+  };
+
+
   const bookmark = async () => {
     if (!question) return;
     try {
@@ -269,11 +301,12 @@ function TestRunner() {
   if (data.test.done) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
-  const showAnswers = submitted && isPractice;
+  const showAnswers = submitted && isPractice && tutorMode;
   const isBookmarked = data.bookmarkedIds.has(question.id);
   const isCorrect = submitted && selected === correctIdx;
   const correctLetter = correctIdx != null ? String.fromCharCode(65 + correctIdx) : "";
   const correctText = correctIdx != null ? answers[correctIdx]?.answer_text ?? "" : "";
+
   const embeddedMediaKeys = new Set<string>();
   getEmbeddedMediaKeys(question.question).forEach((key) => embeddedMediaKeys.add(key));
   answers.forEach((answer) => getEmbeddedMediaKeys(answer.answer_text).forEach((key) => embeddedMediaKeys.add(key)));
@@ -728,7 +761,16 @@ function TestRunner() {
               >
                 <ChevronLeft className="h-4 w-4 inline -mt-0.5" /> Previous
               </button>
-              {!submitted ? (
+              {!tutorMode ? (
+                <button
+                  onClick={proceedExam}
+                  disabled={selected == null && !submitted}
+                  className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40"
+                  style={{ background: NAV_BG }}
+                >
+                  {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
+                </button>
+              ) : !submitted ? (
                 <button
                   onClick={submit}
                   disabled={selected == null}
@@ -752,6 +794,7 @@ function TestRunner() {
                   {idx === total - 1 ? "End Test" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
                 </button>
               )}
+
             </div>
           </div>
         </div>
@@ -759,10 +802,12 @@ function TestRunner() {
 
       {/* Bottom nav */}
       {(() => {
-        const blockSec = Math.max(0, 30 * 60 - elapsed);
+        const allowed = total * 90;
+        const blockSec = timedMode ? Math.max(0, allowed - blockElapsed) : blockElapsed;
         const bh = String(Math.floor(blockSec / 3600)).padStart(2, "0");
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
+
         return (
           <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
