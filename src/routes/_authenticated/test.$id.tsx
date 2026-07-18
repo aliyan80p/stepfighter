@@ -102,6 +102,17 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [submitted, startedAt]);
 
+  // Restore saved highlights per question (must run before early returns to keep hook order stable)
+  useEffect(() => {
+    if (!question || !contentRef.current) return;
+    const saved = (() => { try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); } catch { return {}; } })();
+    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
+      const k = el.dataset.hlkey!;
+      if (typeof saved[k] === "string") el.innerHTML = saved[k];
+    });
+  }, [question?.id, submitted]);
+
+
   const submit = async () => {
     if (selected == null || !question) return;
     const secs = Math.round((Date.now() - startedAt) / 1000);
@@ -151,16 +162,6 @@ function TestRunner() {
 
   const HL_COLORS = ["#fff59d", "#a5d6a7", "#81d4fa", "#f8bbd0", "#ffcc80", "#ce93d8"];
 
-  // Restore saved highlights per question
-  useEffect(() => {
-    if (!question || !contentRef.current) return;
-    const saved = (() => { try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); } catch { return {}; } })();
-    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
-      const k = el.dataset.hlkey!;
-      if (typeof saved[k] === "string") el.innerHTML = saved[k];
-    });
-  }, [question?.id, submitted]);
-
   const persistHighlights = () => {
     if (!question || !contentRef.current) return;
     const snap: Record<string, string> = {};
@@ -171,12 +172,12 @@ function TestRunner() {
   };
 
   const handleSelection = () => {
-    if (!(multicolor || highlightOnly)) { setHlBar(null); return; }
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); return; }
     const range = sel.getRangeAt(0);
-    const container = range.commonAncestorContainer.parentElement;
-    if (!container?.closest(".qbank-html")) { setHlBar(null); return; }
+    const anchor = range.commonAncestorContainer;
+    const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
+    if (!el?.closest("[data-hlkey]")) { setHlBar(null); return; }
     savedRangeRef.current = range.cloneRange();
     const rect = range.getBoundingClientRect();
     setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
@@ -184,14 +185,23 @@ function TestRunner() {
 
   const wrapSelection = (styler: (m: HTMLElement) => void) => {
     const range = savedRangeRef.current;
-    if (!range) return;
+    if (!range || range.collapsed) return;
     const mark = document.createElement("mark");
     mark.className = "qbank-hl";
     mark.style.color = "inherit";
     mark.style.backgroundColor = "transparent";
     styler(mark);
-    try { range.surroundContents(mark); } catch { /* cross-node */ }
+    try {
+      range.surroundContents(mark);
+    } catch {
+      try {
+        const frag = range.extractContents();
+        mark.appendChild(frag);
+        range.insertNode(mark);
+      } catch { /* give up silently */ }
+    }
     window.getSelection()?.removeAllRanges();
+    savedRangeRef.current = null;
     setHlBar(null);
     persistHighlights();
   };
@@ -204,8 +214,9 @@ function TestRunner() {
   const eraseHighlight = () => {
     const range = savedRangeRef.current;
     if (!range) return;
-    const container = range.commonAncestorContainer.parentElement;
-    container?.closest(".qbank-html")?.querySelectorAll("mark.qbank-hl").forEach(m => {
+    const anchor = range.commonAncestorContainer;
+    const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
+    el?.closest("[data-hlkey]")?.querySelectorAll("mark.qbank-hl").forEach(m => {
       if (range.intersectsNode(m)) {
         const parent = m.parentNode!;
         while (m.firstChild) parent.insertBefore(m.firstChild, m);
@@ -216,6 +227,7 @@ function TestRunner() {
     setHlBar(null);
     persistHighlights();
   };
+
   const copySel = async () => {
     const range = savedRangeRef.current;
     if (!range) return;
@@ -245,7 +257,7 @@ function TestRunner() {
 
   return (
     <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }} onMouseUp={handleSelection}>
-      {hlBar && (multicolor || highlightOnly) && (
+      {hlBar && (
         <div
           className="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-full shadow-xl px-2 py-1.5 -translate-x-1/2 -translate-y-full"
           style={{ left: hlBar.x, top: hlBar.y }}
