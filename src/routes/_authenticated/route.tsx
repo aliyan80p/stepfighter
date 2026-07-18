@@ -112,13 +112,14 @@ function AuthedLayout() {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      <aside className="w-64 border-r border-border flex flex-col bg-card/40">
-        <Link to="/dashboard" className="flex items-center gap-2 px-4 h-14 border-b border-border">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-sm">
+      <aside className="w-64 border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground">
+        <Link to="/dashboard" className="flex items-center gap-2 px-4 h-14 border-b border-sidebar-border">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
             IMD
           </div>
           <span className="font-semibold">QBank</span>
         </Link>
+
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {/* Welcome / Dashboard */}
