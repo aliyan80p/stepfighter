@@ -57,6 +57,9 @@ function TestRunner() {
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [timedMode, setTimedMode] = useState(true);
+  const [tutorMode, setTutorMode] = useState(true);
+
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
