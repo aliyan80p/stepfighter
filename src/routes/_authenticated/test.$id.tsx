@@ -438,6 +438,7 @@ function TestRunner() {
                   }}
                 >
                   <div
+                    data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
                     dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }}
                   />
