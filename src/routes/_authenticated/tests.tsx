@@ -18,7 +18,7 @@ import {
   FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy, PlayCircle, Rocket, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import logo from "@/assets/imd-qbank-logo.png";
+
 
 export const Route = createFileRoute("/_authenticated/tests")({
   component: TestsList,
