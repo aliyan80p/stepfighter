@@ -746,7 +746,7 @@ function TestRunner() {
                 {!tutorMode ? (
                   <button
                     onClick={proceedExam}
-                    disabled={selected == null && !submitted}
+                    onClick={proceedExam}
                     className="px-4 py-1.5 rounded-sm text-white text-[12px] font-semibold disabled:opacity-40"
                     style={{ background: NAV_BG }}
                   >
