@@ -260,33 +260,40 @@ function TestRunner() {
             
             <div className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
 
-            <div className="mt-6 space-y-2">
+            <div className="mt-6 rounded border bg-white px-4 py-3" style={{ borderColor: "#b8c6de" }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
                 const isThisWrong = showAnswers && selected === i && i !== correctIdx;
-                const pct: number | null = null;
+                // deterministic pseudo peer % per answer
+                const pct: number | null = submitted
+                  ? (i === correctIdx ? 55 + ((question.id * 7) % 25) : 2 + ((question.id * 3 + i * 11) % 18))
+                  : null;
+                const isSelected = selected === i;
                 return (
                   <button
                     key={a.id}
                     disabled={submitted}
                     onClick={() => setSelected(i)}
-                    className={`w-full text-left rounded border px-3 py-2 flex items-start gap-3 transition-colors ${
-                      isThisCorrect ? "border-green-500 bg-green-50" :
-                      isThisWrong ? "border-red-500 bg-red-50" :
-                      selected === i ? "border-blue-600 bg-blue-50" : "border-gray-300 hover:bg-gray-50"
-                    }`}
+                    className="w-full text-left flex items-center gap-2 py-1.5 text-[15px]"
+                    style={{ color: "#1f2937" }}
                   >
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {isThisCorrect && <CheckCircle2 className="h-4 w-4 text-green-600" />}
-                      {isThisWrong && <span className="text-red-600 font-bold">✕</span>}
-                      <div className={`h-4 w-4 rounded-full border ${selected === i ? "border-blue-600 bg-blue-600" : "border-gray-400"}`} />
-                    </div>
-                    <div className="flex-1 flex items-baseline gap-2">
-                      <span className="font-medium">{letter}.</span>
-                      <span className="flex-1 qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
-                      {submitted && pct != null && <span className="text-xs text-gray-500">({pct}%)</span>}
-                    </div>
+                    <span className="w-4 flex justify-center shrink-0">
+                      {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
+                      {isThisWrong && <span className="text-red-600 font-bold text-base leading-none">✕</span>}
+                    </span>
+                    <span
+                      className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
+                        isSelected ? "border-gray-600" : "border-gray-400"
+                      }`}
+                    >
+                      {isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />}
+                    </span>
+                    <span className="flex-1">
+                      <span className="font-normal">{letter}. </span>
+                      <span className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
+                      {submitted && pct != null && <span className="text-gray-600 ml-1">({pct}%)</span>}
+                    </span>
                   </button>
                 );
               })}
