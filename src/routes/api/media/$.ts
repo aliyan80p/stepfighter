@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { contentTypeFromBytes, decryptImdMedia, looksLikePlainMedia } from "@/lib/imd-media-crypto";
 
 const BUCKET = "qbank-media";
 
@@ -57,6 +58,33 @@ async function resolveObject(
   return null;
 }
 
+function rangeResponse(data: Buffer, contentType: string, range: string | null): Response {
+  const headers = new Headers();
+  headers.set("Content-Type", contentType);
+  headers.set("Accept-Ranges", "bytes");
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  headers.set("Content-Disposition", "inline");
+
+  const match = range?.match(/^bytes=(\d*)-(\d*)$/);
+  if (!match) {
+    headers.set("Content-Length", String(data.byteLength));
+    return new Response(data, { headers });
+  }
+
+  const total = data.byteLength;
+  const start = match[1] ? Number(match[1]) : 0;
+  const end = match[2] ? Math.min(Number(match[2]), total - 1) : total - 1;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end < start || start >= total) {
+    headers.set("Content-Range", `bytes */${total}`);
+    return new Response(null, { status: 416, headers });
+  }
+
+  const slice = data.subarray(start, end + 1);
+  headers.set("Content-Length", String(slice.byteLength));
+  headers.set("Content-Range", `bytes ${start}-${end}/${total}`);
+  return new Response(slice, { status: 206, headers });
+}
+
 export const Route = createFileRoute("/api/media/$")({
   server: {
     handlers: {
@@ -72,11 +100,20 @@ export const Route = createFileRoute("/api/media/$")({
         }
 
         const range = request.headers.get("range");
-        const upstream = await resolveObject(name, supaUrl, srk, range);
+        const upstream = await resolveObject(name, supaUrl, srk, null);
         if (!upstream) return new Response("Not found", { status: 404 });
 
+        const source = Buffer.from(await upstream.arrayBuffer());
+        const resolvedName = nameCache.get(name) ?? name;
+        const data = decryptImdMedia(source, [name, resolvedName, stripPrefix(name), stripPrefix(resolvedName)]);
+        const type = contentTypeFromBytes(data, contentTypeFor(resolvedName));
+
+        if (!looksLikePlainMedia(source) || range) {
+          return rangeResponse(data, type, range);
+        }
+
         const headers = new Headers();
-        headers.set("Content-Type", upstream.headers.get("content-type") ?? contentTypeFor(name));
+        headers.set("Content-Type", upstream.headers.get("content-type") ?? type);
         const len = upstream.headers.get("content-length");
         if (len) headers.set("Content-Length", len);
         const cr = upstream.headers.get("content-range");
