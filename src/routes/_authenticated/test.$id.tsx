@@ -76,7 +76,9 @@ function TestRunner() {
 
   // Highlight toolbar state (hooks must live above early returns)
   const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
+  const [highlightHtml, setHighlightHtml] = useState<Record<string, string>>({});
   const savedRangeRef = useRef<Range | null>(null);
+  const savedSelectionRef = useRef<{ key: string; start: number; end: number } | null>(null);
   const savedTextRef = useRef("");
 
   const themeStyles = theme === "dark"
@@ -106,12 +108,12 @@ function TestRunner() {
 
   // Restore saved highlights per question (must run before early returns to keep hook order stable)
   useEffect(() => {
-    if (!question || !contentRef.current) return;
-    const saved = (() => { try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); } catch { return {}; } })();
-    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
-      const k = el.dataset.hlkey!;
-      if (typeof saved[k] === "string") el.innerHTML = saved[k];
-    });
+    if (!question) return;
+    const saved = (() => {
+      try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); }
+      catch { return {}; }
+    })();
+    setHighlightHtml(saved && typeof saved === "object" ? saved : {});
   }, [question?.id, submitted]);
 
 
@@ -177,23 +179,86 @@ function TestRunner() {
       if (el.querySelector("mark.qbank-hl")) snap[el.dataset.hlkey!] = el.innerHTML;
     });
     try { localStorage.setItem(`qbank-hl-${question.id}`, JSON.stringify(snap)); } catch {}
+    setHighlightHtml(snap);
   };
 
-  const handleSelection = () => {
+  const htmlFor = (key: string, html: string) => highlightHtml[key] ?? rewriteMedia(html);
+
+  const getHighlightRoot = (node: Node) => {
+    const el = (node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement) as Element | null;
+    return el?.closest<HTMLElement>("[data-hlkey]") ?? null;
+  };
+
+  const getSelectionOffsets = (root: HTMLElement, range: Range) => {
+    const before = document.createRange();
+    before.selectNodeContents(root);
+    before.setEnd(range.startContainer, range.startOffset);
+    const start = before.toString().length;
+    return { start, end: start + range.toString().length };
+  };
+
+  const rangeFromOffsets = (root: HTMLElement, start: number, end: number) => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    let pos = 0;
+    let didStart = false;
+    let node = walker.nextNode();
+
+    while (node) {
+      const textLength = node.textContent?.length ?? 0;
+      const next = pos + textLength;
+
+      if (!didStart && start >= pos && start <= next) {
+        range.setStart(node, Math.max(0, Math.min(textLength, start - pos)));
+        didStart = true;
+      }
+
+      if (didStart && end >= pos && end <= next) {
+        range.setEnd(node, Math.max(0, Math.min(textLength, end - pos)));
+        return range;
+      }
+
+      pos = next;
+      node = walker.nextNode();
+    }
+
+    return null;
+  };
+
+  const restoreSavedRange = () => {
+    const snap = savedSelectionRef.current;
+    if (!snap || !contentRef.current) return savedRangeRef.current;
+    const root = contentRef.current.querySelector<HTMLElement>(`[data-hlkey="${CSS.escape(snap.key)}"]`);
+    if (!root) return savedRangeRef.current;
+    return rangeFromOffsets(root, snap.start, snap.end) ?? savedRangeRef.current;
+  };
+
+  const handleSelection = (event?: React.MouseEvent<HTMLDivElement>) => {
+    const target = event?.target instanceof Element ? event.target : null;
+    if (target?.closest("[data-hl-toolbar]")) return;
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); savedTextRef.current = ""; return; }
     const range = sel.getRangeAt(0);
-    const anchor = range.commonAncestorContainer;
-    const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
-    if (!el?.closest("[data-hlkey]")) { setHlBar(null); savedTextRef.current = ""; return; }
+    const startRoot = getHighlightRoot(range.startContainer);
+    const endRoot = getHighlightRoot(range.endContainer);
+    if (!startRoot || startRoot !== endRoot || !contentRef.current?.contains(startRoot)) {
+      setHlBar(null);
+      savedSelectionRef.current = null;
+      savedTextRef.current = "";
+      return;
+    }
+    const key = startRoot.dataset.hlkey;
+    if (!key) return;
+    const offsets = getSelectionOffsets(startRoot, range);
     savedRangeRef.current = range.cloneRange();
+    savedSelectionRef.current = { key, ...offsets };
     savedTextRef.current = range.toString();
     const rect = range.getBoundingClientRect();
     setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
   };
 
   const wrapSelection = (styler: (m: HTMLElement) => void) => {
-    const range = savedRangeRef.current;
+    const range = restoreSavedRange();
     if (!range || range.collapsed) return;
     const mark = document.createElement("mark");
     mark.className = "qbank-hl";
@@ -211,18 +276,19 @@ function TestRunner() {
     }
     window.getSelection()?.removeAllRanges();
     savedRangeRef.current = null;
+    savedSelectionRef.current = null;
     savedTextRef.current = "";
     setHlBar(null);
     persistHighlights();
   };
 
   const applyColor = (c: string) => {
-    setActiveHighlight(c);
     wrapSelection(m => { m.style.backgroundColor = c; });
+    setActiveHighlight(c);
   };
   const applyStrike = () => wrapSelection(m => { m.style.textDecoration = "line-through"; m.style.textDecorationColor = "#ef4444"; });
   const eraseHighlight = () => {
-    const range = savedRangeRef.current;
+    const range = restoreSavedRange();
     if (!range) return;
     const anchor = range.commonAncestorContainer;
     const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
@@ -234,6 +300,8 @@ function TestRunner() {
       }
     });
     window.getSelection()?.removeAllRanges();
+    savedRangeRef.current = null;
+    savedSelectionRef.current = null;
     savedTextRef.current = "";
     setHlBar(null);
     persistHighlights();
@@ -276,27 +344,29 @@ function TestRunner() {
     <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }} onMouseUp={handleSelection}>
       {hlBar && (
         <div
+          data-hl-toolbar
           className="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-full shadow-xl px-2 py-1.5 -translate-x-1/2 -translate-y-full"
           style={{ left: hlBar.x, top: hlBar.y }}
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
           {HL_COLORS.filter(c => enabledHighlights[c]).map(c => (
             <button
               key={c}
-              onClick={() => applyColor(c)}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyColor(c); }}
               className="h-5 w-5 rounded-full border border-white/20 hover:scale-110 transition-transform"
               style={{ background: c }}
               title="Highlight"
             />
           ))}
           <div className="w-px h-5 bg-white/20 mx-1" />
-          <button onClick={applyStrike} className="p-1 hover:bg-white/10 rounded" title="Strike-through">
+          <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyStrike(); }} className="p-1 hover:bg-white/10 rounded" title="Strike-through">
             <Strikethrough className="h-4 w-4" />
           </button>
-          <button onClick={eraseHighlight} className="p-1 hover:bg-white/10 rounded" title="Remove highlight">
+          <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); eraseHighlight(); }} className="p-1 hover:bg-white/10 rounded" title="Remove highlight">
             <Eraser className="h-4 w-4" />
           </button>
-          <button onClick={copySel} className="p-1 hover:bg-white/10 rounded" title="Copy">
+          <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }} className="p-1 hover:bg-white/10 rounded" title="Copy">
             <Copy className="h-4 w-4" />
           </button>
         </div>
@@ -372,7 +442,7 @@ function TestRunner() {
 
 
             
-            <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: rewriteMedia(question.question) }} />
+            <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: htmlFor("q", question.question) }} />
 
             <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: theme === "dark" ? "#334155" : "#b8c6de", background: themeStyles.cardBg }}>
               {answers.map((a, i) => {
@@ -405,7 +475,7 @@ function TestRunner() {
                     </span>
                     <span className="flex-1">
                       <span className="font-normal">{letter}. </span>
-                      <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text) }} />
+                      <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: htmlFor(`a${i}`, a.answer_text) }} />
                       {submitted && pct != null && <span className="text-gray-600 ml-1">({pct}%)</span>}
                     </span>
                   </button>
@@ -472,7 +542,7 @@ function TestRunner() {
                   <div
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
-                    dangerouslySetInnerHTML={{ __html: rewriteMedia(question.explanation) }}
+                    dangerouslySetInnerHTML={{ __html: htmlFor("e", question.explanation) }}
                   />
                 </div>
               </div>
