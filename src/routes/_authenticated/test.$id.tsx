@@ -199,7 +199,7 @@ function TestRunner() {
       {/* Main */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left navigator */}
-        <aside className="w-14 overflow-auto border-r" style={{ background: SIDE_BG, borderColor: "#d1d9e6" }}>
+        <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
             const status = att ? (att.is_correct ? "correct" : "wrong") : "none";
