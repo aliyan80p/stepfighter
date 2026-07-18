@@ -153,7 +153,7 @@ function NewTest() {
       if (!ids.length) return toast.error("Enter at least one question ID");
       setLoading(true);
       try {
-        const r = await createCustomFn({ data: { questionIds: ids, mode, timed } });
+        const r = await createCustomFn({ data: { qbankId, questionIds: ids, mode, timed } });
         if (r.skipped > 0) toast.message(`${r.skipped} ID(s) were not found and skipped`);
         navigate({ to: "/test/$id", params: { id: String(r.id) } });
       } catch (e) {
