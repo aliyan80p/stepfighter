@@ -81,6 +81,8 @@ function TestRunner() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [timedMode, setTimedMode] = useState(true);
   const [tutorMode, setTutorMode] = useState(true);
+  const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
+  const [exhibitZoom, setExhibitZoom] = useState(1);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -139,6 +141,23 @@ function TestRunner() {
       catch { return {}; }
     })();
     setHighlightHtml(saved && typeof saved === "object" ? saved : {});
+  }, [question?.id, submitted]);
+
+  // Click-to-open exhibit modal for any image in the question/explanation
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const img = target.closest?.("img") as HTMLImageElement | null;
+      if (!img || !root.contains(img)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setExhibitSrc(img.currentSrc || img.src);
+      setExhibitZoom(1);
+    };
+    root.addEventListener("click", onClick);
+    return () => root.removeEventListener("click", onClick);
   }, [question?.id, submitted]);
 
 
@@ -666,6 +685,72 @@ function TestRunner() {
           enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
         />
       )}
+
+      {exhibitSrc && (
+        <ExhibitModal
+          src={exhibitSrc}
+          zoom={exhibitZoom}
+          setZoom={setExhibitZoom}
+          onClose={() => setExhibitSrc(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ExhibitModal({
+  src, zoom, setZoom, onClose,
+}: { src: string; zoom: number; setZoom: (v: number) => void; onClose: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className={`bg-white rounded shadow-2xl overflow-hidden flex flex-col ${expanded ? "w-[95vw] h-[95vh]" : "w-[520px] max-w-[95vw] max-h-[92vh]"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e3a8a] text-white">
+          <span className="text-sm font-semibold">Exhibit Display</span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="p-1 hover:bg-white/10 rounded"
+              title={expanded ? "Restore" : "Expand"}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </button>
+            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded" title="Close">
+              <span className="text-lg leading-none">✕</span>
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto bg-white p-3 flex items-start justify-center">
+          <img
+            src={src}
+            alt="Exhibit"
+            style={{ transform: `scale(${zoom})`, transformOrigin: "top center", transition: "transform 0.15s" }}
+            className="max-w-full h-auto"
+          />
+        </div>
+        <div className="flex items-center justify-center gap-2 border-t bg-gray-50 py-1.5">
+          <button
+            onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
+            className="h-7 w-7 rounded-full border border-gray-300 bg-white hover:bg-gray-100 flex items-center justify-center text-sm"
+          >−</button>
+          <span className="text-xs text-gray-600 w-12 text-center">{Math.round(zoom * 100)}%</span>
+          <button
+            onClick={() => setZoom(Math.min(4, zoom + 0.25))}
+            className="h-7 w-7 rounded-full border border-gray-300 bg-white hover:bg-gray-100 flex items-center justify-center text-sm"
+          >+</button>
+        </div>
+      </div>
     </div>
   );
 }

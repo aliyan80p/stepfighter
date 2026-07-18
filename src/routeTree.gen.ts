@@ -16,6 +16,7 @@ import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticated/new-test'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBookmarksRouteImport } from './routes/_authenticated/bookmarks'
+import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
 import { Route as AuthenticatedTestIdRouteImport } from './routes/_authenticated/test.$id'
 import { Route as AuthenticatedTestResultsIdRouteImport } from './routes/_authenticated/test-results.$id'
 import { Route as AuthenticatedSelfAssessmentsScorePredictorRouteImport } from './routes/_authenticated/self-assessments.score-predictor'
@@ -66,6 +67,11 @@ const AuthenticatedBookmarksRoute = AuthenticatedBookmarksRouteImport.update({
   id: '/bookmarks',
   path: '/bookmarks',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiMediaSplatRoute = ApiMediaSplatRouteImport.update({
+  id: '/api/media/$',
+  path: '/api/media/$',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTestIdRoute = AuthenticatedTestIdRouteImport.update({
   id: '/test/$id',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/test/$id': typeof AuthenticatedTestIdRouteWithChildren
+  '/api/media/$': typeof ApiMediaSplatRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRoutesByTo {
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/test/$id': typeof AuthenticatedTestIdRouteWithChildren
+  '/api/media/$': typeof ApiMediaSplatRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRoutesById {
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/self-assessments/score-predictor': typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   '/_authenticated/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/_authenticated/test/$id': typeof AuthenticatedTestIdRouteWithChildren
+  '/api/media/$': typeof ApiMediaSplatRoute
   '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRouteTypes {
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/self-assessments/score-predictor'
     | '/test-results/$id'
     | '/test/$id'
+    | '/api/media/$'
     | '/test/$id/results'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/self-assessments/score-predictor'
     | '/test-results/$id'
     | '/test/$id'
+    | '/api/media/$'
     | '/test/$id/results'
   id:
     | '__root__'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/_authenticated/self-assessments/score-predictor'
     | '/_authenticated/test-results/$id'
     | '/_authenticated/test/$id'
+    | '/api/media/$'
     | '/_authenticated/test/$id/results'
   fileRoutesById: FileRoutesById
 }
@@ -317,6 +329,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiMediaSplatRoute: typeof ApiMediaSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -369,6 +382,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/bookmarks'
       preLoaderRoute: typeof AuthenticatedBookmarksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/media/$': {
+      id: '/api/media/$'
+      path: '/api/media/$'
+      fullPath: '/api/media/$'
+      preLoaderRoute: typeof ApiMediaSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/test/$id': {
       id: '/_authenticated/test/$id'
@@ -554,6 +574,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiMediaSplatRoute: ApiMediaSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

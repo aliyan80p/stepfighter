@@ -7,13 +7,13 @@ for (const [k, v] of Object.entries({ ...imgManifest, ...vidManifest } as Record
 }
 
 function resolve(src: string): string | null {
-  if (/^(https?:|data:|\/__l5e\/)/i.test(src)) return null;
+  if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
   const base = (src.split("/").pop() ?? src).toLowerCase();
   if (map[base]) return map[base];
-  // Strip common CDN prefixes emitted by the source app
   const stripped = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
   if (stripped !== base && map[stripped]) return map[stripped];
-  return null;
+  // Fallback: proxy from Google Drive media-E folder via server route
+  return `/api/media/${encodeURIComponent(stripped)}`;
 }
 
 
