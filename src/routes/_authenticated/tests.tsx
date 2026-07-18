@@ -211,7 +211,7 @@ function TestsList() {
                     </Button>
                   )}
                   {r.answered > 0 && (
-                    <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/test/$id/results", params: { id: String(r.id) } })}>
+                    <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/test-results/$id", params: { id: String(r.id) } })}>
                       <FileText className="h-3.5 w-3.5 mr-1" /> Results
                     </Button>
                   )}
