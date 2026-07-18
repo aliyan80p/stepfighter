@@ -102,6 +102,17 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [submitted, startedAt]);
 
+  // Restore saved highlights per question (must run before early returns to keep hook order stable)
+  useEffect(() => {
+    if (!question || !contentRef.current) return;
+    const saved = (() => { try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); } catch { return {}; } })();
+    contentRef.current.querySelectorAll<HTMLElement>("[data-hlkey]").forEach(el => {
+      const k = el.dataset.hlkey!;
+      if (typeof saved[k] === "string") el.innerHTML = saved[k];
+    });
+  }, [question?.id, submitted]);
+
+
   const submit = async () => {
     if (selected == null || !question) return;
     const secs = Math.round((Date.now() - startedAt) / 1000);
