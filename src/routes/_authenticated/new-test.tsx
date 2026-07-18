@@ -322,7 +322,7 @@ function NewTest() {
 
         {openTab === "courses" && (
           <SelectionList
-            items={COURSES.map((c) => ({ id: c.id, label: c.name, count: c.qbankId === qbankId ? totalStep2 : 0 }))}
+            items={COURSES.filter((c) => c.qbankId === qbankId).map((c) => ({ id: c.id, label: c.name, count: totalStep2 }))}
             selected={courseIds}
             onToggle={(id) => {
               const c = COURSES.find((x) => x.id === id);
