@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import { Search, Copy, Info, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Search, Copy, Info, Loader2, Eye, ArrowUpDown,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions } from "@/lib/qbank.functions";
 import { rewriteMedia } from "@/lib/media";
@@ -105,77 +108,199 @@ function SearchPage() {
         <div className="text-center py-12 text-slate-500">No questions found.</div>
       )}
 
-      {results.length > 0 && (
-        <>
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm text-slate-600">
-              <span className="font-semibold text-slate-900">{results.length}</span> question{results.length === 1 ? "" : "s"} found
-              {mutation.data?.truncated && <span className="text-amber-600 ml-2">(showing first 200)</span>}
-            </div>
-            <button
-              onClick={copyIds}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#1e3a8a] text-white text-sm font-medium hover:bg-[#2a4ba0]"
-            >
-              <Copy className="h-4 w-4" /> Copy IDs
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {results.map((r) => (
-              <ResultCard key={r.id} r={r} />
-            ))}
-          </div>
-        </>
-      )}
+      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} />}
     </div>
   );
 }
 
-function ResultCard({ r }: { r: SearchResult }) {
+type SortKey = "id" | "subject" | "system" | "topic";
+
+function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void }) {
+  const [sortKey, setSortKey] = useState<SortKey>("id");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [viewing, setViewing] = useState<SearchResult | null>(null);
+  const pageSize = 20;
+
+  const sorted = useMemo(() => {
+    const arr = [...results];
+    arr.sort((a, b) => {
+      const av = sortKey === "id" ? a.id : sortKey === "subject" ? a.subject : sortKey === "system" ? a.system : a.title;
+      const bv = sortKey === "id" ? b.id : sortKey === "subject" ? b.subject : sortKey === "system" ? b.system : b.title;
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+    return arr;
+  }, [results, sortKey, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const pageRows = sorted.slice(start, start + pageSize);
+
+  const toggleSort = (k: SortKey) => {
+    if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(k); setSortDir("asc"); }
+  };
+
+  const th = (label: string, k: SortKey) => (
+    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
+      <button onClick={() => toggleSort(k)} className="inline-flex items-center gap-1.5 hover:opacity-80">
+        {label} <ArrowUpDown className="h-3 w-3 opacity-70" />
+      </button>
+    </th>
+  );
+
   return (
-    <div className="bg-white border rounded-lg p-5 shadow-sm">
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="font-mono font-semibold text-[#1e3a8a]">#{r.id}</span>
-          {r.subject && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">{r.subject}</span>}
-          {r.system && <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">{r.system}</span>}
-        </div>
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(String(r.id));
-            toast.success(`Copied ID ${r.id}`);
-          }}
-          className="text-xs text-slate-500 hover:text-[#1e3a8a] inline-flex items-center gap-1"
-        >
-          <Copy className="h-3 w-3" /> Copy ID
-        </button>
-      </div>
-      {r.title && <div className="text-sm font-semibold text-slate-700 mb-2">{r.title}</div>}
-      <div
-        className="qbank-html text-sm text-slate-800 mb-3"
-        dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "") }}
-      />
-      <div className="space-y-1.5">
-        {r.answers.map((a) => {
-          const isCorrect = a.answer_index === r.correctAnswer;
-          return (
-            <div
-              key={a.answer_index}
-              className={`flex gap-2 items-start p-2 rounded border text-sm ${
-                isCorrect ? "bg-green-50 border-green-300" : "bg-slate-50 border-slate-200"
-              }`}
-            >
-              <span className={`font-semibold ${isCorrect ? "text-green-700" : "text-slate-500"}`}>
-                {String.fromCharCode(65 + a.answer_index)}.
-              </span>
-              <span
-                className={`qbank-html flex-1 ${isCorrect ? "text-green-900 font-medium" : "text-slate-700"}`}
-                dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "") }}
-              />
-              {isCorrect && <span className="text-green-700 text-xs font-semibold">✓ Correct</span>}
+    <>
+      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between p-4 bg-slate-50 border-b">
+          <div>
+            <div className="font-bold text-slate-800">Search Results</div>
+            <div className="text-xs text-slate-500 mt-0.5">
+              {sorted.length} question{sorted.length === 1 ? "" : "s"} found
+              {truncated && <span className="text-amber-600 ml-2">(showing first 200)</span>}
             </div>
-          );
-        })}
+          </div>
+          <button
+            onClick={onCopyIds}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <Copy className="h-4 w-4" /> Copy IDs
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-[#2c5aa0]">
+              <tr>
+                {th("ID", "id")}
+                {th("Subject", "subject")}
+                {th("System", "system")}
+                {th("Topic", "topic")}
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {pageRows.map((r) => (
+                <tr key={r.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => setViewing(r)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600"
+                    >
+                      <Eye className="h-3.5 w-3.5" /> View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-4 p-4 border-t bg-white text-sm text-slate-600">
+          <span>
+            Showing {sorted.length === 0 ? 0 : start + 1} to {Math.min(start + pageSize, sorted.length)} of {sorted.length} entries
+          </span>
+          <div className="flex items-center gap-1">
+            <PagerBtn onClick={() => setPage(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></PagerBtn>
+            <PagerBtn onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></PagerBtn>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => Math.abs(p - currentPage) <= 2 || p === 1 || p === totalPages)
+              .reduce<(number | "…")[]>((acc, p, i, arr) => {
+                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("…");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                p === "…" ? (
+                  <span key={`e${i}`} className="px-2 text-slate-400">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`min-w-[32px] h-8 px-2 rounded text-sm font-medium ${
+                      p === currentPage ? "bg-[#1e3a8a] text-white" : "text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+            <PagerBtn onClick={() => setPage(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></PagerBtn>
+            <PagerBtn onClick={() => setPage(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></PagerBtn>
+          </div>
+        </div>
+      </div>
+
+      {viewing && <QuestionModal r={viewing} onClose={() => setViewing(null)} />}
+    </>
+  );
+}
+
+function PagerBtn({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="h-8 w-8 flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent"
+    >
+      {children}
+    </button>
+  );
+}
+
+function QuestionModal({ r, onClose }: { r: SearchResult; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-4 border-b bg-slate-50 sticky top-0 z-10">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-mono font-bold text-[#1e3a8a]">#{r.id}</span>
+            {r.subject && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">{r.subject}</span>}
+            {r.system && <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">{r.system}</span>}
+            {r.title && <span className="text-sm font-semibold text-slate-700">{r.title}</span>}
+          </div>
+          <button onClick={onClose} className="p-1 rounded hover:bg-slate-200">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-5">
+          <div
+            className="qbank-html text-sm text-slate-800 mb-4"
+            dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "") }}
+          />
+          <div className="space-y-1.5">
+            {r.answers.map((a) => {
+              const isCorrect = a.answer_index === r.correctAnswer;
+              return (
+                <div
+                  key={a.answer_index}
+                  className={`flex gap-2 items-start p-2 rounded border text-sm ${
+                    isCorrect ? "bg-green-50 border-green-300" : "bg-slate-50 border-slate-200"
+                  }`}
+                >
+                  <span className={`font-semibold ${isCorrect ? "text-green-700" : "text-slate-500"}`}>
+                    {String.fromCharCode(65 + a.answer_index)}.
+                  </span>
+                  <span
+                    className={`qbank-html flex-1 ${isCorrect ? "text-green-900 font-medium" : "text-slate-700"}`}
+                    dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "") }}
+                  />
+                  {isCorrect && <span className="text-green-700 text-xs font-semibold">✓ Correct</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
