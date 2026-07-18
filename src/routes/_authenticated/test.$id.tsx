@@ -239,6 +239,29 @@ function TestRunner() {
     }
   };
 
+  const proceedExam = async () => {
+    if (!question) return;
+    if (selected != null && !submitted) {
+      const secs = Math.round((Date.now() - startedAt) / 1000);
+      try {
+        await subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to submit");
+        return;
+      }
+    }
+    if (idx === total - 1) {
+      if (window.confirm("End the block and submit your answers? This cannot be undone.")) {
+        qc.invalidateQueries({ queryKey: ["test", testId] });
+        await finish();
+      }
+    } else {
+      qc.invalidateQueries({ queryKey: ["test", testId] });
+      goToQuestion(idx + 1);
+    }
+  };
+
+
   const bookmark = async () => {
     if (!question) return;
     try {
