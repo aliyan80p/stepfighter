@@ -437,38 +437,77 @@ function TestRunner() {
     const range = sel.getRangeAt(0);
     const startRoot = getHighlightRoot(range.startContainer);
     const endRoot = getHighlightRoot(range.endContainer);
-    if (!startRoot || startRoot !== endRoot || !contentRef.current?.contains(startRoot)) {
+    if (!startRoot || !endRoot || !contentRef.current?.contains(startRoot) || !contentRef.current?.contains(endRoot)) {
       setHlBar(null);
       savedSelectionRef.current = null;
       savedTextRef.current = "";
       return;
     }
-    const key = startRoot.dataset.hlkey;
-    if (!key) return;
-    const offsets = getSelectionOffsets(startRoot, range);
+    // Only save single-root offsets when start/end share a root (used for exact restore).
+    if (startRoot === endRoot) {
+      const key = startRoot.dataset.hlkey;
+      if (key) {
+        const offsets = getSelectionOffsets(startRoot, range);
+        savedSelectionRef.current = { key, ...offsets };
+      }
+    } else {
+      savedSelectionRef.current = null;
+    }
     savedRangeRef.current = range.cloneRange();
-    savedSelectionRef.current = { key, ...offsets };
     savedTextRef.current = range.toString();
     const rect = range.getBoundingClientRect();
     setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
   };
 
+  const wrapRangeWithin = (root: HTMLElement, range: Range, styler: (m: HTMLElement) => void) => {
+    // Walk text nodes inside `root` that intersect `range` and wrap each intersecting slice.
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes: Text[] = [];
+    let n = walker.nextNode() as Text | null;
+    while (n) { nodes.push(n); n = walker.nextNode() as Text | null; }
+    for (const node of nodes) {
+      if (!node.textContent) continue;
+      const nodeRange = document.createRange();
+      nodeRange.selectNodeContents(node);
+      // Skip nodes fully outside the selection
+      if (range.compareBoundaryPoints(Range.END_TO_START, nodeRange) >= 0) continue;
+      if (range.compareBoundaryPoints(Range.START_TO_END, nodeRange) <= 0) continue;
+      // Clamp to intersection
+      const startOffset = node === range.startContainer ? range.startOffset : 0;
+      const endOffset = node === range.endContainer ? range.endOffset : node.textContent.length;
+      if (endOffset <= startOffset) continue;
+      const slice = document.createRange();
+      slice.setStart(node, startOffset);
+      slice.setEnd(node, endOffset);
+      const mark = document.createElement("mark");
+      mark.className = "qbank-hl";
+      mark.style.color = "inherit";
+      mark.style.backgroundColor = "transparent";
+      styler(mark);
+      try { slice.surroundContents(mark); } catch { /* skip */ }
+    }
+  };
+
   const wrapSelection = (styler: (m: HTMLElement) => void) => {
     const range = restoreSavedRange();
     if (!range || range.collapsed) return;
-    const mark = document.createElement("mark");
-    mark.className = "qbank-hl";
-    mark.style.color = "inherit";
-    mark.style.backgroundColor = "transparent";
-    styler(mark);
-    try {
-      range.surroundContents(mark);
-    } catch {
-      try {
-        const frag = range.extractContents();
-        mark.appendChild(frag);
-        range.insertNode(mark);
-      } catch { /* give up silently */ }
+    const startRoot = getHighlightRoot(range.startContainer);
+    const endRoot = getHighlightRoot(range.endContainer);
+    const container = contentRef.current;
+    if (!startRoot || !endRoot || !container) return;
+
+    if (startRoot === endRoot) {
+      wrapRangeWithin(startRoot, range, styler);
+    } else {
+      // Multi-root selection: apply to every hlkey block that intersects the range.
+      const roots = Array.from(container.querySelectorAll<HTMLElement>("[data-hlkey]"));
+      for (const root of roots) {
+        const rootRange = document.createRange();
+        rootRange.selectNodeContents(root);
+        if (range.compareBoundaryPoints(Range.END_TO_START, rootRange) >= 0) continue;
+        if (range.compareBoundaryPoints(Range.START_TO_END, rootRange) <= 0) continue;
+        wrapRangeWithin(root, range, styler);
+      }
     }
     window.getSelection()?.removeAllRanges();
     savedRangeRef.current = null;
@@ -477,6 +516,7 @@ function TestRunner() {
     setHlBar(null);
     persistHighlights();
   };
+
 
   const applyColor = (c: string) => {
     wrapSelection(m => { m.style.backgroundColor = c; });
