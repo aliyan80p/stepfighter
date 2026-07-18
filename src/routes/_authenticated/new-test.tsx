@@ -21,7 +21,8 @@ type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
 
 const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name }));
 
-type QbankOption = { id: string; qbankId: number; name: string; source: string; count: number };
+type CmsForm = { source: string; formNumber: number; count: number };
+type QbankOption = { id: string; qbankId: number; name: string; source: string; count: number; cmsSpecialty?: string; cmsForms?: CmsForm[] };
 const STEP1_NBMES = [25, 26, 27, 28, 30, 31, 32, 33];
 const STEP2_NBMES = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 const NBME_COUNTS: Record<string, number> = {
