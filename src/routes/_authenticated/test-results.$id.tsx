@@ -62,7 +62,7 @@ function TestResults() {
     const wrong = rows.filter((r) => r.status === "wrong").length;
     const omitted = rows.filter((r) => r.status === "omitted").length;
     const answered = correct + wrong;
-    const score = answered ? (correct / answered) * 100 : 0;
+    const score = rows.length ? (correct / rows.length) * 100 : 0;
     const peer = rows.length ? rows.reduce((s, r) => s + r.others, 0) / rows.length : 0;
     // Best/worst subject by accuracy
     const bySub: Record<string, { c: number; t: number; o: number }> = {};
