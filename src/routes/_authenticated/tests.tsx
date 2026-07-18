@@ -2,16 +2,23 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listTests, deleteTest, suspendTest } from "@/lib/qbank.functions";
+import { listTests, deleteTest, suspendTest, renameTest } from "@/lib/qbank.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  FileText, BarChart3, Trash2, Pause, Pencil, ArrowUpDown, Search, Filter, ListOrdered,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
+import logo from "@/assets/imd-qbank-logo.png";
 
 export const Route = createFileRoute("/_authenticated/tests")({
   component: TestsList,
@@ -24,9 +31,12 @@ function TestsList() {
   const fn = useServerFn(listTests);
   const delFn = useServerFn(deleteTest);
   const susFn = useServerFn(suspendTest);
+  const renFn = useServerFn(renameTest);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["tests"], queryFn: () => fn() });
+
+  const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null);
 
   const [pageSize, setPageSize] = useState(5);
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -41,7 +51,7 @@ function TestsList() {
       const scorePct = total ? Math.round((t.right_count / total) * 100) : 0;
       const st: "completed" | "suspended" | "not_started" =
         t.done ? "completed" : answered > 0 ? "suspended" : "not_started";
-      const name = `Custom Quiz ${new Date(t.created_at).toLocaleString()}`;
+      const name = (t as any).name && String((t as any).name).trim() ? String((t as any).name) : `Custom Quiz ${new Date(t.created_at).toLocaleString()}`;
       return { ...t, answered, scorePct, status: st, name };
     });
   }, [data]);
@@ -97,8 +107,8 @@ function TestsList() {
       <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-              <FileText className="h-6 w-6" />
+            <div className="h-14 w-14 rounded-2xl overflow-hidden shadow-sm ring-1 ring-border bg-card">
+              <img src={logo} alt="IMD QBank" width={56} height={56} className="h-full w-full object-cover" />
             </div>
             <div>
               <h1 className="text-2xl font-bold">Previous Tests</h1>
@@ -169,10 +179,27 @@ function TestsList() {
               <div key={r.id} className="grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] gap-4 px-4 py-4 items-center hover:bg-muted/30 transition-colors">
                 <div>
                   <div className="font-medium text-sm">{r.name}</div>
-                  <div className="mt-2 flex gap-1.5">
-                    <IconBtn title="Rename" onClick={() => toast.info("Rename coming soon")}><Pencil className="h-3.5 w-3.5" /></IconBtn>
-                    <IconBtn title="Suspend" onClick={() => onSuspend(r.id)}><Pause className="h-3.5 w-3.5" /></IconBtn>
-                    <IconBtn title="Delete" tone="danger" onClick={() => onDelete(r.id)}><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+                  <div className="mt-2 flex gap-1.5 items-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button title="More" className="h-7 w-7 rounded-md border border-border flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors">
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onSelect={() => setRenaming({ id: r.id, name: r.name })}>
+                          <Pencil className="h-3.5 w-3.5 mr-2" /> Edit quiz name
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => { navigator.clipboard.writeText(String(r.id)); toast.success(`Copied quiz ID ${r.id}`); }}>
+                          <Copy className="h-3.5 w-3.5 mr-2" /> Copy quiz ID
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => onDelete(r.id)}>
+                          <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete quiz
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <span className="text-[11px] text-muted-foreground">ID {r.id}</span>
                   </div>
                 </div>
                 <div>
@@ -225,6 +252,30 @@ function TestsList() {
           })}
         </div>
       </div>
+
+      <Dialog open={!!renaming} onOpenChange={(o) => !o && setRenaming(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit quiz name</DialogTitle></DialogHeader>
+          <Input
+            autoFocus
+            value={renaming?.name ?? ""}
+            onChange={(e) => setRenaming((r) => (r ? { ...r, name: e.target.value } : r))}
+            placeholder="Quiz name"
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenaming(null)}>Cancel</Button>
+            <Button
+              onClick={async () => {
+                if (!renaming || !renaming.name.trim()) return;
+                await renFn({ data: { testId: renaming.id, name: renaming.name.trim() } });
+                toast.success("Quiz renamed");
+                setRenaming(null);
+                qc.invalidateQueries({ queryKey: ["tests"] });
+              }}
+            >Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

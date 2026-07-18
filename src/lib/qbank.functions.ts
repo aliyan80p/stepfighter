@@ -298,7 +298,7 @@ export const listTests = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data: tests } = await context.supabase
       .from("tests")
-      .select("id,mode,question_ids,right_count,wrong_count,done,created_at")
+      .select("id,mode,question_ids,right_count,wrong_count,done,created_at,name")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(500);
@@ -338,6 +338,14 @@ export const suspendTest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ testId: z.number() }).parse(d))
   .handler(async ({ data, context }) => {
     await context.supabase.from("tests").update({ done: false }).eq("id", data.testId).eq("user_id", context.userId);
+    return { ok: true };
+  });
+
+export const renameTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ testId: z.number(), name: z.string().trim().min(1).max(120) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await context.supabase.from("tests").update({ name: data.name }).eq("id", data.testId).eq("user_id", context.userId);
     return { ok: true };
   });
 

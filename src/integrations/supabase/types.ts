@@ -269,6 +269,7 @@ export type Database = {
           done: boolean
           id: number
           mode: string
+          name: string | null
           question_ids: number[]
           right_count: number
           subject_label: string | null
@@ -282,6 +283,7 @@ export type Database = {
           done?: boolean
           id?: number
           mode?: string
+          name?: string | null
           question_ids: number[]
           right_count?: number
           subject_label?: string | null
@@ -295,6 +297,7 @@ export type Database = {
           done?: boolean
           id?: number
           mode?: string
+          name?: string | null
           question_ids?: number[]
           right_count?: number
           subject_label?: string | null
