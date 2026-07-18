@@ -252,6 +252,30 @@ function TestsList() {
           })}
         </div>
       </div>
+
+      <Dialog open={!!renaming} onOpenChange={(o) => !o && setRenaming(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit quiz name</DialogTitle></DialogHeader>
+          <Input
+            autoFocus
+            value={renaming?.name ?? ""}
+            onChange={(e) => setRenaming((r) => (r ? { ...r, name: e.target.value } : r))}
+            placeholder="Quiz name"
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenaming(null)}>Cancel</Button>
+            <Button
+              onClick={async () => {
+                if (!renaming || !renaming.name.trim()) return;
+                await renFn({ data: { testId: renaming.id, name: renaming.name.trim() } });
+                toast.success("Quiz renamed");
+                setRenaming(null);
+                qc.invalidateQueries({ queryKey: ["tests"] });
+              }}
+            >Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
