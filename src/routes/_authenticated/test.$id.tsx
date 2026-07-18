@@ -467,12 +467,7 @@ function TestRunner() {
     while (n) { nodes.push(n); n = walker.nextNode() as Text | null; }
     for (const node of nodes) {
       if (!node.textContent) continue;
-      const nodeRange = document.createRange();
-      nodeRange.selectNodeContents(node);
-      // Skip nodes fully outside the selection
-      if (range.compareBoundaryPoints(Range.END_TO_START, nodeRange) >= 0) continue;
-      if (range.compareBoundaryPoints(Range.START_TO_END, nodeRange) <= 0) continue;
-      // Clamp to intersection
+      if (!range.intersectsNode(node)) continue;
       const startOffset = node === range.startContainer ? range.startOffset : 0;
       const endOffset = node === range.endContainer ? range.endOffset : node.textContent.length;
       if (endOffset <= startOffset) continue;
@@ -502,10 +497,7 @@ function TestRunner() {
       // Multi-root selection: apply to every hlkey block that intersects the range.
       const roots = Array.from(container.querySelectorAll<HTMLElement>("[data-hlkey]"));
       for (const root of roots) {
-        const rootRange = document.createRange();
-        rootRange.selectNodeContents(root);
-        if (range.compareBoundaryPoints(Range.END_TO_START, rootRange) >= 0) continue;
-        if (range.compareBoundaryPoints(Range.START_TO_END, rootRange) <= 0) continue;
+        if (!range.intersectsNode(root)) continue;
         wrapRangeWithin(root, range, styler);
       }
     }
