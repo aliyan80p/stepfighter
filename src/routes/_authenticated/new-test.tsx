@@ -45,7 +45,14 @@ function NewTest() {
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
   const qbankId = useActiveQbankId();
-  const { data } = useQuery({ queryKey: ["filters", qbankId], queryFn: () => getFn({ data: { qbankId } }) });
+  const selectedSources = useMemo(
+    () => qbankIds
+      .map((id) => QBANK_OPTIONS.find((o) => o.id === id)?.source)
+      .filter((s): s is string => !!s),
+    [qbankIds],
+  );
+  const { data } = useQuery({ queryKey: ["filters", qbankId, selectedSources], queryFn: () => getFn({ data: { qbankId, sources: selectedSources } }) });
+
 
 
   const [openTab, setOpenTab] = useState<Tab>("courses");
