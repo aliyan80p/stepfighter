@@ -447,7 +447,7 @@ function TestRunner() {
             )}
 
             {showAnswers && question.explanation && (
-              <div className="mt-8">
+              <div className="mt-4">
                 <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
                   <div
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
