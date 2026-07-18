@@ -743,7 +743,7 @@ function TestRunner() {
 
             {/* Primary action button — directly below answer choices */}
             {!isReview && (
-              <div className={`mt-4 ${!tutorMode ? "flex justify-center max-w-[520px]" : ""}`}>
+              <div className={`mt-4 ${isRealExam ? "flex justify-center max-w-[520px]" : ""}`}>
                 {!tutorMode ? (
                   <button
                     onClick={proceedExam}
