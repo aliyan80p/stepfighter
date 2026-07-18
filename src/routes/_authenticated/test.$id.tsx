@@ -390,7 +390,7 @@ function TestRunner() {
                     disabled={submitted}
                     onClick={() => setSelected(i)}
                     className="w-full text-left flex items-center gap-2 py-1.5 text-[15px]"
-                    style={{ color: "#1f2937" }}
+                    style={{ color: themeStyles.text }}
                   >
                     <span className="w-4 flex justify-center shrink-0">
                       {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
