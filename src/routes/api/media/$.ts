@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { contentTypeFromBytes, decryptImdMedia, looksLikePlainMedia } from "@/lib/imd-media-crypto";
+import { contentTypeFromBytes, decryptImdMedia } from "@/lib/imd-media-crypto";
 
 const BUCKET = "qbank-media";
 const PLAIN_BUCKET = "qbank-media-plain";
