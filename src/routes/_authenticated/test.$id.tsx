@@ -18,7 +18,6 @@ import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
 import flashcardIcon from "@/assets/flashcard-icon.png.asset.json";
-import medicalLibraryIcon from "@/assets/medical-library-icon.svg.asset.json";
 import suspendIcon from "@/assets/suspend-icon.png.asset.json";
 import goBackIcon from "@/assets/icons/go-back.png.asset.json";
 import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
