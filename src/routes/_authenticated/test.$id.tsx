@@ -16,6 +16,7 @@ import lockIconImg from "@/assets/icons/lock.png.asset.json";
 import endBlockIcon from "@/assets/icons/end-block.png.asset.json";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
+import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
 import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
 import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
 import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
@@ -710,6 +711,7 @@ function TestRunner() {
           <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
           <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
           {(!isRealExam || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
+          {(!isRealExam || isReview) && <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />}
           <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
           {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
           {isRealExam && !isReview
