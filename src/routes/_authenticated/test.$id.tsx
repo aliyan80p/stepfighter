@@ -983,8 +983,14 @@ function TestRunner() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish();
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "End this block?",
+                    description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                    confirmLabel: "End Block",
+                    tone: "danger",
+                  });
+                  if (ok) finish();
                 }}
                 className="inline-flex items-center gap-2 rounded-sm bg-red-600 hover:bg-red-700 px-3 py-1 text-white text-xs font-semibold shadow"
               >
