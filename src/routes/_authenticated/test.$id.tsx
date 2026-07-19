@@ -666,7 +666,7 @@ function TestRunner() {
         </div>
       )}
       {/* Top nav */}
-      <div className={`flex items-center justify-between px-3 py-1.5 text-white ${isRealExam && !isReview ? "mx-auto w-full max-w-[1100px]" : ""}`} style={{ background: NAV_BG }}>
+      <div className={`flex items-center justify-between px-3 py-1.5 text-white ${isRealExam && !isReview ? "w-full max-w-[1100px]" : ""}`} style={{ background: NAV_BG }}>
         <div className="flex items-center gap-4">
           {!(isRealExam && !isReview) && (
             <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
