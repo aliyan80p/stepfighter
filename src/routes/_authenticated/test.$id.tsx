@@ -682,7 +682,7 @@ function TestRunner() {
             title={isBookmarked ? "Remove flag" : "Flag question"}
           >
             {(isRealExam && !isReview) && (
-              <span className={`inline-block w-3.5 h-3.5 border border-white/70 ${isBookmarked ? "bg-red-500" : "bg-transparent"}`} />
+              <span className={`inline-block w-5 h-5 border border-white/80 ${isBookmarked ? "bg-white" : "bg-transparent"}`} />
             )}
             <img src={markFlagIcon.url} alt="Flag" className={`h-7 w-7 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
             <span className="text-[13px] font-semibold text-red-400">Mark</span>
