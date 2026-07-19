@@ -11,7 +11,9 @@ import {
 import {
   BarChart3, ListOrdered, StickyNote, CheckCircle2, ChevronRight, Flame,
   TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2, X, Copy, Check,
+  ArrowRightLeft, RefreshCw, Repeat,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/test-results/$id")({
   component: TestResults,
@@ -206,6 +208,29 @@ function TestResults() {
         </div>
       </div>
 
+      {/* Answer Changes on retake */}
+      {(() => {
+        const ac = data.answerChanges;
+        const totalChanges = ac.correctToIncorrect + ac.incorrectToCorrect + ac.incorrectToIncorrect;
+        return (
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between mb-1">
+              <div className="font-semibold">Answer Changes</div>
+              <span className="text-xs text-muted-foreground">Compared to your previous attempts on these questions</span>
+            </div>
+            {totalChanges === 0 ? (
+              <div className="text-sm text-muted-foreground mt-3">No prior attempts on these questions — this is your first pass.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                <ChangeStat icon={ArrowRightLeft} tone="rose" label="Correct → Incorrect" value={ac.correctToIncorrect} hint="Second-guessed a right answer" />
+                <ChangeStat icon={RefreshCw} tone="green" label="Incorrect → Correct" value={ac.incorrectToCorrect} hint="Learned from a past miss" />
+                <ChangeStat icon={Repeat} tone="amber" label="Incorrect → Incorrect" value={ac.incorrectToIncorrect} hint="Missed again — review needed" />
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Table controls */}
       <div className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
@@ -287,7 +312,28 @@ function TestResults() {
   );
 }
 
+function ChangeStat({ icon: Icon, tone, label, value, hint }: { icon: any; tone: "rose" | "green" | "amber"; label: string; value: number; hint: string }) {
+  const cls = tone === "rose"
+    ? { bg: "bg-rose-500/10", text: "text-rose-500", pill: "bg-rose-500 text-white" }
+    : tone === "green"
+    ? { bg: "bg-emerald-500/10", text: "text-emerald-500", pill: "bg-emerald-500 text-white" }
+    : { bg: "bg-amber-500/10", text: "text-amber-500", pill: "bg-amber-500 text-white" };
+  return (
+    <div className="rounded-xl border border-border p-4 flex items-center gap-3">
+      <div className={`h-10 w-10 rounded-lg ${cls.bg} ${cls.text} grid place-items-center shrink-0`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium">{label}</div>
+        <div className="text-[11px] text-muted-foreground">{hint}</div>
+      </div>
+      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${cls.pill}`}>{value}</span>
+    </div>
+  );
+}
+
 function QuestionsListModal({
+
   onClose, allIds, wrongIds, omittedIds,
 }: { onClose: () => void; allIds: number[]; wrongIds: number[]; omittedIds: number[] }) {
   return (

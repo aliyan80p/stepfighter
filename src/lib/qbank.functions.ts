@@ -305,6 +305,29 @@ export const getTest = createServerFn({ method: "GET" })
       .select("question_id,selected_answer,is_correct")
       .eq("user_id", userId)
       .eq("test_id", data.id);
+    // Prior attempts on the same questions BEFORE this test was created — used for Answer Changes
+    const { data: priorAttemptsRaw } = await supabase
+      .from("attempts")
+      .select("question_id,is_correct,selected_answer,created_at")
+      .eq("user_id", userId)
+      .eq("qbank_id", qbankId)
+      .in("question_id", test.question_ids as number[])
+      .lt("created_at", test.created_at)
+      .order("created_at", { ascending: false });
+    const priorByQ: Record<number, { is_correct: boolean; selected_answer: number | null }> = {};
+    for (const p of priorAttemptsRaw ?? []) {
+      if (priorByQ[p.question_id] === undefined) {
+        priorByQ[p.question_id] = { is_correct: !!p.is_correct, selected_answer: p.selected_answer };
+      }
+    }
+    let c2i = 0, i2c = 0, i2i = 0;
+    for (const a of attempts ?? []) {
+      const prior = priorByQ[a.question_id];
+      if (!prior || prior.selected_answer == null || a.selected_answer == null) continue;
+      if (prior.is_correct && !a.is_correct) c2i++;
+      else if (!prior.is_correct && a.is_correct) i2c++;
+      else if (!prior.is_correct && !a.is_correct) i2i++;
+    }
     const { data: bookmarks } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("qbank_id", qbankId).in("question_id", test.question_ids);
     const [{ data: subjects }, { data: systems }] = await Promise.all([
       supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
@@ -321,8 +344,10 @@ export const getTest = createServerFn({ method: "GET" })
       bookmarkedIds: new Set((bookmarks ?? []).map((b) => b.question_id)),
       subjectMap,
       systemMap,
+      answerChanges: { correctToIncorrect: c2i, incorrectToCorrect: i2c, incorrectToIncorrect: i2i },
     };
   });
+
 
 function groupBy<T, K extends string | number>(arr: T[], fn: (x: T) => K): Record<K, T[]> {
   const out: Record<string, T[]> = {};
