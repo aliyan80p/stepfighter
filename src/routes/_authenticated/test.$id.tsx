@@ -366,7 +366,7 @@ function TestRunner() {
 
   const correctIdx = question.correct_answer;
   const answered = submitted || selected != null;
-  const showAnswers = isReview || (answered && isPractice && tutorMode);
+  const showAnswers = isReview || (submitted && isPractice && tutorMode);
   const isBookmarked = data.bookmarkedIds.has(question.id);
   const isCorrect = answered && selected === correctIdx;
   const correctLetter = correctIdx != null ? String.fromCharCode(65 + correctIdx) : "";
