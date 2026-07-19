@@ -678,12 +678,17 @@ function TestRunner() {
           </div>
           <button
             onClick={bookmark}
-            className="inline-flex items-center justify-center p-1 rounded hover:bg-white/10"
+            className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10"
             title={isBookmarked ? "Remove flag" : "Flag question"}
           >
-            <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
+            <img src={markFlagIcon.url} alt="Flag" className={`h-7 w-7 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
+            <span
+              aria-hidden
+              className={`inline-block h-4 w-4 rounded-sm border border-white/60 ${isBookmarked ? "bg-red-500 border-red-500" : "bg-transparent"}`}
+            />
             {!isBookmarked && <Flag className="hidden" />}
           </button>
+
         </div>
 
         <div className="flex items-center gap-2">
