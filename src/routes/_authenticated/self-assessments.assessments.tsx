@@ -280,6 +280,7 @@ function AssessmentsPage() {
           </div>
         )}
       </div>
+      {confirmDialog}
     </div>
   );
 }
