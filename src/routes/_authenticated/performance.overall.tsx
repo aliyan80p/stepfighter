@@ -62,14 +62,27 @@ const OPTIONS = buildOptions();
 
 function OverallPerformance() {
   const fn = useServerFn(getDashboardStats);
+  const activeQbankId = useActiveQbankId();
+  const activeSlug = QBANKS.find((q) => q.id === activeQbankId)?.slug ?? "step2";
+  const filteredOptions = useMemo(
+    () => OPTIONS.filter((o) => o.key.startsWith(`${activeSlug}-`)),
+    [activeSlug],
+  );
   const [tab, setTab] = useState<"overall" | "analysis">("overall");
-  const [optKey, setOptKey] = useState<string>("step2-uw");
-  const opt = useMemo(() => OPTIONS.find((o) => o.key === optKey) ?? OPTIONS[0], [optKey]);
+  const [optKey, setOptKey] = useState<string>(`${activeSlug}-uw`);
+  // When user switches course elsewhere, reset selection to that course's UWorld.
+  useEffect(() => {
+    if (!filteredOptions.some((o) => o.key === optKey)) {
+      setOptKey(filteredOptions[0]?.key ?? `${activeSlug}-uw`);
+    }
+  }, [activeSlug, filteredOptions, optKey]);
+  const opt = useMemo(() => filteredOptions.find((o) => o.key === optKey) ?? filteredOptions[0], [filteredOptions, optKey]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["perf-overall", opt.qbankId, opt.sources?.join(",") ?? "all"],
     queryFn: () => fn({ data: { qbankId: opt.qbankId, sources: opt.sources } }),
   });
+
 
   return (
     <div className="min-h-screen bg-muted/30">
