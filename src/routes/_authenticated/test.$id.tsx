@@ -1010,7 +1010,7 @@ function TestRunner() {
                 }}
                 className="inline-flex items-center gap-2 rounded-sm bg-red-600 hover:bg-red-700 px-3 py-1 text-white text-xs font-semibold shadow"
               >
-                <span className="h-2 w-2 rounded-full bg-white/90 shadow-[0_0_6px_rgba(255,255,255,0.9)]" />
+                <img src={endBlockIcon.url} alt="" className="h-4 w-4 object-contain" />
                 End Block
               </button>
             </div>
