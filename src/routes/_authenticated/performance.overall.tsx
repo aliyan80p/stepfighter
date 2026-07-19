@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getDashboardStats } from "@/lib/qbank.functions";
-import { QBANKS } from "@/lib/active-qbank";
+import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
 import { CheckCircle2, XCircle, MinusCircle, HelpCircle, User, ArrowRightLeft, RefreshCw, Repeat, FilePlus2, FileCheck2, PauseCircle, ClipboardList } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/performance/overall")({
   component: OverallPerformance,
