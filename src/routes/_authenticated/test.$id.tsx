@@ -1118,6 +1118,7 @@ function TestRunner() {
           onClose={() => setMediaModalIndex(null)}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
