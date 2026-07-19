@@ -51,7 +51,6 @@ function buildOptions(): Opt[] {
 
   // Step 3
   const s3 = qbId("step3");
-  out.push({ key: "step3-all", label: "USMLE Step 3 — All", qbankId: s3 });
   out.push({ key: "step3-uw", label: "UWorld Step 3", qbankId: s3, sources: ["main"] });
   for (const n of [1, 2, 3]) out.push({ key: `step3-sa${n}`, label: `Step 3 Self Assessment ${n}`, qbankId: s3, sources: [`SA${n}`] });
 
