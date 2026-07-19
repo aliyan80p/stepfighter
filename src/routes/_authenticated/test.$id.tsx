@@ -745,7 +745,7 @@ function TestRunner() {
                 {status === "attempted" && <span className="inline-block h-2 w-2 rounded-full bg-slate-700" />}
                 {status === "none" && <span className="w-3.5" />}
                 <span>{i + 1}</span>
-                {data.bookmarkedIds.has(q.id) && <Flag className="h-3 w-3 ml-auto text-red-500" fill="currentColor" />}
+                {data.bookmarkedIds.has(q.id) && <img src={markFlagIcon.url} alt="Flagged" className="h-3.5 w-3.5 ml-auto object-contain" />}
               </button>
             );
           })}
