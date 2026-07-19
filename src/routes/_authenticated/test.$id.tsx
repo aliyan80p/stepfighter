@@ -1036,7 +1036,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+          <div className="flex items-center justify-between px-4 py-0.5 text-white text-xs" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
               {isReview ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
