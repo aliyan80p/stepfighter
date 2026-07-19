@@ -17,12 +17,13 @@ export const getDashboardStats = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const qbankId = data.qbankId;
-    const [{ count: totalQ }, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }] = await Promise.all([
+    const [{ count: totalQ }, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }, { data: testsRaw }] = await Promise.all([
       supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId),
       supabase.from("subjects").select("id,name,count").eq("qbank_id", qbankId).order("id"),
       fetchAllQuestionRows(supabase, "id,subject_id", { qbankId }),
-      supabase.from("attempts").select("is_correct,question_id,selected_answer").eq("user_id", userId).eq("qbank_id", qbankId),
+      supabase.from("attempts").select("is_correct,question_id,selected_answer,created_at").eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true }),
       supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("qbank_id", qbankId),
+      supabase.from("tests").select("id,done").eq("user_id", userId).eq("qbank_id", qbankId),
     ]);
     const subjectCounts = new Map<number, number>();
     for (const q of questionMeta) {
@@ -34,6 +35,29 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     const incorrect = (attempts ?? []).filter((a) => a.is_correct === false && a.selected_answer != null).length;
     const omitted = (attempts ?? []).filter((a) => a.selected_answer == null).length;
     const total = (attempts ?? []).length;
+
+    // Answer changes: for questions attempted more than once, compare each attempt to the previous one
+    const perQ = new Map<number, { correct: boolean; answered: boolean }[]>();
+    for (const a of attempts ?? []) {
+      const arr = perQ.get(a.question_id) ?? [];
+      arr.push({ correct: !!a.is_correct, answered: a.selected_answer != null });
+      perQ.set(a.question_id, arr);
+    }
+    let c2i = 0, i2c = 0, i2i = 0;
+    for (const arr of perQ.values()) {
+      for (let i = 1; i < arr.length; i++) {
+        const prev = arr[i - 1], cur = arr[i];
+        if (!prev.answered || !cur.answered) continue;
+        if (prev.correct && !cur.correct) c2i++;
+        else if (!prev.correct && cur.correct) i2c++;
+        else if (!prev.correct && !cur.correct) i2i++;
+      }
+    }
+
+    const testsCreated = (testsRaw ?? []).length;
+    const testsCompleted = (testsRaw ?? []).filter((t) => t.done).length;
+    const testsSuspended = testsCreated - testsCompleted;
+
     return {
       totalQuestions: totalQ ?? 0,
       subjects: subjects ?? [],
@@ -47,8 +71,11 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       usedPct: totalQ ? Math.round((uniqueDone / totalQ) * 1000) / 10 : 0,
       correctPct: total ? Math.round((correct / total) * 1000) / 10 : 0,
       bookmarks: bookmarks ?? 0,
+      answerChanges: { correctToIncorrect: c2i, incorrectToCorrect: i2c, incorrectToIncorrect: i2i },
+      testCount: { created: testsCreated, completed: testsCompleted, suspended: testsSuspended },
     };
   });
+
 
 export const getFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
