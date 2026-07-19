@@ -7,6 +7,7 @@ import { listAssessmentBlocks, startAssessmentBlock, resetAssessment } from "@/l
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/self-assessments/assessments")({
   component: AssessmentsPage,
@@ -95,9 +96,17 @@ function AssessmentsPage() {
   const handleResults = (testId: number) => nav({ to: "/test-results/$id", params: { id: String(testId) } });
   const handleAnalysis = (testId: number) => nav({ to: "/test-results/$id", params: { id: String(testId) } });
 
+  const { confirm, dialog: confirmDialog } = useConfirm();
+
   const handleReset = async () => {
     if (!current) return;
-    if (!window.confirm(`Reset all progress for ${current.label}? This deletes your attempts and block results.`)) return;
+    const ok = await confirm({
+      title: `Reset ${current.label}?`,
+      description: "All of your attempts and block results for this assessment will be permanently deleted. This cannot be undone.",
+      confirmLabel: "Reset Assessment",
+      tone: "danger",
+    });
+    if (!ok) return;
     try {
       await resetFn({ data: { qbankId: current.qbankId, source: current.source } });
       toast.success("Assessment reset");
@@ -271,6 +280,7 @@ function AssessmentsPage() {
           </div>
         )}
       </div>
+      {confirmDialog}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon, Lock as LockIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
@@ -142,6 +143,7 @@ function TestRunner() {
   const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
   const [breakModal, setBreakModal] = useState<null | "suspend" | "end">(null);
   const [modeInitFor, setModeInitFor] = useState<number | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -282,9 +284,13 @@ function TestRunner() {
         .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
     }
     if (idx === total - 1) {
-      if (window.confirm("End the block and submit your answers? This cannot be undone.")) {
-        await finish();
-      }
+      const ok = await confirm({
+        title: "End this block?",
+        description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+        confirmLabel: "End Block",
+        tone: "danger",
+      });
+      if (ok) await finish();
     } else {
       goToQuestion(idx + 1);
     }
@@ -924,9 +930,15 @@ function TestRunner() {
                 </button>
               ) : !tutorMode ? null : !submitted ? null : (
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (idx === total - 1) {
-                      if (window.confirm("End the test and submit your answers? This cannot be undone.")) finish();
+                      const ok = await confirm({
+                        title: "End this test?",
+                        description: "Your answers will be submitted and the test will be scored. This cannot be undone.",
+                        confirmLabel: "End Test",
+                        tone: "danger",
+                      });
+                      if (ok) finish();
                     } else {
                       goToQuestion(idx + 1);
                     }
@@ -971,8 +983,14 @@ function TestRunner() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish();
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "End this block?",
+                    description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                    confirmLabel: "End Block",
+                    tone: "danger",
+                  });
+                  if (ok) finish();
                 }}
                 className="inline-flex items-center gap-2 rounded-sm bg-red-600 hover:bg-red-700 px-3 py-1 text-white text-xs font-semibold shadow"
               >
@@ -1005,11 +1023,23 @@ function TestRunner() {
                 <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
-                  <TopBtn icon={Clock} label="Suspend" onClick={() => {
-                    if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" });
+                  <TopBtn icon={Clock} label="Suspend" onClick={async () => {
+                    const ok = await confirm({
+                      title: "Suspend this test?",
+                      description: "Your progress is saved and you can resume the test later from the Tests page.",
+                      confirmLabel: "Suspend",
+                      tone: "warning",
+                    });
+                    if (ok) nav({ to: "/tests" });
                   }} />
-                  <TopBtn icon={ArrowLeft} label="End Block" onClick={() => {
-                    if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish();
+                  <TopBtn icon={ArrowLeft} label="End Block" onClick={async () => {
+                    const ok = await confirm({
+                      title: "End this block?",
+                      description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                      confirmLabel: "End Block",
+                      tone: "danger",
+                    });
+                    if (ok) finish();
                   }} />
                 </>
               )}
@@ -1088,6 +1118,7 @@ function TestRunner() {
           onClose={() => setMediaModalIndex(null)}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
