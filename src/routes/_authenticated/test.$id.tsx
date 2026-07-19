@@ -1023,11 +1023,23 @@ function TestRunner() {
                 <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
-                  <TopBtn icon={Clock} label="Suspend" onClick={() => {
-                    if (window.confirm("Suspend this test? Your progress is saved and you can resume later.")) nav({ to: "/tests" });
+                  <TopBtn icon={Clock} label="Suspend" onClick={async () => {
+                    const ok = await confirm({
+                      title: "Suspend this test?",
+                      description: "Your progress is saved and you can resume the test later from the Tests page.",
+                      confirmLabel: "Suspend",
+                      tone: "warning",
+                    });
+                    if (ok) nav({ to: "/tests" });
                   }} />
-                  <TopBtn icon={ArrowLeft} label="End Block" onClick={() => {
-                    if (window.confirm("End this block and submit your answers? This cannot be undone.")) finish();
+                  <TopBtn icon={ArrowLeft} label="End Block" onClick={async () => {
+                    const ok = await confirm({
+                      title: "End this block?",
+                      description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                      confirmLabel: "End Block",
+                      tone: "danger",
+                    });
+                    if (ok) finish();
                   }} />
                 </>
               )}
