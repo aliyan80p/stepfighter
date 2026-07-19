@@ -95,12 +95,8 @@ function OverallPerformance() {
             onChange={(e) => setOptKey(e.target.value)}
             className="rounded-md border border-border bg-background px-3 py-2 text-sm min-w-[280px]"
           >
-            <optgroup label="Overview">
-              {OPTIONS.filter((o) => o.key === "all").map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
             <optgroup label="USMLE Step 1">
+
               {OPTIONS.filter((o) => o.key.startsWith("step1")).map((o) => (
                 <option key={o.key} value={o.key}>{o.label}</option>
               ))}
