@@ -897,7 +897,10 @@ function TestRunner() {
                 <div
                   className="pt-3 pb-2"
                   style={{
-                    background: transparentExpl ? "transparent" : "transparent",
+                    background: transparentExpl ? "transparent" : themeStyles.cardBg,
+                    border: transparentExpl ? "none" : `1px solid ${themeStyles.border}`,
+                    borderRadius: transparentExpl ? 0 : 8,
+                    padding: transparentExpl ? "12px 0" : "16px 18px",
                     fontSize: `${fontSize}px`,
                     fontWeight,
                     lineHeight: 1.7,
@@ -913,6 +916,7 @@ function TestRunner() {
                     dangerouslySetInnerHTML={{ __html: htmlFor("e", question.explanation, true) }}
                   />
                 </div>
+
               </div>
             )}
 
