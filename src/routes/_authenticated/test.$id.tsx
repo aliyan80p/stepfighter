@@ -682,7 +682,8 @@ function TestRunner() {
           >
             <span className={`inline-block w-3.5 h-3.5 border ${isBookmarked ? "bg-white border-white" : "border-white/80"}`} />
             <span className="text-[12px]">Mark</span>
-            <Flag className={`h-4 w-4 ${isBookmarked ? "text-yellow-300" : "text-white/90"}`} fill={isBookmarked ? "currentColor" : "none"} />
+            <img src={markFlagIcon.url} alt="" className={`h-4 w-4 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
+            {!isBookmarked && <Flag className="hidden" />}
           </button>
         </div>
 
