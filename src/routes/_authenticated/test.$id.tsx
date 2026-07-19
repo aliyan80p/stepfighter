@@ -930,9 +930,15 @@ function TestRunner() {
                 </button>
               ) : !tutorMode ? null : !submitted ? null : (
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (idx === total - 1) {
-                      if (window.confirm("End the test and submit your answers? This cannot be undone.")) finish();
+                      const ok = await confirm({
+                        title: "End this test?",
+                        description: "Your answers will be submitted and the test will be scored. This cannot be undone.",
+                        confirmLabel: "End Test",
+                        tone: "danger",
+                      });
+                      if (ok) finish();
                     } else {
                       goToQuestion(idx + 1);
                     }
