@@ -18,6 +18,7 @@ import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
 import flashcardIcon from "@/assets/flashcard-icon.png.asset.json";
+import suspendIcon from "@/assets/suspend-icon.png.asset.json";
 import goBackIcon from "@/assets/icons/go-back.png.asset.json";
 import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
 import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
@@ -1057,7 +1058,7 @@ function TestRunner() {
                 <TopBtn imgSrc={goBackIcon.url} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
-                  <TopBtn icon={Clock} label="Suspend" onClick={async () => {
+                  <TopBtn imgSrc={suspendIcon.url} label="Suspend" onClick={async () => {
                     const ok = await confirm({
                       title: "Suspend this test?",
                       description: "Your progress is saved and you can resume the test later from the Tests page.",
