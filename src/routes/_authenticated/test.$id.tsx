@@ -712,7 +712,9 @@ function TestRunner() {
           {(!isRealExam || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
           {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
-          <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
+          {isRealExam && !isReview
+            ? <TopBtn imgSrc={textZoomIcon.url} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
+            : <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />}
           {(!isRealExam || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
         </div>
       </div>
