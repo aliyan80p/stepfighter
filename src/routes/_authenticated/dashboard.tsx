@@ -118,7 +118,34 @@ function Dashboard() {
               </div>
             </div>
           )}
+
+          {data && (
+            <div className="grid gap-4 md:grid-cols-2 mt-4">
+              {/* Answer Changes */}
+              <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+                <div className="font-semibold">Answer Changes</div>
+                <div className="text-xs text-muted-foreground mb-4">How your answers changed when you re-attempted questions</div>
+                <div className="space-y-3">
+                  <Row icon={ArrowRightLeft} tone="rose" label="Correct to Incorrect" value={data.answerChanges.correctToIncorrect} />
+                  <Row icon={RefreshCw} tone="green" label="Incorrect to Correct" value={data.answerChanges.incorrectToCorrect} />
+                  <Row icon={Repeat} tone="amber" label="Incorrect to Incorrect" value={data.answerChanges.incorrectToIncorrect} />
+                </div>
+              </div>
+
+              {/* Test Count */}
+              <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+                <div className="font-semibold">Test Count</div>
+                <div className="text-xs text-muted-foreground mb-4">Your test activity across this qbank</div>
+                <div className="space-y-3">
+                  <Row icon={FilePlus2} tone="blue" label="Tests Created" value={data.testCount.created} />
+                  <Row icon={FileCheck2} tone="green" label="Tests Completed" value={data.testCount.completed} />
+                  <Row icon={PauseCircle} tone="amber" label="Suspended Tests" value={data.testCount.suspended} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3">
