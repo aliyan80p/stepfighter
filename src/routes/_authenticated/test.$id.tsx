@@ -1056,7 +1056,7 @@ function TestRunner() {
               <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={notImpl("Flashcards")} />
               <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
               {isReview ? (
-                <TopBtn imgSrc={goBackIcon.url} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+                <TopBtn imgSrc={goBackIcon.url} imgClass="h-12 w-12 object-contain" label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
                   <TopBtn imgSrc={suspendIcon.url} label="Suspend" onClick={async () => {
