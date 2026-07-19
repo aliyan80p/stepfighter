@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats } from "@/lib/qbank.functions";
 import { useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
-import { BookOpen, CheckCircle2, XCircle, MinusCircle, HelpCircle, User, Percent, BarChart3, Flag } from "lucide-react";
+import { BookOpen, CheckCircle2, XCircle, MinusCircle, HelpCircle, User, Percent, BarChart3, Flag, ArrowRightLeft, RefreshCw, Repeat, FilePlus2, FileCheck2, PauseCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
