@@ -284,9 +284,13 @@ function TestRunner() {
         .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
     }
     if (idx === total - 1) {
-      if (window.confirm("End the block and submit your answers? This cannot be undone.")) {
-        await finish();
-      }
+      const ok = await confirm({
+        title: "End this block?",
+        description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+        confirmLabel: "End Block",
+        tone: "danger",
+      });
+      if (ok) await finish();
     } else {
       goToQuestion(idx + 1);
     }
