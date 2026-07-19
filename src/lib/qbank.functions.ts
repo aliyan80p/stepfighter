@@ -13,17 +13,44 @@ export const listQbanks = createServerFn({ method: "GET" })
 
 export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ qbankId: qb(), sources: z.array(z.string()).optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const qbankId = data.qbankId;
+    const sources = data.sources && data.sources.length ? data.sources : undefined;
+
+    // If sources filter is active, resolve the question id set for those sources within this qbank.
+    let sourceQIds: number[] | null = null;
+    if (sources) {
+      const qrows = await fetchAllQuestionRows(supabase, "id", { qbankId, sources });
+      sourceQIds = qrows.map((r: any) => r.id as number);
+    }
+
+    const questionsCountQ = sources
+      ? supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId).in("source", sources)
+      : supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId);
+
+    let attemptsQ = supabase.from("attempts").select("is_correct,question_id,selected_answer,created_at").eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true });
+    let bookmarksQ = supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("qbank_id", qbankId);
+    let testsQ = supabase.from("tests").select("id,done,name").eq("user_id", userId).eq("qbank_id", qbankId);
+    if (sourceQIds) {
+      if (sourceQIds.length === 0) {
+        attemptsQ = attemptsQ.eq("question_id", -1);
+        bookmarksQ = bookmarksQ.eq("question_id", -1);
+      } else {
+        // Supabase .in() has URL length limits; chunk if very large
+        attemptsQ = attemptsQ.in("question_id", sourceQIds);
+        bookmarksQ = bookmarksQ.in("question_id", sourceQIds);
+      }
+    }
+
     const [{ count: totalQ }, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }, { data: testsRaw }] = await Promise.all([
-      supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId),
+      questionsCountQ,
       supabase.from("subjects").select("id,name,count").eq("qbank_id", qbankId).order("id"),
-      fetchAllQuestionRows(supabase, "id,subject_id", { qbankId }),
-      supabase.from("attempts").select("is_correct,question_id,selected_answer,created_at").eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true }),
-      supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("qbank_id", qbankId),
-      supabase.from("tests").select("id,done").eq("user_id", userId).eq("qbank_id", qbankId),
+      fetchAllQuestionRows(supabase, "id,subject_id", { qbankId, sources }),
+      attemptsQ,
+      bookmarksQ,
+      testsQ,
     ]);
     const subjectCounts = new Map<number, number>();
     for (const q of questionMeta) {
@@ -43,19 +70,28 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       arr.push({ correct: !!a.is_correct, answered: a.selected_answer != null });
       perQ.set(a.question_id, arr);
     }
-    let c2i = 0, i2c = 0, i2i = 0;
+    let c2c = 0, c2i = 0, i2c = 0, i2i = 0;
     for (const arr of perQ.values()) {
       for (let i = 1; i < arr.length; i++) {
         const prev = arr[i - 1], cur = arr[i];
         if (!prev.answered || !cur.answered) continue;
-        if (prev.correct && !cur.correct) c2i++;
+        if (prev.correct && cur.correct) c2c++;
+        else if (prev.correct && !cur.correct) c2i++;
         else if (!prev.correct && cur.correct) i2c++;
         else if (!prev.correct && !cur.correct) i2i++;
       }
     }
 
-    const testsCreated = (testsRaw ?? []).length;
-    const testsCompleted = (testsRaw ?? []).filter((t) => t.done).length;
+    // Filter tests by source (test names are `${source} Block #N` for source-scoped blocks)
+    let testsFiltered = testsRaw ?? [];
+    if (sources) {
+      testsFiltered = testsFiltered.filter((t: any) => {
+        const nm: string = t.name ?? "";
+        return sources.some((s) => nm.startsWith(`${s} Block #`) || nm.startsWith(`${s} `));
+      });
+    }
+    const testsCreated = testsFiltered.length;
+    const testsCompleted = testsFiltered.filter((t: any) => t.done).length;
     const testsSuspended = testsCreated - testsCompleted;
 
     return {
@@ -71,7 +107,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       usedPct: totalQ ? Math.round((uniqueDone / totalQ) * 1000) / 10 : 0,
       correctPct: total ? Math.round((correct / total) * 1000) / 10 : 0,
       bookmarks: bookmarks ?? 0,
-      answerChanges: { correctToIncorrect: c2i, incorrectToCorrect: i2c, incorrectToIncorrect: i2i },
+      answerChanges: { correctToCorrect: c2c, correctToIncorrect: c2i, incorrectToCorrect: i2c, incorrectToIncorrect: i2i },
       testCount: { created: testsCreated, completed: testsCompleted, suspended: testsSuspended },
     };
   });
