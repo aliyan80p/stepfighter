@@ -871,8 +871,7 @@ function TestRunner() {
                 ) : !submitted ? (
                   <button
                     onClick={submit}
-                    disabled={selected == null}
-                    className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40 uppercase tracking-wide"
+                    className="px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide"
                     style={{ background: NAV_BG }}
                   >
                     Submit
