@@ -280,11 +280,12 @@ function TestRunner() {
   };
 
   const submit = async () => {
-    if (selected == null || !question) return;
+    if (!question) return;
     const secs = Math.round((Date.now() - startedAt) / 1000);
+    setSubmitted(true);
+    if (selected == null) return;
     const isCorrect = question.correct_answer === selected;
     // Optimistic: mark submitted immediately, update cache, fire-and-forget the server call
-    setSubmitted(true);
     optimisticAttempt(question.id, selected, secs, isCorrect);
     subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } })
       .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
