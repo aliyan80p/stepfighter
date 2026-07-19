@@ -17,6 +17,7 @@ import endBlockIcon from "@/assets/icons/end-block.png.asset.json";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
+import goBackIcon from "@/assets/icons/go-back.png.asset.json";
 import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
 import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
 import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
