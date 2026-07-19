@@ -684,10 +684,11 @@ function TestRunner() {
             <img src={markFlagIcon.url} alt="Flag" className={`h-7 w-7 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
             <span
               aria-hidden
-              className={`inline-block h-4 w-4 rounded-sm border border-white/60 ${isBookmarked ? "bg-red-500 border-red-500" : "bg-transparent"}`}
+              className={`inline-block h-3.5 w-3.5 rounded-[2px] border border-white/70 ${isBookmarked ? "bg-red-500 border-red-500" : "bg-transparent"}`}
             />
-            {!isBookmarked && <Flag className="hidden" />}
+            <span className="text-[12px] font-semibold text-red-400">Mark</span>
           </button>
+
 
         </div>
 
@@ -744,7 +745,7 @@ function TestRunner() {
                 {status === "attempted" && <span className="inline-block h-2 w-2 rounded-full bg-slate-700" />}
                 {status === "none" && <span className="w-3.5" />}
                 <span>{i + 1}</span>
-                {data.bookmarkedIds.has(q.id) && <Flag className="h-3 w-3 ml-auto text-red-500" fill="currentColor" />}
+                {data.bookmarkedIds.has(q.id) && <img src={markFlagIcon.url} alt="Flagged" className="h-3.5 w-3.5 ml-auto object-contain" />}
               </button>
             );
           })}
