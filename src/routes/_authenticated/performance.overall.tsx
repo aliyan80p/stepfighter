@@ -62,7 +62,7 @@ const OPTIONS = buildOptions();
 function OverallPerformance() {
   const fn = useServerFn(getDashboardStats);
   const [tab, setTab] = useState<"overall" | "analysis">("overall");
-  const [optKey, setOptKey] = useState<string>("step2-all");
+  const [optKey, setOptKey] = useState<string>("step2-uw");
   const opt = useMemo(() => OPTIONS.find((o) => o.key === optKey) ?? OPTIONS[0], [optKey]);
 
   const { data, isLoading } = useQuery({
