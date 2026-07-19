@@ -11,7 +11,9 @@ import {
 import {
   BarChart3, ListOrdered, StickyNote, CheckCircle2, ChevronRight, Flame,
   TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2, X, Copy, Check,
+  ArrowRightLeft, RefreshCw, Repeat,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/test-results/$id")({
   component: TestResults,
