@@ -280,11 +280,12 @@ function TestRunner() {
   };
 
   const submit = async () => {
-    if (selected == null || !question) return;
+    if (!question) return;
     const secs = Math.round((Date.now() - startedAt) / 1000);
+    setSubmitted(true);
+    if (selected == null) return;
     const isCorrect = question.correct_answer === selected;
     // Optimistic: mark submitted immediately, update cache, fire-and-forget the server call
-    setSubmitted(true);
     optimisticAttempt(question.id, selected, secs, isCorrect);
     subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } })
       .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
@@ -870,8 +871,7 @@ function TestRunner() {
                 ) : !submitted ? (
                   <button
                     onClick={submit}
-                    disabled={selected == null}
-                    className="px-6 py-2 rounded text-white text-sm font-semibold disabled:opacity-40 uppercase tracking-wide"
+                    className="px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide"
                     style={{ background: NAV_BG }}
                   >
                     Submit
