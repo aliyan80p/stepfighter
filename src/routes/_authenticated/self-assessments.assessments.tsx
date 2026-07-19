@@ -7,6 +7,7 @@ import { listAssessmentBlocks, startAssessmentBlock, resetAssessment } from "@/l
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/self-assessments/assessments")({
   component: AssessmentsPage,
