@@ -126,6 +126,7 @@ function Dashboard() {
                 <div className="font-semibold">Answer Changes</div>
                 <div className="text-xs text-muted-foreground mb-4">How your answers changed when you re-attempted questions</div>
                 <div className="space-y-3">
+                  <Row icon={CheckCircle2} tone="green" label="Correct to Correct" value={data.answerChanges.correctToCorrect ?? 0} />
                   <Row icon={ArrowRightLeft} tone="rose" label="Correct to Incorrect" value={data.answerChanges.correctToIncorrect} />
                   <Row icon={RefreshCw} tone="green" label="Incorrect to Correct" value={data.answerChanges.incorrectToCorrect} />
                   <Row icon={Repeat} tone="amber" label="Incorrect to Incorrect" value={data.answerChanges.incorrectToIncorrect} />
