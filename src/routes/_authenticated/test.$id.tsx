@@ -1048,7 +1048,7 @@ function TestRunner() {
                     });
                     if (ok) nav({ to: "/tests" });
                   }} />
-                  <TopBtn icon={ArrowLeft} label="End Block" onClick={async () => {
+                  <TopBtn imgSrc={endBlockIcon.url} label="End Block" onClick={async () => {
                     const ok = await confirm({
                       title: "End this block?",
                       description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
