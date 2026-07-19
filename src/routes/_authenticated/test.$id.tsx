@@ -11,6 +11,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
+import reverseColorIcon from "@/assets/icons/reverse-color.png.asset.json";
+import lockIconImg from "@/assets/icons/lock.png.asset.json";
+import endBlockIcon from "@/assets/icons/end-block.png.asset.json";
+import notesIcon from "@/assets/icons/notes.png.asset.json";
+import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
+import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
+import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
@@ -77,13 +84,17 @@ function isEmbeddedMedia(item: MediaItem, embeddedKeys: Set<string>) {
   return mediaKeys(item.name).some((key) => embeddedKeys.has(key));
 }
 
-function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+function TopBtn({ icon: Icon, imgSrc, imgFlip, label, onClick }: { icon?: any; imgSrc?: string; imgFlip?: boolean; label: string; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
       className="flex flex-col items-center justify-center px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px]"
     >
-      <Icon className="h-5 w-5" />
+      {imgSrc ? (
+        <img src={imgSrc} alt="" className="h-5 w-5 object-contain" style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+      ) : Icon ? (
+        <Icon className="h-5 w-5" />
+      ) : null}
       <span className="text-[11px] mt-0.5">{label}</span>
     </button>
   );
@@ -671,23 +682,24 @@ function TestRunner() {
           >
             <span className={`inline-block w-3.5 h-3.5 border ${isBookmarked ? "bg-white border-white" : "border-white/80"}`} />
             <span className="text-[12px]">Mark</span>
-            <Flag className={`h-4 w-4 ${isBookmarked ? "text-yellow-300" : "text-white/90"}`} fill={isBookmarked ? "currentColor" : "none"} />
+            <img src={markFlagIcon.url} alt="" className={`h-4 w-4 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
+            {!isBookmarked && <Flag className="hidden" />}
           </button>
         </div>
 
         <div className="flex items-center gap-2">
-          <TopBtn icon={ChevronLeft} label="Previous" onClick={() => goToQuestion(idx - 1)} />
-          <TopBtn icon={ChevronRight} label="Next" onClick={() => goToQuestion(idx + 1)} />
+          <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
+          <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
         </div>
 
         <div className="flex items-center gap-1">
           {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
           {mediaItems.length > 0 && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
-          <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
-          <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
+          <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
+          <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
           {(!isRealExam || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          {isRealExam && !isReview && <TopBtn icon={Eraser} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
+          {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
           <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
           {(!isRealExam || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
         </div>
@@ -980,8 +992,8 @@ function TestRunner() {
                 title="Unauthorized Break"
                 className="flex flex-col items-center leading-none text-white"
               >
-                <span className="flex items-center justify-center bg-yellow-400 border border-yellow-600 rounded-[3px] h-6 w-6">
-                  <LockIcon className="h-4 w-4 text-red-600" fill="currentColor" strokeWidth={2.5} />
+                <span className="flex items-center justify-center h-6 w-6">
+                  <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
                 </span>
                 <span className="text-[10px] font-semibold mt-0.5">Lock</span>
               </button>
@@ -998,7 +1010,7 @@ function TestRunner() {
                 }}
                 className="inline-flex items-center gap-2 rounded-sm bg-red-600 hover:bg-red-700 px-3 py-1 text-white text-xs font-semibold shadow"
               >
-                <span className="h-2 w-2 rounded-full bg-white/90 shadow-[0_0_6px_rgba(255,255,255,0.9)]" />
+                <img src={endBlockIcon.url} alt="" className="h-4 w-4 object-contain" />
                 End Block
               </button>
             </div>
@@ -1036,7 +1048,7 @@ function TestRunner() {
                     });
                     if (ok) nav({ to: "/tests" });
                   }} />
-                  <TopBtn icon={ArrowLeft} label="End Block" onClick={async () => {
+                  <TopBtn imgSrc={endBlockIcon.url} label="End Block" onClick={async () => {
                     const ok = await confirm({
                       title: "End this block?",
                       description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
