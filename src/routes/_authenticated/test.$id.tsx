@@ -691,7 +691,7 @@ function TestRunner() {
                 )}
               </span>
             )}
-            <img src={markFlagIcon.url} alt="Flag" className={`h-7 w-7 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
+            <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
             <span className="text-[11px] font-semibold text-white">Mark</span>
           </button>
 
