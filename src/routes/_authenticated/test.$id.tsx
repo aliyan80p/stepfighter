@@ -86,14 +86,14 @@ function isEmbeddedMedia(item: MediaItem, embeddedKeys: Set<string>) {
   return mediaKeys(item.name).some((key) => embeddedKeys.has(key));
 }
 
-function TopBtn({ icon: Icon, imgSrc, imgFlip, label, onClick }: { icon?: any; imgSrc?: string; imgFlip?: boolean; label: string; onClick?: () => void }) {
+function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
       className="flex flex-col items-center justify-center px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px]"
     >
       {imgSrc ? (
-        <img src={imgSrc} alt="" className="h-5 w-5 object-contain" style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+        <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
       ) : Icon ? (
         <Icon className="h-5 w-5" />
       ) : null}
