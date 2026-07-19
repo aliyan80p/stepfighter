@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getDashboardStats } from "@/lib/qbank.functions";
-import { QBANKS } from "@/lib/active-qbank";
+import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
 import { CheckCircle2, XCircle, MinusCircle, HelpCircle, User, ArrowRightLeft, RefreshCw, Repeat, FilePlus2, FileCheck2, PauseCircle, ClipboardList } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/performance/overall")({
   component: OverallPerformance,
@@ -61,14 +62,27 @@ const OPTIONS = buildOptions();
 
 function OverallPerformance() {
   const fn = useServerFn(getDashboardStats);
+  const activeQbankId = useActiveQbankId();
+  const activeSlug = QBANKS.find((q) => q.id === activeQbankId)?.slug ?? "step2";
+  const filteredOptions = useMemo(
+    () => OPTIONS.filter((o) => o.key.startsWith(`${activeSlug}-`)),
+    [activeSlug],
+  );
   const [tab, setTab] = useState<"overall" | "analysis">("overall");
-  const [optKey, setOptKey] = useState<string>("step2-uw");
-  const opt = useMemo(() => OPTIONS.find((o) => o.key === optKey) ?? OPTIONS[0], [optKey]);
+  const [optKey, setOptKey] = useState<string>(`${activeSlug}-uw`);
+  // When user switches course elsewhere, reset selection to that course's UWorld.
+  useEffect(() => {
+    if (!filteredOptions.some((o) => o.key === optKey)) {
+      setOptKey(filteredOptions[0]?.key ?? `${activeSlug}-uw`);
+    }
+  }, [activeSlug, filteredOptions, optKey]);
+  const opt = useMemo(() => filteredOptions.find((o) => o.key === optKey) ?? filteredOptions[0], [filteredOptions, optKey]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["perf-overall", opt.qbankId, opt.sources?.join(",") ?? "all"],
     queryFn: () => fn({ data: { qbankId: opt.qbankId, sources: opt.sources } }),
   });
+
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -95,27 +109,27 @@ function OverallPerformance() {
             onChange={(e) => setOptKey(e.target.value)}
             className="rounded-md border border-border bg-background px-3 py-2 text-sm min-w-[280px]"
           >
-            <optgroup label="USMLE Step 1">
+            {activeSlug === "step2" ? (
+              <>
+                <optgroup label="USMLE Step 2 CK">
+                  {filteredOptions.filter((o) => !o.key.startsWith("step2-cms")).map((o) => (
+                    <option key={o.key} value={o.key}>{o.label}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="CMS Forms (Step 2 CK)">
+                  {filteredOptions.filter((o) => o.key.startsWith("step2-cms")).map((o) => (
+                    <option key={o.key} value={o.key}>{o.label}</option>
+                  ))}
+                </optgroup>
+              </>
+            ) : (
+              <optgroup label={QBANKS.find((q) => q.slug === activeSlug)?.name ?? ""}>
+                {filteredOptions.map((o) => (
+                  <option key={o.key} value={o.key}>{o.label}</option>
+                ))}
+              </optgroup>
+            )}
 
-              {OPTIONS.filter((o) => o.key.startsWith("step1")).map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
-            <optgroup label="USMLE Step 2 CK">
-              {OPTIONS.filter((o) => o.key.startsWith("step2") && !o.key.startsWith("step2-cms")).map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
-            <optgroup label="CMS Forms (Step 2 CK)">
-              {OPTIONS.filter((o) => o.key.startsWith("step2-cms")).map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
-            <optgroup label="USMLE Step 3">
-              {OPTIONS.filter((o) => o.key.startsWith("step3")).map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
           </select>
         </div>
 
