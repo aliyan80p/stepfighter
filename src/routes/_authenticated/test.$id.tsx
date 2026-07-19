@@ -18,6 +18,7 @@ import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
 import flashcardIcon from "@/assets/flashcard-icon.png.asset.json";
+import medicalLibraryIcon from "@/assets/medical-library-icon.svg.asset.json";
 import suspendIcon from "@/assets/suspend-icon.png.asset.json";
 import goBackIcon from "@/assets/icons/go-back.png.asset.json";
 import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
@@ -713,7 +714,7 @@ function TestRunner() {
           {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
           <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
           <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
-          {(!isRealExam || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
+          {isRealExam && !isReview && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           
           <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
           {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
@@ -1052,6 +1053,7 @@ function TestRunner() {
                 </>
               )}
               
+              <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
               <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={notImpl("Flashcards")} />
               <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
               {isReview ? (
