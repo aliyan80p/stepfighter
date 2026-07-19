@@ -94,7 +94,7 @@ function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { ico
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px]"
+      className="flex flex-col items-center justify-center px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px] leading-tight"
     >
       {imgSrc ? (
         <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
