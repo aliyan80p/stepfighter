@@ -30,19 +30,17 @@ const qbId = (slug: string) => QBANKS.find((q) => q.slug === slug)?.id ?? 1;
 
 function buildOptions(): Opt[] {
   const out: Opt[] = [];
-  out.push({ key: "all", label: "All QBanks (aggregate current)", qbankId: qbId("step2") });
 
   // Step 1
   const s1 = qbId("step1");
-  out.push({ key: "step1-all", label: "USMLE Step 1 — All", qbankId: s1 });
   out.push({ key: "step1-uw", label: "UWorld Step 1", qbankId: s1, sources: ["main"] });
   for (const n of [1, 2, 3]) out.push({ key: `step1-sa${n}`, label: `Step 1 Self Assessment ${n}`, qbankId: s1, sources: [`SA${n}`] });
   for (const n of STEP1_NBMES) out.push({ key: `step1-nbme${n}`, label: `Step 1 NBME ${n}`, qbankId: s1, sources: [`NBME${n}`] });
 
   // Step 2
   const s2 = qbId("step2");
-  out.push({ key: "step2-all", label: "USMLE Step 2 CK — All", qbankId: s2 });
   out.push({ key: "step2-uw", label: "UWorld Step 2 CK", qbankId: s2, sources: ["main"] });
+
   for (const n of [1, 2, 3]) out.push({ key: `step2-sa${n}`, label: `Step 2 CK Self Assessment ${n}`, qbankId: s2, sources: [`SA${n}`] });
   for (const n of STEP2_NBMES) out.push({ key: `step2-nbme${n}`, label: `Step 2 CK NBME ${n}`, qbankId: s2, sources: [`NBME${n}`] });
   for (const cms of STEP2_CMS) {
@@ -53,7 +51,6 @@ function buildOptions(): Opt[] {
 
   // Step 3
   const s3 = qbId("step3");
-  out.push({ key: "step3-all", label: "USMLE Step 3 — All", qbankId: s3 });
   out.push({ key: "step3-uw", label: "UWorld Step 3", qbankId: s3, sources: ["main"] });
   for (const n of [1, 2, 3]) out.push({ key: `step3-sa${n}`, label: `Step 3 Self Assessment ${n}`, qbankId: s3, sources: [`SA${n}`] });
 
@@ -65,7 +62,7 @@ const OPTIONS = buildOptions();
 function OverallPerformance() {
   const fn = useServerFn(getDashboardStats);
   const [tab, setTab] = useState<"overall" | "analysis">("overall");
-  const [optKey, setOptKey] = useState<string>("step2-all");
+  const [optKey, setOptKey] = useState<string>("step2-uw");
   const opt = useMemo(() => OPTIONS.find((o) => o.key === optKey) ?? OPTIONS[0], [optKey]);
 
   const { data, isLoading } = useQuery({
@@ -98,12 +95,8 @@ function OverallPerformance() {
             onChange={(e) => setOptKey(e.target.value)}
             className="rounded-md border border-border bg-background px-3 py-2 text-sm min-w-[280px]"
           >
-            <optgroup label="Overview">
-              {OPTIONS.filter((o) => o.key === "all").map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
             <optgroup label="USMLE Step 1">
+
               {OPTIONS.filter((o) => o.key.startsWith("step1")).map((o) => (
                 <option key={o.key} value={o.key}>{o.label}</option>
               ))}
