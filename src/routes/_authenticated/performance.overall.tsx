@@ -109,27 +109,27 @@ function OverallPerformance() {
             onChange={(e) => setOptKey(e.target.value)}
             className="rounded-md border border-border bg-background px-3 py-2 text-sm min-w-[280px]"
           >
-            <optgroup label="USMLE Step 1">
+            {activeSlug === "step2" ? (
+              <>
+                <optgroup label="USMLE Step 2 CK">
+                  {filteredOptions.filter((o) => !o.key.startsWith("step2-cms")).map((o) => (
+                    <option key={o.key} value={o.key}>{o.label}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="CMS Forms (Step 2 CK)">
+                  {filteredOptions.filter((o) => o.key.startsWith("step2-cms")).map((o) => (
+                    <option key={o.key} value={o.key}>{o.label}</option>
+                  ))}
+                </optgroup>
+              </>
+            ) : (
+              <optgroup label={QBANKS.find((q) => q.slug === activeSlug)?.name ?? ""}>
+                {filteredOptions.map((o) => (
+                  <option key={o.key} value={o.key}>{o.label}</option>
+                ))}
+              </optgroup>
+            )}
 
-              {OPTIONS.filter((o) => o.key.startsWith("step1")).map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
-            <optgroup label="USMLE Step 2 CK">
-              {OPTIONS.filter((o) => o.key.startsWith("step2") && !o.key.startsWith("step2-cms")).map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
-            <optgroup label="CMS Forms (Step 2 CK)">
-              {OPTIONS.filter((o) => o.key.startsWith("step2-cms")).map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
-            <optgroup label="USMLE Step 3">
-              {OPTIONS.filter((o) => o.key.startsWith("step3")).map((o) => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </optgroup>
           </select>
         </div>
 
