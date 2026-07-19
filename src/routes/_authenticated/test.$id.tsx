@@ -682,16 +682,16 @@ function TestRunner() {
             title={isBookmarked ? "Remove flag" : "Flag question"}
           >
             {(isRealExam && !isReview) && (
-              <span className={`inline-flex items-center justify-center w-3.5 h-3.5 border border-white/80 ${isBookmarked ? "bg-red-600" : "bg-transparent"}`}>
+              <span className={`inline-flex items-center justify-center w-2.5 h-2.5 border border-white/80 ${isBookmarked ? "bg-red-600" : "bg-transparent"}`}>
                 {isBookmarked && (
-                  <svg viewBox="0 0 16 16" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg viewBox="0 0 16 16" className="w-2 h-2 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 8.5 6.5 12 13 4.5" />
                   </svg>
                 )}
               </span>
             )}
             <img src={markFlagIcon.url} alt="Flag" className={`h-7 w-7 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
-            <span className="text-[13px] font-semibold text-white">Mark</span>
+            <span className="text-[11px] font-semibold text-white">Mark</span>
           </button>
 
 
