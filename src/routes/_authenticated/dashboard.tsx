@@ -46,7 +46,7 @@ function Dashboard() {
           <div className="grid gap-4 md:grid-cols-4">
             <MiniStat icon={BookOpen} tone="blue" label="Total Questions" value={data.totalQuestions.toLocaleString()} />
             <MiniStat icon={CheckCircle2} tone="green" label="Total Correct" value={data.correctAttempts.toLocaleString()} />
-            <MiniStat icon={Percent} tone="amber" label="Accuracy" value={`${data.accuracy}%`} />
+            <MiniStat icon={Percent} tone="amber" label="Correct" value={`${data.correctPct}%`} />
             <MiniStat icon={BarChart3} tone="violet" label="QBank Used" value={`${data.usedPct}%`} />
           </div>
         )}
