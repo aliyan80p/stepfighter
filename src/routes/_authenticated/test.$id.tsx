@@ -10,6 +10,7 @@ import {
   ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon, Lock as LockIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
