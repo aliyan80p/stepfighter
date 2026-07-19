@@ -116,11 +116,9 @@ function OverallPerformance() {
                     <option key={o.key} value={o.key}>{o.label}</option>
                   ))}
                 </optgroup>
-                <optgroup label="CMS Forms (Step 2 CK)">
-                  {filteredOptions.filter((o) => o.key.startsWith("step2-cms")).map((o) => (
-                    <option key={o.key} value={o.key}>{o.label}</option>
-                  ))}
-                </optgroup>
+                {filteredOptions.filter((o) => o.key.startsWith("step2-cms")).map((o) => (
+                  <option key={o.key} value={o.key}>{o.label}</option>
+                ))}
               </>
             ) : (
               <optgroup label={QBANKS.find((q) => q.slug === activeSlug)?.name ?? ""}>
