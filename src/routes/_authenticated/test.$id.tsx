@@ -992,8 +992,8 @@ function TestRunner() {
                 title="Unauthorized Break"
                 className="flex flex-col items-center leading-none text-white"
               >
-                <span className="flex items-center justify-center bg-yellow-400 border border-yellow-600 rounded-[3px] h-6 w-6">
-                  <LockIcon className="h-4 w-4 text-red-600" fill="currentColor" strokeWidth={2.5} />
+                <span className="flex items-center justify-center h-6 w-6">
+                  <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
                 </span>
                 <span className="text-[10px] font-semibold mt-0.5">Lock</span>
               </button>
