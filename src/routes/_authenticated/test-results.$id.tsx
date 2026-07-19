@@ -208,6 +208,29 @@ function TestResults() {
         </div>
       </div>
 
+      {/* Answer Changes on retake */}
+      {(() => {
+        const ac = data.answerChanges;
+        const totalChanges = ac.correctToIncorrect + ac.incorrectToCorrect + ac.incorrectToIncorrect;
+        return (
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between mb-1">
+              <div className="font-semibold">Answer Changes</div>
+              <span className="text-xs text-muted-foreground">Compared to your previous attempts on these questions</span>
+            </div>
+            {totalChanges === 0 ? (
+              <div className="text-sm text-muted-foreground mt-3">No prior attempts on these questions — this is your first pass.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                <ChangeStat icon={ArrowRightLeft} tone="rose" label="Correct → Incorrect" value={ac.correctToIncorrect} hint="Second-guessed a right answer" />
+                <ChangeStat icon={RefreshCw} tone="green" label="Incorrect → Correct" value={ac.incorrectToCorrect} hint="Learned from a past miss" />
+                <ChangeStat icon={Repeat} tone="amber" label="Incorrect → Incorrect" value={ac.incorrectToIncorrect} hint="Missed again — review needed" />
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Table controls */}
       <div className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
