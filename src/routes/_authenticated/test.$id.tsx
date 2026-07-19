@@ -14,6 +14,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 import reverseColorIcon from "@/assets/icons/reverse-color.png.asset.json";
 import lockIconImg from "@/assets/icons/lock.png.asset.json";
 import endBlockIcon from "@/assets/icons/end-block.png.asset.json";
+import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
 import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
@@ -696,7 +697,7 @@ function TestRunner() {
           <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
           <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
           {(!isRealExam || isReview) && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
-          <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+          <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
           {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
           <TopBtn icon={FileText} label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
           {(!isRealExam || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
@@ -1006,9 +1007,9 @@ function TestRunner() {
                   });
                   if (ok) finish();
                 }}
-                className="inline-flex items-center gap-2 rounded-sm bg-red-600 hover:bg-red-700 px-3 py-1 text-white text-xs font-semibold shadow"
+                className="inline-flex items-center gap-2 rounded-sm hover:bg-white/10 px-2 py-1 text-white text-xs font-semibold"
               >
-                <img src={endBlockIcon.url} alt="" className="h-4 w-4 object-contain" />
+                <img src={endBlockIcon.url} alt="" className="h-6 w-6 object-contain" />
                 End Block
               </button>
             </div>
