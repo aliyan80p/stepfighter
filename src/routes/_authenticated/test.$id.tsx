@@ -143,6 +143,7 @@ function TestRunner() {
   const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
   const [breakModal, setBreakModal] = useState<null | "suspend" | "end">(null);
   const [modeInitFor, setModeInitFor] = useState<number | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
 
   const rootRef = useRef<HTMLDivElement>(null);
