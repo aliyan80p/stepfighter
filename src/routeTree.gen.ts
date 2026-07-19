@@ -17,6 +17,7 @@ import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBookmarksRouteImport } from './routes/_authenticated/bookmarks'
 import { Route as ApiPublicWarmMediaRouteImport } from './routes/api/public/warm-media'
+import { Route as ApiPublicNbmeExportRouteImport } from './routes/api/public/nbme-export'
 import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
 import { Route as AuthenticatedTestIdRouteImport } from './routes/_authenticated/test.$id'
 import { Route as AuthenticatedTestResultsIdRouteImport } from './routes/_authenticated/test-results.$id'
@@ -72,6 +73,11 @@ const AuthenticatedBookmarksRoute = AuthenticatedBookmarksRouteImport.update({
 const ApiPublicWarmMediaRoute = ApiPublicWarmMediaRouteImport.update({
   id: '/api/public/warm-media',
   path: '/api/public/warm-media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNbmeExportRoute = ApiPublicNbmeExportRouteImport.update({
+  id: '/api/public/nbme-export',
+  path: '/api/public/nbme-export',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMediaSplatRoute = ApiMediaSplatRouteImport.update({
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/test/$id': typeof AuthenticatedTestIdRouteWithChildren
   '/api/media/$': typeof ApiMediaSplatRoute
+  '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
@@ -224,6 +231,7 @@ export interface FileRoutesByTo {
   '/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/test/$id': typeof AuthenticatedTestIdRouteWithChildren
   '/api/media/$': typeof ApiMediaSplatRoute
+  '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/_authenticated/test-results/$id': typeof AuthenticatedTestResultsIdRoute
   '/_authenticated/test/$id': typeof AuthenticatedTestIdRouteWithChildren
   '/api/media/$': typeof ApiMediaSplatRoute
+  '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/test-results/$id'
     | '/test/$id'
     | '/api/media/$'
+    | '/api/public/nbme-export'
     | '/api/public/warm-media'
     | '/test/$id/results'
   fileRoutesByTo: FileRoutesByTo
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/test-results/$id'
     | '/test/$id'
     | '/api/media/$'
+    | '/api/public/nbme-export'
     | '/api/public/warm-media'
     | '/test/$id/results'
   id:
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/_authenticated/test-results/$id'
     | '/_authenticated/test/$id'
     | '/api/media/$'
+    | '/api/public/nbme-export'
     | '/api/public/warm-media'
     | '/_authenticated/test/$id/results'
   fileRoutesById: FileRoutesById
@@ -342,6 +354,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiMediaSplatRoute: typeof ApiMediaSplatRoute
+  ApiPublicNbmeExportRoute: typeof ApiPublicNbmeExportRoute
   ApiPublicWarmMediaRoute: typeof ApiPublicWarmMediaRoute
 }
 
@@ -401,6 +414,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/warm-media'
       fullPath: '/api/public/warm-media'
       preLoaderRoute: typeof ApiPublicWarmMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/nbme-export': {
+      id: '/api/public/nbme-export'
+      path: '/api/public/nbme-export'
+      fullPath: '/api/public/nbme-export'
+      preLoaderRoute: typeof ApiPublicNbmeExportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/media/$': {
@@ -595,18 +615,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiMediaSplatRoute: ApiMediaSplatRoute,
+  ApiPublicNbmeExportRoute: ApiPublicNbmeExportRoute,
   ApiPublicWarmMediaRoute: ApiPublicWarmMediaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
