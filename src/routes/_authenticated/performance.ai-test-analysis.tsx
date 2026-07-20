@@ -362,32 +362,13 @@ function CrossTable({
               const childRows = Array.from(r.children.entries()).map(([cid, qs]) => ({ id: cid, name: cid === -1 ? "—" : (childNames[cid] ?? `#${cid}`), ...stats(qs) }))
                 .sort((a, b) => a.name.localeCompare(b.name));
               return (
-                <>
-                  <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/40">
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => setExpanded((s) => { const n = new Set(s); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })}
-                        className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium"
-                      >
-                        <ChevronRight className={cn("h-4 w-4 transition-transform", open && "rotate-90")} />
-                        {r.name}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">{r.total}</td>
-                    <td className="px-4 py-3 text-emerald-600 font-semibold">{r.correct}</td>
-                    <td className="px-4 py-3 text-rose-600 font-semibold">{r.incorrect}</td>
-                    <td className="px-4 py-3 text-blue-600 font-semibold">{r.omitted}</td>
-                  </tr>
-                  {open && childRows.map((c) => (
-                    <tr key={`${r.id}-${c.id}`} className="border-b border-border last:border-0 bg-muted/20">
-                      <td className="px-4 py-2.5 pl-12 text-blue-600 dark:text-blue-400">{c.name}</td>
-                      <td className="px-4 py-2.5">{c.total}</td>
-                      <td className="px-4 py-2.5 text-emerald-600">{c.correct}</td>
-                      <td className="px-4 py-2.5 text-rose-600">{c.incorrect}</td>
-                      <td className="px-4 py-2.5 text-blue-600">{c.omitted}</td>
-                    </tr>
-                  ))}
-                </>
+                <FragmentRows
+                  key={r.id}
+                  row={r}
+                  open={open}
+                  childRows={childRows}
+                  onToggle={() => setExpanded((s) => { const n = new Set(s); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })}
+                />
               );
             })}
           </tbody>
@@ -396,6 +377,35 @@ function CrossTable({
     </div>
   );
 }
+
+function FragmentRows({ row: r, open, childRows, onToggle }: any) {
+  return (
+    <>
+      <tr className="border-b border-border last:border-0 hover:bg-muted/40">
+        <td className="px-4 py-3">
+          <button onClick={onToggle} className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium">
+            <ChevronRight className={cn("h-4 w-4 transition-transform", open && "rotate-90")} />
+            {r.name}
+          </button>
+        </td>
+        <td className="px-4 py-3">{r.total}</td>
+        <td className="px-4 py-3 text-emerald-600 font-semibold">{r.correct}</td>
+        <td className="px-4 py-3 text-rose-600 font-semibold">{r.incorrect}</td>
+        <td className="px-4 py-3 text-blue-600 font-semibold">{r.omitted}</td>
+      </tr>
+      {open && childRows.map((c: any) => (
+        <tr key={c.id} className="border-b border-border last:border-0 bg-muted/20">
+          <td className="px-4 py-2.5 pl-12 text-blue-600 dark:text-blue-400">{c.name}</td>
+          <td className="px-4 py-2.5">{c.total}</td>
+          <td className="px-4 py-2.5 text-emerald-600">{c.correct}</td>
+          <td className="px-4 py-2.5 text-rose-600">{c.incorrect}</td>
+          <td className="px-4 py-2.5 text-blue-600">{c.omitted}</td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
 
 // keep import used
 void Loader2; void getAiTestAnalysis; void Button; void useMutation;
