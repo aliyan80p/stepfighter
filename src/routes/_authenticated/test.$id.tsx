@@ -927,45 +927,54 @@ function TestRunner() {
 
             {/* Answered banner — placed just above the explanation */}
             {submitted && showAnswers && (
-              <div className={`mt-4 rounded-md border-l-4 p-3 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"}`}>
+              <div
+                className={`mt-4 rounded-md border-l-4 p-3 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500" : "border-red-500"}`}
+                style={{
+                  background: theme === "dark"
+                    ? (isCorrect ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)")
+                    : (isCorrect ? "#f0fdf4" : "#fef2f2"),
+                  color: themeStyles.text,
+                }}
+              >
                 <div>
-                  <div className={`font-semibold ${isCorrect ? "text-green-700" : "text-red-700"}`}>
+                  <div className={`font-semibold ${isCorrect ? "text-green-500" : "text-red-500"}`}>
                     {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
                   </div>
-                  <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
-                  <div className="font-semibold text-gray-800 mt-1" dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1 })}` }} />
+                  <div className="text-xs mt-1 opacity-70">The correct answer is:</div>
+                  <div className="font-semibold mt-1" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1 })}` }} />
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Clock className="h-4 w-4 text-blue-700" />
+                    <div className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: theme === "dark" ? "rgba(59,130,246,0.2)" : "#dbeafe" }}>
+                      <Clock className="h-4 w-4" style={{ color: theme === "dark" ? "#60a5fa" : "#1d4ed8" }} />
                     </div>
                     <div>
                       <div className="text-sm font-semibold">{timeLabel}</div>
-                      <div className="text-[11px] text-gray-500">Time Taken</div>
+                      <div className="text-[11px] opacity-60">Time Taken</div>
                     </div>
                   </div>
                   {!userSettings.hidePercentages && (
                     <div className="flex items-center gap-2">
-                      <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
-                        <CheckCircle2 className="h-4 w-4 text-green-700" />
+                      <div className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: theme === "dark" ? "rgba(34,197,94,0.2)" : "#dcfce7" }}>
+                        <CheckCircle2 className="h-4 w-4" style={{ color: theme === "dark" ? "#4ade80" : "#15803d" }} />
                       </div>
                       <div>
                         <div className="text-sm font-semibold">{peerPct}%</div>
-                        <div className="text-[11px] text-gray-500">Answered Correctly</div>
+                        <div className="text-[11px] opacity-60">Answered Correctly</div>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
+
             )}
 
             {showAnswers && question.explanation && (
               <div className="mt-4">
-                <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
+              <div className="border-b" style={{ borderColor: themeStyles.border }}>
                   <div
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
-                    style={{ color: "#1e3a8a", boxShadow: "inset 0 -3px 0 #1e3a8a" }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
+                    style={{ background: themeStyles.cardBg, color: theme === "dark" ? "#60a5fa" : "#1e3a8a", boxShadow: `inset 0 -3px 0 ${theme === "dark" ? "#60a5fa" : "#1e3a8a"}` }}
                   >
                     <FileText className="h-4 w-4" /> Explanation
                   </div>
