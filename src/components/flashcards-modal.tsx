@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Trash2, Maximize2 } from "lucide-react";
+import { Plus, Search, X, Trash2, Maximize2, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { listFlashcards, createFlashcard, deleteFlashcard } from "@/lib/flashcards.functions";
 
@@ -22,8 +22,12 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const [creating, setCreating] = useState(false);
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
+  const [frontImage, setFrontImage] = useState<string | null>(null);
+  const [backImage, setBackImage] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
+  const frontFileRef = useRef<HTMLInputElement>(null);
+  const backFileRef = useRef<HTMLInputElement>(null);
 
   const { data: cards = [], isLoading } = useQuery({
     queryKey: ["flashcards", qbankId ?? null],
@@ -38,13 +42,21 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const filtered = (arr: any[]) => query.trim() ? arr.filter(c => (c.front + " " + c.back).toLowerCase().includes(query.toLowerCase())) : arr;
 
   const submit = async () => {
-    if (!front.trim()) { toast.error("Front cannot be empty"); return; }
+    if (!front.trim() && !frontImage) { toast.error("Add front text or an image"); return; }
     try {
-      await createFn({ data: { qbankId, questionId, front: front.trim(), back: back.trim() } });
-      setFront(""); setBack(""); setCreating(false);
+      await createFn({ data: { qbankId, questionId, front: front.trim(), back: back.trim(), frontImage, backImage } });
+      setFront(""); setBack(""); setFrontImage(null); setBackImage(null); setCreating(false);
       qc.invalidateQueries({ queryKey: ["flashcards"] });
       toast.success("Flashcard saved");
     } catch (e: any) { toast.error(e?.message ?? "Failed to save"); }
+  };
+
+  const pickImage = async (file: File | undefined, setter: (v: string | null) => void) => {
+    if (!file) return;
+    if (file.size > 2_000_000) { toast.error("Image must be under 2MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => setter(String(reader.result));
+    reader.readAsDataURL(file);
   };
 
   const remove = async (id: string) => {
