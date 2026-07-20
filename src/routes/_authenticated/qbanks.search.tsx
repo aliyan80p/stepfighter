@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import {
   Search, Copy, Info, Loader2, Eye, ArrowUpDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, FileText,
@@ -10,12 +12,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
-import { useActiveQbankId, setActiveQbankId, QBANKS } from "@/lib/active-qbank";
+import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 
 
 export const Route = createFileRoute("/_authenticated/qbanks/search")({
+  validateSearch: zodValidator(z.object({
+    q: fallback(z.string(), "").default(""),
+    open: fallback(z.string(), "").default(""),
+  })),
   component: SearchPage,
 });
 
