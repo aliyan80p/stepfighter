@@ -355,6 +355,19 @@ function TestRunner() {
   };
 
   const finish = async () => {
+    if (userSettings.confirmOmission && !isReview && data) {
+      const answeredCount = data.questions.reduce((n, q) => n + (data.attemptsByQ[q.id] ? 1 : 0), 0);
+      const omitted = total - answeredCount;
+      if (omitted > 0) {
+        const ok = await confirm({
+          title: `${omitted} question${omitted === 1 ? "" : "s"} omitted`,
+          description: `You have not answered ${omitted} of ${total} question${total === 1 ? "" : "s"}. End the block anyway?`,
+          confirmLabel: "End Block",
+          tone: "danger",
+        });
+        if (!ok) return;
+      }
+    }
     await finFn({ data: { testId } });
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
