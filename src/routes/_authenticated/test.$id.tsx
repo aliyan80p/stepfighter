@@ -33,8 +33,8 @@ export const Route = createFileRoute("/_authenticated/test/$id")({
 // USMLE-Fighter palette
 const NAV_BG = "#1e3a8a";       // deep blue top/bottom bars
 const NAV_ACCENT = "#2a4ba0";
-const PAGE_BG = "#f3f4f6";
-const SIDE_BG = "#eef2f9";
+const PAGE_BG = "#ffffff";
+const SIDE_BG = "#f7f9fc";
 const TEXT = "#1f2937";
 
 type MediaKind = "image" | "video" | "audio";
