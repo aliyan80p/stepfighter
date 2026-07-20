@@ -20,6 +20,8 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const listFn = useServerFn(listFlashcards);
   const createFn = useServerFn(createFlashcard);
   const delFn = useServerFn(deleteFlashcard);
+  const decksFn = useServerFn(listDecks);
+  const createDeckFn = useServerFn(createDeck);
 
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
@@ -29,6 +31,9 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const [backImage, setBackImage] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
+  const [deckId, setDeckId] = useState<string>("");
+  const [newDeckName, setNewDeckName] = useState("");
+  const [showNewDeck, setShowNewDeck] = useState(false);
   const frontFileRef = useRef<HTMLInputElement>(null);
   const backFileRef = useRef<HTMLInputElement>(null);
 
@@ -37,6 +42,20 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
     queryFn: () => listFn({ data: { qbankId } }),
     enabled: open,
   });
+
+  const { data: decksData } = useQuery({
+    queryKey: ["decks"],
+    queryFn: () => decksFn(),
+    enabled: open,
+  });
+  const decks = decksData?.decks ?? [];
+
+  useEffect(() => {
+    if (!open) return;
+    const saved = typeof window !== "undefined" ? localStorage.getItem(DEFAULT_DECK_KEY) : null;
+    if (saved && decks.some((d: any) => d.id === saved)) setDeckId(saved);
+    else if (decks[0]) setDeckId(decks[0].id);
+  }, [open, decks.length]);
 
   if (!open) return null;
 
@@ -47,8 +66,18 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const submit = async () => {
     if (!front.trim() && !frontImage) { toast.error("Add front text or an image"); return; }
     try {
-      await createFn({ data: { qbankId, questionId, front: front.trim(), back: back.trim(), frontImage, backImage } });
+      let targetDeckId: string | null = deckId || null;
+      if (showNewDeck && newDeckName.trim()) {
+        const created: any = await createDeckFn({ data: { name: newDeckName.trim(), color: "#3b82f6" } });
+        targetDeckId = created.id;
+        qc.invalidateQueries({ queryKey: ["decks"] });
+      }
+      if (targetDeckId && typeof window !== "undefined") {
+        localStorage.setItem(DEFAULT_DECK_KEY, targetDeckId);
+      }
+      await createFn({ data: { qbankId, questionId, deckId: targetDeckId, front: front.trim(), back: back.trim(), frontImage, backImage } });
       setFront(""); setBack(""); setFrontImage(null); setBackImage(null); setCreating(false);
+      setShowNewDeck(false); setNewDeckName("");
       qc.invalidateQueries({ queryKey: ["flashcards"] });
       toast.success("Flashcard saved");
     } catch (e: any) { toast.error(e?.message ?? "Failed to save"); }
