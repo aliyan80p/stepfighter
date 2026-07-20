@@ -971,10 +971,10 @@ function TestRunner() {
 
             {showAnswers && question.explanation && (
               <div className="mt-4">
-                <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
+              <div className="border-b" style={{ borderColor: themeStyles.border }}>
                   <div
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
-                    style={{ color: "#1e3a8a", boxShadow: "inset 0 -3px 0 #1e3a8a" }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
+                    style={{ background: themeStyles.cardBg, color: theme === "dark" ? "#60a5fa" : "#1e3a8a", boxShadow: `inset 0 -3px 0 ${theme === "dark" ? "#60a5fa" : "#1e3a8a"}` }}
                   >
                     <FileText className="h-4 w-4" /> Explanation
                   </div>
