@@ -667,3 +667,20 @@ export const resetAssessment = createServerFn({ method: "POST" })
     }
     return { ok: true, deleted: testIds.length };
   });
+
+export const resetQbank = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { qbankId } = data;
+    const [attempts, tests, bookmarks] = await Promise.all([
+      supabase.from("attempts").delete().eq("user_id", userId).eq("qbank_id", qbankId),
+      supabase.from("tests").delete().eq("user_id", userId).eq("qbank_id", qbankId),
+      supabase.from("bookmarks").delete().eq("user_id", userId).eq("qbank_id", qbankId),
+    ]);
+    const err = attempts.error || tests.error || bookmarks.error;
+    if (err) throw err;
+    return { ok: true };
+  });
+
