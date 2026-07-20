@@ -78,7 +78,12 @@ export const updateFlashcard = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { id, ...rest } = data;
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      deck_id?: string | null; front?: string; back?: string;
+      front_html?: string | null; back_html?: string | null;
+      front_image?: string | null; back_image?: string | null;
+      tags?: string[];
+    } = {};
     if (rest.deckId !== undefined) patch.deck_id = rest.deckId;
     if (rest.front !== undefined) patch.front = rest.front;
     if (rest.back !== undefined) patch.back = rest.back;
