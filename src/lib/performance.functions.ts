@@ -770,3 +770,145 @@ export const generatePerformancePrediction = createServerFn({ method: "POST" })
     }
   });
 
+
+// ============ Self-Assessment Report ============
+export const getAssessmentReport = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ qbankId: qb(), sources: z.array(z.string()).min(1) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Resolve questions for this assessment
+    const { data: qs } = await supabase
+      .from("questions")
+      .select("id,subject_id,system_id")
+      .eq("qbank_id", data.qbankId)
+      .in("source", data.sources)
+      .limit(50000);
+    const qids = (qs ?? []).map((r: any) => r.id);
+    const totalQuestions = qids.length;
+
+    if (!totalQuestions) {
+      return {
+        totalQuestions: 0, totalCorrect: 0, totalIncorrect: 0, totalOmitted: 0,
+        scorePct: 0, passingPct: 65,
+        percentile: 0, peerCount: 0,
+        chance: "borderline" as const,
+        answerChanges: { correctToCorrect: 0, correctToIncorrect: 0, incorrectToCorrect: 0, incorrectToIncorrect: 0 },
+        subjectBreakdown: [] as any[], systemBreakdown: [] as any[],
+      };
+    }
+
+    // User's attempts on these questions (chronological)
+    const { data: attempts } = await supabase
+      .from("attempts")
+      .select("question_id,is_correct,selected_answer,created_at")
+      .eq("user_id", userId).eq("qbank_id", data.qbankId)
+      .in("question_id", qids)
+      .order("created_at", { ascending: true })
+      .limit(100000);
+    const rows = attempts ?? [];
+
+    // Latest attempt per question -> correct/incorrect/omitted
+    const latest = new Map<number, any>();
+    for (const a of rows) latest.set(a.question_id, a);
+    let correct = 0, incorrect = 0;
+    for (const a of latest.values()) {
+      if (a.selected_answer == null) continue;
+      if (a.is_correct) correct++; else incorrect++;
+    }
+    const attemptedQuestionCount = Array.from(latest.values()).filter((a) => a.selected_answer != null).length;
+    const omitted = totalQuestions - attemptedQuestionCount;
+    const scorePct = totalQuestions ? Math.round((correct / totalQuestions) * 100) : 0;
+
+    // Answer changes across chronological attempts per question
+    const byQ = new Map<number, any[]>();
+    for (const a of rows) {
+      if (!byQ.has(a.question_id)) byQ.set(a.question_id, []);
+      byQ.get(a.question_id)!.push(a);
+    }
+    let cc = 0, ci = 0, ic = 0, ii = 0;
+    for (const arr of byQ.values()) {
+      const answered = arr.filter((x) => x.selected_answer != null);
+      for (let i = 1; i < answered.length; i++) {
+        const prev = answered[i - 1], cur = answered[i];
+        if (prev.is_correct && cur.is_correct) cc++;
+        else if (prev.is_correct && !cur.is_correct) ci++;
+        else if (!prev.is_correct && cur.is_correct) ic++;
+        else ii++;
+      }
+    }
+
+    // Peer scores on same source (all users)
+    const { data: peerAtt } = await supabase
+      .from("attempts")
+      .select("user_id,question_id,is_correct,selected_answer,created_at")
+      .eq("qbank_id", data.qbankId)
+      .in("question_id", qids)
+      .order("created_at", { ascending: true })
+      .limit(500000);
+    const perUserLatest = new Map<string, Map<number, any>>();
+    for (const a of (peerAtt ?? []) as any[]) {
+      let m = perUserLatest.get(a.user_id);
+      if (!m) { m = new Map(); perUserLatest.set(a.user_id, m); }
+      m.set(a.question_id, a);
+    }
+    const peerScores: number[] = [];
+    for (const m of perUserLatest.values()) {
+      let c = 0;
+      for (const a of m.values()) if (a.selected_answer != null && a.is_correct) c++;
+      peerScores.push(c / totalQuestions);
+    }
+    const myScore = correct / totalQuestions;
+    const below = peerScores.filter((s) => s < myScore).length;
+    const percentile = peerScores.length ? Math.round((below / peerScores.length) * 10000) / 100 : 0;
+
+    // Chance of passing
+    let chance: "low" | "borderline" | "high" | "very-high" = "borderline";
+    if (scorePct >= 85) chance = "very-high";
+    else if (scorePct >= 65) chance = "high";
+    else if (scorePct >= 50) chance = "borderline";
+    else chance = "low";
+
+    // Breakdowns
+    const [{ data: subs }, { data: sysm }] = await Promise.all([
+      supabase.from("subjects").select("id,name").eq("qbank_id", data.qbankId),
+      supabase.from("systems").select("id,name").eq("qbank_id", data.qbankId),
+    ]);
+    const subjName = new Map<number, string>((subs ?? []).map((s: any) => [s.id, s.name]));
+    const sysName = new Map<number, string>((sysm ?? []).map((s: any) => [s.id, s.name]));
+    const qMeta = new Map<number, any>((qs ?? []).map((q: any) => [q.id, q]));
+    const subjAgg = new Map<number, { c: number; t: number }>();
+    const sysAgg = new Map<number, { c: number; t: number }>();
+    for (const a of latest.values()) {
+      if (a.selected_answer == null) continue;
+      const q = qMeta.get(a.question_id); if (!q) continue;
+      if (q.subject_id != null) {
+        const x = subjAgg.get(q.subject_id) ?? { c: 0, t: 0 };
+        x.t++; if (a.is_correct) x.c++;
+        subjAgg.set(q.subject_id, x);
+      }
+      if (q.system_id != null) {
+        const x = sysAgg.get(q.system_id) ?? { c: 0, t: 0 };
+        x.t++; if (a.is_correct) x.c++;
+        sysAgg.set(q.system_id, x);
+      }
+    }
+    const subjectBreakdown = Array.from(subjAgg.entries()).map(([id, v]) => ({
+      name: subjName.get(id) ?? `Subject ${id}`, correct: v.c, total: v.t, pct: Math.round((v.c / v.t) * 100),
+    })).sort((a, b) => a.pct - b.pct);
+    const systemBreakdown = Array.from(sysAgg.entries()).map(([id, v]) => ({
+      name: sysName.get(id) ?? `System ${id}`, correct: v.c, total: v.t, pct: Math.round((v.c / v.t) * 100),
+    })).sort((a, b) => a.pct - b.pct);
+
+    return {
+      totalQuestions, totalCorrect: correct, totalIncorrect: incorrect, totalOmitted: omitted,
+      scorePct, passingPct: 65,
+      percentile, peerCount: peerScores.length,
+      chance,
+      answerChanges: { correctToCorrect: cc, correctToIncorrect: ci, incorrectToCorrect: ic, incorrectToIncorrect: ii },
+      subjectBreakdown, systemBreakdown,
+    };
+  });
