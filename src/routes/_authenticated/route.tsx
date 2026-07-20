@@ -131,18 +131,22 @@ function AuthedLayout() {
   };
   const [open, setOpen] = useState<Record<string, boolean>>(initialOpen);
 
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    const saved = localStorage.getItem("sidebar-open");
-    if (saved !== null) return saved === "1";
-    return window.matchMedia("(min-width: 768px)").matches;
-  });
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("sidebar-open", sidebarOpen ? "1" : "0");
+    const saved = localStorage.getItem("sidebar-open");
+    if (saved !== null) {
+      setSidebarOpen(saved === "1");
+    } else {
+      setSidebarOpen(window.matchMedia("(min-width: 768px)").matches);
     }
-  }, [sidebarOpen]);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) localStorage.setItem("sidebar-open", sidebarOpen ? "1" : "0");
+  }, [sidebarOpen, hydrated]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
