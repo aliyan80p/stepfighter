@@ -14,6 +14,16 @@ export function StudySession({ open, onClose, deckId, deckName }: Props) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const startRef = useRef<number>(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+  const [showTimer, setShowTimer] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setShowTimer(typeof window !== "undefined" && localStorage.getItem("flashcards.showAnswerTimer") === "1");
+    const id = setInterval(() => setElapsed(Date.now() - startRef.current), 200);
+    return () => clearInterval(id);
+  }, [open]);
+
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["study-queue", deckId],
