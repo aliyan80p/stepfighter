@@ -16,7 +16,7 @@ import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
-import notesIcon from "@/assets/icons/notes-icon.png.asset.json";
+import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
 import flashcardIcon from "@/assets/flashcard-icon.png.asset.json";
 import goBackIcon from "@/assets/icons/go-back.png.asset.json";
