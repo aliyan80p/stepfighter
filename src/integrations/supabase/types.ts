@@ -193,6 +193,27 @@ export type Database = {
           },
         ]
       }
+      qbank_resets: {
+        Row: {
+          id: string
+          qbank_id: number
+          reset_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          qbank_id: number
+          reset_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          qbank_id?: number
+          reset_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       qbanks: {
         Row: {
           created_at: string
