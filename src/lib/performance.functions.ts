@@ -441,14 +441,18 @@ export const getAiTestAnalysis = createServerFn({ method: "POST" })
       name, ...v, pct: v.total ? Math.round((v.correct / v.total) * 100) / 1 : 0,
     }));
 
-    const totalAns = correct + incorrect + omitted;
+    const totalAttempted = correct + incorrect + omitted;
+    const totalQ = qIds.length;
     const summary = {
       name: test.name,
       mode: test.mode,
-      total: qIds.length,
-      answered: totalAns,
+      total: totalQ,
+      answered: correct + incorrect,
       correct, incorrect, omitted,
-      accuracy: totalAns ? Math.round((correct / totalAns) * 100) : 0,
+      // UWorld convention: omitted counts as wrong. Score = correct / total questions.
+      score: totalQ ? Math.round((correct / totalQ) * 100) : 0,
+      // Secondary metric: accuracy on answered only (excludes omitted).
+      accuracyOnAnswered: (correct + incorrect) ? Math.round((correct / (correct + incorrect)) * 100) : 0,
       avgTimeSec: timeSamples ? Math.round(totalTime / timeSamples) : 0,
       subjects: subjRows.sort((a, b) => a.pct - b.pct),
       systems: sysRows.sort((a, b) => a.pct - b.pct),
@@ -460,7 +464,8 @@ export const getAiTestAnalysis = createServerFn({ method: "POST" })
     const prompt = `You are a USMLE tutor. Analyze this test result and produce a concise, personalized study plan in Markdown.
 
 Test: ${summary.name ?? "Untitled"}  (mode: ${summary.mode})
-Score: ${summary.correct}/${summary.total} answered = ${summary.accuracy}% correct
+Score: ${summary.correct}/${summary.total} = ${summary.score}% (omitted counted as wrong, UWorld-style)
+Accuracy on answered only: ${summary.accuracyOnAnswered}%
 Incorrect: ${summary.incorrect} | Omitted: ${summary.omitted}
 Avg time per question: ${summary.avgTimeSec}s
 
