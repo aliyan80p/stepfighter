@@ -43,7 +43,7 @@ export const DEFAULT_HIGHLIGHTS: Record<string, { label: string; color: string }
 
 export const TOOLBAR_ITEMS: { key: string; label: string }[] = [
   { key: "notes", label: "Add to Notes" },
-  { key: "notebook", label: "Add to Notebook" },
+  
   { key: "library", label: "Medical Library" },
   { key: "newFlashcard", label: "New Flashcard" },
   { key: "existingFlashcard", label: "Existing Flashcard" },
