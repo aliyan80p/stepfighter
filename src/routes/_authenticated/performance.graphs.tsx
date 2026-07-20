@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { getPerformanceGraphs } from "@/lib/performance.functions";
+import { getPerformanceGraphs, getPerformanceCharts } from "@/lib/performance.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
-import { TrendingUp, BarChart3, Layers, Activity } from "lucide-react";
+import { TrendingUp, BarChart3, Layers, Activity, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/performance/graphs")({
   component: GraphsPage,
@@ -59,6 +59,15 @@ function GraphsPage() {
     queryFn: () => fn({ data: { qbankId: opt.qbankId, sources: opt.sources, days } }),
   });
 
+  const chartsFn = useServerFn(getPerformanceCharts);
+  const { data: chartsData } = useQuery({
+    queryKey: ["perf-charts", opt.qbankId, opt.sources?.join(",") ?? "all"],
+    queryFn: () => chartsFn({ data: { qbankId: opt.qbankId, sources: opt.sources } }),
+  });
+  const tests = chartsData?.tests ?? [];
+  const byTest = tests.map((t: any) => ({ x: String(t.id), y: t.score, label: t.name }));
+  const byDate = tests.map((t: any) => ({ x: t.date, y: t.score, label: `${t.name} · ${t.date}` }));
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
@@ -112,6 +121,17 @@ function GraphsPage() {
                 <BreakdownList rows={data.systemBreakdown} />
               </Card>
             </div>
+
+            {tests.length > 0 && (
+              <>
+                <Card title="Performance by Test" subtitle="Your score progression across different tests">
+                  <ScatterChart data={byTest} />
+                </Card>
+                <Card title="Performance by Date" subtitle="Your score trend over time">
+                  <ScatterChart data={byDate} />
+                </Card>
+              </>
+            )}
           </>
         )}
       </div>
@@ -199,6 +219,54 @@ function BarChart({ data, color }: { data: { x: string; y: number }[]; color: st
           return <rect key={i} x={pad + i * (bw + 2)} y={h - pad - bh} width={bw} height={bh} fill={color} opacity={0.85} rx={1} />;
         })}
         <line x1={pad} x2={w - pad} y1={h - pad} y2={h - pad} stroke="hsl(0 0% 80%)" />
+      </svg>
+    </div>
+  );
+}
+
+function ScatterChart({ data }: { data: { x: string; y: number; label: string }[] }) {
+  const W = 900, H = 320, padL = 36, padR = 12, padT = 24, padB = 60;
+  const n = data.length;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const stepX = n > 1 ? innerW / (n - 1) : 0;
+  const xAt = (i: number) => padL + i * stepX;
+  const yAt = (v: number) => padT + innerH - (Math.max(0, Math.min(100, v)) / 100) * innerH;
+  const [hover, setHover] = useState<number | null>(null);
+  const labelEvery = Math.max(1, Math.ceil(n / 30));
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: Math.max(600, n * 12) }}>
+        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((v) => (
+          <g key={v}>
+            <line x1={padL} x2={W - padR} y1={yAt(v)} y2={yAt(v)} stroke="hsl(0 0% 88%)" strokeDasharray="2 3" />
+            <text x={padL - 6} y={yAt(v) + 3} fontSize={10} textAnchor="end" fill="hsl(var(--muted-foreground))">{v}</text>
+          </g>
+        ))}
+        {n > 1 && (
+          <polyline fill="none" stroke="hsl(217 91% 75%)" strokeWidth={1} points={data.map((d, i) => `${xAt(i)},${yAt(d.y)}`).join(" ")} />
+        )}
+        {data.map((d, i) => (
+          <circle key={i} cx={xAt(i)} cy={yAt(d.y)} r={hover === i ? 5 : 3.2} fill="hsl(217 91% 55%)"
+            onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} style={{ cursor: "pointer" }} />
+        ))}
+        {data.map((d, i) =>
+          i % labelEvery === 0 ? (
+            <g key={`xl-${i}`} transform={`translate(${xAt(i)}, ${H - padB + 10})`}>
+              <text fontSize={9} fill="hsl(var(--muted-foreground))" transform="rotate(-55)" textAnchor="end">{d.x}</text>
+            </g>
+          ) : null,
+        )}
+        {hover != null && (
+          <g>
+            <rect x={Math.min(W - 160, Math.max(0, xAt(hover) - 70))} y={Math.max(4, yAt(data[hover].y) - 42)}
+              width={160} height={34} rx={6} fill="hsl(var(--foreground))" opacity={0.92} />
+            <text x={Math.min(W - 160, Math.max(0, xAt(hover) - 70)) + 8} y={Math.max(4, yAt(data[hover].y) - 42) + 14}
+              fontSize={11} fill="hsl(var(--background))" fontWeight={600}>{data[hover].label.slice(0, 26)}</text>
+            <text x={Math.min(W - 160, Math.max(0, xAt(hover) - 70)) + 8} y={Math.max(4, yAt(data[hover].y) - 42) + 28}
+              fontSize={11} fill="hsl(var(--background))">Score: {data[hover].y}%</text>
+          </g>
+        )}
       </svg>
     </div>
   );
