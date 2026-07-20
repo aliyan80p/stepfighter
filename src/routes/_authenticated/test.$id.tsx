@@ -25,6 +25,8 @@ import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
 import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 import textZoomIcon from "@/assets/icons/text-zoom.png.asset.json";
 import { DEFAULT_SETTINGS, useHydratedSettings, setUserSettings, TOOLBAR_ITEMS } from "@/lib/user-settings";
+import { FlashcardsModal } from "@/components/flashcards-modal";
+import { FeedbackModal } from "@/components/feedback-modal";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
@@ -154,6 +156,8 @@ function TestRunner() {
   const [blockElapsed, setBlockElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [timedMode, setTimedMode] = useState(true);
   const [tutorMode, setTutorMode] = useState(true);
@@ -1120,8 +1124,8 @@ function TestRunner() {
               )}
               
               <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
-              <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={notImpl("Flashcards")} />
-              <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
+              <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+              <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
                 <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
@@ -1189,6 +1193,18 @@ function TestRunner() {
 
 
       {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+      <FlashcardsModal
+        open={showFlashcards}
+        onClose={() => setShowFlashcards(false)}
+        qbankId={data?.qbankId}
+        questionId={question?.id}
+      />
+      <FeedbackModal
+        open={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        qbankId={data?.qbankId}
+        questionId={question?.id}
+      />
       {showSettings && (
         <SettingsPanel
           onClose={() => setShowSettings(false)}

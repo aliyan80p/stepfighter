@@ -143,6 +143,69 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          created_at: string
+          id: string
+          is_technical: boolean
+          message: string
+          qbank_id: number | null
+          question_id: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_technical?: boolean
+          message: string
+          qbank_id?: number | null
+          question_id?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_technical?: boolean
+          message?: string
+          qbank_id?: number | null
+          question_id?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcards: {
+        Row: {
+          back: string
+          created_at: string
+          front: string
+          id: string
+          qbank_id: number | null
+          question_id: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          back?: string
+          created_at?: string
+          front: string
+          id?: string
+          qbank_id?: number | null
+          question_id?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          back?: string
+          created_at?: string
+          front?: string
+          id?: string
+          qbank_id?: number | null
+          question_id?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
