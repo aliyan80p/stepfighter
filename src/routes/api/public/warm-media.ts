@@ -77,6 +77,36 @@ async function uploadPlain(path: string, data: Buffer, ct: string, supaUrl: stri
   return res.ok;
 }
 
+async function signPlain(path: string, supaUrl: string, srk: string): Promise<{ url: string; expiresAt: string } | null> {
+  const expiresIn = 60 * 60 * 24 * 365;
+  const res = await fetch(
+    `${supaUrl}/storage/v1/object/sign/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn }),
+    },
+  );
+  if (!res.ok) return null;
+  const j = (await res.json()) as { signedURL?: string; signedUrl?: string };
+  const p = j.signedURL || j.signedUrl;
+  if (!p) return null;
+  return { url: `${supaUrl}/storage/v1${p}`, expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString() };
+}
+
+async function persistPlainUrl(qbankId: number, name: string, plainUrl: string, expiresAt: string, supaUrl: string, srk: string) {
+  try {
+    await fetch(`${supaUrl}/rest/v1/qbank_media?qbank_id=eq.${qbankId}&name=eq.${encodeURIComponent(name)}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${srk}`, apikey: srk,
+        "Content-Type": "application/json", Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ plain_url: plainUrl, plain_url_expires_at: expiresAt }),
+    });
+  } catch {}
+}
+
 async function processOne(
   row: { qbank_id: number; name: string; drive_file_id: string | null },
   supaUrl: string, srk: string,
@@ -88,11 +118,16 @@ async function processOne(
     const ct = contentTypeFromBytes(data, contentTypeFor(row.name));
     const path = `${SLUGS[row.qbank_id] ?? ""}${row.name}`;
     const ok = await uploadPlain(path, data, ct, supaUrl, srk);
+    if (ok) {
+      const signed = await signPlain(path, supaUrl, srk);
+      if (signed) await persistPlainUrl(row.qbank_id, row.name, signed.url, signed.expiresAt, supaUrl, srk);
+    }
     return { name: row.name, ok, err: ok ? undefined : "upload-failed" };
   } catch (e: any) {
     return { name: row.name, ok: false, err: String(e?.message ?? e).slice(0, 200) };
   }
 }
+
 
 export const Route = createFileRoute("/api/public/warm-media")({
   server: {
