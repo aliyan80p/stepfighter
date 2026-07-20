@@ -1375,9 +1375,20 @@ export function SettingsPanel(props: any) {
   const {
     onClose, fontSize, setFontSize, fontWeight, setFontWeight, theme, setTheme,
     transparentExpl, setTransparentExpl, largeImages, setLargeImages,
-    highlightOnly, setHighlightOnly, multicolor, setMulticolor,
+    multicolor, setMulticolor,
     activeHighlight, setActiveHighlight, enabledHighlights, setEnabledHighlights,
+    userSettings,
   } = props;
+  const us = userSettings ?? DEFAULT_SETTINGS;
+  const customColors: string[] = us.customHighlights ?? [];
+  const allHL = [...HIGHLIGHTS, ...customColors.map((c: string, i: number) => ({ color: c, label: `Custom ${i + 1}` }))];
+
+  const hourStr = (h: number) => {
+    const hr = ((h + 11) % 12) + 1;
+    const ap = h < 12 ? "AM" : "PM";
+    return `${String(hr).padStart(2, "0")}:00 ${ap}`;
+  };
+
   return (
     <div className="fixed top-16 right-4 w-80 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 text-gray-800 max-h-[80vh] overflow-auto">
       <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gray-100 sticky top-0">
@@ -1420,14 +1431,14 @@ export function SettingsPanel(props: any) {
 
       <div className="p-4 border-b">
         <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Customize Highlight</div>
-        {HIGHLIGHTS.map(h => (
+        {allHL.map(h => (
           <div key={h.color} className="flex items-center justify-between py-1.5">
             <button
               onClick={() => setActiveHighlight(h.color)}
               className={`flex items-center gap-2 ${activeHighlight === h.color ? "font-semibold" : ""}`}
             >
               <span className="h-4 w-4 rounded-full border" style={{ background: h.color }} />
-              <span className="text-sm">{h.label} Highlight</span>
+              <span className="text-sm">{h.label}</span>
               {activeHighlight === h.color && <span className="text-[10px] text-blue-600">(active)</span>}
             </button>
             <Toggle on={!!enabledHighlights[h.color]} onChange={v => setEnabledHighlights({ ...enabledHighlights, [h.color]: v })} />
@@ -1435,16 +1446,76 @@ export function SettingsPanel(props: any) {
         ))}
       </div>
 
-      <div className="p-4">
+      <div className="p-4 border-b">
+        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Quiz Toolbar Icons</div>
+        {TOOLBAR_ITEMS.map(item => (
+          <Row key={item.key} label={item.label}>
+            <Toggle
+              on={us.toolbar[item.key] !== false}
+              onChange={(v) => setUserSettings((cur) => ({ ...cur, toolbar: { ...cur.toolbar, [item.key]: v } }))}
+            />
+          </Row>
+        ))}
+      </div>
+
+      <div className="p-4 border-b">
         <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Content</div>
-        <Row label="Transparent Background in Explanations">
-          <Toggle on={transparentExpl} onChange={setTransparentExpl} />
+        <Row label="Hide Percentages">
+          <Toggle on={us.hidePercentages} onChange={(v) => setUserSettings({ hidePercentages: v })} />
         </Row>
-        <Row label="Large Image Size"><Toggle on={largeImages} onChange={setLargeImages} /></Row>
+        <Row label="Split Screen Explanations">
+          <Toggle on={us.splitExplanations} onChange={(v) => setUserSettings({ splitExplanations: v })} />
+        </Row>
+        <Row label="Transparent Background in Explanations">
+          <Toggle on={transparentExpl} onChange={(v) => { setTransparentExpl(v); setUserSettings({ transparentExplanations: v }); }} />
+        </Row>
+        <Row label="Large Image Size">
+          <Toggle on={largeImages} onChange={(v) => { setLargeImages(v); setUserSettings({ largeImages: v }); }} />
+        </Row>
+      </div>
+
+      <div className="p-4 border-b">
+        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">More Features</div>
+        <Row label="Confirm Answer Omission">
+          <Toggle on={us.confirmOmission} onChange={(v) => setUserSettings({ confirmOmission: v })} />
+        </Row>
+        <Row label="Show Timer">
+          <Toggle on={us.showTimer} onChange={(v) => setUserSettings({ showTimer: v })} />
+        </Row>
+        <Row label="Stop Timer on Blur">
+          <Toggle on={us.stopTimerOnBlur} onChange={(v) => setUserSettings({ stopTimerOnBlur: v })} />
+        </Row>
+      </div>
+
+      <div className="p-4">
+        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Night Mode</div>
+        <div className="text-[11px] text-gray-500 mb-2">If on, auto changes to dark mode based on scheduled time.</div>
+        <Row label="Automatic">
+          <Toggle on={us.autoNightMode} onChange={(v) => setUserSettings({ autoNightMode: v })} />
+        </Row>
+        <Row label="Start">
+          <select
+            value={us.nightStart}
+            onChange={(e) => setUserSettings({ nightStart: Number(e.target.value) })}
+            className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+          >
+            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{hourStr(i)}</option>)}
+          </select>
+        </Row>
+        <Row label="End">
+          <select
+            value={us.nightEnd}
+            onChange={(e) => setUserSettings({ nightEnd: Number(e.target.value) })}
+            className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+          >
+            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{hourStr(i)}</option>)}
+          </select>
+        </Row>
       </div>
     </div>
   );
 }
+
 
 /* ---------------- Scientific Calculator ---------------- */
 
