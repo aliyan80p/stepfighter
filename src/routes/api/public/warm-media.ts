@@ -133,12 +133,25 @@ export const Route = createFileRoute("/api/public/warm-media")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = request.headers.get("x-warm-secret");
-        if (!secret || secret !== process.env.WARM_MEDIA_SECRET) {
-          return new Response("Unauthorized", { status: 401 });
-        }
         const supaUrl = process.env.SUPABASE_URL!;
         const srk = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+        const provided = request.headers.get("x-warm-secret") ?? "";
+        let ok = provided !== "" && provided === process.env.WARM_MEDIA_SECRET;
+        if (!ok && provided) {
+          // Fall back to DB-stored secret (used by pg_cron)
+          try {
+            const r = await fetch(
+              `${supaUrl}/rest/v1/internal_config?select=value&key=eq.warm_media_secret&limit=1`,
+              { headers: { Authorization: `Bearer ${srk}`, apikey: srk } },
+            );
+            if (r.ok) {
+              const rows = (await r.json()) as Array<{ value: string }>;
+              if (rows[0]?.value && rows[0].value === provided) ok = true;
+            }
+          } catch {}
+        }
+        if (!ok) return new Response("Unauthorized", { status: 401 });
+
         const url = new URL(request.url);
         const qbankId = Number(url.searchParams.get("qbank_id") ?? "0");
         if (!qbankId || !(qbankId in SLUGS)) {
