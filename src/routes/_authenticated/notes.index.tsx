@@ -181,6 +181,15 @@ function NotesBrowser() {
       </div>
 
       {dialog}
+      <NotesModal
+        open={!!editNote}
+        onClose={() => {
+          setEditNote(null);
+          qc.invalidateQueries({ queryKey: ["notes-list"] });
+        }}
+        qbankId={editNote?.qbankId}
+        questionId={editNote?.questionId}
+      />
     </div>
   );
 }
