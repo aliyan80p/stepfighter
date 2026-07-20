@@ -109,9 +109,10 @@
   }
 }
 
-.qbank-html img { max-width: 320px; height: auto; border: 1px solid #cbd5e1; border-radius: 4px; margin: 0.5rem 0; background: var(--color-muted); cursor: zoom-in; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.qbank-html img { display: block; max-width: 320px; height: auto; border: 1px solid #cbd5e1; border-radius: 4px; margin: 0.5rem auto; background: var(--color-muted); cursor: zoom-in; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .qbank-html img:hover { border-color: #1e3a8a; }
 .qbank-large-images .qbank-html img { max-width: 100%; }
+.qbank-html p:has(> img) { text-align: center; }
 .qbank-html table { border-collapse: separate; border-spacing: 0; margin: 0.75rem 0; width: 100%; border: 1px solid #c9d3e0; border-radius: 8px; overflow: hidden; background: #eef1f5; }
 .qbank-html table td, .qbank-html table th { border-right: 1px solid #c9d3e0; border-bottom: 1px solid #c9d3e0; padding: 0.6rem 0.85rem; vertical-align: middle; }
 .qbank-html table td:last-child, .qbank-html table th:last-child { border-right: none; }
