@@ -154,8 +154,17 @@
 
 .qbank-theme-sepia, .qbank-theme-sepia .qbank-html, .qbank-theme-sepia .qbank-explanation,
 .qbank-theme-sepia .qbank-explanation p, .qbank-theme-sepia .qbank-explanation li,
-.qbank-theme-sepia .qbank-html p, .qbank-theme-sepia .qbank-html li { color: #3b2f1e !important; }
-.qbank-theme-sepia .qbank-explanation strong, .qbank-theme-sepia .qbank-explanation b { color: #2a2010 !important; }
+.qbank-theme-sepia .qbank-html p, .qbank-theme-sepia .qbank-html li,
+.qbank-theme-sepia .qbank-html td, .qbank-theme-sepia .qbank-html th { color: #3b2f1e !important; }
+.qbank-theme-sepia .qbank-explanation strong, .qbank-theme-sepia .qbank-explanation b,
+.qbank-theme-sepia .qbank-html strong, .qbank-theme-sepia .qbank-html b { color: #2a2010 !important; }
+.qbank-theme-sepia .qbank-html a { color: #7c4a1e !important; }
+.qbank-theme-sepia .qbank-html table { border-color: #d9c9a8 !important; background: #f5ecd6 !important; }
+.qbank-theme-sepia .qbank-html table td, .qbank-theme-sepia .qbank-html table th { border-color: #d9c9a8 !important; background: #f5ecd6 !important; color: #3b2f1e !important; }
+.qbank-theme-sepia .qbank-html table th { background: #ecdfbf !important; color: #2a2010 !important; }
+.qbank-theme-sepia .qbank-html table td:first-child { background: #eee1c2 !important; color: #2a2010 !important; }
+.qbank-theme-sepia .qbank-html [style*="background"], .qbank-theme-sepia .qbank-html [style*="BACKGROUND"] { background-color: transparent !important; }
+
 
 /* Highlighted text always uses dark ink so it stays readable on light highlight colors in any theme */
 mark.qbank-hl, .qbank-theme-dark mark.qbank-hl, .qbank-theme-sepia mark.qbank-hl,
