@@ -576,8 +576,8 @@ function QuestionModal({
           <div className="font-semibold tracking-wide hidden md:block">IMD QBank</div>
           <div className="flex items-center gap-3">
             <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
-            <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={notImpl("Flashcards")} />
-            <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
+            <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+            <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
             <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={onClose} />
           </div>
         </div>
@@ -586,6 +586,18 @@ function QuestionModal({
         <NotesModal
           open={showNotes}
           onClose={() => setShowNotes(false)}
+          qbankId={modalQbankId}
+          questionId={r.id}
+        />
+        <FlashcardsModal
+          open={showFlashcards}
+          onClose={() => setShowFlashcards(false)}
+          qbankId={modalQbankId}
+          questionId={r.id}
+        />
+        <FeedbackModal
+          open={showFeedback}
+          onClose={() => setShowFeedback(false)}
           qbankId={modalQbankId}
           questionId={r.id}
         />
