@@ -231,58 +231,38 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* FRONT */}
-                <div className="border rounded p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-slate-600">Front</label>
-                    <button
-                      onClick={() => frontFileRef.current?.click()}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                      title="Attach image"
-                    >
-                      <ImagePlus className="h-3.5 w-3.5" /> Image
-                    </button>
-                    <input ref={frontFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => pickImage(e.target.files?.[0], setFrontImage)} />
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-1 text-right">Front</div>
+                  <RichEditor value={frontHtml} onChange={setFrontHtml} placeholder="Front…" minHeight={160} />
+                  <div className={`text-[11px] mt-1 text-right ${frontLen > MAX_CHARS ? "text-red-500" : "text-slate-500"}`}>
+                    {frontLen} / {MAX_CHARS} characters
                   </div>
-                  <textarea value={front} onChange={(e) => setFront(e.target.value)} rows={4} className="w-full border rounded p-2 text-sm" placeholder="Front text…" />
-                  {frontImage && (
-                    <div className="relative mt-2">
-                      <img src={frontImage} alt="Front attachment" className="max-h-40 rounded border" />
-                      <button onClick={() => setFrontImage(null)} className="absolute top-1 right-1 p-0.5 bg-white/90 rounded shadow" title="Remove image">
-                        <X className="h-3.5 w-3.5 text-red-500" />
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* BACK */}
-                <div className="border rounded p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-slate-600">Back</label>
-                    <button
-                      onClick={() => backFileRef.current?.click()}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                      title="Attach image"
-                    >
-                      <ImagePlus className="h-3.5 w-3.5" /> Image
-                    </button>
-                    <input ref={backFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => pickImage(e.target.files?.[0], setBackImage)} />
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-1 text-right">Back</div>
+                  <RichEditor value={backHtml} onChange={setBackHtml} placeholder="Back…" minHeight={160} />
+                  <div className={`text-[11px] mt-1 text-right ${backLen > MAX_CHARS ? "text-red-500" : "text-slate-500"}`}>
+                    {backLen} / {MAX_CHARS} characters
                   </div>
-                  <textarea value={back} onChange={(e) => setBack(e.target.value)} rows={4} className="w-full border rounded p-2 text-sm" placeholder="Back text…" />
-                  {backImage && (
-                    <div className="relative mt-2">
-                      <img src={backImage} alt="Back attachment" className="max-h-40 rounded border" />
-                      <button onClick={() => setBackImage(null)} className="absolute top-1 right-1 p-0.5 bg-white/90 rounded shadow" title="Remove image">
-                        <X className="h-3.5 w-3.5 text-red-500" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setCreating(false)} className="px-3 py-1.5 text-sm border rounded">Cancel</button>
-                <button onClick={submit} className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+              <div className="mt-3">
+                <input
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  placeholder="tag name, comma separated"
+                  className="w-full border-0 border-b border-slate-200 focus:border-blue-400 focus:outline-none px-1 py-1.5 text-sm bg-transparent"
+                />
               </div>
+
+              <div className="flex justify-between items-center gap-2 mt-4">
+                <button onClick={() => setCreating(false)} className="px-4 py-1.5 text-sm border rounded">Cancel</button>
+                <button onClick={submit} className="px-6 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+              </div>
+
             </div>
           </div>
         )}
