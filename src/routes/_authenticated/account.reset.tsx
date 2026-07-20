@@ -98,6 +98,17 @@ function ResetPage() {
             </li>
             <li className="text-rose-600 font-medium">
               You have {limit} resets per course. Used: {used} / {limit}.
+            </div>
+          </div>
+
+          <ul className="list-disc pl-5 space-y-2 text-sm rounded-lg bg-muted/40 p-4">
+            <li>
+              Resetting will <strong>DELETE ALL</strong> data for{" "}
+              <strong>{course.name}</strong>: attempts, tests (created,
+              completed, or suspended), and flagged questions.
+            </li>
+            <li className="text-rose-600 font-medium">
+              You have {limit} resets per course. Used: {used} / {limit}.
             </li>
             <li className="text-rose-600 font-medium">
               You currently have {remaining} reset{remaining === 1 ? "" : "s"}{" "}
