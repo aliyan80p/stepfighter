@@ -1080,7 +1080,7 @@ function TestRunner() {
         return (
           <div className="flex items-center justify-between px-4 py-0 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
-              {isReview ? "" : `Block Time: ${bh}:${bm}:${bs}`}
+              {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
             <div className="font-semibold tracking-wide hidden md:flex items-center gap-3">
               <span>IMD QBank</span>
