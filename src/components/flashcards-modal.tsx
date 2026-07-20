@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Trash2, Maximize2, ChevronDown } from "lucide-react";
+import { Plus, Search, X, Trash2, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { listFlashcards, createFlashcard, deleteFlashcard } from "@/lib/flashcards.functions";
 import { listDecks, createDeck } from "@/lib/decks.functions";
