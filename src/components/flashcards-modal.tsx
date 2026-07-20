@@ -1,12 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Trash2, Maximize2, ImagePlus } from "lucide-react";
+import { Plus, Search, X, Trash2, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { listFlashcards, createFlashcard, deleteFlashcard } from "@/lib/flashcards.functions";
 import { listDecks, createDeck } from "@/lib/decks.functions";
+import { RichEditor } from "@/components/flashcards/rich-editor";
 
 const DEFAULT_DECK_KEY = "flashcards.defaultDeckId";
+const MAX_CHARS = 3000;
+
+const stripHtml = (html: string) => {
+  if (typeof window === "undefined") return html.replace(/<[^>]+>/g, "");
+  const el = document.createElement("div");
+  el.innerHTML = html;
+  return el.textContent || el.innerText || "";
+};
+
 
 type Props = {
   open: boolean;
@@ -25,17 +35,15 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
 
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
-  const [front, setFront] = useState("");
-  const [back, setBack] = useState("");
-  const [frontImage, setFrontImage] = useState<string | null>(null);
-  const [backImage, setBackImage] = useState<string | null>(null);
+  const [frontHtml, setFrontHtml] = useState("");
+  const [backHtml, setBackHtml] = useState("");
+  const [tagsInput, setTagsInput] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
   const [deckId, setDeckId] = useState<string>("");
   const [newDeckName, setNewDeckName] = useState("");
   const [showNewDeck, setShowNewDeck] = useState(false);
-  const frontFileRef = useRef<HTMLInputElement>(null);
-  const backFileRef = useRef<HTMLInputElement>(null);
+
 
   const { data: cards = [], isLoading } = useQuery({
     queryKey: ["flashcards", qbankId ?? null],
@@ -63,8 +71,14 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const other = cards.filter((c: any) => !questionId || c.question_id !== questionId);
   const filtered = (arr: any[]) => query.trim() ? arr.filter(c => (c.front + " " + c.back).toLowerCase().includes(query.toLowerCase())) : arr;
 
+  const frontText = stripHtml(frontHtml);
+  const backText = stripHtml(backHtml);
+  const frontLen = frontText.length;
+  const backLen = backText.length;
+
   const submit = async () => {
-    if (!front.trim() && !frontImage) { toast.error("Add front text or an image"); return; }
+    if (!frontText.trim() && !/<img/i.test(frontHtml)) { toast.error("Add front text or an image"); return; }
+    if (frontLen > MAX_CHARS || backLen > MAX_CHARS) { toast.error(`Max ${MAX_CHARS} characters`); return; }
     try {
       let targetDeckId: string | null = deckId || null;
       if (showNewDeck && newDeckName.trim()) {
@@ -75,21 +89,20 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
       if (targetDeckId && typeof window !== "undefined") {
         localStorage.setItem(DEFAULT_DECK_KEY, targetDeckId);
       }
-      await createFn({ data: { qbankId, questionId, deckId: targetDeckId, front: front.trim(), back: back.trim(), frontImage, backImage } });
-      setFront(""); setBack(""); setFrontImage(null); setBackImage(null); setCreating(false);
+      const tags = tagsInput.split(",").map(t => t.trim()).filter(Boolean).slice(0, 30);
+      await createFn({ data: {
+        qbankId, questionId, deckId: targetDeckId,
+        front: frontText.trim().slice(0, 6000),
+        back: backText.trim().slice(0, 6000),
+        frontHtml, backHtml, tags,
+      } });
+      setFrontHtml(""); setBackHtml(""); setTagsInput(""); setCreating(false);
       setShowNewDeck(false); setNewDeckName("");
       qc.invalidateQueries({ queryKey: ["flashcards"] });
       toast.success("Flashcard saved");
     } catch (e: any) { toast.error(e?.message ?? "Failed to save"); }
   };
 
-  const pickImage = async (file: File | undefined, setter: (v: string | null) => void) => {
-    if (!file) return;
-    if (file.size > 2_000_000) { toast.error("Image must be under 2MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => setter(String(reader.result));
-    reader.readAsDataURL(file);
-  };
 
   const remove = async (id: string) => {
     try {
@@ -218,58 +231,38 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* FRONT */}
-                <div className="border rounded p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-slate-600">Front</label>
-                    <button
-                      onClick={() => frontFileRef.current?.click()}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                      title="Attach image"
-                    >
-                      <ImagePlus className="h-3.5 w-3.5" /> Image
-                    </button>
-                    <input ref={frontFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => pickImage(e.target.files?.[0], setFrontImage)} />
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-1 text-right">Front</div>
+                  <RichEditor value={frontHtml} onChange={setFrontHtml} placeholder="Front…" minHeight={160} />
+                  <div className={`text-[11px] mt-1 text-right ${frontLen > MAX_CHARS ? "text-red-500" : "text-slate-500"}`}>
+                    {frontLen} / {MAX_CHARS} characters
                   </div>
-                  <textarea value={front} onChange={(e) => setFront(e.target.value)} rows={4} className="w-full border rounded p-2 text-sm" placeholder="Front text…" />
-                  {frontImage && (
-                    <div className="relative mt-2">
-                      <img src={frontImage} alt="Front attachment" className="max-h-40 rounded border" />
-                      <button onClick={() => setFrontImage(null)} className="absolute top-1 right-1 p-0.5 bg-white/90 rounded shadow" title="Remove image">
-                        <X className="h-3.5 w-3.5 text-red-500" />
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 {/* BACK */}
-                <div className="border rounded p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-slate-600">Back</label>
-                    <button
-                      onClick={() => backFileRef.current?.click()}
-                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                      title="Attach image"
-                    >
-                      <ImagePlus className="h-3.5 w-3.5" /> Image
-                    </button>
-                    <input ref={backFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => pickImage(e.target.files?.[0], setBackImage)} />
+                <div>
+                  <div className="text-xs font-semibold text-slate-600 mb-1 text-right">Back</div>
+                  <RichEditor value={backHtml} onChange={setBackHtml} placeholder="Back…" minHeight={160} />
+                  <div className={`text-[11px] mt-1 text-right ${backLen > MAX_CHARS ? "text-red-500" : "text-slate-500"}`}>
+                    {backLen} / {MAX_CHARS} characters
                   </div>
-                  <textarea value={back} onChange={(e) => setBack(e.target.value)} rows={4} className="w-full border rounded p-2 text-sm" placeholder="Back text…" />
-                  {backImage && (
-                    <div className="relative mt-2">
-                      <img src={backImage} alt="Back attachment" className="max-h-40 rounded border" />
-                      <button onClick={() => setBackImage(null)} className="absolute top-1 right-1 p-0.5 bg-white/90 rounded shadow" title="Remove image">
-                        <X className="h-3.5 w-3.5 text-red-500" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setCreating(false)} className="px-3 py-1.5 text-sm border rounded">Cancel</button>
-                <button onClick={submit} className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+              <div className="mt-3">
+                <input
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  placeholder="tag name, comma separated"
+                  className="w-full border-0 border-b border-slate-200 focus:border-blue-400 focus:outline-none px-1 py-1.5 text-sm bg-transparent"
+                />
               </div>
+
+              <div className="flex justify-between items-center gap-2 mt-4">
+                <button onClick={() => setCreating(false)} className="px-4 py-1.5 text-sm border rounded">Cancel</button>
+                <button onClick={submit} className="px-6 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+              </div>
+
             </div>
           </div>
         )}
