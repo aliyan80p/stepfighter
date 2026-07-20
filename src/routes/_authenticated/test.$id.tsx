@@ -1094,7 +1094,7 @@ function TestRunner() {
         const examUI = isRealExam && !isReview;
         if (examUI) {
           return (
-            <div className="qbank-nav-scroll flex items-center justify-between gap-3 px-2 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
               <div className="font-semibold tracking-wide tabular-nums">
                 {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
               </div>
@@ -1129,7 +1129,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex items-center justify-between gap-1 sm:gap-3 px-1 sm:px-4 py-0 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
+          <div className="flex flex-wrap items-center justify-between gap-1 sm:gap-3 px-1 sm:px-4 py-0 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
             <div className="shrink-0 font-semibold tracking-wide tabular-nums hidden sm:block">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
