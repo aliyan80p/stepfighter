@@ -33,7 +33,6 @@ import { Route as AuthenticatedPerformancePeerRankingRouteImport } from './route
 import { Route as AuthenticatedPerformanceOverallRouteImport } from './routes/_authenticated/performance.overall'
 import { Route as AuthenticatedPerformanceImprovementsRouteImport } from './routes/_authenticated/performance.improvements'
 import { Route as AuthenticatedPerformanceGraphsRouteImport } from './routes/_authenticated/performance.graphs'
-import { Route as AuthenticatedPerformanceChartsRouteImport } from './routes/_authenticated/performance.charts'
 import { Route as AuthenticatedPerformanceAiTestAnalysisRouteImport } from './routes/_authenticated/performance.ai-test-analysis'
 import { Route as AuthenticatedFlashcardsMyDecksRouteImport } from './routes/_authenticated/flashcards.my-decks'
 import { Route as AuthenticatedCoursesMyCoursesRouteImport } from './routes/_authenticated/courses.my-courses'
@@ -172,12 +171,6 @@ const AuthenticatedPerformanceGraphsRoute =
     path: '/performance/graphs',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedPerformanceChartsRoute =
-  AuthenticatedPerformanceChartsRouteImport.update({
-    id: '/performance/charts',
-    path: '/performance/charts',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedPerformanceAiTestAnalysisRoute =
   AuthenticatedPerformanceAiTestAnalysisRouteImport.update({
     id: '/performance/ai-test-analysis',
@@ -228,7 +221,6 @@ export interface FileRoutesByFullPath {
   '/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
   '/flashcards/my-decks': typeof AuthenticatedFlashcardsMyDecksRoute
   '/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
-  '/performance/charts': typeof AuthenticatedPerformanceChartsRoute
   '/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
   '/performance/improvements': typeof AuthenticatedPerformanceImprovementsRoute
   '/performance/overall': typeof AuthenticatedPerformanceOverallRoute
@@ -260,7 +252,6 @@ export interface FileRoutesByTo {
   '/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
   '/flashcards/my-decks': typeof AuthenticatedFlashcardsMyDecksRoute
   '/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
-  '/performance/charts': typeof AuthenticatedPerformanceChartsRoute
   '/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
   '/performance/improvements': typeof AuthenticatedPerformanceImprovementsRoute
   '/performance/overall': typeof AuthenticatedPerformanceOverallRoute
@@ -294,7 +285,6 @@ export interface FileRoutesById {
   '/_authenticated/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
   '/_authenticated/flashcards/my-decks': typeof AuthenticatedFlashcardsMyDecksRoute
   '/_authenticated/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
-  '/_authenticated/performance/charts': typeof AuthenticatedPerformanceChartsRoute
   '/_authenticated/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
   '/_authenticated/performance/improvements': typeof AuthenticatedPerformanceImprovementsRoute
   '/_authenticated/performance/overall': typeof AuthenticatedPerformanceOverallRoute
@@ -328,7 +318,6 @@ export interface FileRouteTypes {
     | '/courses/my-courses'
     | '/flashcards/my-decks'
     | '/performance/ai-test-analysis'
-    | '/performance/charts'
     | '/performance/graphs'
     | '/performance/improvements'
     | '/performance/overall'
@@ -360,7 +349,6 @@ export interface FileRouteTypes {
     | '/courses/my-courses'
     | '/flashcards/my-decks'
     | '/performance/ai-test-analysis'
-    | '/performance/charts'
     | '/performance/graphs'
     | '/performance/improvements'
     | '/performance/overall'
@@ -393,7 +381,6 @@ export interface FileRouteTypes {
     | '/_authenticated/courses/my-courses'
     | '/_authenticated/flashcards/my-decks'
     | '/_authenticated/performance/ai-test-analysis'
-    | '/_authenticated/performance/charts'
     | '/_authenticated/performance/graphs'
     | '/_authenticated/performance/improvements'
     | '/_authenticated/performance/overall'
@@ -592,13 +579,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerformanceGraphsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/performance/charts': {
-      id: '/_authenticated/performance/charts'
-      path: '/performance/charts'
-      fullPath: '/performance/charts'
-      preLoaderRoute: typeof AuthenticatedPerformanceChartsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/performance/ai-test-analysis': {
       id: '/_authenticated/performance/ai-test-analysis'
       path: '/performance/ai-test-analysis'
@@ -666,7 +646,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCoursesMyCoursesRoute: typeof AuthenticatedCoursesMyCoursesRoute
   AuthenticatedFlashcardsMyDecksRoute: typeof AuthenticatedFlashcardsMyDecksRoute
   AuthenticatedPerformanceAiTestAnalysisRoute: typeof AuthenticatedPerformanceAiTestAnalysisRoute
-  AuthenticatedPerformanceChartsRoute: typeof AuthenticatedPerformanceChartsRoute
   AuthenticatedPerformanceGraphsRoute: typeof AuthenticatedPerformanceGraphsRoute
   AuthenticatedPerformanceImprovementsRoute: typeof AuthenticatedPerformanceImprovementsRoute
   AuthenticatedPerformanceOverallRoute: typeof AuthenticatedPerformanceOverallRoute
@@ -694,7 +673,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFlashcardsMyDecksRoute: AuthenticatedFlashcardsMyDecksRoute,
   AuthenticatedPerformanceAiTestAnalysisRoute:
     AuthenticatedPerformanceAiTestAnalysisRoute,
-  AuthenticatedPerformanceChartsRoute: AuthenticatedPerformanceChartsRoute,
   AuthenticatedPerformanceGraphsRoute: AuthenticatedPerformanceGraphsRoute,
   AuthenticatedPerformanceImprovementsRoute:
     AuthenticatedPerformanceImprovementsRoute,
