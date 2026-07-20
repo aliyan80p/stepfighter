@@ -9,7 +9,7 @@ export const listFlashcards = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    let q = supabase.from("flashcards").select("id,question_id,qbank_id,front,back,created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500);
+    let q = supabase.from("flashcards").select("id,question_id,qbank_id,front,back,front_image,back_image,created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500);
     if (data.qbankId) q = q.eq("qbank_id", data.qbankId);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
@@ -22,9 +22,11 @@ export const createFlashcard = createServerFn({ method: "POST" })
     z.object({
       qbankId: z.number().int().optional(),
       questionId: z.number().int().optional(),
-      front: z.string().trim().min(1).max(2000),
-      back: z.string().trim().max(4000).default(""),
-    }).parse(d),
+      front: z.string().trim().max(3000).default(""),
+      back: z.string().trim().max(3000).default(""),
+      frontImage: z.string().max(3_000_000).optional().nullable(),
+      backImage: z.string().max(3_000_000).optional().nullable(),
+    }).refine((v) => (v.front && v.front.length > 0) || !!v.frontImage, { message: "Front cannot be empty" }).parse(d),
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
@@ -32,9 +34,11 @@ export const createFlashcard = createServerFn({ method: "POST" })
       user_id: userId,
       qbank_id: data.qbankId ?? null,
       question_id: data.questionId ?? null,
-      front: data.front,
+      front: data.front ?? "",
       back: data.back ?? "",
-    }).select("id,question_id,qbank_id,front,back,created_at").single();
+      front_image: data.frontImage ?? null,
+      back_image: data.backImage ?? null,
+    }).select("id,question_id,qbank_id,front,back,front_image,back_image,created_at").single();
     if (error) throw new Error(error.message);
     return row;
   });

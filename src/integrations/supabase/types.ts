@@ -176,8 +176,10 @@ export type Database = {
       flashcards: {
         Row: {
           back: string
+          back_image: string | null
           created_at: string
           front: string
+          front_image: string | null
           id: string
           qbank_id: number | null
           question_id: number | null
@@ -186,8 +188,10 @@ export type Database = {
         }
         Insert: {
           back?: string
+          back_image?: string | null
           created_at?: string
           front: string
+          front_image?: string | null
           id?: string
           qbank_id?: number | null
           question_id?: number | null
@@ -196,8 +200,10 @@ export type Database = {
         }
         Update: {
           back?: string
+          back_image?: string | null
           created_at?: string
           front?: string
+          front_image?: string | null
           id?: string
           qbank_id?: number | null
           question_id?: number | null
