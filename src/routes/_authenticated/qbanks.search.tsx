@@ -569,11 +569,10 @@ function QuestionModal({
           <div className="font-semibold tracking-wide" />
           <div className="font-semibold tracking-wide hidden md:block">IMD QBank</div>
           <div className="flex items-center gap-3">
-            <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
-            <TopBtn icon={FileText} label="NBME Library" onClick={notImpl("NBME Library")} />
-            <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
+            <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
+            <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={notImpl("Flashcards")} />
             <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
-            <TopBtn icon={ArrowLeft} label="Go Back" onClick={onClose} />
+            <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={onClose} />
           </div>
         </div>
 
