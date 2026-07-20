@@ -13,9 +13,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/tests'
+import { Route as AuthenticatedStudyPlannerRouteImport } from './routes/_authenticated/study-planner'
 import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticated/new-test'
+import { Route as AuthenticatedMedicalLibraryRouteImport } from './routes/_authenticated/medical-library'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBookmarksRouteImport } from './routes/_authenticated/bookmarks'
+import { Route as AuthenticatedNotesIndexRouteImport } from './routes/_authenticated/notes.index'
 import { Route as ApiPublicWarmMediaRouteImport } from './routes/api/public/warm-media'
 import { Route as ApiPublicNbmeExportRouteImport } from './routes/api/public/nbme-export'
 import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
@@ -31,6 +34,7 @@ import { Route as AuthenticatedPerformancePeerRankingRouteImport } from './route
 import { Route as AuthenticatedPerformanceOverallRouteImport } from './routes/_authenticated/performance.overall'
 import { Route as AuthenticatedPerformanceGraphsRouteImport } from './routes/_authenticated/performance.graphs'
 import { Route as AuthenticatedPerformanceAiTestAnalysisRouteImport } from './routes/_authenticated/performance.ai-test-analysis'
+import { Route as AuthenticatedFlashcardsMyDecksRouteImport } from './routes/_authenticated/flashcards.my-decks'
 import { Route as AuthenticatedCoursesMyCoursesRouteImport } from './routes/_authenticated/courses.my-courses'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account.settings'
 import { Route as AuthenticatedAccountResetRouteImport } from './routes/_authenticated/account.reset'
@@ -55,11 +59,23 @@ const AuthenticatedTestsRoute = AuthenticatedTestsRouteImport.update({
   path: '/tests',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStudyPlannerRoute =
+  AuthenticatedStudyPlannerRouteImport.update({
+    id: '/study-planner',
+    path: '/study-planner',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedNewTestRoute = AuthenticatedNewTestRouteImport.update({
   id: '/new-test',
   path: '/new-test',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMedicalLibraryRoute =
+  AuthenticatedMedicalLibraryRouteImport.update({
+    id: '/medical-library',
+    path: '/medical-library',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -68,6 +84,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedBookmarksRoute = AuthenticatedBookmarksRouteImport.update({
   id: '/bookmarks',
   path: '/bookmarks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNotesIndexRoute = AuthenticatedNotesIndexRouteImport.update({
+  id: '/notes/',
+  path: '/notes/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicWarmMediaRoute = ApiPublicWarmMediaRouteImport.update({
@@ -156,6 +177,12 @@ const AuthenticatedPerformanceAiTestAnalysisRoute =
     path: '/performance/ai-test-analysis',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFlashcardsMyDecksRoute =
+  AuthenticatedFlashcardsMyDecksRouteImport.update({
+    id: '/flashcards/my-decks',
+    path: '/flashcards/my-decks',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCoursesMyCoursesRoute =
   AuthenticatedCoursesMyCoursesRouteImport.update({
     id: '/courses/my-courses',
@@ -186,11 +213,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bookmarks': typeof AuthenticatedBookmarksRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/new-test': typeof AuthenticatedNewTestRoute
+  '/study-planner': typeof AuthenticatedStudyPlannerRoute
   '/tests': typeof AuthenticatedTestsRoute
   '/account/reset': typeof AuthenticatedAccountResetRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
+  '/flashcards/my-decks': typeof AuthenticatedFlashcardsMyDecksRoute
   '/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
   '/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
   '/performance/overall': typeof AuthenticatedPerformanceOverallRoute
@@ -206,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/api/media/$': typeof ApiMediaSplatRoute
   '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
+  '/notes/': typeof AuthenticatedNotesIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRoutesByTo {
@@ -213,11 +244,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bookmarks': typeof AuthenticatedBookmarksRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/new-test': typeof AuthenticatedNewTestRoute
+  '/study-planner': typeof AuthenticatedStudyPlannerRoute
   '/tests': typeof AuthenticatedTestsRoute
   '/account/reset': typeof AuthenticatedAccountResetRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
+  '/flashcards/my-decks': typeof AuthenticatedFlashcardsMyDecksRoute
   '/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
   '/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
   '/performance/overall': typeof AuthenticatedPerformanceOverallRoute
@@ -233,6 +267,7 @@ export interface FileRoutesByTo {
   '/api/media/$': typeof ApiMediaSplatRoute
   '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
+  '/notes': typeof AuthenticatedNotesIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRoutesById {
@@ -242,11 +277,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/bookmarks': typeof AuthenticatedBookmarksRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/_authenticated/new-test': typeof AuthenticatedNewTestRoute
+  '/_authenticated/study-planner': typeof AuthenticatedStudyPlannerRoute
   '/_authenticated/tests': typeof AuthenticatedTestsRoute
   '/_authenticated/account/reset': typeof AuthenticatedAccountResetRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
+  '/_authenticated/flashcards/my-decks': typeof AuthenticatedFlashcardsMyDecksRoute
   '/_authenticated/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
   '/_authenticated/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
   '/_authenticated/performance/overall': typeof AuthenticatedPerformanceOverallRoute
@@ -262,6 +300,7 @@ export interface FileRoutesById {
   '/api/media/$': typeof ApiMediaSplatRoute
   '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
+  '/_authenticated/notes/': typeof AuthenticatedNotesIndexRoute
   '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
 }
 export interface FileRouteTypes {
@@ -271,11 +310,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bookmarks'
     | '/dashboard'
+    | '/medical-library'
     | '/new-test'
+    | '/study-planner'
     | '/tests'
     | '/account/reset'
     | '/account/settings'
     | '/courses/my-courses'
+    | '/flashcards/my-decks'
     | '/performance/ai-test-analysis'
     | '/performance/graphs'
     | '/performance/overall'
@@ -291,6 +333,7 @@ export interface FileRouteTypes {
     | '/api/media/$'
     | '/api/public/nbme-export'
     | '/api/public/warm-media'
+    | '/notes/'
     | '/test/$id/results'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -298,11 +341,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bookmarks'
     | '/dashboard'
+    | '/medical-library'
     | '/new-test'
+    | '/study-planner'
     | '/tests'
     | '/account/reset'
     | '/account/settings'
     | '/courses/my-courses'
+    | '/flashcards/my-decks'
     | '/performance/ai-test-analysis'
     | '/performance/graphs'
     | '/performance/overall'
@@ -318,6 +364,7 @@ export interface FileRouteTypes {
     | '/api/media/$'
     | '/api/public/nbme-export'
     | '/api/public/warm-media'
+    | '/notes'
     | '/test/$id/results'
   id:
     | '__root__'
@@ -326,11 +373,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/bookmarks'
     | '/_authenticated/dashboard'
+    | '/_authenticated/medical-library'
     | '/_authenticated/new-test'
+    | '/_authenticated/study-planner'
     | '/_authenticated/tests'
     | '/_authenticated/account/reset'
     | '/_authenticated/account/settings'
     | '/_authenticated/courses/my-courses'
+    | '/_authenticated/flashcards/my-decks'
     | '/_authenticated/performance/ai-test-analysis'
     | '/_authenticated/performance/graphs'
     | '/_authenticated/performance/overall'
@@ -346,6 +396,7 @@ export interface FileRouteTypes {
     | '/api/media/$'
     | '/api/public/nbme-export'
     | '/api/public/warm-media'
+    | '/_authenticated/notes/'
     | '/_authenticated/test/$id/results'
   fileRoutesById: FileRoutesById
 }
@@ -388,11 +439,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/study-planner': {
+      id: '/_authenticated/study-planner'
+      path: '/study-planner'
+      fullPath: '/study-planner'
+      preLoaderRoute: typeof AuthenticatedStudyPlannerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/new-test': {
       id: '/_authenticated/new-test'
       path: '/new-test'
       fullPath: '/new-test'
       preLoaderRoute: typeof AuthenticatedNewTestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/medical-library': {
+      id: '/_authenticated/medical-library'
+      path: '/medical-library'
+      fullPath: '/medical-library'
+      preLoaderRoute: typeof AuthenticatedMedicalLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -407,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/bookmarks'
       fullPath: '/bookmarks'
       preLoaderRoute: typeof AuthenticatedBookmarksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notes/': {
+      id: '/_authenticated/notes/'
+      path: '/notes'
+      fullPath: '/notes/'
+      preLoaderRoute: typeof AuthenticatedNotesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/warm-media': {
@@ -514,6 +586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerformanceAiTestAnalysisRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/flashcards/my-decks': {
+      id: '/_authenticated/flashcards/my-decks'
+      path: '/flashcards/my-decks'
+      fullPath: '/flashcards/my-decks'
+      preLoaderRoute: typeof AuthenticatedFlashcardsMyDecksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/courses/my-courses': {
       id: '/_authenticated/courses/my-courses'
       path: '/courses/my-courses'
@@ -559,11 +638,14 @@ const AuthenticatedTestIdRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBookmarksRoute: typeof AuthenticatedBookmarksRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMedicalLibraryRoute: typeof AuthenticatedMedicalLibraryRoute
   AuthenticatedNewTestRoute: typeof AuthenticatedNewTestRoute
+  AuthenticatedStudyPlannerRoute: typeof AuthenticatedStudyPlannerRoute
   AuthenticatedTestsRoute: typeof AuthenticatedTestsRoute
   AuthenticatedAccountResetRoute: typeof AuthenticatedAccountResetRoute
   AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedCoursesMyCoursesRoute: typeof AuthenticatedCoursesMyCoursesRoute
+  AuthenticatedFlashcardsMyDecksRoute: typeof AuthenticatedFlashcardsMyDecksRoute
   AuthenticatedPerformanceAiTestAnalysisRoute: typeof AuthenticatedPerformanceAiTestAnalysisRoute
   AuthenticatedPerformanceGraphsRoute: typeof AuthenticatedPerformanceGraphsRoute
   AuthenticatedPerformanceOverallRoute: typeof AuthenticatedPerformanceOverallRoute
@@ -576,16 +658,20 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSelfAssessmentsScorePredictorRoute: typeof AuthenticatedSelfAssessmentsScorePredictorRoute
   AuthenticatedTestResultsIdRoute: typeof AuthenticatedTestResultsIdRoute
   AuthenticatedTestIdRoute: typeof AuthenticatedTestIdRouteWithChildren
+  AuthenticatedNotesIndexRoute: typeof AuthenticatedNotesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBookmarksRoute: AuthenticatedBookmarksRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMedicalLibraryRoute: AuthenticatedMedicalLibraryRoute,
   AuthenticatedNewTestRoute: AuthenticatedNewTestRoute,
+  AuthenticatedStudyPlannerRoute: AuthenticatedStudyPlannerRoute,
   AuthenticatedTestsRoute: AuthenticatedTestsRoute,
   AuthenticatedAccountResetRoute: AuthenticatedAccountResetRoute,
   AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedCoursesMyCoursesRoute: AuthenticatedCoursesMyCoursesRoute,
+  AuthenticatedFlashcardsMyDecksRoute: AuthenticatedFlashcardsMyDecksRoute,
   AuthenticatedPerformanceAiTestAnalysisRoute:
     AuthenticatedPerformanceAiTestAnalysisRoute,
   AuthenticatedPerformanceGraphsRoute: AuthenticatedPerformanceGraphsRoute,
@@ -605,6 +691,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedSelfAssessmentsScorePredictorRoute,
   AuthenticatedTestResultsIdRoute: AuthenticatedTestResultsIdRoute,
   AuthenticatedTestIdRoute: AuthenticatedTestIdRouteWithChildren,
+  AuthenticatedNotesIndexRoute: AuthenticatedNotesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

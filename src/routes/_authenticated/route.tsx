@@ -22,6 +22,10 @@ import {
   LogOut,
   ChevronDown,
   Library,
+  StickyNote,
+  FileText,
+  CalendarDays,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -69,6 +73,24 @@ const groups: Group[] = [
       { to: "/performance/ai-test-analysis", label: "AI Test Analysis", icon: Sparkles },
       { to: "/performance/score-calculator", label: "Score Calculator", icon: Calculator },
       { to: "/performance/graphs", label: "Graphs", icon: LineChart },
+    ],
+  },
+  {
+    key: "notes-study",
+    label: "Notes and Study",
+    icon: StickyNote,
+    items: [
+      { to: "/notes", label: "Notes", icon: StickyNote },
+      { to: "/medical-library", label: "Medical Library", icon: FileText },
+      { to: "/study-planner", label: "Study Planner", icon: CalendarDays },
+    ],
+  },
+  {
+    key: "flashcards",
+    label: "Flashcards",
+    icon: Zap,
+    items: [
+      { to: "/flashcards/my-decks", label: "My Decks", icon: Zap },
     ],
   },
   {
