@@ -98,14 +98,14 @@ function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { ico
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px] leading-tight"
+      className="shrink-0 flex flex-col items-center justify-center px-2 sm:px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[52px] sm:min-w-[64px] leading-tight"
     >
       {imgSrc ? (
         <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
       ) : Icon ? (
         <Icon className="h-5 w-5" />
       ) : null}
-      <span className="text-[11px] mt-0.5">{label}</span>
+      <span className="text-[10px] sm:text-[11px] mt-0.5">{label}</span>
     </button>
   );
 }
@@ -160,7 +160,10 @@ function TestRunner() {
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(min-width: 768px)").matches;
+  });
   const [timedMode, setTimedMode] = useState(true);
   const [tutorMode, setTutorMode] = useState(true);
   const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
@@ -718,24 +721,24 @@ function TestRunner() {
         </div>
       )}
       {/* Top nav */}
-      <div className={`flex items-center justify-between px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: NAV_BG }}>
-        <div className="flex items-center gap-4">
+      <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: NAV_BG }}>
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {!(isRealExam && !isReview) && (
-            <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
+            <button className="p-1 hover:bg-white/10 rounded shrink-0" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
               <span className="block w-5 h-0.5 bg-white mb-1" />
               <span className="block w-5 h-0.5 bg-white mb-1" />
               <span className="block w-5 h-0.5 bg-white" />
             </button>
           )}
-          <div className="text-[12px] leading-tight">
+          <div className="text-[11px] sm:text-[12px] leading-tight shrink-0">
             <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
             {(isRealExam && !isReview)
               ? <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
-              : <div className="text-[11px] text-white/75">Question Id: {question.id}</div>}
+              : <div className="hidden sm:block text-[11px] text-white/75">Question Id: {question.id}</div>}
           </div>
           <button
             onClick={bookmark}
-            className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10"
+            className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10 shrink-0"
             title={isBookmarked ? "Remove flag" : "Flag question"}
           >
             {(isRealExam && !isReview) && (
@@ -748,19 +751,19 @@ function TestRunner() {
               </span>
             )}
             <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
-            <span className="text-[11px] font-semibold text-white">Mark</span>
+            <span className="hidden sm:inline text-[11px] font-semibold text-white">Mark</span>
           </button>
 
 
 
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
           <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
           {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
           <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
@@ -777,10 +780,21 @@ function TestRunner() {
       </div>
 
       {/* Main */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Left navigator */}
         {sidebarOpen && (
-        <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
+        <>
+          {/* Mobile overlay backdrop */}
+          <button
+            type="button"
+            aria-label="Close question list"
+            className="md:hidden fixed inset-0 z-30 bg-black/40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        <aside
+          className="w-14 overflow-auto border-r z-40 md:static absolute inset-y-0 left-0"
+          style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
+        >
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
             const hideResult = !isReview && !tutorMode;
@@ -796,6 +810,9 @@ function TestRunner() {
                   e.preventDefault();
                   e.stopPropagation();
                   goToQuestion(i);
+                  if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+                    setSidebarOpen(false);
+                  }
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -816,11 +833,12 @@ function TestRunner() {
             );
           })}
         </aside>
+        </>
         )}
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`w-full mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+          <div className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
             {(() => null)()}
             {(() => null)()}
 
@@ -1074,7 +1092,7 @@ function TestRunner() {
         const examUI = isRealExam && !isReview;
         if (examUI) {
           return (
-            <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+            <div className="qbank-nav-scroll flex items-center justify-between gap-3 px-2 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
               <div className="font-semibold tracking-wide tabular-nums">
                 {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
               </div>
@@ -1109,7 +1127,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex items-center justify-between px-4 py-0 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
+          <div className="qbank-nav-scroll flex items-center justify-between gap-3 px-2 sm:px-4 py-0 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
