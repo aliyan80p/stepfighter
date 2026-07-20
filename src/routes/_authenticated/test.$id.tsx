@@ -814,10 +814,8 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          {(() => { return null; })()}
-          {(() => null)()}
-          <div className={`w-full mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && question.explanation) ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
-          {(userSettings.splitExplanations && showAnswers && question.explanation) ? <div className="min-w-0"> : null}
+          <div className={`w-full mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+            {(() => null)()}
             {(() => null)()}
 
 
