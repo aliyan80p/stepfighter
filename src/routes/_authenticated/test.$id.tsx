@@ -795,8 +795,8 @@ function TestRunner() {
                 }}
                 onMouseUp={(e) => e.stopPropagation()}
                 aria-label={`Go to question ${i + 1}`}
-                className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:bg-white/60 ${active ? "bg-white font-semibold" : ""}`}
-                style={{ borderColor: "#d1d9e6", color: TEXT }}
+                className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:bg-black/10 ${active ? "font-semibold" : ""}`}
+                style={{ borderColor: themeStyles.border, color: themeStyles.text, background: active ? themeStyles.cardBg : "transparent" }}
               >
                 {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
                 {status === "wrong" && <span className="text-red-600 font-bold">✕</span>}
