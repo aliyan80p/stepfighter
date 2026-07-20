@@ -73,6 +73,7 @@ const groups: Group[] = [
       { to: "/performance/ai-test-analysis", label: "AI Test Analysis", icon: Sparkles },
       { to: "/performance/score-calculator", label: "Score Calculator", icon: Calculator },
       { to: "/performance/graphs", label: "Graphs", icon: LineChart },
+      { to: "/performance/charts", label: "Performance Charts", icon: LineChart },
     ],
   },
   {
