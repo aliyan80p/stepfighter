@@ -305,13 +305,17 @@ function PagerBtn({ children, onClick, disabled }: { children: React.ReactNode; 
 
 const NAV_BG = "#1e3a8a";
 
-function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
       className="flex flex-col items-center justify-center px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px]"
     >
-      <Icon className="h-5 w-5" />
+      {imgSrc ? (
+        <img src={imgSrc} alt="" className={`${imgClass ?? "h-5 w-5 object-contain"} ${imgFlip ? "scale-x-[-1]" : ""}`} />
+      ) : Icon ? (
+        <Icon className="h-5 w-5" />
+      ) : null}
       <span className="text-[11px] mt-0.5">{label}</span>
     </button>
   );
