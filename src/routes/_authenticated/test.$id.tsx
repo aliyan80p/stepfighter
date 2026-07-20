@@ -27,6 +27,7 @@ import textZoomIcon from "@/assets/icons/text-zoom.png.asset.json";
 import { DEFAULT_SETTINGS, useHydratedSettings, setUserSettings, TOOLBAR_ITEMS } from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
+import { NotesModal } from "@/components/notes-modal";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
@@ -158,6 +159,7 @@ function TestRunner() {
   const [showSettings, setShowSettings] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [timedMode, setTimedMode] = useState(true);
   const [tutorMode, setTutorMode] = useState(true);
@@ -762,7 +764,7 @@ function TestRunner() {
           {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
           {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
           <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
-          <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
+          <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
           {false && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           
           <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
@@ -1202,6 +1204,12 @@ function TestRunner() {
       <FeedbackModal
         open={showFeedback}
         onClose={() => setShowFeedback(false)}
+        qbankId={data?.qbankId}
+        questionId={question?.id}
+      />
+      <NotesModal
+        open={showNotes}
+        onClose={() => setShowNotes(false)}
         qbankId={data?.qbankId}
         questionId={question?.id}
       />
