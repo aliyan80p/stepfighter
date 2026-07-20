@@ -29,32 +29,29 @@ function NotesBrowser() {
     queryFn: () => list(),
   });
 
+  const activeQbankId = useActiveQbankId();
+  const activeQbankName = QBANKS.find((q) => q.id === activeQbankId)?.name ?? "";
+
   const [search, setSearch] = useState("");
-  const [qbank, setQbank] = useState<string>("all");
   const [subject, setSubject] = useState<string>("all");
-  const [system, setSystem] = useState<string>("all");
   const [pageSize, setPageSize] = useState(25);
   const { confirm, dialog } = useConfirm();
 
-  const qbanks = useMemo(
-    () => Array.from(new Set(notes.map((n) => n.qbankName).filter(Boolean))) as string[],
-    [notes],
+  // Notes scoped to the currently selected qbank
+  const scopedNotes = useMemo(
+    () => notes.filter((n) => Number(n.qbankId) === activeQbankId),
+    [notes, activeQbankId],
   );
+
   const subjects = useMemo(
-    () => Array.from(new Set(notes.map((n) => n.subject).filter(Boolean))) as string[],
-    [notes],
-  );
-  const systems = useMemo(
-    () => Array.from(new Set(notes.map((n) => n.system).filter(Boolean))) as string[],
-    [notes],
+    () => Array.from(new Set(scopedNotes.map((n) => n.subject).filter(Boolean))) as string[],
+    [scopedNotes],
   );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return notes.filter((n) => {
-      if (qbank !== "all" && n.qbankName !== qbank) return false;
+    return scopedNotes.filter((n) => {
       if (subject !== "all" && n.subject !== subject) return false;
-      if (system !== "all" && n.system !== system) return false;
       if (!q) return true;
       return (
         n.content?.toLowerCase().includes(q) ||
@@ -63,7 +60,7 @@ function NotesBrowser() {
         n.system?.toLowerCase().includes(q)
       );
     }).slice(0, pageSize);
-  }, [notes, search, qbank, subject, system, pageSize]);
+  }, [scopedNotes, search, subject, pageSize]);
 
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
