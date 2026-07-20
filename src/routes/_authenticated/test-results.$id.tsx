@@ -266,7 +266,7 @@ function TestResults() {
 
       {/* Table */}
       <div className="rounded-2xl border border-border overflow-hidden">
-        <div className="bg-muted/50 grid grid-cols-[70px_1fr_1.4fr_1.4fr_1.6fr_1fr_1fr_80px] gap-3 px-4 py-3 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+        <div className="bg-muted/50 hidden md:grid grid-cols-[70px_1fr_1.4fr_1.4fr_1.6fr_1fr_1fr_80px] gap-3 px-4 py-3 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
           <div>Status</div>
           <SortH label="ID" k="id" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
           <SortH label="Subjects" k="subject" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
