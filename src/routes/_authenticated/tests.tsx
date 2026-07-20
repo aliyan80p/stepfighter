@@ -162,7 +162,7 @@ function TestsList() {
 
       {/* Table */}
       <div className="rounded-2xl border border-border overflow-hidden">
-        <div className="bg-muted/50 grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] gap-4 px-4 py-3 text-sm font-medium">
+        <div className="bg-muted/50 hidden md:grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] gap-4 px-4 py-3 text-sm font-medium">
           <SortHeader label="Name" k="name" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
           <SortHeader label="Score" k="score" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
           <SortHeader label="Date" k="date" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
