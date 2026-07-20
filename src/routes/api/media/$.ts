@@ -131,13 +131,23 @@ async function fetchPlainUrlFromDb(
   const candidates = candidateNames(name);
   const orExpr = candidates.map((c) => `name.eq.${encodeURIComponent(c)}`).join(",");
   const url =
-    `${supaUrl}/rest/v1/qbank_media?select=plain_url,plain_url_expires_at` +
-    `&qbank_id=eq.${qbankId}&or=(${orExpr})&plain_url=not.is.null&limit=1`;
+    `${supaUrl}/rest/v1/qbank_media?select=name,plain_url,plain_url_expires_at` +
+    `&qbank_id=eq.${qbankId}&or=(${orExpr})&plain_url=not.is.null&limit=20`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${srk}`, apikey: srk } });
   if (!res.ok) return null;
-  const rows = (await res.json()) as Array<{ plain_url: string; plain_url_expires_at: string | null }>;
-  const row = rows[0];
-  if (!row?.plain_url) return null;
+  const rows = (await res.json()) as Array<{ name: string; plain_url: string; plain_url_expires_at: string | null }>;
+  if (!rows.length) return null;
+  // Prefer the row whose name most closely matches the requested one.
+  // Exact > case-insensitive exact > has original-style prefix > shorter name.
+  const scored = rows.map((r) => {
+    let score = 0;
+    if (r.name === name) score += 1000;
+    else if (r.name.toLowerCase() === name.toLowerCase()) score += 500;
+    if (/^(highresdefault_|hqdefault_|sddefault_|mqdefault_|default_)/i.test(r.name)) score += 100;
+    score -= r.name.length;
+    return { r, score };
+  }).sort((a, b) => b.score - a.score);
+  const row = scored[0].r;
   if (row.plain_url_expires_at) {
     const exp = Date.parse(row.plain_url_expires_at);
     if (Number.isFinite(exp) && exp < Date.now() + 60_000) return null;
