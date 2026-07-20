@@ -1,0 +1,1 @@
+ALTER TABLE public.tests ADD COLUMN IF NOT EXISTS study_plan_index INTEGER; CREATE INDEX IF NOT EXISTS idx_tests_study_plan ON public.tests(user_id, qbank_id, study_plan_index) WHERE study_plan_index IS NOT NULL;

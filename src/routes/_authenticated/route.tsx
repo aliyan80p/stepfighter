@@ -26,6 +26,8 @@ import {
   FileText,
   CalendarDays,
   Zap,
+  Flag,
+
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -71,6 +73,7 @@ const groups: Group[] = [
       { to: "/performance/overall", label: "Overall", icon: PieChart },
       { to: "/performance/peer-ranking", label: "Peer Ranking", icon: Users },
       { to: "/performance/ai-test-analysis", label: "AI Test Analysis", icon: Sparkles },
+      { to: "/performance/improvements", label: "Improvements Required", icon: Flag },
       { to: "/performance/score-calculator", label: "Score Calculator", icon: Calculator },
       { to: "/performance/graphs", label: "Graphs", icon: LineChart },
       { to: "/performance/charts", label: "Performance Charts", icon: LineChart },

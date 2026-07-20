@@ -502,3 +502,271 @@ Keep it under 350 words. Be direct and specific.`;
 
     return { summary, analysis };
   });
+
+// ============ Improvements Required (AI Study Plan) ============
+
+async function loadAttemptContext(supabase: any, userId: string, qbankId: number) {
+  const [{ data: attempts }, { data: questions }, { data: subjects }, { data: systems }, { data: tests }] = await Promise.all([
+    supabase.from("attempts").select("question_id,is_correct,selected_answer,created_at,test_id")
+      .eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true }).limit(200000),
+    supabase.from("questions").select("id,subject_id,system_id,topic").eq("qbank_id", qbankId).limit(200000),
+    supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
+    supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
+    supabase.from("tests").select("id,name,question_ids,right_count,wrong_count,done,created_at,study_plan_index")
+      .eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true }).limit(5000),
+  ]);
+  return {
+    attempts: attempts ?? [],
+    questions: questions ?? [],
+    subjectName: new Map<number, string>((subjects ?? []).map((s: any) => [s.id, s.name])),
+    systemName: new Map<number, string>((systems ?? []).map((s: any) => [s.id, s.name])),
+    tests: tests ?? [],
+  };
+}
+
+/**
+ * Latest attempt per question. Uses the last selected/omitted attempt to compute
+ * overall accuracy and category breakdowns.
+ */
+function latestByQuestion(attempts: any[]) {
+  const map = new Map<number, any>();
+  for (const a of attempts) map.set(a.question_id, a);
+  return Array.from(map.values());
+}
+
+export const getImprovementsOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { attempts, questions, subjectName, systemName, tests } = await loadAttemptContext(supabase, userId, data.qbankId);
+
+    const qSub = new Map<number, number | null>(questions.map((q: any) => [q.id, q.subject_id]));
+    const qSys = new Map<number, number | null>(questions.map((q: any) => [q.id, q.system_id]));
+
+    const latest = latestByQuestion(attempts);
+    const answered = latest.filter((a) => a.selected_answer != null);
+    const correct = answered.filter((a) => a.is_correct).length;
+    const overallPct = answered.length ? Math.round((correct / answered.length) * 100) : 0;
+
+    // Subject accuracy
+    const subjAgg = new Map<number, { c: number; t: number }>();
+    const sysAgg = new Map<number, { c: number; t: number }>();
+    const subjSys = new Map<number, Map<number, { c: number; t: number }>>();
+    for (const a of answered) {
+      const sid = qSub.get(a.question_id) ?? null;
+      const syid = qSys.get(a.question_id) ?? null;
+      if (sid != null) {
+        const x = subjAgg.get(sid) ?? { c: 0, t: 0 };
+        x.t++; if (a.is_correct) x.c++;
+        subjAgg.set(sid, x);
+        if (syid != null) {
+          let m = subjSys.get(sid); if (!m) { m = new Map(); subjSys.set(sid, m); }
+          const y = m.get(syid) ?? { c: 0, t: 0 };
+          y.t++; if (a.is_correct) y.c++;
+          m.set(syid, y);
+        }
+      }
+      if (syid != null) {
+        const x = sysAgg.get(syid) ?? { c: 0, t: 0 };
+        x.t++; if (a.is_correct) x.c++;
+        sysAgg.set(syid, x);
+      }
+    }
+
+    const subjRows = Array.from(subjAgg.entries())
+      .filter(([, v]) => v.t >= 3)
+      .map(([id, v]) => ({ id, name: subjectName.get(id) ?? `Subject ${id}`, pct: Math.round((v.c / v.t) * 100), total: v.t }))
+      .sort((a, b) => a.pct - b.pct);
+
+    const under40 = subjRows.filter((s) => s.pct < 40).slice(0, 3);
+    const weakList = under40.length
+      ? under40
+      : subjRows.filter((s) => s.pct <= 90).slice(0, 3);
+
+    const weakAreas = weakList.map((s) => {
+      const sysMap = subjSys.get(s.id);
+      let weakestSystem = "—";
+      if (sysMap) {
+        const rows = Array.from(sysMap.entries())
+          .filter(([, v]) => v.t >= 2)
+          .map(([id, v]) => ({ id, pct: v.c / v.t }))
+          .sort((a, b) => a.pct - b.pct);
+        if (rows.length) weakestSystem = systemName.get(rows[0].id) ?? "—";
+      }
+      return { subject: s.name, subjectId: s.id, weakestSystem, pct: s.pct };
+    });
+
+    // Per-test scores (chronological)
+    const perfOverTime = tests
+      .filter((t: any) => t.done)
+      .map((t: any) => {
+        const total = (t.question_ids ?? []).length || 1;
+        return {
+          testId: Number(t.id),
+          name: t.name ?? `Test ${t.id}`,
+          pct: Math.round(((t.right_count ?? 0) / total) * 100),
+          date: (t.created_at as string).slice(0, 10),
+        };
+      });
+
+    // Trend: recent half vs earlier half
+    let trendDelta: number | null = null;
+    if (perfOverTime.length >= 4) {
+      const half = Math.floor(perfOverTime.length / 2);
+      const earlier = perfOverTime.slice(0, half);
+      const recent = perfOverTime.slice(perfOverTime.length - half);
+      const avg = (arr: any[]) => arr.reduce((a, r) => a + r.pct, 0) / arr.length;
+      trendDelta = Math.round((avg(recent) - avg(earlier)) * 10) / 10;
+    }
+
+    return { overallPct, totalAnswered: answered.length, weakAreas, perfOverTime, trendDelta };
+  });
+
+export const getCategoryStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    qbankId: qb(),
+    kind: z.enum(["subject", "system", "topic"]),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { attempts, questions, subjectName, systemName } = await loadAttemptContext(supabase, userId, data.qbankId);
+    const qMeta = new Map<number, any>(questions.map((q: any) => [q.id, q]));
+    const latest = latestByQuestion(attempts).filter((a) => a.selected_answer != null);
+
+    const agg = new Map<string, { c: number; t: number }>();
+    for (const a of latest) {
+      const q = qMeta.get(a.question_id);
+      if (!q) continue;
+      let key: string | null = null;
+      if (data.kind === "subject") key = q.subject_id != null ? (subjectName.get(q.subject_id) ?? null) : null;
+      else if (data.kind === "system") key = q.system_id != null ? (systemName.get(q.system_id) ?? null) : null;
+      else key = q.topic ?? null;
+      if (!key) continue;
+      const x = agg.get(key) ?? { c: 0, t: 0 };
+      x.t++; if (a.is_correct) x.c++;
+      agg.set(key, x);
+    }
+    const rows = Array.from(agg.entries())
+      .map(([name, v]) => ({ name, count: v.t, pct: Math.round((v.c / v.t) * 1000) / 10 }))
+      .sort((a, b) => b.pct - a.pct);
+    return { rows };
+  });
+
+export const getStudyPlan = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { attempts, questions, subjectName, tests } = await loadAttemptContext(supabase, userId, data.qbankId);
+
+    const qSub = new Map<number, number | null>(questions.map((q: any) => [q.id, q.subject_id]));
+    const latest = latestByQuestion(attempts);
+    const answered = latest.filter((a) => a.selected_answer != null);
+
+    // Find weakest subjects (same rule as overview)
+    const subjAgg = new Map<number, { c: number; t: number }>();
+    for (const a of answered) {
+      const sid = qSub.get(a.question_id) ?? null;
+      if (sid == null) continue;
+      const x = subjAgg.get(sid) ?? { c: 0, t: 0 };
+      x.t++; if (a.is_correct) x.c++;
+      subjAgg.set(sid, x);
+    }
+    const subjRanked = Array.from(subjAgg.entries())
+      .filter(([, v]) => v.t >= 3)
+      .map(([id, v]) => ({ id, pct: v.c / v.t }))
+      .sort((a, b) => a.pct - b.pct);
+    const weakSubjectIds = new Set(subjRanked.slice(0, 6).map((s) => s.id));
+
+    // Wrong-answered questions in weak subjects (deterministic order by q id)
+    const wrongIds = Array.from(new Set(
+      answered
+        .filter((a) => !a.is_correct)
+        .map((a) => a.question_id)
+        .filter((qid) => {
+          const sid = qSub.get(qid) ?? null;
+          return sid != null && weakSubjectIds.has(sid);
+        })
+    )).sort((a, b) => a - b);
+
+    // Chunk into up to 5 quizzes of 40
+    const CHUNK = 40, MAX = 5;
+    const quizzes: {
+      index: number;
+      questionIds: number[];
+      subjects: string[];
+      unlocked: boolean;
+      completedTestId: number | null;
+      score: number | null;
+    }[] = [];
+
+    const completedByIndex = new Map<number, any>();
+    for (const t of tests as any[]) {
+      if (t.study_plan_index && t.done) completedByIndex.set(t.study_plan_index, t);
+    }
+
+    for (let i = 0; i < MAX; i++) {
+      const slice = wrongIds.slice(i * CHUNK, (i + 1) * CHUNK);
+      if (!slice.length) break;
+      const subjNames = new Set<string>();
+      for (const qid of slice) {
+        const sid = qSub.get(qid);
+        if (sid != null) subjNames.add(subjectName.get(sid) ?? `Subject ${sid}`);
+      }
+      const prevDone = i === 0 || completedByIndex.has(i);
+      const completed = completedByIndex.get(i + 1);
+      quizzes.push({
+        index: i + 1,
+        questionIds: slice,
+        subjects: Array.from(subjNames),
+        unlocked: prevDone,
+        completedTestId: completed ? Number(completed.id) : null,
+        score: completed ? Math.round(((completed.right_count ?? 0) / (slice.length || 1)) * 100) : null,
+      });
+    }
+
+    const totalQuestions = quizzes.reduce((a, q) => a + q.questionIds.length, 0);
+    return { quizzes, totalQuestions };
+  });
+
+export const generatePerformancePrediction = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    qbankId: qb(),
+    overallPct: z.number(),
+    studyPlanTotal: z.number(),
+  }).parse(d))
+  .handler(async ({ data }) => {
+    // Deterministic fallback: current + (70 - current) * (planTotal weight)
+    const deterministic = () => {
+      const target = 70;
+      const gap = Math.max(0, target - data.overallPct);
+      // assume plan covers ~30% of what's needed to reach target
+      const predicted = Math.min(95, Math.round(data.overallPct + gap * 0.5 + Math.min(15, data.studyPlanTotal / 20)));
+      return `Your current overall score is **${data.overallPct}%**. Your study plan contains **${data.studyPlanTotal}** questions covering your weakest subjects. If you score at least **70%** on these quizzes, your overall score is predicted to reach **${predicted}%**.`;
+    };
+
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) return { text: deterministic() };
+
+    try {
+      const prompt = `A USMLE student's current overall accuracy is ${data.overallPct}%. Their personalized study plan has ${data.studyPlanTotal} questions from their weakest subjects. Write ONE short paragraph (max 40 words) predicting their overall score if they answer 70% of the study-plan questions correctly. Use this exact structure, bolding key numbers with markdown: "Your current overall score is **${data.overallPct}%**. Your study plan contains **${data.studyPlanTotal}** questions covering your weakest subjects. If you score at least **70%** on these quizzes, your overall score is predicted to reach **X%**." Replace X with a realistic single integer prediction.`;
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
+        body: JSON.stringify({
+          model: "google/gemini-3.5-flash",
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!resp.ok) return { text: deterministic() };
+      const json = await resp.json() as { choices?: { message?: { content?: string } }[] };
+      const text = json.choices?.[0]?.message?.content?.trim();
+      return { text: text || deterministic() };
+    } catch {
+      return { text: deterministic() };
+    }
+  });
+

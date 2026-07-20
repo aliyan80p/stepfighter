@@ -1,56 +1,41 @@
-## Goal
-Transform the Flashcards area into a full deck-based study system matching the uploaded screenshots (Browse Decks, Study Mode, Create Deck, rich Create Flashcard editor, deck stats & settings).
+## Improvements Required (AI Study Plan)
 
-## Scope
-Rebuild `/flashcards/my-decks` as the main Flashcards hub. The existing per-question `FlashcardsModal` (tutor/exam quick-add) stays but writes into a deck.
+New page at `/performance/improvements` (also linked from sidebar and reachable in place of / alongside the current AI Test Analysis). Course selector in the top-right (Step 1/2/3) drives all data.
 
-## Features to build
+### Sections (top → bottom, matching screenshots)
 
-### 1. Decks
-- New table `flashcard_decks` (id, user_id, name, color, created_at).
-- CRUD server fns: `listDecks`, `createDeck`, `updateDeck`, `deleteDeck`.
-- Extend `flashcards` table: add `deck_id` (nullable FK), `tags text[]`, plus SRS fields (`state`: new/learning/review, `due_at`, `interval_days`, `ease`, `reps`, `lapses`, `last_reviewed_at`, `time_spent_ms`).
-- Migrate existing cards into a per-user auto-created "Default" deck.
+1. **Header + "How does this page work?" accordion** — collapsible explainer card with 6 tiles: Your Score, Weak Areas, Performance Over Time, Performance Trend, Performance Prediction, Study Plan.
+2. **Your Score donut** — overall correct % across all answered questions in the active course (used answers, latest per question).
+3. **Weak Areas** — up to 3 cards. Rule: subjects with accuracy < 40% first; if none, take the 3 lowest-scoring subjects (capped at 90%). Each card shows subject, its weakest system, and the subject accuracy %.
+4. **Performance Over Time** — line chart of accuracy % per completed test, chronological.
+5. **Performance Trend** — compares average accuracy of most-recent half of tests vs earlier half; renders "+X.X points" (or "-X.X"). Needs ≥ 4 completed tests, otherwise a "not enough data" state.
+6. **Performance Prediction** — one AI-generated sentence: current overall %, total questions in the study plan, predicted overall if user scores ≥70% on the plan quizzes. Uses Lovable AI (`google/gemini-3.5-flash`) via server function; falls back to a deterministic formula if the AI call fails.
+7. **Study Plan** — 5 quizzes of 40 questions each, built from the user's previously-incorrect questions in the weakest subjects. Quiz #1 unlocked initially; each subsequent quiz unlocks after the previous is completed. "Start Quiz" launches a test in existing test flow (reuses `startTest` server fn with a fixed question-id list).
 
-### 2. Browse Decks tab
-- Search bar + Create Deck + New Card buttons.
-- Each deck card: colored circle avatar (initial), name, card count, New/Learning/Review pill counts, "See All" + 3-dot menu (Edit / Delete).
-- Horizontally scrollable strip of card previews per deck; click preview → open card editor.
+### Statistics by Category modal
 
-### 3. Study Mode tab
-- Table: Choose Deck | New Cards | Learning | To Review | Last Used | Action (gear).
-- Search decks, "View Stats" link (opens Statistics panel: Today / Forecast / Review Count / Time Spent).
-- Gear → Settings modal with tabs (New Cards: max/day + order; Reviews: max/day; General). Persist in `deck_settings` table or JSON column on deck.
-- Clicking a deck row starts a study session (simple SM-2-lite: show front → flip → Again/Hard/Good/Easy → schedule).
+Opened via "Statistics by Category" button. Tabs: **Subjects / Systems / Topics**. Rows sorted strongest → weakest with a colored badge (green ↑ / red ↓). Threshold for red arrow: <50%. Info banner: "Your category statistics are sorted from strongest to weakest." Scrollable list.
 
-### 4. Create Deck modal
-- Name + color swatch picker (blue/red/orange/yellow/purple/violet/gray/brown/pink/teal).
+### Backend
 
-### 5. Create Flashcard modal (rich)
-- Deck selector chip (top-left with color dot).
-- Front / Back panels with a lightweight rich-text toolbar (Paragraph/H1/H2, font size +/-, B/I/U/S, color, highlight, bullet/number/align, link, image, media, code, table, undo/redo). Store as HTML.
-- Character counter (x / 3000).
-- Tag input (comma-separated).
-- Maximize toggle, Cancel / Save.
-- Reuse for edit; per-card 3-dot Edit/Delete menu on tiles.
+New server functions in `src/lib/performance.functions.ts`:
+- `getImprovementsOverview({ qbankId })` → `{ overallPct, totalAnswered, weakAreas: [{subject, weakestSystem, pct}], perfOverTime: [{testId, name, pct, date}], trendDelta }`.
+- `getCategoryStats({ qbankId, kind: 'subject'|'system'|'topic' })` → `[{name, pct, count}]` sorted strongest→weakest.
+- `getStudyPlan({ qbankId })` → `{ quizzes: [{index, questionIds, subjectsLabel, unlocked, completedTestId}], totalQuestions }`. Deterministically picks weak-subject wrong-answered questions, chunks of 40, up to 5 quizzes. Unlock state derived from existing tests that used exactly those question ids (stored via `tests.metadata` marker `study_plan_index`).
+- `generatePerformancePrediction({ qbankId })` → `{ text }` via Lovable AI Gateway.
 
-### 6. Integration
-- Keep the existing quick-add modal from tutor/exam/search, but let it target a deck (default: auto "Quick Adds" deck for that qbank).
-- Update `notes.index.tsx` etc. unaffected.
+Reuses existing tables — no schema changes required (quizzes are ephemeral question-id lists persisted only when the user starts them; the `tests` row is tagged with `study_plan_index` in an existing metadata/notes column, or a new nullable column `study_plan_index INTEGER` added via migration if none exists).
 
-## Technical notes
-- Rich text: `@tiptap/react` + starter kit + underline/link/image/color/highlight/text-align/table extensions. `bun add` all.
-- SRS: simple SM-2 in `src/lib/srs.ts`.
-- All server fns use `requireSupabaseAuth`; migration adds tables with GRANTs + RLS (user_id = auth.uid()).
-- Files:
-  - migration: decks, deck_settings, extend flashcards.
-  - `src/lib/decks.functions.ts`, `src/lib/flashcards.functions.ts` (extend), `src/lib/srs.ts`.
-  - `src/routes/_authenticated/flashcards.my-decks.tsx` (main hub with tabs).
-  - `src/components/flashcards/DeckCard.tsx`, `CreateDeckModal.tsx`, `CardEditorModal.tsx` (tiptap), `StudySession.tsx`, `DeckSettingsModal.tsx`, `StatsPanel.tsx`.
+### Files
 
-## Out of scope (ask if wanted)
-- Media/video embeds beyond image (toolbar buttons will be present but only image works initially).
-- Import/export decks (Anki .apkg).
-- Cross-device sync of study timer beyond DB writes.
+- `src/routes/_authenticated/performance.improvements.tsx` (new page)
+- `src/components/performance/statistics-by-category-modal.tsx` (new)
+- `src/components/performance/weak-area-card.tsx`, `study-plan-list.tsx` (new)
+- `src/lib/performance.functions.ts` (extend)
+- `src/components/app-sidebar.tsx` (add "Improvements Required" link under Performance)
+- migration: add `study_plan_index INTEGER` to `tests` if not present, and grants unchanged.
 
-Confirm and I'll build it, or tell me what to trim (e.g. skip SRS, skip rich text, single tab only).
+### Non-goals
+
+- Not touching existing Overall / Graphs / Peer Ranking / Charts / AI Test Analysis pages.
+- No changes to test-taking UI; Study Plan quizzes use the existing runner.
