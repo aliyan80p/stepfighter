@@ -579,6 +579,12 @@ function QuestionModal({
         </div>
 
         {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+        <NotesModal
+          open={showNotes}
+          onClose={() => setShowNotes(false)}
+          qbankId={modalQbankId}
+          questionId={r.id}
+        />
         {showSettings && (
           <SettingsPanel
             onClose={() => setShowSettings(false)}
