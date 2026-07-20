@@ -59,6 +59,15 @@ function GraphsPage() {
     queryFn: () => fn({ data: { qbankId: opt.qbankId, sources: opt.sources, days } }),
   });
 
+  const chartsFn = useServerFn(getPerformanceCharts);
+  const { data: chartsData } = useQuery({
+    queryKey: ["perf-charts", opt.qbankId, opt.sources?.join(",") ?? "all"],
+    queryFn: () => chartsFn({ data: { qbankId: opt.qbankId, sources: opt.sources } }),
+  });
+  const tests = chartsData?.tests ?? [];
+  const byTest = tests.map((t: any) => ({ x: String(t.id), y: t.score, label: t.name }));
+  const byDate = tests.map((t: any) => ({ x: t.date, y: t.score, label: `${t.name} · ${t.date}` }));
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
