@@ -56,33 +56,40 @@ function ResetPage() {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="p-6 md:p-8 max-w-3xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Reset QBank</h1>
+        <div className="text-center space-y-2">
+          <div className="mx-auto h-12 w-12 rounded-full bg-orange-500 text-white flex items-center justify-center shadow">
+            <RotateCcw className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl font-bold text-rose-600">Reset Options</h1>
           <p className="text-sm text-muted-foreground">
-            Clear your attempts, tests, and flags for a single course.
+            Clear your data and start fresh. Please proceed with caution.
           </p>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-5">
-          <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">
+          <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-900">
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div className="text-sm">
-              Reset only affects the <strong>currently active course</strong>.
-              Switch courses from the top nav to reset a different one.
+              <strong>Warning:</strong> This action cannot be undone.
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-border p-4">
-            <div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                Active course
-              </div>
-              <div className="text-lg font-semibold">{course.name}</div>
-            </div>
+          <ul className="list-disc pl-5 space-y-2 text-sm rounded-lg bg-muted/40 p-4">
+            <li>
+              Resetting will <strong>DELETE ALL</strong> data for{" "}
+              <strong>{course.name}</strong>: attempts, tests (created, completed,
+              or suspended), and flagged questions.
+            </li>
+            <li className="text-rose-600 font-medium">
+              Progress in your other courses will not be affected.
+            </li>
+          </ul>
+
+          <div className="flex justify-center pt-2">
             <Button
               onClick={onReset}
               disabled={busy}
-              className="bg-gradient-to-r from-rose-500 to-red-600 hover:opacity-90 text-white shadow"
+              className="bg-gradient-to-r from-rose-500 to-red-600 hover:opacity-90 text-white shadow px-8"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               {busy ? "Resetting…" : `Reset ${course.name}`}
