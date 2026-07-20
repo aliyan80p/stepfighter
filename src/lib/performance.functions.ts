@@ -334,6 +334,58 @@ export const getPeerCategoryBreakdown = createServerFn({ method: "GET" })
     return { subjects: build(subjAgg, subjectName), systems: build(sysAgg, systemName) };
   });
 
+// ============ Performance Charts (per-test scores) ============
+export const getPerformanceCharts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ qbankId: qb(), sources: z.array(z.string()).optional() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Optionally resolve question set for source filter
+    let sourceQIds: Set<number> | null = null;
+    if (data.sources?.length) {
+      const { data: qs } = await supabase
+        .from("questions")
+        .select("id")
+        .eq("qbank_id", data.qbankId)
+        .in("source", data.sources)
+        .limit(100000);
+      sourceQIds = new Set((qs ?? []).map((r) => r.id));
+    }
+
+    const { data: tests, error } = await supabase
+      .from("tests")
+      .select("id,name,question_ids,right_count,wrong_count,done,created_at")
+      .eq("user_id", userId)
+      .eq("qbank_id", data.qbankId)
+      .eq("done", true)
+      .order("created_at", { ascending: true })
+      .limit(2000);
+    if (error) throw new Error(error.message);
+
+    const rows = (tests ?? [])
+      .filter((t) => {
+        if (!sourceQIds) return true;
+        const qids = (t.question_ids ?? []) as number[];
+        return qids.some((id) => sourceQIds!.has(id));
+      })
+      .map((t) => {
+        const qids = (t.question_ids ?? []) as number[];
+        const total = qids.length || 1;
+        const score = Math.round(((t.right_count ?? 0) / total) * 1000) / 10;
+        return {
+          id: Number(t.id),
+          name: t.name ?? `Test ${t.id}`,
+          date: (t.created_at as string).slice(0, 10),
+          score,
+        };
+      });
+
+    return { tests: rows };
+  });
+
 // ============ AI Test Analysis ============
 export const getAiTestAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
