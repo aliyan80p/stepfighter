@@ -1,12 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Trash2, Maximize2, ImagePlus } from "lucide-react";
+import { Plus, Search, X, Trash2, Maximize2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { listFlashcards, createFlashcard, deleteFlashcard } from "@/lib/flashcards.functions";
 import { listDecks, createDeck } from "@/lib/decks.functions";
+import { RichEditor } from "@/components/flashcards/rich-editor";
 
 const DEFAULT_DECK_KEY = "flashcards.defaultDeckId";
+const MAX_CHARS = 3000;
+
+const stripHtml = (html: string) => {
+  if (typeof window === "undefined") return html.replace(/<[^>]+>/g, "");
+  const el = document.createElement("div");
+  el.innerHTML = html;
+  return el.textContent || el.innerText || "";
+};
+
 
 type Props = {
   open: boolean;
