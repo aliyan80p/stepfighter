@@ -711,28 +711,31 @@ function TestRunner() {
 
         <div
           data-hl-toolbar
-          className="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-full shadow-xl px-2 py-1.5 -translate-x-1/2 -translate-y-full"
+          className="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-full shadow-xl px-2 py-1.5 -translate-x-1/2 -translate-y-full touch-manipulation"
           style={{ left: hlBar.x, top: hlBar.y }}
+          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
           {(multicolor ? HL_COLORS.filter(c => enabledHighlights[c]) : [HL_COLORS[0]]).map(c => (
             <button
               key={c}
-              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); applyColor(c); }}
-              className="h-5 w-5 rounded-full border border-white/20 hover:scale-110 transition-transform"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); applyColor(c); }}
+              className="h-6 w-6 sm:h-5 sm:w-5 rounded-full border border-white/20 hover:scale-110 transition-transform"
               style={{ background: c }}
               title="Highlight"
             />
           ))}
           <div className="w-px h-5 bg-white/20 mx-1" />
-          <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); eraseHighlight(); }} className="p-1 hover:bg-white/10 rounded" title="Remove highlight">
+          <button onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); eraseHighlight(); }} className="p-1.5 sm:p-1 hover:bg-white/10 rounded" title="Remove highlight">
             <Eraser className="h-4 w-4" />
           </button>
-          <button onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }} className="p-1 hover:bg-white/10 rounded" title="Copy">
+          <button onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }} className="p-1.5 sm:p-1 hover:bg-white/10 rounded" title="Copy">
             <Copy className="h-4 w-4" />
           </button>
         </div>
+
       )}
       {/* Top nav */}
       <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: NAV_BG }}>
