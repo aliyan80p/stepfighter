@@ -721,24 +721,24 @@ function TestRunner() {
         </div>
       )}
       {/* Top nav */}
-      <div className={`flex items-center justify-between px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: NAV_BG }}>
-        <div className="flex items-center gap-4">
+      <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: NAV_BG }}>
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {!(isRealExam && !isReview) && (
-            <button className="p-1 hover:bg-white/10 rounded" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
+            <button className="p-1 hover:bg-white/10 rounded shrink-0" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
               <span className="block w-5 h-0.5 bg-white mb-1" />
               <span className="block w-5 h-0.5 bg-white mb-1" />
               <span className="block w-5 h-0.5 bg-white" />
             </button>
           )}
-          <div className="text-[12px] leading-tight">
+          <div className="text-[11px] sm:text-[12px] leading-tight shrink-0">
             <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
             {(isRealExam && !isReview)
               ? <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
-              : <div className="text-[11px] text-white/75">Question Id: {question.id}</div>}
+              : <div className="hidden sm:block text-[11px] text-white/75">Question Id: {question.id}</div>}
           </div>
           <button
             onClick={bookmark}
-            className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10"
+            className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10 shrink-0"
             title={isBookmarked ? "Remove flag" : "Flag question"}
           >
             {(isRealExam && !isReview) && (
@@ -751,19 +751,19 @@ function TestRunner() {
               </span>
             )}
             <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
-            <span className="text-[11px] font-semibold text-white">Mark</span>
+            <span className="hidden sm:inline text-[11px] font-semibold text-white">Mark</span>
           </button>
 
 
 
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
           <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
           {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
           <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
