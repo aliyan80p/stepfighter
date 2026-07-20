@@ -331,6 +331,22 @@ function TestRunner() {
 
   const proceedExam = async () => {
     if (!question) return;
+    // Real exam mode: show USMLE-style warning before locking the answer
+    if (isRealExam && !isReview) {
+      const hasAnswer = selected != null;
+      const ok = await confirm({
+        title: "Warning",
+        description: hasAnswer ? (
+          <>You will not be able to change this answer if you proceed to next item.<br /><br />Do you wish to proceed?</>
+        ) : (
+          <>You have not answered this item.<br />You will not be able to select an answer for this item if you proceed to next item.<br /><br />Do you wish to proceed?</>
+        ),
+        confirmLabel: "Yes",
+        cancelLabel: "No",
+        tone: "warning",
+      });
+      if (!ok) return;
+    }
     if (selected != null && !submitted) {
       const secs = Math.round((Date.now() - startedAt) / 1000);
       const isCorrect = question.correct_answer === selected;
@@ -340,13 +356,16 @@ function TestRunner() {
         .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
     }
     if (idx === total - 1) {
-      const ok = await confirm({
-        title: "End this block?",
-        description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
-        confirmLabel: "End Block",
-        tone: "danger",
-      });
-      if (ok) await finish();
+      if (!isRealExam || isReview) {
+        const ok = await confirm({
+          title: "End this block?",
+          description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+          confirmLabel: "End Block",
+          tone: "danger",
+        });
+        if (!ok) return;
+      }
+      await finish();
     } else {
       goToQuestion(idx + 1);
     }
