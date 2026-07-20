@@ -71,8 +71,14 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const other = cards.filter((c: any) => !questionId || c.question_id !== questionId);
   const filtered = (arr: any[]) => query.trim() ? arr.filter(c => (c.front + " " + c.back).toLowerCase().includes(query.toLowerCase())) : arr;
 
+  const frontText = stripHtml(frontHtml);
+  const backText = stripHtml(backHtml);
+  const frontLen = frontText.length;
+  const backLen = backText.length;
+
   const submit = async () => {
-    if (!front.trim() && !frontImage) { toast.error("Add front text or an image"); return; }
+    if (!frontText.trim() && !/<img/i.test(frontHtml)) { toast.error("Add front text or an image"); return; }
+    if (frontLen > MAX_CHARS || backLen > MAX_CHARS) { toast.error(`Max ${MAX_CHARS} characters`); return; }
     try {
       let targetDeckId: string | null = deckId || null;
       if (showNewDeck && newDeckName.trim()) {
@@ -83,21 +89,20 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
       if (targetDeckId && typeof window !== "undefined") {
         localStorage.setItem(DEFAULT_DECK_KEY, targetDeckId);
       }
-      await createFn({ data: { qbankId, questionId, deckId: targetDeckId, front: front.trim(), back: back.trim(), frontImage, backImage } });
-      setFront(""); setBack(""); setFrontImage(null); setBackImage(null); setCreating(false);
+      const tags = tagsInput.split(",").map(t => t.trim()).filter(Boolean).slice(0, 30);
+      await createFn({ data: {
+        qbankId, questionId, deckId: targetDeckId,
+        front: frontText.trim().slice(0, 6000),
+        back: backText.trim().slice(0, 6000),
+        frontHtml, backHtml, tags,
+      } });
+      setFrontHtml(""); setBackHtml(""); setTagsInput(""); setCreating(false);
       setShowNewDeck(false); setNewDeckName("");
       qc.invalidateQueries({ queryKey: ["flashcards"] });
       toast.success("Flashcard saved");
     } catch (e: any) { toast.error(e?.message ?? "Failed to save"); }
   };
 
-  const pickImage = async (file: File | undefined, setter: (v: string | null) => void) => {
-    if (!file) return;
-    if (file.size > 2_000_000) { toast.error("Image must be under 2MB"); return; }
-    const reader = new FileReader();
-    reader.onload = () => setter(String(reader.result));
-    reader.readAsDataURL(file);
-  };
 
   const remove = async (id: string) => {
     try {
