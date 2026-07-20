@@ -54,7 +54,7 @@ function Dashboard() {
         {/* QBank Performance */}
         <div>
           <h2 className="text-lg font-semibold">QBank Performance</h2>
-          <p className="text-sm text-muted-foreground mb-4">Track your question bank progress and accuracy</p>
+          <p className="text-sm text-muted-foreground mb-4">Track your question bank progress and score</p>
 
           {data && (
             <div className="grid gap-4 md:grid-cols-2">

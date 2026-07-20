@@ -116,7 +116,7 @@ function ImprovementsPage() {
           </button>
           {howOpen && (
             <div className="grid gap-4 md:grid-cols-3 px-5 pb-5">
-              <ExplainCard icon={FileText} title="Your Score" text="This is your overall accuracy across all questions you have answered — calculated as the number of correct answers divided by total questions answered, across all your weak subjects." />
+              <ExplainCard icon={FileText} title="Your Score" text="Your overall score across all questions in your weak subjects — correct answers divided by total questions (omitted questions count as wrong, UWorld-style)." />
               <ExplainCard icon={Flag} title="Weak Areas" text="Up to 3 subjects where your score is lowest. If any subjects are below 40%, those are shown first. If all subjects are above 40%, the lowest-scoring ones (up to 90%) are shown instead." />
               <ExplainCard icon={LineChartIcon} title="Performance Over Time" text="A graph of your quiz scores in chronological order, showing how your performance has changed across each quiz you have taken." />
               <ExplainCard icon={LineChartIcon} title="Performance Trend" text="Compares the average score of your most recent quizzes against your earlier quizzes. A positive number means you are improving; a negative number means your scores have declined recently." />
