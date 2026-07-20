@@ -650,84 +650,9 @@ function TestRunner() {
     if (isTouch) window.setTimeout(run, 80); else run();
   };
 
-  // Global listeners: pointerup/touchend/keyup fire regardless of where the
-  // pointer released, so selection detection works even if the user drags
-  // outside the root or uses shift+arrow keyboard selection.
-  useEffect(() => {
-    const isHighlightTarget = (target: EventTarget | null) => {
-      return target instanceof Element && !!target.closest("[data-hlkey]");
-    };
-    const scheduleSelectionCheck = (isTouch = false, suppressToolbar = false) => {
-      if (selectionTimerRef.current != null) window.clearTimeout(selectionTimerRef.current);
-      selectionTimerRef.current = window.setTimeout(() => {
-        handleSelection({ isTouch, keepEmpty: true, suppressToolbar });
-      }, isTouch ? 140 : 40);
-    };
-    const beginSelectionGesture = (target: EventTarget | null, isTouch: boolean) => {
-      if (!isHighlightTarget(target)) return;
-      selectionGestureRef.current = true;
-      lastSelectionWasTouchRef.current = isTouch;
-      setHlBar(null);
-    };
-    const endSelectionGesture = (target: EventTarget | null, isTouch: boolean) => {
-      lastSelectionWasTouchRef.current = isTouch;
-      selectionGestureRef.current = false;
-      handleSelection({ isTouch, target, keepEmpty: true });
-      scheduleSelectionCheck(isTouch);
-    };
-    const onPointerDown = (e: PointerEvent) => {
-      beginSelectionGesture(e.target, e.pointerType === "touch" || e.pointerType === "pen");
-    };
-    const onPointerUp = (e: PointerEvent) => {
-      const isTouch = e.pointerType === "touch" || e.pointerType === "pen";
-      endSelectionGesture(e.target, isTouch);
-    };
-    const onPointerCancel = (e: PointerEvent) => {
-      const isTouch = e.pointerType === "touch" || e.pointerType === "pen";
-      endSelectionGesture(e.target, isTouch);
-    };
-    const onTouchStart = (e: TouchEvent) => {
-      beginSelectionGesture(e.target, true);
-    };
-    const onTouchEnd = (e: TouchEvent) => {
-      endSelectionGesture(e.target, true);
-    };
-    const onTouchCancel = (e: TouchEvent) => {
-      endSelectionGesture(e.target, true);
-    };
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (e.shiftKey || e.key === "Shift" || e.key.startsWith("Arrow")) {
-        handleSelection({ isTouch: false, target: e.target });
-      }
-    };
-    const onSelectionChange = () => {
-      if (selectionGestureRef.current) {
-        scheduleSelectionCheck(lastSelectionWasTouchRef.current, true);
-        return;
-      }
-      scheduleSelectionCheck(lastSelectionWasTouchRef.current);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("pointerup", onPointerUp);
-    document.addEventListener("pointercancel", onPointerCancel);
-    document.addEventListener("touchstart", onTouchStart, { passive: true });
-    document.addEventListener("touchend", onTouchEnd);
-    document.addEventListener("touchcancel", onTouchCancel);
-    document.addEventListener("keyup", onKeyUp);
-    document.addEventListener("selectionchange", onSelectionChange);
-    return () => {
-      if (selectionTimerRef.current != null) window.clearTimeout(selectionTimerRef.current);
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("pointerup", onPointerUp);
-      document.removeEventListener("pointercancel", onPointerCancel);
-      document.removeEventListener("touchstart", onTouchStart);
-      document.removeEventListener("touchend", onTouchEnd);
-      document.removeEventListener("touchcancel", onTouchCancel);
-      document.removeEventListener("keyup", onKeyUp);
-      document.removeEventListener("selectionchange", onSelectionChange);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Keep the ref pointing at the latest handleSelection so listeners registered
+  // above the early return always call the current closure.
+  handleSelectionRef.current = handleSelection;
 
 
 
