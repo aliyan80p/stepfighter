@@ -14,6 +14,16 @@ export function StudySession({ open, onClose, deckId, deckName }: Props) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const startRef = useRef<number>(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+  const [showTimer, setShowTimer] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setShowTimer(typeof window !== "undefined" && localStorage.getItem("flashcards.showAnswerTimer") === "1");
+    const id = setInterval(() => setElapsed(Date.now() - startRef.current), 200);
+    return () => clearInterval(id);
+  }, [open]);
+
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["study-queue", deckId],
@@ -55,9 +65,11 @@ export function StudySession({ open, onClose, deckId, deckName }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {showTimer && <div className="text-xs font-mono text-slate-600 tabular-nums">{(elapsed / 1000).toFixed(1)}s</div>}
           <div className="text-xs text-slate-500">{remaining} left</div>
           <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded"><X className="h-4 w-4" /></button>
         </div>
+
       </div>
 
       <div className="flex-1 flex items-center justify-center p-6">
