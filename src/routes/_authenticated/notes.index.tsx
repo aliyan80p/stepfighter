@@ -37,6 +37,7 @@ function NotesBrowser() {
   const [subject, setSubject] = useState<string>("all");
   const [pageSize, setPageSize] = useState(25);
   const { confirm, dialog } = useConfirm();
+  const [editNote, setEditNote] = useState<{ qbankId: number; questionId: number } | null>(null);
 
   // Notes scoped to the currently selected qbank
   const scopedNotes = useMemo(
