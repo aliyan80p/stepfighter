@@ -89,7 +89,8 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 200 }: Pr
         <Sep />
         <Btn onClick={addLink} title="Link"><LinkIcon className="h-3.5 w-3.5" /></Btn>
         <Btn onClick={addImage} title="Image"><ImageIcon className="h-3.5 w-3.5" /></Btn>
-        <Sep />
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onImageFile} />
+
         <Btn onClick={() => exec("undo")} title="Undo"><Undo2 className="h-3.5 w-3.5" /></Btn>
         <Btn onClick={() => exec("redo")} title="Redo"><Redo2 className="h-3.5 w-3.5" /></Btn>
       </div>
