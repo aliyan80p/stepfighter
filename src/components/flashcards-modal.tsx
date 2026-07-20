@@ -1,9 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, X, Trash2, Maximize2, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { listFlashcards, createFlashcard, deleteFlashcard } from "@/lib/flashcards.functions";
+import { listDecks, createDeck } from "@/lib/decks.functions";
+
+const DEFAULT_DECK_KEY = "flashcards.defaultDeckId";
 
 type Props = {
   open: boolean;
@@ -17,6 +20,8 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const listFn = useServerFn(listFlashcards);
   const createFn = useServerFn(createFlashcard);
   const delFn = useServerFn(deleteFlashcard);
+  const decksFn = useServerFn(listDecks);
+  const createDeckFn = useServerFn(createDeck);
 
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
@@ -26,6 +31,9 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const [backImage, setBackImage] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
+  const [deckId, setDeckId] = useState<string>("");
+  const [newDeckName, setNewDeckName] = useState("");
+  const [showNewDeck, setShowNewDeck] = useState(false);
   const frontFileRef = useRef<HTMLInputElement>(null);
   const backFileRef = useRef<HTMLInputElement>(null);
 
@@ -34,6 +42,20 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
     queryFn: () => listFn({ data: { qbankId } }),
     enabled: open,
   });
+
+  const { data: decksData } = useQuery({
+    queryKey: ["decks"],
+    queryFn: () => decksFn(),
+    enabled: open,
+  });
+  const decks = decksData?.decks ?? [];
+
+  useEffect(() => {
+    if (!open) return;
+    const saved = typeof window !== "undefined" ? localStorage.getItem(DEFAULT_DECK_KEY) : null;
+    if (saved && decks.some((d: any) => d.id === saved)) setDeckId(saved);
+    else if (decks[0]) setDeckId(decks[0].id);
+  }, [open, decks.length]);
 
   if (!open) return null;
 
@@ -44,8 +66,18 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   const submit = async () => {
     if (!front.trim() && !frontImage) { toast.error("Add front text or an image"); return; }
     try {
-      await createFn({ data: { qbankId, questionId, front: front.trim(), back: back.trim(), frontImage, backImage } });
+      let targetDeckId: string | null = deckId || null;
+      if (showNewDeck && newDeckName.trim()) {
+        const created: any = await createDeckFn({ data: { name: newDeckName.trim(), color: "#3b82f6" } });
+        targetDeckId = created.id;
+        qc.invalidateQueries({ queryKey: ["decks"] });
+      }
+      if (targetDeckId && typeof window !== "undefined") {
+        localStorage.setItem(DEFAULT_DECK_KEY, targetDeckId);
+      }
+      await createFn({ data: { qbankId, questionId, deckId: targetDeckId, front: front.trim(), back: back.trim(), frontImage, backImage } });
       setFront(""); setBack(""); setFrontImage(null); setBackImage(null); setCreating(false);
+      setShowNewDeck(false); setNewDeckName("");
       qc.invalidateQueries({ queryKey: ["flashcards"] });
       toast.success("Flashcard saved");
     } catch (e: any) { toast.error(e?.message ?? "Failed to save"); }
@@ -145,6 +177,38 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 p-4" onClick={() => setCreating(false)}>
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="font-semibold text-slate-800 mb-3">New Flashcard</div>
+
+              <div className="mb-3">
+                <label className="text-xs font-semibold text-slate-600 block mb-1">Deck</label>
+                {showNewDeck ? (
+                  <div className="flex gap-2">
+                    <input
+                      value={newDeckName}
+                      onChange={(e) => setNewDeckName(e.target.value)}
+                      placeholder="New deck name"
+                      autoFocus
+                      className="flex-1 border rounded px-2 py-1.5 text-sm"
+                    />
+                    <button onClick={() => { setShowNewDeck(false); setNewDeckName(""); }} className="text-xs text-slate-500 px-2">Cancel</button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <select
+                      value={deckId}
+                      onChange={(e) => setDeckId(e.target.value)}
+                      className="flex-1 border rounded px-2 py-1.5 text-sm"
+                    >
+                      {decks.length === 0 && <option value="">— No decks yet —</option>}
+                      {decks.map((d: any) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                    <button onClick={() => setShowNewDeck(true)} className="text-xs px-2 py-1 border rounded text-blue-600 hover:bg-blue-50 whitespace-nowrap">+ New deck</button>
+                  </div>
+                )}
+                <p className="text-[11px] text-slate-500 mt-1">All new cards you create will be saved to this deck.</p>
+              </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* FRONT */}
