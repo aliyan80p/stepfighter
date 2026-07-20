@@ -509,38 +509,49 @@ function TestRunner() {
     return rangeFromOffsets(root, snap.start, snap.end) ?? savedRangeRef.current;
   };
 
-  const handleSelection = (event?: React.MouseEvent<HTMLDivElement>) => {
+  const handleSelection = (event?: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
     const target = event?.target instanceof Element ? event.target : null;
     if (target?.closest("[data-hl-toolbar]")) return;
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); savedTextRef.current = ""; return; }
-    const range = sel.getRangeAt(0);
-    const startRoot = getHighlightRoot(range.startContainer);
-    const endRoot = getHighlightRoot(range.endContainer);
-    if (!startRoot || !endRoot || !contentRef.current?.contains(startRoot) || !contentRef.current?.contains(endRoot)) {
-      setHlBar(null);
-      savedSelectionRef.current = null;
-      savedTextRef.current = "";
-      return;
-    }
-    // Only save single-root offsets when start/end share a root (used for exact restore).
-    if (startRoot === endRoot) {
-      const key = startRoot.dataset.hlkey;
-      if (key) {
-        const offsets = getSelectionOffsets(startRoot, range);
-        savedSelectionRef.current = { key, ...offsets };
+    const isTouch = (event as React.PointerEvent | undefined)?.pointerType === "touch"
+      || (event as React.PointerEvent | undefined)?.pointerType === "pen";
+    const run = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); savedTextRef.current = ""; return; }
+      const range = sel.getRangeAt(0);
+      const startRoot = getHighlightRoot(range.startContainer);
+      const endRoot = getHighlightRoot(range.endContainer);
+      if (!startRoot || !endRoot || !contentRef.current?.contains(startRoot) || !contentRef.current?.contains(endRoot)) {
+        setHlBar(null);
+        savedSelectionRef.current = null;
+        savedTextRef.current = "";
+        return;
       }
-    } else {
-      savedSelectionRef.current = null;
-    }
-    savedRangeRef.current = range.cloneRange();
-    savedTextRef.current = range.toString();
-    const rect = range.getBoundingClientRect();
-    setHlBar({ x: rect.left + rect.width / 2, y: rect.top - 8 });
-    // Keep the toolbar, but remove the browser's native blue selection overlay.
-    // The exact text/range is already saved above for highlight/copy actions.
-    sel.removeAllRanges();
+      if (startRoot === endRoot) {
+        const key = startRoot.dataset.hlkey;
+        if (key) {
+          const offsets = getSelectionOffsets(startRoot, range);
+          savedSelectionRef.current = { key, ...offsets };
+        }
+      } else {
+        savedSelectionRef.current = null;
+      }
+      savedRangeRef.current = range.cloneRange();
+      savedTextRef.current = range.toString();
+      const rect = range.getBoundingClientRect();
+      // On touch devices, keep the native selection so users can extend it and
+      // access the OS copy menu; place our toolbar just below so it doesn't
+      // fight with the iOS/Android callout that appears above the selection.
+      const toolbarY = isTouch ? rect.bottom + 44 : rect.top - 8;
+      setHlBar({ x: rect.left + rect.width / 2, y: toolbarY });
+      if (!isTouch) {
+        // Desktop: hide the browser's blue overlay; the range is already saved.
+        sel.removeAllRanges();
+      }
+    };
+    // Touch selection finalizes after touchend/pointerup fires — defer a tick.
+    if (isTouch) setTimeout(run, 30); else run();
   };
+
 
   const textOffsetIn = (root: HTMLElement, container: Node, offset: number) => {
     try {
