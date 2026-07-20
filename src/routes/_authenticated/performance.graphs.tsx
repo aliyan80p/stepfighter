@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { getPerformanceGraphs } from "@/lib/performance.functions";
+import { getPerformanceGraphs, getPerformanceCharts } from "@/lib/performance.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
-import { TrendingUp, BarChart3, Layers, Activity } from "lucide-react";
+import { TrendingUp, BarChart3, Layers, Activity, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/performance/graphs")({
   component: GraphsPage,
