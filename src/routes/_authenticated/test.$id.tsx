@@ -503,10 +503,12 @@ function TestRunner() {
 
   const restoreSavedRange = () => {
     const snap = savedSelectionRef.current;
-    if (!snap || !contentRef.current) return savedRangeRef.current;
+    const liveSel = window.getSelection();
+    const liveRange = liveSel && liveSel.rangeCount > 0 && !liveSel.isCollapsed ? liveSel.getRangeAt(0) : null;
+    if (!snap || !contentRef.current) return savedRangeRef.current ?? liveRange;
     const root = contentRef.current.querySelector<HTMLElement>(`[data-hlkey="${CSS.escape(snap.key)}"]`);
-    if (!root) return savedRangeRef.current;
-    return rangeFromOffsets(root, snap.start, snap.end) ?? savedRangeRef.current;
+    if (!root) return savedRangeRef.current ?? liveRange;
+    return rangeFromOffsets(root, snap.start, snap.end) ?? savedRangeRef.current ?? liveRange;
   };
 
   const handleSelection = (opts?: { isTouch?: boolean; target?: EventTarget | null }) => {
