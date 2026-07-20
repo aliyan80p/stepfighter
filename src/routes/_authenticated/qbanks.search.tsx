@@ -97,16 +97,11 @@ function SearchPage() {
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Course</label>
-            <select
-              value={currentBank.id}
-              onChange={(e) => setActiveQbankId(Number(e.target.value))}
-              className="w-full mt-1 py-2.5 px-3 border rounded-md bg-white"
-            >
-              {QBANKS.map((q) => (
-                <option key={q.id} value={q.id}>{q.name}</option>
-              ))}
-            </select>
+            <div className="w-full mt-1 py-2.5 px-3 border rounded-md bg-slate-100 text-slate-700 font-medium">
+              {currentBank.name}
+            </div>
           </div>
+
           <button
             onClick={runSearch}
             disabled={mutation.isPending}
