@@ -157,10 +157,9 @@ function NotesBrowser() {
               >
                 <ExternalLink className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="ghost" title="Edit"
+              <Button size="icon" variant="ghost" title="Edit note"
                 onClick={() => {
-                  if (n.qbankId) setActiveQbankId(Number(n.qbankId));
-                  router.navigate({ to: "/qbanks/search", search: { q: String(n.questionId), open: String(n.questionId) } as never });
+                  setEditNote({ qbankId: Number(n.qbankId), questionId: Number(n.questionId) });
                 }}>
                 <Pencil className="h-4 w-4 text-blue-500" />
               </Button>
