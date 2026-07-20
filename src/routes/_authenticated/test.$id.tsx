@@ -942,15 +942,17 @@ function TestRunner() {
                       <div className="text-[11px] text-gray-500">Time Taken</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 text-green-700" />
+                  {!userSettings.hidePercentages && (
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
+                        <CheckCircle2 className="h-4 w-4 text-green-700" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold">{peerPct}%</div>
+                        <div className="text-[11px] text-gray-500">Answered Correctly</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-semibold">{peerPct}%</div>
-                      <div className="text-[11px] text-gray-500">Answered Correctly</div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
