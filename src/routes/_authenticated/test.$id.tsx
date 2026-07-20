@@ -241,12 +241,15 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [blockStartedAt, userSettings.stopTimerOnBlur]);
 
-  // Auto night mode — switch to dark theme between 20:00 and 06:00
+  // Auto night mode — switch to dark theme within the user's scheduled window
   useEffect(() => {
     if (!userSettings.autoNightMode) return;
     const h = new Date().getHours();
-    if (h >= 20 || h < 6) setTheme("dark");
-  }, [userSettings.autoNightMode, question?.id]);
+    const s = userSettings.nightStart, e = userSettings.nightEnd;
+    const inWindow = s === e ? false : s < e ? (h >= s && h < e) : (h >= s || h < e);
+    if (inWindow) setTheme("dark");
+  }, [userSettings.autoNightMode, userSettings.nightStart, userSettings.nightEnd, question?.id]);
+
 
   // Initialize tutor/exam toggle from test.mode once per test
   useEffect(() => {
