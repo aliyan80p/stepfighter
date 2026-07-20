@@ -423,7 +423,7 @@ function NewTest() {
 
       {/* Tabs / Selection */}
       <Card>
-        <div className="flex items-center gap-1 border-b border-border mb-4 -mt-2 -mx-6 px-6 overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-0 border-b border-border mb-4 -mt-2 -mx-6 px-2 sm:px-6">
           {(Object.keys(availableTabs) as Tab[]).map((t) => {
             const enabled = availableTabs[t];
             return (
@@ -432,7 +432,7 @@ function NewTest() {
                 disabled={!enabled}
                 onClick={() => enabled && setOpenTab(t)}
                 className={cn(
-                  "shrink-0 px-3 sm:px-4 py-3 text-sm font-medium capitalize border-b-2 -mb-px transition-colors",
+                  "shrink-0 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium capitalize border-b-2 -mb-px transition-colors",
                   openTab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground",
                   enabled ? "hover:text-foreground cursor-pointer" : "opacity-40 cursor-not-allowed",
                 )}
@@ -447,6 +447,7 @@ function NewTest() {
             </button>
           </div>
         </div>
+
 
         {openTab === "courses" && (
           <SelectionList
