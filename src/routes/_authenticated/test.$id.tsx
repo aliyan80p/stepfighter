@@ -460,6 +460,9 @@ function TestRunner() {
   };
 
   const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1 });
+  const answerHtmlFor = (key: string, letter: string, html: string) => (
+    rewriteMedia(highlightHtml[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1 })
+  );
 
   const getHighlightRoot = (node: Node) => {
     const el = (node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement) as Element | null;
@@ -1032,9 +1035,13 @@ function TestRunner() {
                     >
                       {isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />}
                     </span>
-                    <span className="flex-1" style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}>
-                      <span className="font-normal">{letter}. </span>
-                      <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: htmlFor(`a${i}`, a.answer_text) }} />
+                    <span className="flex-1 min-w-0">
+                      <span
+                        data-hlkey={`a${i}`}
+                        className="qbank-html qbank-light inline"
+                        style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
+                        dangerouslySetInnerHTML={{ __html: answerHtmlFor(`a${i}`, letter, a.answer_text) }}
+                      />
                       {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
                     </span>
                   </div>
