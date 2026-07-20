@@ -1129,23 +1129,22 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex flex-wrap items-center justify-between gap-1 sm:gap-3 px-1 sm:px-4 py-0 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
-            <div className="shrink-0 font-semibold tracking-wide tabular-nums hidden sm:block">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
+            <div className="shrink-0 font-semibold tracking-wide tabular-nums">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
             <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
               <span>IMD QBank</span>
             </div>
-            <div className="shrink-0 flex items-center gap-1 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {!isReview && (
                 <>
-                  <div className="hidden sm:flex items-center gap-3">
-                    <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
-                    <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
-                    <div className="w-px h-6 bg-white/20 mx-1" />
-                  </div>
+                  <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
+                  <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
+                  <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
                 </>
               )}
+
 
               
               <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
