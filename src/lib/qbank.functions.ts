@@ -27,8 +27,9 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     }
 
     const questionsCountQ = sources
-      ? supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId).in("source", sources)
-      : supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId);
+      ? supabase.from("questions").select("id", { count: "exact", head: true }).eq("qbank_id", qbankId).in("source", sources)
+      : null;
+
 
     let attemptsQ = supabase.from("attempts").select("is_correct,question_id,selected_answer,created_at").eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true });
     let bookmarksQ = supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("qbank_id", qbankId);
