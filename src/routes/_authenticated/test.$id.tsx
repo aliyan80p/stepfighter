@@ -1179,8 +1179,10 @@ function TestRunner() {
           multicolor={multicolor} setMulticolor={setMulticolor}
           activeHighlight={activeHighlight} setActiveHighlight={setActiveHighlight}
           enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
+          userSettings={userSettings}
         />
       )}
+
 
       {exhibitSrc && (
         <ExhibitModal
