@@ -15,6 +15,14 @@ import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
 import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
+import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
+import notesIcon from "@/assets/icons/notes-icon.png.asset.json";
+import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
+import flashcardIcon from "@/assets/flashcard-icon.png.asset.json";
+import goBackIcon from "@/assets/icons/go-back.png.asset.json";
+import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
+import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
+import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 
 
 export const Route = createFileRoute("/_authenticated/qbanks/search")({
