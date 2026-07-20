@@ -67,8 +67,21 @@ export function DeckSettingsModal({ open, onClose, deckName, initial, onSave }: 
             </Field>
           )}
           {tab === "general" && (
-            <div className="text-sm text-slate-500">No general options yet.</div>
+            <div className="space-y-3">
+              <Field label="Show answer timer">
+                <Toggle
+                  checked={typeof window !== "undefined" && localStorage.getItem("flashcards.showAnswerTimer") === "1"}
+                  onChange={(v) => {
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem("flashcards.showAnswerTimer", v ? "1" : "0");
+                    }
+                    setS({ ...s }); // trigger re-render
+                  }}
+                />
+              </Field>
+            </div>
           )}
+
         </div>
         <div className="flex items-center justify-between px-4 py-3 border-t text-sm">
           <button onClick={onClose} className="text-blue-600 hover:underline">Cancel</button>
