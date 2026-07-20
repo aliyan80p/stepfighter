@@ -45,7 +45,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       }
     }
 
-    const [{ count: totalQ }, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }, { data: testsRaw }] = await Promise.all([
+    const [countRes, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }, { data: testsRaw }] = await Promise.all([
       questionsCountQ,
       supabase.from("subjects").select("id,name,count").eq("qbank_id", qbankId).order("id"),
       // Only fetch per-question subject mapping when a source filter is active.
@@ -68,6 +68,8 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     } else {
       subjects = (subjectsRaw ?? []).map((s) => ({ ...s, count: s.count ?? 0 }));
     }
+    const totalQ = countRes?.count ?? subjects.reduce((sum, s) => sum + (s.count ?? 0), 0);
+
 
     const uniqueDone = new Set((attempts ?? []).map((a) => a.question_id)).size;
     const correct = (attempts ?? []).filter((a) => a.is_correct).length;
