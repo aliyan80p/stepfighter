@@ -201,6 +201,8 @@ export const createCustomTest = createServerFn({ method: "POST" })
     questionIds: z.array(z.number().int().positive()).min(1).max(500),
     mode: z.enum(["practice", "test"]).default("practice"),
     timed: z.boolean().default(false),
+    name: z.string().optional(),
+    studyPlanIndex: z.number().int().min(1).max(50).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -210,14 +212,18 @@ export const createCustomTest = createServerFn({ method: "POST" })
     const validIds = (found ?? []).map((r: any) => r.id as number);
     if (!validIds.length) throw new Error("None of the provided question IDs were found.");
     const ordered = uniq.filter((id) => validIds.includes(id));
+    const insertRow: any = { user_id: userId, question_ids: ordered, mode: data.mode, qbank_id: data.qbankId };
+    if (data.name) insertRow.name = data.name;
+    if (data.studyPlanIndex) insertRow.study_plan_index = data.studyPlanIndex;
     const { data: inserted, error: e2 } = await supabase
       .from("tests")
-      .insert({ user_id: userId, question_ids: ordered, mode: data.mode, qbank_id: data.qbankId })
+      .insert(insertRow)
       .select("id")
       .single();
     if (e2) throw e2;
     return { id: inserted.id as number, count: ordered.length, skipped: uniq.length - ordered.length };
   });
+
 
 export const getTestQuestionIds = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
