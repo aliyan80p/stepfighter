@@ -426,7 +426,7 @@ function QuestionModal({
           <div className="flex items-center gap-1">
             <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
             <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
-            <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
+            <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
             
             <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
             <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings((v) => !v)} />
