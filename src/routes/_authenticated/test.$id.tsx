@@ -98,14 +98,16 @@ function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { ico
   return (
     <button
       onClick={onClick}
-      className="shrink-0 flex flex-col items-center justify-center px-2 sm:px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[52px] sm:min-w-[64px] leading-tight"
+      title={label}
+      aria-label={label}
+      className="shrink-0 flex flex-col items-center justify-center px-1 sm:px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[36px] sm:min-w-[64px] leading-tight"
     >
       {imgSrc ? (
         <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
       ) : Icon ? (
         <Icon className="h-5 w-5" />
       ) : null}
-      <span className="text-[10px] sm:text-[11px] mt-0.5">{label}</span>
+      <span className="hidden sm:block text-[11px] mt-0.5">{label}</span>
     </button>
   );
 }
