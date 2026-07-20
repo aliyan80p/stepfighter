@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { listNotes, deleteNote } from "@/lib/notes.functions";
-import { setActiveQbankId } from "@/lib/active-qbank";
+import { setActiveQbankId, useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
