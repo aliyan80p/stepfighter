@@ -223,3 +223,51 @@ function BarChart({ data, color }: { data: { x: string; y: number }[]; color: st
     </div>
   );
 }
+
+function ScatterChart({ data }: { data: { x: string; y: number; label: string }[] }) {
+  const W = 900, H = 320, padL = 36, padR = 12, padT = 24, padB = 60;
+  const n = data.length;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const stepX = n > 1 ? innerW / (n - 1) : 0;
+  const xAt = (i: number) => padL + i * stepX;
+  const yAt = (v: number) => padT + innerH - (Math.max(0, Math.min(100, v)) / 100) * innerH;
+  const [hover, setHover] = useState<number | null>(null);
+  const labelEvery = Math.max(1, Math.ceil(n / 30));
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ minWidth: Math.max(600, n * 12) }}>
+        {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((v) => (
+          <g key={v}>
+            <line x1={padL} x2={W - padR} y1={yAt(v)} y2={yAt(v)} stroke="hsl(0 0% 88%)" strokeDasharray="2 3" />
+            <text x={padL - 6} y={yAt(v) + 3} fontSize={10} textAnchor="end" fill="hsl(var(--muted-foreground))">{v}</text>
+          </g>
+        ))}
+        {n > 1 && (
+          <polyline fill="none" stroke="hsl(217 91% 75%)" strokeWidth={1} points={data.map((d, i) => `${xAt(i)},${yAt(d.y)}`).join(" ")} />
+        )}
+        {data.map((d, i) => (
+          <circle key={i} cx={xAt(i)} cy={yAt(d.y)} r={hover === i ? 5 : 3.2} fill="hsl(217 91% 55%)"
+            onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} style={{ cursor: "pointer" }} />
+        ))}
+        {data.map((d, i) =>
+          i % labelEvery === 0 ? (
+            <g key={`xl-${i}`} transform={`translate(${xAt(i)}, ${H - padB + 10})`}>
+              <text fontSize={9} fill="hsl(var(--muted-foreground))" transform="rotate(-55)" textAnchor="end">{d.x}</text>
+            </g>
+          ) : null,
+        )}
+        {hover != null && (
+          <g>
+            <rect x={Math.min(W - 160, Math.max(0, xAt(hover) - 70))} y={Math.max(4, yAt(data[hover].y) - 42)}
+              width={160} height={34} rx={6} fill="hsl(var(--foreground))" opacity={0.92} />
+            <text x={Math.min(W - 160, Math.max(0, xAt(hover) - 70)) + 8} y={Math.max(4, yAt(data[hover].y) - 42) + 14}
+              fontSize={11} fill="hsl(var(--background))" fontWeight={600}>{data[hover].label.slice(0, 26)}</text>
+            <text x={Math.min(W - 160, Math.max(0, xAt(hover) - 70)) + 8} y={Math.max(4, yAt(data[hover].y) - 42) + 28}
+              fontSize={11} fill="hsl(var(--background))">Score: {data[hover].y}%</text>
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+}
