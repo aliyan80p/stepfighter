@@ -730,7 +730,7 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }} onPointerUp={handleSelection}>
+    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
       {hlBar && (
 
         <div
