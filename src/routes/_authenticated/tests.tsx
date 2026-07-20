@@ -123,11 +123,12 @@ function TestsList() {
               </p>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <StatCard label="Saved Tests" value={totals.saved} />
             <StatCard label="Completed" value={totals.completed} accent="success" />
             <StatCard label="Suspended" value={totals.suspended} accent="warn" />
           </div>
+
         </div>
       </div>
 
@@ -162,7 +163,7 @@ function TestsList() {
 
       {/* Table */}
       <div className="rounded-2xl border border-border overflow-hidden">
-        <div className="bg-muted/50 grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] gap-4 px-4 py-3 text-sm font-medium">
+        <div className="bg-muted/50 hidden md:grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] gap-4 px-4 py-3 text-sm font-medium">
           <SortHeader label="Name" k="name" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
           <SortHeader label="Score" k="score" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
           <SortHeader label="Date" k="date" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
@@ -182,7 +183,7 @@ function TestsList() {
           {filtered.map((r) => {
             const d = new Date(r.created_at);
             return (
-              <div key={r.id} className="grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] gap-4 px-4 py-4 items-center hover:bg-muted/30 transition-colors">
+              <div key={r.id} className="flex flex-col gap-3 md:grid md:grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] md:gap-4 px-4 py-4 md:items-center hover:bg-muted/30 transition-colors">
                 <div>
                   <div className="font-medium text-sm">{r.name}</div>
                   <div className="mt-2 flex gap-1.5 items-center">
