@@ -16,6 +16,8 @@ import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 import { NotesModal } from "@/components/notes-modal";
+import { FlashcardsModal } from "@/components/flashcards-modal";
+import { FeedbackModal } from "@/components/feedback-modal";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
