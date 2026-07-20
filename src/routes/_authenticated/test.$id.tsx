@@ -263,13 +263,13 @@ function TestRunner() {
       if (!state.root || !state.anchor) return false;
       const focus = caretRangeFromPoint(touch.clientX, touch.clientY);
       if (!focus) return false;
-      const focusRoot = highlightRootForTarget(document.elementFromPoint(touch.clientX, touch.clientY));
-      if (focusRoot !== state.root || !state.root.contains(focus.startContainer)) return false;
+      if (!state.root.contains(focus.startContainer)) return false;
 
       const nextRange = document.createRange();
-      nextRange.setStart(state.anchor.startContainer, state.anchor.startOffset);
-      nextRange.setEnd(focus.startContainer, focus.startOffset);
-      if (nextRange.collapsed || nextRange.toString().trim().length === 0) {
+      try {
+        nextRange.setStart(state.anchor.startContainer, state.anchor.startOffset);
+        nextRange.setEnd(focus.startContainer, focus.startOffset);
+      } catch {
         nextRange.setStart(focus.startContainer, focus.startOffset);
         nextRange.setEnd(state.anchor.startContainer, state.anchor.startOffset);
       }
