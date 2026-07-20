@@ -53,10 +53,12 @@ async function getApplier(cls: string) {
   if (!a) {
     a = rangy.createClassApplier(cls, {
       elementTagName: "mark",
-      elementProperties: { className: `${cls} qbank-hl` },
       ignoreWhiteSpace: true,
       tagNames: ["mark", "span", "hl", "a", "b", "i", "em", "strong", "u"],
       normalize: true,
+      onElementCreate: (el: HTMLElement) => {
+        el.classList.add("qbank-hl");
+      },
     });
     appliers.set(cls, a);
   }
