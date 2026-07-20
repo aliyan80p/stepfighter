@@ -93,27 +93,15 @@ function NotesBrowser() {
           <span>entries</span>
         </div>
 
-        <Select value={qbank} onValueChange={setQbank}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="QBank" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All QBanks</SelectItem>
-            {qbanks.map((q) => <SelectItem key={q} value={q}>{q}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {activeQbankName && (
+          <Badge variant="outline" className="text-xs">{activeQbankName}</Badge>
+        )}
 
         <Select value={subject} onValueChange={setSubject}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Subject" /></SelectTrigger>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Subject" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Subjects</SelectItem>
             {subjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        <Select value={system} onValueChange={setSystem}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="System" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Systems</SelectItem>
-            {systems.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
 
