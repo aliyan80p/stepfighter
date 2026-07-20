@@ -19,6 +19,8 @@ export type UserSettings = {
   confirmOmission: boolean;
   hidePercentages: boolean;
   autoNightMode: boolean;
+  nightStart: number; // hour 0-23
+  nightEnd: number;   // hour 0-23
   // Reading
   fontSize: number;
   fontWeight: number;
@@ -28,6 +30,7 @@ export type UserSettings = {
   // Toolbar
   toolbar: Record<string, boolean>;
 };
+
 
 export const DEFAULT_HIGHLIGHTS: Record<string, { label: string; color: string }> = {
   "#ffeb3b": { label: "Yellow Highlight", color: "#ffeb3b" },
