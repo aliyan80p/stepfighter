@@ -133,7 +133,8 @@ export function useHydratedSettings(): UserSettings {
   const [s, setS] = useState<UserSettings>(DEFAULT_SETTINGS);
   useEffect(() => {
     setS(load());
-    return subscribe(() => setS(current));
+    const unsub = subscribe(() => setS(current));
+    return () => { unsub(); };
   }, []);
   return s;
 }
