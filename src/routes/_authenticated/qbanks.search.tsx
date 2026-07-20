@@ -129,19 +129,20 @@ function SearchPage() {
         <div className="text-center py-12 text-slate-500">No questions found.</div>
       )}
 
-      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} />}
+      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} autoOpenId={autoOpenId} />}
     </div>
   );
 }
 
 type SortKey = "id" | "subject" | "system" | "topic";
 
-function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void }) {
+function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void; autoOpenId?: number | null }) {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [viewingIdx, setViewingIdx] = useState<number | null>(null);
   const pageSize = 20;
+
 
   const sorted = useMemo(() => {
     const arr = [...results];
