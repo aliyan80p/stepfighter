@@ -62,7 +62,7 @@ function Dashboard() {
               <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
                 <div className="font-semibold">QBank Usage</div>
                 <div className="text-xs text-muted-foreground mb-4">Counts each unique question ID once, even if repeated</div>
-                <div className="flex items-center gap-6">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                   <Donut
                     size={160}
                     segments={[
@@ -72,7 +72,7 @@ function Dashboard() {
                     ]}
                     center={<div className="text-center"><div className="text-2xl font-bold">{data.usedPct}%</div><div className="text-[10px] text-muted-foreground uppercase">Used</div></div>}
                   />
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 min-w-0 w-full space-y-3">
                     <Row icon={HelpCircle} tone="blue" label="Total Questions" value={data.totalQuestions} />
                     <Row icon={User} tone="rose" label="Used Questions" value={data.answered} />
                     <Row icon={MinusCircle} tone="sky" label="Unused Questions" value={data.unused} />
