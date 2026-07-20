@@ -13,7 +13,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/tests'
-import { Route as AuthenticatedStudyPlannerRouteImport } from './routes/_authenticated/study-planner'
 import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticated/new-test'
 import { Route as AuthenticatedMedicalLibraryRouteImport } from './routes/_authenticated/medical-library'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -59,12 +58,6 @@ const AuthenticatedTestsRoute = AuthenticatedTestsRouteImport.update({
   path: '/tests',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedStudyPlannerRoute =
-  AuthenticatedStudyPlannerRouteImport.update({
-    id: '/study-planner',
-    path: '/study-planner',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedNewTestRoute = AuthenticatedNewTestRouteImport.update({
   id: '/new-test',
   path: '/new-test',
@@ -215,7 +208,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/new-test': typeof AuthenticatedNewTestRoute
-  '/study-planner': typeof AuthenticatedStudyPlannerRoute
   '/tests': typeof AuthenticatedTestsRoute
   '/account/reset': typeof AuthenticatedAccountResetRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
@@ -246,7 +238,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/new-test': typeof AuthenticatedNewTestRoute
-  '/study-planner': typeof AuthenticatedStudyPlannerRoute
   '/tests': typeof AuthenticatedTestsRoute
   '/account/reset': typeof AuthenticatedAccountResetRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
@@ -279,7 +270,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/_authenticated/new-test': typeof AuthenticatedNewTestRoute
-  '/_authenticated/study-planner': typeof AuthenticatedStudyPlannerRoute
   '/_authenticated/tests': typeof AuthenticatedTestsRoute
   '/_authenticated/account/reset': typeof AuthenticatedAccountResetRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
@@ -312,7 +302,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/medical-library'
     | '/new-test'
-    | '/study-planner'
     | '/tests'
     | '/account/reset'
     | '/account/settings'
@@ -343,7 +332,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/medical-library'
     | '/new-test'
-    | '/study-planner'
     | '/tests'
     | '/account/reset'
     | '/account/settings'
@@ -375,7 +363,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/medical-library'
     | '/_authenticated/new-test'
-    | '/_authenticated/study-planner'
     | '/_authenticated/tests'
     | '/_authenticated/account/reset'
     | '/_authenticated/account/settings'
@@ -437,13 +424,6 @@ declare module '@tanstack/react-router' {
       path: '/tests'
       fullPath: '/tests'
       preLoaderRoute: typeof AuthenticatedTestsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/study-planner': {
-      id: '/_authenticated/study-planner'
-      path: '/study-planner'
-      fullPath: '/study-planner'
-      preLoaderRoute: typeof AuthenticatedStudyPlannerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/new-test': {
@@ -640,7 +620,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMedicalLibraryRoute: typeof AuthenticatedMedicalLibraryRoute
   AuthenticatedNewTestRoute: typeof AuthenticatedNewTestRoute
-  AuthenticatedStudyPlannerRoute: typeof AuthenticatedStudyPlannerRoute
   AuthenticatedTestsRoute: typeof AuthenticatedTestsRoute
   AuthenticatedAccountResetRoute: typeof AuthenticatedAccountResetRoute
   AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
@@ -666,7 +645,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMedicalLibraryRoute: AuthenticatedMedicalLibraryRoute,
   AuthenticatedNewTestRoute: AuthenticatedNewTestRoute,
-  AuthenticatedStudyPlannerRoute: AuthenticatedStudyPlannerRoute,
   AuthenticatedTestsRoute: AuthenticatedTestsRoute,
   AuthenticatedAccountResetRoute: AuthenticatedAccountResetRoute,
   AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
