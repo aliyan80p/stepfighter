@@ -212,6 +212,7 @@ function TestRunner() {
   const savedRangeRef = useRef<Range | null>(null);
   const savedSelectionRef = useRef<{ key: string; start: number; end: number } | null>(null);
   const savedTextRef = useRef("");
+  const selectionTimerRef = useRef<number | null>(null);
 
   const themeStyles = theme === "dark"
     ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
@@ -459,10 +460,33 @@ function TestRunner() {
   };
 
   const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1 });
+  const answerHtmlFor = (key: string, letter: string, html: string) => (
+    rewriteMedia(highlightHtml[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1 })
+  );
 
   const getHighlightRoot = (node: Node) => {
     const el = (node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement) as Element | null;
     return el?.closest<HTMLElement>("[data-hlkey]") ?? null;
+  };
+
+  const getRangeBox = (range: Range) => {
+    const rects = Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
+    if (rects.length === 0) {
+      const rect = range.getBoundingClientRect();
+      return rect.width > 0 || rect.height > 0 ? rect : null;
+    }
+    const top = Math.min(...rects.map((rect) => rect.top));
+    const left = Math.min(...rects.map((rect) => rect.left));
+    const right = Math.max(...rects.map((rect) => rect.right));
+    const bottom = Math.max(...rects.map((rect) => rect.bottom));
+    return { top, left, right, bottom, width: right - left, height: bottom - top };
+  };
+
+  const selectionInsideAnswer = (el: HTMLElement) => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) return false;
+    const range = sel.getRangeAt(0);
+    return el.contains(range.commonAncestorContainer) || el.contains(range.startContainer) || el.contains(range.endContainer);
   };
 
   const getSelectionOffsets = (root: HTMLElement, range: Range) => {
@@ -511,13 +535,21 @@ function TestRunner() {
     return rangeFromOffsets(root, snap.start, snap.end) ?? savedRangeRef.current ?? liveRange;
   };
 
-  const handleSelection = (opts?: { isTouch?: boolean; target?: EventTarget | null }) => {
+  const handleSelection = (opts?: { isTouch?: boolean; target?: EventTarget | null; keepEmpty?: boolean }) => {
     const target = opts?.target instanceof Element ? opts.target : null;
     if (target?.closest("[data-hl-toolbar]")) return;
     const isTouch = !!opts?.isTouch;
     const run = () => {
       const sel = window.getSelection();
-      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); savedTextRef.current = ""; return; }
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+        if (!opts?.keepEmpty) {
+          setHlBar(null);
+          savedTextRef.current = "";
+          savedSelectionRef.current = null;
+          savedRangeRef.current = null;
+        }
+        return;
+      }
       const range = sel.getRangeAt(0);
       const startRoot = getHighlightRoot(range.startContainer);
       const endRoot = getHighlightRoot(range.endContainer);
@@ -538,8 +570,8 @@ function TestRunner() {
       }
       savedRangeRef.current = range.cloneRange();
       savedTextRef.current = range.toString();
-      const rect = range.getBoundingClientRect();
-      if (rect.width === 0 && rect.height === 0) { setHlBar(null); return; }
+      const rect = getRangeBox(range);
+      if (!rect) { setHlBar(null); return; }
       // Keep native selection visible on ALL devices so users can extend it,
       // use browser Copy, or long-press context menu on mobile.
       // Toolbar sits below the selection on touch (avoids OS callout above)
@@ -549,30 +581,43 @@ function TestRunner() {
       const y = isTouch ? rect.bottom + 44 : Math.max(40, rect.top - 8);
       setHlBar({ x, y });
     };
-    if (isTouch) setTimeout(run, 30); else run();
+    if (isTouch) window.setTimeout(run, 80); else run();
   };
 
   // Global listeners: pointerup/touchend/keyup fire regardless of where the
   // pointer released, so selection detection works even if the user drags
   // outside the root or uses shift+arrow keyboard selection.
   useEffect(() => {
+    const scheduleSelectionCheck = (isTouch = false) => {
+      if (selectionTimerRef.current != null) window.clearTimeout(selectionTimerRef.current);
+      selectionTimerRef.current = window.setTimeout(() => {
+        handleSelection({ isTouch, keepEmpty: true });
+      }, isTouch ? 140 : 40);
+    };
     const onPointerUp = (e: PointerEvent) => {
       const isTouch = e.pointerType === "touch" || e.pointerType === "pen";
       handleSelection({ isTouch, target: e.target });
     };
-    const onTouchEnd = (e: TouchEvent) => handleSelection({ isTouch: true, target: e.target });
+    const onTouchEnd = (e: TouchEvent) => {
+      handleSelection({ isTouch: true, target: e.target });
+      scheduleSelectionCheck(true);
+    };
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.shiftKey || e.key === "Shift" || e.key.startsWith("Arrow")) {
         handleSelection({ isTouch: false, target: e.target });
       }
     };
+    const onSelectionChange = () => scheduleSelectionCheck(false);
     document.addEventListener("pointerup", onPointerUp);
     document.addEventListener("touchend", onTouchEnd);
     document.addEventListener("keyup", onKeyUp);
+    document.addEventListener("selectionchange", onSelectionChange);
     return () => {
+      if (selectionTimerRef.current != null) window.clearTimeout(selectionTimerRef.current);
       document.removeEventListener("pointerup", onPointerUp);
       document.removeEventListener("touchend", onTouchEnd);
       document.removeEventListener("keyup", onKeyUp);
+      document.removeEventListener("selectionchange", onSelectionChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -952,12 +997,31 @@ function TestRunner() {
                   if (selected === i) setSelected(null);
                 };
                 return (
-                  <button
+                  <div
+                    role="radio"
+                    tabIndex={isReview || (submitted && showAnswers) ? -1 : 0}
+                    aria-checked={isSelected}
+                    aria-disabled={isReview || (submitted && showAnswers)}
                     key={a.id}
-                    disabled={isReview || (submitted && showAnswers)}
-                    onClick={() => { if (isStruck) { toggleStruck(); return; } setSelected(i); }}
-                    onContextMenu={(e) => { e.preventDefault(); if (isReview || (submitted && showAnswers)) return; toggleStruck(); }}
-                    className="w-full text-left flex items-center gap-2 py-1.5 text-[15px]"
+                    onClick={(e) => {
+                      if (isReview || (submitted && showAnswers) || selectionInsideAnswer(e.currentTarget)) return;
+                      if (isStruck) { toggleStruck(); return; }
+                      setSelected(i);
+                    }}
+                    onKeyDown={(e) => {
+                      if (isReview || (submitted && showAnswers)) return;
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (isStruck) toggleStruck(); else setSelected(i);
+                      }
+                    }}
+                    onContextMenu={(e) => {
+                      if (window.matchMedia("(hover: none) and (pointer: coarse)").matches || selectionInsideAnswer(e.currentTarget)) return;
+                      e.preventDefault();
+                      if (isReview || (submitted && showAnswers)) return;
+                      toggleStruck();
+                    }}
+                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 text-[15px] ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
                     style={{ color: themeStyles.text }}
                   >
                     <span className="w-4 flex justify-center shrink-0">
@@ -971,12 +1035,16 @@ function TestRunner() {
                     >
                       {isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />}
                     </span>
-                    <span className="flex-1" style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}>
-                      <span className="font-normal">{letter}. </span>
-                      <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: htmlFor(`a${i}`, a.answer_text) }} />
+                    <span className="flex-1 min-w-0">
+                      <span
+                        data-hlkey={`a${i}`}
+                        className="qbank-html qbank-light inline"
+                        style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
+                        dangerouslySetInnerHTML={{ __html: answerHtmlFor(`a${i}`, letter, a.answer_text) }}
+                      />
                       {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
                     </span>
-                  </button>
+                  </div>
                 );
               })}
             </div>
