@@ -125,27 +125,68 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
   return new Response(bodyFrom(slice), { status: 206, headers });
 }
 
+async function fetchPlainUrlFromDb(
+  qbankId: number, name: string, supaUrl: string, srk: string,
+): Promise<string | null> {
+  const candidates = candidateNames(name);
+  const orExpr = candidates.map((c) => `name.eq.${encodeURIComponent(c)}`).join(",");
+  const url =
+    `${supaUrl}/rest/v1/qbank_media?select=plain_url,plain_url_expires_at` +
+    `&qbank_id=eq.${qbankId}&or=(${orExpr})&plain_url=not.is.null&limit=1`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${srk}`, apikey: srk } });
+  if (!res.ok) return null;
+  const rows = (await res.json()) as Array<{ plain_url: string; plain_url_expires_at: string | null }>;
+  const row = rows[0];
+  if (!row?.plain_url) return null;
+  if (row.plain_url_expires_at) {
+    const exp = Date.parse(row.plain_url_expires_at);
+    if (Number.isFinite(exp) && exp < Date.now() + 60_000) return null;
+  }
+  return row.plain_url;
+}
+
+async function persistPlainUrl(
+  qbankId: number, name: string, plainUrl: string, expiresAt: string,
+  supaUrl: string, srk: string,
+) {
+  try {
+    await fetch(`${supaUrl}/rest/v1/qbank_media?on_conflict=qbank_id,name`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${srk}`, apikey: srk,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+      },
+      body: JSON.stringify([{
+        qbank_id: qbankId, name, drive_file_id: "",
+        plain_url: plainUrl, plain_url_expires_at: expiresAt,
+      }]),
+    });
+  } catch {}
+}
+
 async function getPlainSignedUrl(
   storagePath: string, cacheKey: string, supaUrl: string, srk: string,
-): Promise<string | null> {
+): Promise<{ url: string; expiresAt: string } | null> {
   const now = Date.now();
   const cached = plainUrlCache.get(cacheKey);
-  if (cached && cached.exp > now + 60_000) return cached.url;
+  if (cached && cached.exp > now + 60_000) {
+    return { url: cached.url, expiresAt: new Date(cached.exp).toISOString() };
+  }
 
-  // Try direct path first
   const paths = new Set<string>([storagePath]);
-  // Also try case variants for the leaf name
   const dir = storagePath.includes("/") ? storagePath.slice(0, storagePath.lastIndexOf("/") + 1) : "";
   const leaf = storagePath.slice(dir.length);
   for (const c of candidateNames(leaf)) paths.add(dir + c);
 
+  const expiresIn = 60 * 60 * 24 * 365;
   for (const p of paths) {
     const res = await fetch(
       `${supaUrl}/storage/v1/object/sign/${PLAIN_BUCKET}/${p.split("/").map(encodeURIComponent).join("/")}`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Content-Type": "application/json" },
-        body: JSON.stringify({ expiresIn: 60 * 60 * 24 * 365 }),
+        body: JSON.stringify({ expiresIn }),
       },
     );
     if (!res.ok) continue;
@@ -153,8 +194,9 @@ async function getPlainSignedUrl(
     const path = json.signedURL || json.signedUrl;
     if (!path) continue;
     const url = `${supaUrl}/storage/v1${path}`;
-    plainUrlCache.set(cacheKey, { url, exp: now + 1000 * 60 * 60 * 24 * 300 });
-    return url;
+    const exp = now + expiresIn * 1000;
+    plainUrlCache.set(cacheKey, { url, exp });
+    return { url, expiresAt: new Date(exp).toISOString() };
   }
   return null;
 }
@@ -174,6 +216,7 @@ async function uploadPlain(storagePath: string, data: Buffer, contentType: strin
     });
   } catch {}
 }
+
 
 export const Route = createFileRoute("/api/media/$")({
   server: {
@@ -198,12 +241,23 @@ export const Route = createFileRoute("/api/media/$")({
         const storagePrefix = qbankSlug ? `${qbankSlug}/` : "";
         const cacheKey = `${qbankId}:${name}`;
 
-        // Fast path: signed URL from plain bucket
-        const signed = await getPlainSignedUrl(`${storagePrefix}${name}`, cacheKey, supaUrl, srk);
-        if (signed) {
+        // Fastest path: DB-cached signed URL (survives worker restarts)
+        const dbUrl = await fetchPlainUrlFromDb(qbankId, name, supaUrl, srk);
+        if (dbUrl) {
+          plainUrlCache.set(cacheKey, { url: dbUrl, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 });
           return new Response(null, {
             status: 302,
-            headers: { Location: signed, "Cache-Control": "public, max-age=86400" },
+            headers: { Location: dbUrl, "Cache-Control": "public, max-age=86400" },
+          });
+        }
+
+        // Fast path: sign the plain bucket + persist for other workers
+        const signed = await getPlainSignedUrl(`${storagePrefix}${name}`, cacheKey, supaUrl, srk);
+        if (signed) {
+          void persistPlainUrl(qbankId, name, signed.url, signed.expiresAt, supaUrl, srk);
+          return new Response(null, {
+            status: 302,
+            headers: { Location: signed.url, "Cache-Control": "public, max-age=86400" },
           });
         }
 
@@ -212,7 +266,6 @@ export const Route = createFileRoute("/api/media/$")({
         // Slow path: get encrypted source
         let encrypted: { bytes: Buffer; resolvedName: string } | null = null;
         if (qbankId === 1) {
-          // Legacy: bucket-hosted
           const upstream = await resolveEncryptedFromBucket(name, supaUrl, srk);
           if (upstream) {
             encrypted = {
@@ -222,7 +275,6 @@ export const Route = createFileRoute("/api/media/$")({
           }
         }
         if (!encrypted) {
-          // Fallback / step1: fetch from Google Drive via connector
           encrypted = await resolveEncryptedFromDrive(qbankId, name, supaUrl, srk);
         }
         if (!encrypted) return new Response("Not found", { status: 404 });
@@ -231,9 +283,14 @@ export const Route = createFileRoute("/api/media/$")({
         const data = decryptImdMedia(bytes, [name, resolvedName, stripPrefix(name), stripPrefix(resolvedName)]);
         const type = contentTypeFromBytes(data, contentTypeFor(resolvedName));
 
-        void uploadPlain(`${storagePrefix}${resolvedName}`, data, type, supaUrl, srk);
+        void (async () => {
+          await uploadPlain(`${storagePrefix}${resolvedName}`, data, type, supaUrl, srk);
+          const s = await getPlainSignedUrl(`${storagePrefix}${resolvedName}`, cacheKey, supaUrl, srk);
+          if (s) await persistPlainUrl(qbankId, resolvedName, s.url, s.expiresAt, supaUrl, srk);
+        })();
 
         return rangeResponse(data, type, range);
+
       },
     },
   },

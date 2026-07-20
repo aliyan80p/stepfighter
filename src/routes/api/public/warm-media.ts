@@ -77,6 +77,36 @@ async function uploadPlain(path: string, data: Buffer, ct: string, supaUrl: stri
   return res.ok;
 }
 
+async function signPlain(path: string, supaUrl: string, srk: string): Promise<{ url: string; expiresAt: string } | null> {
+  const expiresIn = 60 * 60 * 24 * 365;
+  const res = await fetch(
+    `${supaUrl}/storage/v1/object/sign/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${srk}`, apikey: srk, "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn }),
+    },
+  );
+  if (!res.ok) return null;
+  const j = (await res.json()) as { signedURL?: string; signedUrl?: string };
+  const p = j.signedURL || j.signedUrl;
+  if (!p) return null;
+  return { url: `${supaUrl}/storage/v1${p}`, expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString() };
+}
+
+async function persistPlainUrl(qbankId: number, name: string, plainUrl: string, expiresAt: string, supaUrl: string, srk: string) {
+  try {
+    await fetch(`${supaUrl}/rest/v1/qbank_media?qbank_id=eq.${qbankId}&name=eq.${encodeURIComponent(name)}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${srk}`, apikey: srk,
+        "Content-Type": "application/json", Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ plain_url: plainUrl, plain_url_expires_at: expiresAt }),
+    });
+  } catch {}
+}
+
 async function processOne(
   row: { qbank_id: number; name: string; drive_file_id: string | null },
   supaUrl: string, srk: string,
@@ -88,22 +118,40 @@ async function processOne(
     const ct = contentTypeFromBytes(data, contentTypeFor(row.name));
     const path = `${SLUGS[row.qbank_id] ?? ""}${row.name}`;
     const ok = await uploadPlain(path, data, ct, supaUrl, srk);
+    if (ok) {
+      const signed = await signPlain(path, supaUrl, srk);
+      if (signed) await persistPlainUrl(row.qbank_id, row.name, signed.url, signed.expiresAt, supaUrl, srk);
+    }
     return { name: row.name, ok, err: ok ? undefined : "upload-failed" };
   } catch (e: any) {
     return { name: row.name, ok: false, err: String(e?.message ?? e).slice(0, 200) };
   }
 }
 
+
 export const Route = createFileRoute("/api/public/warm-media")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = request.headers.get("x-warm-secret");
-        if (!secret || secret !== process.env.WARM_MEDIA_SECRET) {
-          return new Response("Unauthorized", { status: 401 });
-        }
         const supaUrl = process.env.SUPABASE_URL!;
         const srk = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+        const provided = request.headers.get("x-warm-secret") ?? "";
+        let ok = provided !== "" && provided === process.env.WARM_MEDIA_SECRET;
+        if (!ok && provided) {
+          // Fall back to DB-stored secret (used by pg_cron)
+          try {
+            const r = await fetch(
+              `${supaUrl}/rest/v1/internal_config?select=value&key=eq.warm_media_secret&limit=1`,
+              { headers: { Authorization: `Bearer ${srk}`, apikey: srk } },
+            );
+            if (r.ok) {
+              const rows = (await r.json()) as Array<{ value: string }>;
+              if (rows[0]?.value && rows[0].value === provided) ok = true;
+            }
+          } catch {}
+        }
+        if (!ok) return new Response("Unauthorized", { status: 401 });
+
         const url = new URL(request.url);
         const qbankId = Number(url.searchParams.get("qbank_id") ?? "0");
         if (!qbankId || !(qbankId in SLUGS)) {
@@ -155,11 +203,12 @@ export const Route = createFileRoute("/api/public/warm-media")({
             }
           }),
         );
-        const ok = results.filter((r) => r.ok).length;
+        const uploaded = results.filter((r) => r.ok).length;
         return new Response(
           JSON.stringify({
             existing_count: existing.size, scanned, missing_selected: queue.length,
-            processed: results.length, uploaded: ok,
+            processed: results.length, uploaded,
+
             errors: results.filter((r) => !r.ok).slice(0, 10),
           }, null, 2),
           { status: 200, headers: { "Content-Type": "application/json" } },

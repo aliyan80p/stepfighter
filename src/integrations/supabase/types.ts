@@ -340,6 +340,24 @@ export type Database = {
           },
         ]
       }
+      internal_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -363,6 +381,8 @@ export type Database = {
           created_at: string
           drive_file_id: string
           name: string
+          plain_url: string | null
+          plain_url_expires_at: string | null
           qbank_id: number
           size_bytes: number | null
         }
@@ -370,6 +390,8 @@ export type Database = {
           created_at?: string
           drive_file_id: string
           name: string
+          plain_url?: string | null
+          plain_url_expires_at?: string | null
           qbank_id: number
           size_bytes?: number | null
         }
@@ -377,6 +399,8 @@ export type Database = {
           created_at?: string
           drive_file_id?: string
           name?: string
+          plain_url?: string | null
+          plain_url_expires_at?: string | null
           qbank_id?: number
           size_bytes?: number | null
         }
