@@ -880,28 +880,41 @@ export const getAssessmentReport = createServerFn({ method: "GET" })
     const subjName = new Map<number, string>((subs ?? []).map((s: any) => [s.id, s.name]));
     const sysName = new Map<number, string>((sysm ?? []).map((s: any) => [s.id, s.name]));
     const qMeta = new Map<number, any>((qs ?? []).map((q: any) => [q.id, q]));
-    const subjAgg = new Map<number, { c: number; t: number }>();
-    const sysAgg = new Map<number, { c: number; t: number }>();
+    type Agg = { c: number; i: number; t: number };
+    const subjAgg = new Map<number, Agg>();
+    const sysAgg = new Map<number, Agg>();
+    // total per subject/system from questions
+    for (const q of qs ?? []) {
+      if (q.subject_id != null) {
+        const x = subjAgg.get(q.subject_id) ?? { c: 0, i: 0, t: 0 };
+        x.t++; subjAgg.set(q.subject_id, x);
+      }
+      if (q.system_id != null) {
+        const x = sysAgg.get(q.system_id) ?? { c: 0, i: 0, t: 0 };
+        x.t++; sysAgg.set(q.system_id, x);
+      }
+    }
     for (const a of latest.values()) {
       if (a.selected_answer == null) continue;
       const q = qMeta.get(a.question_id); if (!q) continue;
       if (q.subject_id != null) {
-        const x = subjAgg.get(q.subject_id) ?? { c: 0, t: 0 };
-        x.t++; if (a.is_correct) x.c++;
-        subjAgg.set(q.subject_id, x);
+        const x = subjAgg.get(q.subject_id)!;
+        if (a.is_correct) x.c++; else x.i++;
       }
       if (q.system_id != null) {
-        const x = sysAgg.get(q.system_id) ?? { c: 0, t: 0 };
-        x.t++; if (a.is_correct) x.c++;
-        sysAgg.set(q.system_id, x);
+        const x = sysAgg.get(q.system_id)!;
+        if (a.is_correct) x.c++; else x.i++;
       }
     }
-    const subjectBreakdown = Array.from(subjAgg.entries()).map(([id, v]) => ({
-      name: subjName.get(id) ?? `Subject ${id}`, correct: v.c, total: v.t, pct: Math.round((v.c / v.t) * 100),
-    })).sort((a, b) => a.pct - b.pct);
-    const systemBreakdown = Array.from(sysAgg.entries()).map(([id, v]) => ({
-      name: sysName.get(id) ?? `System ${id}`, correct: v.c, total: v.t, pct: Math.round((v.c / v.t) * 100),
-    })).sort((a, b) => a.pct - b.pct);
+    const toRows = (map: Map<number, Agg>, names: Map<number, string>, prefix: string) =>
+      Array.from(map.entries()).map(([id, v]) => ({
+        name: names.get(id) ?? `${prefix} ${id}`,
+        correct: v.c, incorrect: v.i, omitted: v.t - v.c - v.i, total: v.t,
+        pct: v.t ? Math.round((v.c / v.t) * 100) : 0,
+      })).sort((a, b) => a.name.localeCompare(b.name));
+    const subjectBreakdown = toRows(subjAgg, subjName, "Subject");
+    const systemBreakdown = toRows(sysAgg, sysName, "System");
+
 
     return {
       totalQuestions, totalCorrect: correct, totalIncorrect: incorrect, totalOmitted: omitted,
