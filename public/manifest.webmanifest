@@ -1,0 +1,15 @@
+{
+  "name": "IMD QBank — USMLE Practice",
+  "short_name": "IMD QBank",
+  "description": "USMLE Step 1, 2 & 3 question bank with practice and test modes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    { "src": "/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
