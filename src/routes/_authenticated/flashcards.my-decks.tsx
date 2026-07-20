@@ -146,10 +146,39 @@ function FlashcardsPage() {
             </button>
           </div>
 
-          {!decks.length ? (
+          {!decks.length && !(cardsByDeck["__none"]?.length) ? (
             <EmptyDecks onCreate={() => setShowCreateDeck(true)} />
           ) : (
             <div className="space-y-6">
+              {(cardsByDeck["__none"]?.length ?? 0) > 0 && (
+                <section className="border rounded-lg p-4 bg-amber-50/40">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded flex items-center justify-center text-white text-sm font-semibold bg-amber-500">★</div>
+                      <div>
+                        <div className="font-semibold text-slate-800">Unsorted</div>
+                        <div className="text-xs text-slate-500">{cardsByDeck["__none"].length} cards created from question reviews</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {cardsByDeck["__none"].slice(0, 24).map((c: any) => (
+                      <CardTile
+                        key={c.id} card={c}
+                        menuOpen={cardMenuOpen === c.id}
+                        onMenu={() => setCardMenuOpen(cardMenuOpen === c.id ? null : c.id)}
+                        onEdit={() => { setCardMenuOpen(null); setCardEditor({ initial: cardToValue(c) }); }}
+                        onDelete={async () => {
+                          setCardMenuOpen(null);
+                          if (!confirm("Delete this card?")) return;
+                          try { await deleteCardFn({ data: { id: c.id } }); invalidateAll(); } catch (e: any) { toast.error(e?.message ?? "Failed"); }
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-2">Tip: open a card to assign it to a deck.</div>
+                </section>
+              )}
               {filteredDecks.map(d => {
                 const st = stats[d.id] ?? { total: 0, new: 0, learning: 0, review: 0 };
                 const list = cardsByDeck[d.id] ?? [];
