@@ -890,7 +890,7 @@ function TestRunner() {
                     <span className="flex-1">
                       <span className="font-normal">{letter}. </span>
                       <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: htmlFor(`a${i}`, a.answer_text) }} />
-                      {submitted && pct != null && <span className="text-gray-600 ml-1">({pct}%)</span>}
+                      {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
                     </span>
                   </button>
                 );
