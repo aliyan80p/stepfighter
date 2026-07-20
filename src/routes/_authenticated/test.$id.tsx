@@ -213,6 +213,8 @@ function TestRunner() {
   const savedSelectionRef = useRef<{ key: string; start: number; end: number } | null>(null);
   const savedTextRef = useRef("");
   const selectionTimerRef = useRef<number | null>(null);
+  const selectionGestureRef = useRef(false);
+  const lastSelectionWasTouchRef = useRef(false);
 
   const themeStyles = theme === "dark"
     ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
@@ -535,7 +537,7 @@ function TestRunner() {
     return rangeFromOffsets(root, snap.start, snap.end) ?? savedRangeRef.current ?? liveRange;
   };
 
-  const handleSelection = (opts?: { isTouch?: boolean; target?: EventTarget | null; keepEmpty?: boolean }) => {
+  const handleSelection = (opts?: { isTouch?: boolean; target?: EventTarget | null; keepEmpty?: boolean; suppressToolbar?: boolean }) => {
     const target = opts?.target instanceof Element ? opts.target : null;
     if (target?.closest("[data-hl-toolbar]")) return;
     const isTouch = !!opts?.isTouch;
@@ -554,9 +556,12 @@ function TestRunner() {
       const startRoot = getHighlightRoot(range.startContainer);
       const endRoot = getHighlightRoot(range.endContainer);
       if (!startRoot || !endRoot || !contentRef.current?.contains(startRoot) || !contentRef.current?.contains(endRoot)) {
-        setHlBar(null);
-        savedSelectionRef.current = null;
-        savedTextRef.current = "";
+        if (!opts?.keepEmpty) {
+          setHlBar(null);
+          savedSelectionRef.current = null;
+          savedTextRef.current = "";
+          savedRangeRef.current = null;
+        }
         return;
       }
       if (startRoot === endRoot) {
@@ -570,6 +575,7 @@ function TestRunner() {
       }
       savedRangeRef.current = range.cloneRange();
       savedTextRef.current = range.toString();
+      if (opts?.suppressToolbar) return;
       const rect = getRangeBox(range);
       if (!rect) { setHlBar(null); return; }
       // Keep native selection visible on ALL devices so users can extend it,
@@ -588,34 +594,75 @@ function TestRunner() {
   // pointer released, so selection detection works even if the user drags
   // outside the root or uses shift+arrow keyboard selection.
   useEffect(() => {
-    const scheduleSelectionCheck = (isTouch = false) => {
+    const isHighlightTarget = (target: EventTarget | null) => {
+      return target instanceof Element && !!target.closest("[data-hlkey]");
+    };
+    const scheduleSelectionCheck = (isTouch = false, suppressToolbar = false) => {
       if (selectionTimerRef.current != null) window.clearTimeout(selectionTimerRef.current);
       selectionTimerRef.current = window.setTimeout(() => {
-        handleSelection({ isTouch, keepEmpty: true });
+        handleSelection({ isTouch, keepEmpty: true, suppressToolbar });
       }, isTouch ? 140 : 40);
+    };
+    const beginSelectionGesture = (target: EventTarget | null, isTouch: boolean) => {
+      if (!isHighlightTarget(target)) return;
+      selectionGestureRef.current = true;
+      lastSelectionWasTouchRef.current = isTouch;
+      setHlBar(null);
+    };
+    const endSelectionGesture = (target: EventTarget | null, isTouch: boolean) => {
+      lastSelectionWasTouchRef.current = isTouch;
+      selectionGestureRef.current = false;
+      handleSelection({ isTouch, target, keepEmpty: true });
+      scheduleSelectionCheck(isTouch);
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      beginSelectionGesture(e.target, e.pointerType === "touch" || e.pointerType === "pen");
     };
     const onPointerUp = (e: PointerEvent) => {
       const isTouch = e.pointerType === "touch" || e.pointerType === "pen";
-      handleSelection({ isTouch, target: e.target });
+      endSelectionGesture(e.target, isTouch);
+    };
+    const onPointerCancel = (e: PointerEvent) => {
+      const isTouch = e.pointerType === "touch" || e.pointerType === "pen";
+      endSelectionGesture(e.target, isTouch);
+    };
+    const onTouchStart = (e: TouchEvent) => {
+      beginSelectionGesture(e.target, true);
     };
     const onTouchEnd = (e: TouchEvent) => {
-      handleSelection({ isTouch: true, target: e.target });
-      scheduleSelectionCheck(true);
+      endSelectionGesture(e.target, true);
+    };
+    const onTouchCancel = (e: TouchEvent) => {
+      endSelectionGesture(e.target, true);
     };
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.shiftKey || e.key === "Shift" || e.key.startsWith("Arrow")) {
         handleSelection({ isTouch: false, target: e.target });
       }
     };
-    const onSelectionChange = () => scheduleSelectionCheck(false);
+    const onSelectionChange = () => {
+      if (selectionGestureRef.current) {
+        scheduleSelectionCheck(lastSelectionWasTouchRef.current, true);
+        return;
+      }
+      scheduleSelectionCheck(lastSelectionWasTouchRef.current);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerCancel);
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
     document.addEventListener("touchend", onTouchEnd);
+    document.addEventListener("touchcancel", onTouchCancel);
     document.addEventListener("keyup", onKeyUp);
     document.addEventListener("selectionchange", onSelectionChange);
     return () => {
       if (selectionTimerRef.current != null) window.clearTimeout(selectionTimerRef.current);
+      document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("pointercancel", onPointerCancel);
+      document.removeEventListener("touchstart", onTouchStart);
       document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchcancel", onTouchCancel);
       document.removeEventListener("keyup", onKeyUp);
       document.removeEventListener("selectionchange", onSelectionChange);
     };
