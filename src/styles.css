@@ -178,10 +178,25 @@ mark.qbank-hl *, .qbank-theme-dark mark.qbank-hl *, .qbank-theme-sepia mark.qban
    these are set explicitly on the content roots). */
 .qbank-html,
 .qbank-explanation,
-[data-hlkey] {
-  -webkit-user-select: text;
-  user-select: text;
-  -webkit-touch-callout: default;
+[data-hlkey],
+[data-hlkey] *,
+.qbank-answer-choice,
+.qbank-answer-choice * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+  touch-action: auto;
+}
+
+.qbank-answer-choice {
+  cursor: text;
+}
+
+.qbank-answer-choice > span:first-child,
+.qbank-answer-choice > span:nth-child(2) {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  cursor: pointer;
 }
 
 
@@ -256,5 +271,11 @@ body { overscroll-behavior-y: none; }
 /* Minimum 44x44 tap targets on touch devices */
 @media (hover: none) and (pointer: coarse) {
   button, [role="button"], a { touch-action: manipulation; }
+  .qbank-answer-choice,
+  .qbank-answer-choice *,
+  [data-hlkey],
+  [data-hlkey] * {
+    touch-action: auto !important;
+  }
 }
 
