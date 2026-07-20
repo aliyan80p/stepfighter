@@ -995,8 +995,9 @@ function TestRunner() {
                 };
                 return (
                   <div
-                    role="button"
+                    role="radio"
                     tabIndex={isReview || (submitted && showAnswers) ? -1 : 0}
+                    aria-checked={isSelected}
                     aria-disabled={isReview || (submitted && showAnswers)}
                     key={a.id}
                     onClick={(e) => {
