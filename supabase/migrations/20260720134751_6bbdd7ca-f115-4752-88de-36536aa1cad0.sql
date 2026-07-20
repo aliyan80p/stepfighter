@@ -1,0 +1,1 @@
+UPDATE public.qbank_media SET qbank_id = 1 WHERE qbank_id = 2 AND name LIKE '6-%enu-csms%';
