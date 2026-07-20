@@ -123,11 +123,12 @@ function TestsList() {
               </p>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <StatCard label="Saved Tests" value={totals.saved} />
             <StatCard label="Completed" value={totals.completed} accent="success" />
             <StatCard label="Suspended" value={totals.suspended} accent="warn" />
           </div>
+
         </div>
       </div>
 
