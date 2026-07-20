@@ -24,6 +24,7 @@ import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
 import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
 import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 import textZoomIcon from "@/assets/icons/text-zoom.png.asset.json";
+import { DEFAULT_SETTINGS, useHydratedSettings } from "@/lib/user-settings";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
