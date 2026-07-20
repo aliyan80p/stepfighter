@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/confirm-dialog";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
-import { resetQbank } from "@/lib/qbank.functions";
+import { resetQbank, getResetInfo } from "@/lib/qbank.functions";
 
 export const Route = createFileRoute("/_authenticated/account/reset")({
   component: ResetPage,
@@ -17,11 +17,23 @@ function ResetPage() {
   const activeId = useActiveQbankId();
   const course = QBANKS.find((q) => q.id === activeId) ?? QBANKS[1];
   const resetFn = useServerFn(resetQbank);
+  const infoFn = useServerFn(getResetInfo);
   const { confirm, dialog } = useConfirm();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
 
+  const { data: info } = useQuery({
+    queryKey: ["reset-info", course.id],
+    queryFn: () => infoFn({ data: { qbankId: course.id } }),
+  });
+
+  const remaining = info?.remaining ?? 0;
+  const limit = info?.limit ?? 5;
+  const used = info?.used ?? 0;
+  const exhausted = info ? remaining <= 0 : false;
+
   const onReset = async () => {
+    if (exhausted) return;
     const ok = await confirm({
       title: `Reset ${course.name}?`,
       description: (
@@ -32,8 +44,10 @@ function ResetPage() {
           course.
           <br />
           <br />
-          Progress in your other courses will <strong>not</strong> be affected.
-          This action cannot be undone.
+          You will have <strong>{Math.max(0, remaining - 1)}</strong> reset
+          {Math.max(0, remaining - 1) === 1 ? "" : "s"} left for this course
+          after this action. Progress in your other courses will{" "}
+          <strong>not</strong> be affected. This cannot be undone.
         </>
       ),
       confirmLabel: "Reset QBank",
@@ -70,29 +84,40 @@ function ResetPage() {
           <div className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-900">
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div className="text-sm">
-              <strong>Warning:</strong> This action cannot be undone.
+              <strong>Warning:</strong> This action cannot be undone. You have{" "}
+              <strong>{remaining}</strong> of <strong>{limit}</strong> reset
+              {limit === 1 ? "" : "s"} remaining for this course.
             </div>
           </div>
 
           <ul className="list-disc pl-5 space-y-2 text-sm rounded-lg bg-muted/40 p-4">
             <li>
               Resetting will <strong>DELETE ALL</strong> data for{" "}
-              <strong>{course.name}</strong>: attempts, tests (created, completed,
-              or suspended), and flagged questions.
+              <strong>{course.name}</strong>: attempts, tests (created,
+              completed, or suspended), and flagged questions.
             </li>
             <li className="text-rose-600 font-medium">
-              Progress in your other courses will not be affected.
+              You have {limit} resets per course. Used: {used} / {limit}.
             </li>
+            <li className="text-rose-600 font-medium">
+              You currently have {remaining} reset{remaining === 1 ? "" : "s"}{" "}
+              remaining for {course.name}.
+            </li>
+            <li>Progress in your other courses will not be affected.</li>
           </ul>
 
           <div className="flex justify-center pt-2">
             <Button
               onClick={onReset}
-              disabled={busy}
-              className="bg-gradient-to-r from-rose-500 to-red-600 hover:opacity-90 text-white shadow px-8"
+              disabled={busy || exhausted}
+              className="bg-gradient-to-r from-rose-500 to-red-600 hover:opacity-90 text-white shadow px-8 disabled:opacity-50"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              {busy ? "Resetting…" : `Reset ${course.name}`}
+              {exhausted
+                ? "No resets remaining"
+                : busy
+                ? "Resetting…"
+                : `Reset ${course.name} (${remaining} left)`}
             </Button>
           </div>
         </div>
