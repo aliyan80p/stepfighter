@@ -983,7 +983,7 @@ function TestRunner() {
             )}
 
             {showAnswers && question.explanation && (
-              <div className="mt-4">
+              <div className="mt-4 qbank-split-expl">
               <div className="border-b" style={{ borderColor: themeStyles.border }}>
                   <div
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
