@@ -121,6 +121,17 @@ function GraphsPage() {
                 <BreakdownList rows={data.systemBreakdown} />
               </Card>
             </div>
+
+            {tests.length > 0 && (
+              <>
+                <Card title="Performance by Test" subtitle="Your score progression across different tests">
+                  <ScatterChart data={byTest} />
+                </Card>
+                <Card title="Performance by Date" subtitle="Your score trend over time">
+                  <ScatterChart data={byDate} />
+                </Card>
+              </>
+            )}
           </>
         )}
       </div>
