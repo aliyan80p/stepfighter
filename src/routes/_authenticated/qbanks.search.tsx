@@ -15,6 +15,14 @@ import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
 import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
+import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
+import notesIcon from "@/assets/icons/notes.png.asset.json";
+import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
+import flashcardIcon from "@/assets/flashcard-icon.png.asset.json";
+import goBackIcon from "@/assets/icons/go-back.png.asset.json";
+import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
+import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
+import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 
 
 export const Route = createFileRoute("/_authenticated/qbanks/search")({
@@ -297,13 +305,17 @@ function PagerBtn({ children, onClick, disabled }: { children: React.ReactNode; 
 
 const NAV_BG = "#1e3a8a";
 
-function TopBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
       className="flex flex-col items-center justify-center px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[64px]"
     >
-      <Icon className="h-5 w-5" />
+      {imgSrc ? (
+        <img src={imgSrc} alt="" className={`${imgClass ?? "h-5 w-5 object-contain"} ${imgFlip ? "scale-x-[-1]" : ""}`} />
+      ) : Icon ? (
+        <Icon className="h-5 w-5" />
+      ) : null}
       <span className="text-[11px] mt-0.5">{label}</span>
     </button>
   );
@@ -401,20 +413,20 @@ function QuestionModal({
               className={`flex flex-col items-center px-2 py-1 rounded hover:bg-white/10 ${isMarked ? "text-yellow-300" : "text-white/90"}`}
               title={isMarked ? "Remove flag" : "Flag question"}
             >
-              <Flag className="h-5 w-5" fill={isMarked ? "currentColor" : "none"} />
+              <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isMarked ? "" : "opacity-90"}`} />
               <span className="text-[11px]">Flag</span>
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <TopBtn icon={ChevronLeft} label="Previous" onClick={() => go(-1)} />
-            <TopBtn icon={ChevronRight} label="Next" onClick={() => go(1)} />
+            <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => go(-1)} />
+            <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => go(1)} />
           </div>
           <div className="flex items-center gap-1">
             <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
-            <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
-            <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
+            <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
+            <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
             
-            <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
+            <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
             <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings((v) => !v)} />
           </div>
         </div>
@@ -557,11 +569,10 @@ function QuestionModal({
           <div className="font-semibold tracking-wide" />
           <div className="font-semibold tracking-wide hidden md:block">IMD QBank</div>
           <div className="flex items-center gap-3">
-            <TopBtn icon={Library} label="Medical Library" onClick={notImpl("Medical Library")} />
-            <TopBtn icon={FileText} label="NBME Library" onClick={notImpl("NBME Library")} />
-            <TopBtn icon={Zap} label="Flashcards" onClick={notImpl("Flashcards")} />
+            <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
+            <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={notImpl("Flashcards")} />
             <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
-            <TopBtn icon={ArrowLeft} label="Go Back" onClick={onClose} />
+            <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={onClose} />
           </div>
         </div>
 
