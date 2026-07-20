@@ -674,15 +674,13 @@ export const resetQbank = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { qbankId } = data;
-    const [attempts, tests, bookmarks, notes] = await Promise.all([
+    const [attempts, tests, bookmarks] = await Promise.all([
       supabase.from("attempts").delete().eq("user_id", userId).eq("qbank_id", qbankId),
       supabase.from("tests").delete().eq("user_id", userId).eq("qbank_id", qbankId),
       supabase.from("bookmarks").delete().eq("user_id", userId).eq("qbank_id", qbankId),
-      supabase.from("notes").delete().eq("user_id", userId).eq("qbank_id", qbankId),
     ]);
     const err = attempts.error || tests.error || bookmarks.error;
     if (err) throw err;
-    void notes;
     return { ok: true };
   });
 
