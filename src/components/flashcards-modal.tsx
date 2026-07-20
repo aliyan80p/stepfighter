@@ -1,9 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, X, Trash2, Maximize2, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { listFlashcards, createFlashcard, deleteFlashcard } from "@/lib/flashcards.functions";
+import { listDecks, createDeck } from "@/lib/decks.functions";
+
+const DEFAULT_DECK_KEY = "flashcards.defaultDeckId";
 
 type Props = {
   open: boolean;
