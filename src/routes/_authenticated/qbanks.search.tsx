@@ -16,6 +16,8 @@ import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 import { NotesModal } from "@/components/notes-modal";
+import { FlashcardsModal } from "@/components/flashcards-modal";
+import { FeedbackModal } from "@/components/feedback-modal";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
@@ -345,6 +347,8 @@ function QuestionModal({
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [marked, setMarked] = useState<Record<number, boolean>>({});
 
@@ -572,8 +576,8 @@ function QuestionModal({
           <div className="font-semibold tracking-wide hidden md:block">IMD QBank</div>
           <div className="flex items-center gap-3">
             <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
-            <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={notImpl("Flashcards")} />
-            <TopBtn icon={MessageSquare} label="Feedback" onClick={notImpl("Feedback")} />
+            <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+            <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
             <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={onClose} />
           </div>
         </div>
@@ -582,6 +586,18 @@ function QuestionModal({
         <NotesModal
           open={showNotes}
           onClose={() => setShowNotes(false)}
+          qbankId={modalQbankId}
+          questionId={r.id}
+        />
+        <FlashcardsModal
+          open={showFlashcards}
+          onClose={() => setShowFlashcards(false)}
+          qbankId={modalQbankId}
+          questionId={r.id}
+        />
+        <FeedbackModal
+          open={showFeedback}
+          onClose={() => setShowFeedback(false)}
           qbankId={modalQbankId}
           questionId={r.id}
         />
