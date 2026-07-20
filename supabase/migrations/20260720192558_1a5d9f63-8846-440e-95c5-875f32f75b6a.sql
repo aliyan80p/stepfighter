@@ -1,0 +1,1 @@
+DELETE FROM answers WHERE qbank_id=1 AND question_id IN (SELECT id FROM questions WHERE qbank_id=1 AND source='CMS_SUR7'); DELETE FROM questions WHERE qbank_id=1 AND source='CMS_SUR7';
