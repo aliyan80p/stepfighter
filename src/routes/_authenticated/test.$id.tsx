@@ -509,11 +509,10 @@ function TestRunner() {
     return rangeFromOffsets(root, snap.start, snap.end) ?? savedRangeRef.current;
   };
 
-  const handleSelection = (event?: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
-    const target = event?.target instanceof Element ? event.target : null;
+  const handleSelection = (opts?: { isTouch?: boolean; target?: EventTarget | null }) => {
+    const target = opts?.target instanceof Element ? opts.target : null;
     if (target?.closest("[data-hl-toolbar]")) return;
-    const isTouch = (event as React.PointerEvent | undefined)?.pointerType === "touch"
-      || (event as React.PointerEvent | undefined)?.pointerType === "pen";
+    const isTouch = !!opts?.isTouch;
     const run = () => {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || sel.isCollapsed) { setHlBar(null); savedTextRef.current = ""; return; }
@@ -538,19 +537,44 @@ function TestRunner() {
       savedRangeRef.current = range.cloneRange();
       savedTextRef.current = range.toString();
       const rect = range.getBoundingClientRect();
-      // On touch devices, keep the native selection so users can extend it and
-      // access the OS copy menu; place our toolbar just below so it doesn't
-      // fight with the iOS/Android callout that appears above the selection.
-      const toolbarY = isTouch ? rect.bottom + 44 : rect.top - 8;
-      setHlBar({ x: rect.left + rect.width / 2, y: toolbarY });
-      if (!isTouch) {
-        // Desktop: hide the browser's blue overlay; the range is already saved.
-        sel.removeAllRanges();
-      }
+      if (rect.width === 0 && rect.height === 0) { setHlBar(null); return; }
+      // Keep native selection visible on ALL devices so users can extend it,
+      // use browser Copy, or long-press context menu on mobile.
+      // Toolbar sits below the selection on touch (avoids OS callout above)
+      // and above on desktop.
+      const vw = window.innerWidth;
+      const x = Math.max(80, Math.min(vw - 80, rect.left + rect.width / 2));
+      const y = isTouch ? rect.bottom + 44 : Math.max(40, rect.top - 8);
+      setHlBar({ x, y });
     };
-    // Touch selection finalizes after touchend/pointerup fires — defer a tick.
     if (isTouch) setTimeout(run, 30); else run();
   };
+
+  // Global listeners: pointerup/touchend/keyup fire regardless of where the
+  // pointer released, so selection detection works even if the user drags
+  // outside the root or uses shift+arrow keyboard selection.
+  useEffect(() => {
+    const onPointerUp = (e: PointerEvent) => {
+      const isTouch = e.pointerType === "touch" || e.pointerType === "pen";
+      handleSelection({ isTouch, target: e.target });
+    };
+    const onTouchEnd = (e: TouchEvent) => handleSelection({ isTouch: true, target: e.target });
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.shiftKey || e.key === "Shift" || e.key.startsWith("Arrow")) {
+        handleSelection({ isTouch: false, target: e.target });
+      }
+    };
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("touchend", onTouchEnd);
+    document.addEventListener("keyup", onKeyUp);
+    return () => {
+      document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("keyup", onKeyUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
 
   const textOffsetIn = (root: HTMLElement, container: Node, offset: number) => {
