@@ -182,7 +182,7 @@ function TestsList() {
           {filtered.map((r) => {
             const d = new Date(r.created_at);
             return (
-              <div key={r.id} className="grid grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] gap-4 px-4 py-4 items-center hover:bg-muted/30 transition-colors">
+              <div key={r.id} className="flex flex-col gap-3 md:grid md:grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] md:gap-4 px-4 py-4 md:items-center hover:bg-muted/30 transition-colors">
                 <div>
                   <div className="font-medium text-sm">{r.name}</div>
                   <div className="mt-2 flex gap-1.5 items-center">
