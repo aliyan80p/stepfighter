@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { listNotes, deleteNote } from "@/lib/notes.functions";
-import { setActiveQbankId } from "@/lib/active-qbank";
+import { setActiveQbankId, useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,32 +29,29 @@ function NotesBrowser() {
     queryFn: () => list(),
   });
 
+  const activeQbankId = useActiveQbankId();
+  const activeQbankName = QBANKS.find((q) => q.id === activeQbankId)?.name ?? "";
+
   const [search, setSearch] = useState("");
-  const [qbank, setQbank] = useState<string>("all");
   const [subject, setSubject] = useState<string>("all");
-  const [system, setSystem] = useState<string>("all");
   const [pageSize, setPageSize] = useState(25);
   const { confirm, dialog } = useConfirm();
 
-  const qbanks = useMemo(
-    () => Array.from(new Set(notes.map((n) => n.qbankName).filter(Boolean))) as string[],
-    [notes],
+  // Notes scoped to the currently selected qbank
+  const scopedNotes = useMemo(
+    () => notes.filter((n) => Number(n.qbankId) === activeQbankId),
+    [notes, activeQbankId],
   );
+
   const subjects = useMemo(
-    () => Array.from(new Set(notes.map((n) => n.subject).filter(Boolean))) as string[],
-    [notes],
-  );
-  const systems = useMemo(
-    () => Array.from(new Set(notes.map((n) => n.system).filter(Boolean))) as string[],
-    [notes],
+    () => Array.from(new Set(scopedNotes.map((n) => n.subject).filter(Boolean))) as string[],
+    [scopedNotes],
   );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return notes.filter((n) => {
-      if (qbank !== "all" && n.qbankName !== qbank) return false;
+    return scopedNotes.filter((n) => {
       if (subject !== "all" && n.subject !== subject) return false;
-      if (system !== "all" && n.system !== system) return false;
       if (!q) return true;
       return (
         n.content?.toLowerCase().includes(q) ||
@@ -63,7 +60,7 @@ function NotesBrowser() {
         n.system?.toLowerCase().includes(q)
       );
     }).slice(0, pageSize);
-  }, [notes, search, qbank, subject, system, pageSize]);
+  }, [scopedNotes, search, subject, pageSize]);
 
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -96,27 +93,15 @@ function NotesBrowser() {
           <span>entries</span>
         </div>
 
-        <Select value={qbank} onValueChange={setQbank}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="QBank" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All QBanks</SelectItem>
-            {qbanks.map((q) => <SelectItem key={q} value={q}>{q}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {activeQbankName && (
+          <Badge variant="outline" className="text-xs">{activeQbankName}</Badge>
+        )}
 
         <Select value={subject} onValueChange={setSubject}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Subject" /></SelectTrigger>
+          <SelectTrigger className="w-48"><SelectValue placeholder="Subject" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Subjects</SelectItem>
             {subjects.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        <Select value={system} onValueChange={setSystem}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="System" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Systems</SelectItem>
-            {systems.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
 
