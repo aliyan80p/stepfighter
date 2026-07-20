@@ -226,14 +226,27 @@ function TestRunner() {
 
   useEffect(() => {
     if (submitted) return;
-    const t = setInterval(() => setElapsed(Math.round((Date.now() - startedAt) / 1000)), 1000);
+    const t = setInterval(() => {
+      if (userSettings.stopTimerOnBlur && typeof document !== "undefined" && document.hidden) return;
+      setElapsed(Math.round((Date.now() - startedAt) / 1000));
+    }, 1000);
     return () => clearInterval(t);
-  }, [submitted, startedAt]);
+  }, [submitted, startedAt, userSettings.stopTimerOnBlur]);
 
   useEffect(() => {
-    const t = setInterval(() => setBlockElapsed(Math.round((Date.now() - blockStartedAt) / 1000)), 1000);
+    const t = setInterval(() => {
+      if (userSettings.stopTimerOnBlur && typeof document !== "undefined" && document.hidden) return;
+      setBlockElapsed(Math.round((Date.now() - blockStartedAt) / 1000));
+    }, 1000);
     return () => clearInterval(t);
-  }, [blockStartedAt]);
+  }, [blockStartedAt, userSettings.stopTimerOnBlur]);
+
+  // Auto night mode — switch to dark theme between 20:00 and 06:00
+  useEffect(() => {
+    if (!userSettings.autoNightMode) return;
+    const h = new Date().getHours();
+    if (h >= 20 || h < 6) setTheme("dark");
+  }, [userSettings.autoNightMode, question?.id]);
 
   // Initialize tutor/exam toggle from test.mode once per test
   useEffect(() => {
