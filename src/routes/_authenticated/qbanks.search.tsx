@@ -39,15 +39,16 @@ type SearchResult = {
 function SearchPage() {
   const searchFn = useServerFn(searchQuestions);
   const qbankId = useActiveQbankId();
-  const [query, setQuery] = useState("");
+  const urlSearch = Route.useSearch();
+  const [query, setQuery] = useState(urlSearch.q ?? "");
   const currentBank = QBANKS.find((q) => q.id === qbankId) ?? QBANKS[0];
 
   const mutation = useMutation({
     mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
   });
 
-
   const results = mutation.data?.results ?? [];
+  const autoOpenId = urlSearch.open ? Number(urlSearch.open) : null;
 
   const runSearch = () => {
     if (!query.trim()) {
@@ -57,11 +58,20 @@ function SearchPage() {
     mutation.mutate(query);
   };
 
+  // Auto-run search when arriving with ?q=... (e.g. from Notes browser)
+  useEffect(() => {
+    if (urlSearch.q && urlSearch.q.trim()) {
+      mutation.mutate(urlSearch.q);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch.q, qbankId]);
+
   const copyIds = () => {
     const ids = results.map((r) => r.id).join(", ");
     navigator.clipboard.writeText(ids);
     toast.success(`Copied ${results.length} IDs`);
   };
+
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto">
