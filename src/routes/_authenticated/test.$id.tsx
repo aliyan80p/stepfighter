@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/test/$id")({
 const NAV_BG = "#1e3a8a";       // deep blue top/bottom bars
 const NAV_ACCENT = "#2a4ba0";
 const PAGE_BG = "#ffffff";
-const SIDE_BG = "#f7f9fc";
+const SIDE_BG = "#ffffff";
 const TEXT = "#1f2937";
 
 type MediaKind = "image" | "video" | "audio";
