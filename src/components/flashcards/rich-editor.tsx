@@ -14,6 +14,7 @@ type Props = {
 
 export function RichEditor({ value, onChange, placeholder, minHeight = 200 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (ref.current && ref.current.innerHTML !== value) {
@@ -33,9 +34,15 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 200 }: Pr
     const url = prompt("URL");
     if (url) exec("createLink", url);
   };
-  const addImage = () => {
-    const url = prompt("Image URL");
-    if (url) exec("insertImage", url);
+  const addImage = () => fileRef.current?.click();
+  const onImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 2_000_000) { alert("Image must be under 2MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => exec("insertImage", String(reader.result));
+    reader.readAsDataURL(file);
   };
   const setBlock = (tag: string) => exec("formatBlock", tag);
 
@@ -82,7 +89,10 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 200 }: Pr
         <Sep />
         <Btn onClick={addLink} title="Link"><LinkIcon className="h-3.5 w-3.5" /></Btn>
         <Btn onClick={addImage} title="Image"><ImageIcon className="h-3.5 w-3.5" /></Btn>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onImageFile} />
         <Sep />
+
+
         <Btn onClick={() => exec("undo")} title="Undo"><Undo2 className="h-3.5 w-3.5" /></Btn>
         <Btn onClick={() => exec("redo")} title="Redo"><Redo2 className="h-3.5 w-3.5" /></Btn>
       </div>
