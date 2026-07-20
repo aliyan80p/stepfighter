@@ -223,6 +223,7 @@ function TestRunner() {
     setStartedAt(Date.now());
     setElapsed(0);
     setMediaModalIndex(null);
+    setStruck(new Set());
   }, [idx, question?.id, priorAttempt?.selected_answer]);
 
   useEffect(() => {
