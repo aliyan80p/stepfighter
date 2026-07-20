@@ -15,6 +15,7 @@ import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
 import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
+import { NotesModal } from "@/components/notes-modal";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
@@ -343,6 +344,7 @@ function QuestionModal({
   const rootRef = useRef<HTMLDivElement>(null);
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [marked, setMarked] = useState<Record<number, boolean>>({});
 
@@ -424,7 +426,7 @@ function QuestionModal({
           <div className="flex items-center gap-1">
             <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
             <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
-            <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
+            <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
             
             <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
             <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings((v) => !v)} />
@@ -577,6 +579,12 @@ function QuestionModal({
         </div>
 
         {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+        <NotesModal
+          open={showNotes}
+          onClose={() => setShowNotes(false)}
+          qbankId={modalQbankId}
+          questionId={r.id}
+        />
         {showSettings && (
           <SettingsPanel
             onClose={() => setShowSettings(false)}
