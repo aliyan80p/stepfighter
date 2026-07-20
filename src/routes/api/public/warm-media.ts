@@ -203,11 +203,12 @@ export const Route = createFileRoute("/api/public/warm-media")({
             }
           }),
         );
-        const ok = results.filter((r) => r.ok).length;
+        const uploaded = results.filter((r) => r.ok).length;
         return new Response(
           JSON.stringify({
             existing_count: existing.size, scanned, missing_selected: queue.length,
-            processed: results.length, uploaded: ok,
+            processed: results.length, uploaded,
+
             errors: results.filter((r) => !r.ok).slice(0, 10),
           }, null, 2),
           { status: 200, headers: { "Content-Type": "application/json" } },
