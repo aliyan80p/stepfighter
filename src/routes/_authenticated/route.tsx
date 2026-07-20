@@ -27,6 +27,8 @@ import {
   CalendarDays,
   Zap,
   Flag,
+  Menu,
+  PanelLeftClose,
 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
