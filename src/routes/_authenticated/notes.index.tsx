@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Search, Trash2, Pencil, ExternalLink, StickyNote } from "lucide-react";
+import { NotesModal } from "@/components/notes-modal";
 
 export const Route = createFileRoute("/_authenticated/notes/")({
   component: NotesBrowser,
@@ -36,6 +37,7 @@ function NotesBrowser() {
   const [subject, setSubject] = useState<string>("all");
   const [pageSize, setPageSize] = useState(25);
   const { confirm, dialog } = useConfirm();
+  const [editNote, setEditNote] = useState<{ qbankId: number; questionId: number } | null>(null);
 
   // Notes scoped to the currently selected qbank
   const scopedNotes = useMemo(
@@ -155,10 +157,9 @@ function NotesBrowser() {
               >
                 <ExternalLink className="h-4 w-4" />
               </Button>
-              <Button size="icon" variant="ghost" title="Edit"
+              <Button size="icon" variant="ghost" title="Edit note"
                 onClick={() => {
-                  if (n.qbankId) setActiveQbankId(Number(n.qbankId));
-                  router.navigate({ to: "/qbanks/search", search: { q: String(n.questionId), open: String(n.questionId) } as never });
+                  setEditNote({ qbankId: Number(n.qbankId), questionId: Number(n.questionId) });
                 }}>
                 <Pencil className="h-4 w-4 text-blue-500" />
               </Button>
@@ -180,6 +181,15 @@ function NotesBrowser() {
       </div>
 
       {dialog}
+      <NotesModal
+        open={!!editNote}
+        onClose={() => {
+          setEditNote(null);
+          qc.invalidateQueries({ queryKey: ["notes-list"] });
+        }}
+        qbankId={editNote?.qbankId}
+        questionId={editNote?.questionId}
+      />
     </div>
   );
 }
