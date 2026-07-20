@@ -196,7 +196,12 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
                   <div className="flex gap-2">
                     <select
                       value={deckId}
-                      onChange={(e) => setDeckId(e.target.value)}
+                      onChange={(e) => {
+                        setDeckId(e.target.value);
+                        if (typeof window !== "undefined" && e.target.value) {
+                          localStorage.setItem(DEFAULT_DECK_KEY, e.target.value);
+                        }
+                      }}
                       className="flex-1 border rounded px-2 py-1.5 text-sm"
                     >
                       {decks.length === 0 && <option value="">— No decks yet —</option>}
