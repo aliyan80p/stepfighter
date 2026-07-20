@@ -35,11 +35,13 @@ function candidateNames(name: string): string[] {
     set.add(b);
     if (/^[a-z]/.test(b)) set.add(b[0].toUpperCase() + b.slice(1));
     if (/^[A-Z]/.test(b)) set.add(b[0].toLowerCase() + b.slice(1));
-    if (/^[LlUu]\d/.test(b)) {
-      const rest = b.slice(1);
-      set.add("L" + rest); set.add("U" + rest);
-      set.add("l" + rest); set.add("u" + rest);
+    if (/^[Ll]\d/.test(b)) {
+      set.add("L" + b.slice(1)); set.add("l" + b.slice(1));
     }
+    if (/^[Uu]\d/.test(b)) {
+      set.add("U" + b.slice(1)); set.add("u" + b.slice(1));
+    }
+
     const lower = b.toLowerCase();
     if (!HIGHRES_PREFIXES.some((p) => lower.startsWith(p))) {
       for (const p of HIGHRES_PREFIXES) set.add(p + b);
