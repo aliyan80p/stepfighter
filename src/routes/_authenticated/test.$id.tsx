@@ -697,8 +697,9 @@ function TestRunner() {
   };
 
   const copySel = async () => {
+    const liveSel = window.getSelection()?.toString() ?? "";
     const range = savedRangeRef.current;
-    const text = (savedTextRef.current || range?.toString() || "").trim();
+    const text = (liveSel || savedTextRef.current || range?.toString() || "").trim();
     if (!text) {
       toast.error("Select text first");
       setHlBar(null);
