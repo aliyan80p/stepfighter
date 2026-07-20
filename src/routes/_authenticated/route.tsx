@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Gauge,
@@ -27,6 +27,8 @@ import {
   CalendarDays,
   Zap,
   Flag,
+  Menu,
+  PanelLeftClose,
 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -129,6 +131,19 @@ function AuthedLayout() {
   };
   const [open, setOpen] = useState<Record<string, boolean>>(initialOpen);
 
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("sidebar-open");
+    if (saved !== null) return saved === "1";
+    return window.matchMedia("(min-width: 768px)").matches;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sidebar-open", sidebarOpen ? "1" : "0");
+    }
+  }, [sidebarOpen]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
     router.navigate({ to: "/auth" });
@@ -138,27 +153,52 @@ function AuthedLayout() {
 
   const hideSidebar = /^\/test\//.test(pathname);
 
+  const closeOnMobile = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-background text-foreground">
+      {!hideSidebar && sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       {!hideSidebar && (
-      <aside className="w-64 border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground">
+      <aside
+        className={cn(
+          "border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-200 z-40",
+          "fixed inset-y-0 left-0 md:static",
+          sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:w-0 md:translate-x-0 overflow-hidden",
+        )}
+      >
 
-        <Link to="/dashboard" className="flex items-center gap-2 px-4 h-14 border-b border-sidebar-border">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
-            IMD
-          </div>
-          <span className="font-semibold">QBank</span>
-        </Link>
-
-        
-
-
-
+        <div className="flex items-center justify-between px-4 h-14 border-b border-sidebar-border">
+          <Link to="/dashboard" className="flex items-center gap-2" onClick={closeOnMobile}>
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
+              IMD
+            </div>
+            <span className="font-semibold">QBank</span>
+          </Link>
+          <button
+            type="button"
+            aria-label="Collapse sidebar"
+            onClick={() => setSidebarOpen(false)}
+            className="p-1 rounded text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
+        </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {/* Welcome / Dashboard */}
           <Link
             to="/dashboard"
+            onClick={closeOnMobile}
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               isActive("/dashboard")
@@ -195,6 +235,7 @@ function AuthedLayout() {
                       <Link
                         key={i.to}
                         to={i.to}
+                        onClick={closeOnMobile}
                         className={cn(
                           "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                           isActive(i.to)
@@ -222,9 +263,17 @@ function AuthedLayout() {
       </aside>
       )}
 
-
-
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto min-w-0 relative">
+        {!hideSidebar && !sidebarOpen && (
+          <button
+            type="button"
+            aria-label="Open sidebar"
+            onClick={() => setSidebarOpen(true)}
+            className="fixed top-3 left-3 z-30 flex items-center justify-center h-9 w-9 rounded-md border border-border bg-background/90 backdrop-blur shadow-sm hover:bg-accent hover:text-accent-foreground"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        )}
         <Outlet />
       </main>
     </div>
