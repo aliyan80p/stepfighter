@@ -267,11 +267,9 @@ function TestRunner() {
       if (focusRoot !== state.root || !state.root.contains(focus.startContainer)) return false;
 
       const nextRange = document.createRange();
-      const anchorBeforeFocus = state.anchor.compareBoundaryPoints(Range.START_TO_START, focus) <= 0;
-      if (anchorBeforeFocus) {
-        nextRange.setStart(state.anchor.startContainer, state.anchor.startOffset);
-        nextRange.setEnd(focus.startContainer, focus.startOffset);
-      } else {
+      nextRange.setStart(state.anchor.startContainer, state.anchor.startOffset);
+      nextRange.setEnd(focus.startContainer, focus.startOffset);
+      if (nextRange.collapsed || nextRange.toString().trim().length === 0) {
         nextRange.setStart(focus.startContainer, focus.startOffset);
         nextRange.setEnd(state.anchor.startContainer, state.anchor.startOffset);
       }
