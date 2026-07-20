@@ -152,8 +152,6 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
             <h3 className="text-sm font-semibold text-slate-700 mb-2">{questionId ? "Other" : "All Flashcards"}</h3>
             {isLoading ? (
               <div className="text-sm text-slate-500">Loading…</div>
-            ) : filtered(other).length === 0 ? (
-              <div className="text-sm text-slate-500">No flashcards yet.</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3">
                 {!questionId && (
@@ -168,6 +166,9 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
                 {filtered(other).map((c: any) => (
                   <CardTile key={c.id} card={c} onClick={() => setExpanded(c.id)} onDelete={() => remove(c.id)} />
                 ))}
+                {filtered(other).length === 0 && !questionId === false && (
+                  <div className="text-sm text-slate-500 col-span-full">No flashcards yet.</div>
+                )}
               </div>
             )}
           </section>
