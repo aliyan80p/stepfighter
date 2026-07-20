@@ -1193,6 +1193,18 @@ function TestRunner() {
 
 
       {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+      <FlashcardsModal
+        open={showFlashcards}
+        onClose={() => setShowFlashcards(false)}
+        qbankId={data?.qbankId}
+        questionId={question?.id}
+      />
+      <FeedbackModal
+        open={showFeedback}
+        onClose={() => setShowFeedback(false)}
+        qbankId={data?.qbankId}
+        questionId={question?.id}
+      />
       {showSettings && (
         <SettingsPanel
           onClose={() => setShowSettings(false)}
