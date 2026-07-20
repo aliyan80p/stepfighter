@@ -404,7 +404,7 @@ function TestRunner() {
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
-  const HL_COLORS = ["#ffeb3b", "#4ade80", "#38bdf8", "#f472b6", "#fb923c", "#c084fc"];
+  const HL_COLORS = ["#ffeb3b", "#4ade80", "#38bdf8", "#f472b6", "#fb923c", "#c084fc", ...(userSettings.customHighlights ?? [])];
 
   const persistHighlights = () => {
     if (!question || !contentRef.current) return;
