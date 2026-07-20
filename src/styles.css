@@ -173,6 +173,18 @@ mark.qbank-hl *, .qbank-theme-dark mark.qbank-hl *, .qbank-theme-sepia mark.qban
   color: #111827 !important;
 }
 
+/* Ensure users can select and copy question/explanation text on touch devices
+   (iOS/iPadOS Safari and Android Chrome disable long-press selection unless
+   these are set explicitly on the content roots). */
+.qbank-html,
+.qbank-explanation,
+[data-hlkey] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+
 
 
 .qbank-inline-media-wrap {
