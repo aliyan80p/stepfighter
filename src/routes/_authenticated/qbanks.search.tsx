@@ -413,20 +413,20 @@ function QuestionModal({
               className={`flex flex-col items-center px-2 py-1 rounded hover:bg-white/10 ${isMarked ? "text-yellow-300" : "text-white/90"}`}
               title={isMarked ? "Remove flag" : "Flag question"}
             >
-              <Flag className="h-5 w-5" fill={isMarked ? "currentColor" : "none"} />
+              <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isMarked ? "" : "opacity-90"}`} />
               <span className="text-[11px]">Flag</span>
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <TopBtn icon={ChevronLeft} label="Previous" onClick={() => go(-1)} />
-            <TopBtn icon={ChevronRight} label="Next" onClick={() => go(1)} />
+            <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => go(-1)} />
+            <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => go(1)} />
           </div>
           <div className="flex items-center gap-1">
             <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
-            <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
-            <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
+            <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
+            <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={notImpl("Notes")} />
             
-            <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
+            <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
             <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings((v) => !v)} />
           </div>
         </div>
