@@ -780,10 +780,21 @@ function TestRunner() {
       </div>
 
       {/* Main */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Left navigator */}
         {sidebarOpen && (
-        <aside className="w-14 overflow-auto border-r" style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}>
+        <>
+          {/* Mobile overlay backdrop */}
+          <button
+            type="button"
+            aria-label="Close question list"
+            className="md:hidden fixed inset-0 z-30 bg-black/40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        <aside
+          className="w-14 overflow-auto border-r z-40 md:static absolute inset-y-0 left-0"
+          style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
+        >
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
             const hideResult = !isReview && !tutorMode;
@@ -799,6 +810,9 @@ function TestRunner() {
                   e.preventDefault();
                   e.stopPropagation();
                   goToQuestion(i);
+                  if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+                    setSidebarOpen(false);
+                  }
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -819,11 +833,12 @@ function TestRunner() {
             );
           })}
         </aside>
+        </>
         )}
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`w-full mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+          <div className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
             {(() => null)()}
             {(() => null)()}
 
