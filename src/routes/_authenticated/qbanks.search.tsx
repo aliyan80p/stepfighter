@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import {
   Search, Copy, Info, Loader2, Eye, ArrowUpDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, FileText,
@@ -10,12 +12,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
-import { useActiveQbankId, setActiveQbankId, QBANKS } from "@/lib/active-qbank";
+import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 
 
 export const Route = createFileRoute("/_authenticated/qbanks/search")({
+  validateSearch: zodValidator(z.object({
+    q: fallback(z.string(), "").default(""),
+    open: fallback(z.string(), "").default(""),
+  })),
   component: SearchPage,
 });
 
@@ -33,15 +39,16 @@ type SearchResult = {
 function SearchPage() {
   const searchFn = useServerFn(searchQuestions);
   const qbankId = useActiveQbankId();
-  const [query, setQuery] = useState("");
+  const urlSearch = Route.useSearch();
+  const [query, setQuery] = useState(urlSearch.q ?? "");
   const currentBank = QBANKS.find((q) => q.id === qbankId) ?? QBANKS[0];
 
   const mutation = useMutation({
     mutationFn: async (q: string) => searchFn({ data: { query: q, qbankId } }) as Promise<{ results: SearchResult[]; total: number; truncated: boolean }>,
   });
 
-
   const results = mutation.data?.results ?? [];
+  const autoOpenId = urlSearch.open ? Number(urlSearch.open) : null;
 
   const runSearch = () => {
     if (!query.trim()) {
@@ -51,11 +58,20 @@ function SearchPage() {
     mutation.mutate(query);
   };
 
+  // Auto-run search when arriving with ?q=... (e.g. from Notes browser)
+  useEffect(() => {
+    if (urlSearch.q && urlSearch.q.trim()) {
+      mutation.mutate(urlSearch.q);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch.q, qbankId]);
+
   const copyIds = () => {
     const ids = results.map((r) => r.id).join(", ");
     navigator.clipboard.writeText(ids);
     toast.success(`Copied ${results.length} IDs`);
   };
+
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto">
@@ -81,16 +97,11 @@ function SearchPage() {
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Course</label>
-            <select
-              value={currentBank.id}
-              onChange={(e) => setActiveQbankId(Number(e.target.value))}
-              className="w-full mt-1 py-2.5 px-3 border rounded-md bg-white"
-            >
-              {QBANKS.map((q) => (
-                <option key={q.id} value={q.id}>{q.name}</option>
-              ))}
-            </select>
+            <div className="w-full mt-1 py-2.5 px-3 border rounded-md bg-slate-100 text-slate-700 font-medium">
+              {currentBank.name}
+            </div>
           </div>
+
           <button
             onClick={runSearch}
             disabled={mutation.isPending}
@@ -118,19 +129,20 @@ function SearchPage() {
         <div className="text-center py-12 text-slate-500">No questions found.</div>
       )}
 
-      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} />}
+      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} autoOpenId={autoOpenId} />}
     </div>
   );
 }
 
 type SortKey = "id" | "subject" | "system" | "topic";
 
-function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void }) {
+function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void; autoOpenId?: number | null }) {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [viewingIdx, setViewingIdx] = useState<number | null>(null);
   const pageSize = 20;
+
 
   const sorted = useMemo(() => {
     const arr = [...results];
@@ -143,6 +155,14 @@ function ResultsTable({ results, truncated, onCopyIds }: { results: SearchResult
     });
     return arr;
   }, [results, sortKey, sortDir]);
+
+  // Auto-open modal when arriving with ?open=<id>
+  useEffect(() => {
+    if (autoOpenId == null) return;
+    const idx = sorted.findIndex((r) => r.id === autoOpenId);
+    if (idx >= 0) setViewingIdx(idx);
+  }, [autoOpenId, sorted]);
+
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages);

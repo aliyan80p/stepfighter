@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { listNotes, deleteNote } from "@/lib/notes.functions";
+import { setActiveQbankId } from "@/lib/active-qbank";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -161,14 +163,21 @@ function NotesBrowser() {
                 size="icon"
                 variant="ghost"
                 title="Open question"
-                onClick={() => router.navigate({ to: "/qbanks/search", search: { q: String(n.questionId) } as never })}
+                onClick={() => {
+                  if (n.qbankId) setActiveQbankId(Number(n.qbankId));
+                  router.navigate({ to: "/qbanks/search", search: { q: String(n.questionId), open: String(n.questionId) } as never });
+                }}
               >
                 <ExternalLink className="h-4 w-4" />
               </Button>
               <Button size="icon" variant="ghost" title="Edit"
-                onClick={() => router.navigate({ to: "/qbanks/search", search: { q: String(n.questionId) } as never })}>
+                onClick={() => {
+                  if (n.qbankId) setActiveQbankId(Number(n.qbankId));
+                  router.navigate({ to: "/qbanks/search", search: { q: String(n.questionId), open: String(n.questionId) } as never });
+                }}>
                 <Pencil className="h-4 w-4 text-blue-500" />
               </Button>
+
               <Button size="icon" variant="ghost" title="Delete"
                 onClick={async () => {
                   const ok = await confirm({
