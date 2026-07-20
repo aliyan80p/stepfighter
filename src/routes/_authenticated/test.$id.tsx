@@ -226,14 +226,27 @@ function TestRunner() {
 
   useEffect(() => {
     if (submitted) return;
-    const t = setInterval(() => setElapsed(Math.round((Date.now() - startedAt) / 1000)), 1000);
+    const t = setInterval(() => {
+      if (userSettings.stopTimerOnBlur && typeof document !== "undefined" && document.hidden) return;
+      setElapsed(Math.round((Date.now() - startedAt) / 1000));
+    }, 1000);
     return () => clearInterval(t);
-  }, [submitted, startedAt]);
+  }, [submitted, startedAt, userSettings.stopTimerOnBlur]);
 
   useEffect(() => {
-    const t = setInterval(() => setBlockElapsed(Math.round((Date.now() - blockStartedAt) / 1000)), 1000);
+    const t = setInterval(() => {
+      if (userSettings.stopTimerOnBlur && typeof document !== "undefined" && document.hidden) return;
+      setBlockElapsed(Math.round((Date.now() - blockStartedAt) / 1000));
+    }, 1000);
     return () => clearInterval(t);
-  }, [blockStartedAt]);
+  }, [blockStartedAt, userSettings.stopTimerOnBlur]);
+
+  // Auto night mode — switch to dark theme between 20:00 and 06:00
+  useEffect(() => {
+    if (!userSettings.autoNightMode) return;
+    const h = new Date().getHours();
+    if (h >= 20 || h < 6) setTheme("dark");
+  }, [userSettings.autoNightMode, question?.id]);
 
   // Initialize tutor/exam toggle from test.mode once per test
   useEffect(() => {
@@ -342,6 +355,19 @@ function TestRunner() {
   };
 
   const finish = async () => {
+    if (userSettings.confirmOmission && !isReview && data) {
+      const answeredCount = data.questions.reduce((n, q) => n + (data.attemptsByQ[q.id] ? 1 : 0), 0);
+      const omitted = total - answeredCount;
+      if (omitted > 0) {
+        const ok = await confirm({
+          title: `${omitted} question${omitted === 1 ? "" : "s"} omitted`,
+          description: `You have not answered ${omitted} of ${total} question${total === 1 ? "" : "s"}. End the block anyway?`,
+          confirmLabel: "End Block",
+          tone: "danger",
+        });
+        if (!ok) return;
+      }
+    }
     await finFn({ data: { testId } });
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
@@ -864,7 +890,7 @@ function TestRunner() {
                     <span className="flex-1">
                       <span className="font-normal">{letter}. </span>
                       <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: htmlFor(`a${i}`, a.answer_text) }} />
-                      {submitted && pct != null && <span className="text-gray-600 ml-1">({pct}%)</span>}
+                      {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
                     </span>
                   </button>
                 );
@@ -916,15 +942,17 @@ function TestRunner() {
                       <div className="text-[11px] text-gray-500">Time Taken</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 text-green-700" />
+                  {!userSettings.hidePercentages && (
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
+                        <CheckCircle2 className="h-4 w-4 text-green-700" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold">{peerPct}%</div>
+                        <div className="text-[11px] text-gray-500">Answered Correctly</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-semibold">{peerPct}%</div>
-                      <div className="text-[11px] text-gray-500">Answered Correctly</div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1052,7 +1080,7 @@ function TestRunner() {
         return (
           <div className="flex items-center justify-between px-4 py-0 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
             <div className="font-semibold tracking-wide tabular-nums">
-              {isReview ? "" : `Block Time: ${bh}:${bm}:${bs}`}
+              {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
             <div className="font-semibold tracking-wide hidden md:flex items-center gap-3">
               <span>IMD QBank</span>
