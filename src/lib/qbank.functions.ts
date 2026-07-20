@@ -668,12 +668,37 @@ export const resetAssessment = createServerFn({ method: "POST" })
     return { ok: true, deleted: testIds.length };
   });
 
+export const RESET_LIMIT_PER_QBANK = 5;
+
+export const getResetInfo = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { count } = await supabase
+      .from("qbank_resets")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("qbank_id", data.qbankId);
+    const used = count ?? 0;
+    return { used, limit: RESET_LIMIT_PER_QBANK, remaining: Math.max(0, RESET_LIMIT_PER_QBANK - used) };
+  });
+
 export const resetQbank = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { qbankId } = data;
+    const { count } = await supabase
+      .from("qbank_resets")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("qbank_id", qbankId);
+    const used = count ?? 0;
+    if (used >= RESET_LIMIT_PER_QBANK) {
+      throw new Error(`Reset limit reached. You have used all ${RESET_LIMIT_PER_QBANK} resets for this course.`);
+    }
     const [attempts, tests, bookmarks] = await Promise.all([
       supabase.from("attempts").delete().eq("user_id", userId).eq("qbank_id", qbankId),
       supabase.from("tests").delete().eq("user_id", userId).eq("qbank_id", qbankId),
@@ -681,6 +706,9 @@ export const resetQbank = createServerFn({ method: "POST" })
     ]);
     const err = attempts.error || tests.error || bookmarks.error;
     if (err) throw err;
-    return { ok: true };
+    const { error: logErr } = await supabase.from("qbank_resets").insert({ user_id: userId, qbank_id: qbankId });
+    if (logErr) throw logErr;
+    const remaining = Math.max(0, RESET_LIMIT_PER_QBANK - (used + 1));
+    return { ok: true, used: used + 1, limit: RESET_LIMIT_PER_QBANK, remaining };
   });
 
