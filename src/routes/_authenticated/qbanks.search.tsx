@@ -393,7 +393,7 @@ function QuestionModal({
             <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
             <TopBtn icon={FlaskConical} label="Lab Values" onClick={notImpl("Lab Values")} />
             <TopBtn icon={StickyNote} label="Notes" onClick={notImpl("Notes")} />
-            <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />
+            
             <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
             <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings((v) => !v)} />
           </div>
