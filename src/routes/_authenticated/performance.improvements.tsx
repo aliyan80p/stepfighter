@@ -87,17 +87,17 @@ function ImprovementsPage() {
               Here is an AI-Generated <span className="text-primary font-medium">study plan</span> to boost your scores.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <select
               value={qbankId}
               onChange={(e) => setActiveQbankId(Number(e.target.value))}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              className="h-10 min-w-0 flex-1 sm:flex-none rounded-md border border-input bg-background px-3 text-sm"
             >
               {QBANKS.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
             </select>
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white" onClick={() => setStatsOpen(true)}>
+            <Button className="bg-blue-700 hover:bg-blue-800 text-white shrink-0" onClick={() => setStatsOpen(true)}>
               <Sparkles className="h-4 w-4 mr-2" />
-              Statistics by Category
+              <span className="truncate">Statistics by Category</span>
             </Button>
           </div>
         </div>
