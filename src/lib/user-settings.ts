@@ -42,14 +42,14 @@ export const DEFAULT_HIGHLIGHTS: Record<string, { label: string; color: string }
 };
 
 export const TOOLBAR_ITEMS: { key: string; label: string }[] = [
-  { key: "notes", label: "Notes" },
-  { key: "notebook", label: "Notebook" },
-  { key: "library", label: "Library" },
-  { key: "newFlashcard", label: "New flashcard" },
-  { key: "existingFlashcard", label: "Existing flashcard" },
-  { key: "aiFlashcard", label: "AI flashcard" },
-  { key: "copy", label: "Copy" },
+  { key: "notes", label: "Add to Notes" },
+  { key: "notebook", label: "Add to Notebook" },
+  { key: "library", label: "Medical Library" },
+  { key: "newFlashcard", label: "New Flashcard" },
+  { key: "existingFlashcard", label: "Existing Flashcard" },
+  { key: "copy", label: "Copy Text" },
 ];
+
 
 export const DEFAULT_SETTINGS: UserSettings = {
   darkMode: false,
