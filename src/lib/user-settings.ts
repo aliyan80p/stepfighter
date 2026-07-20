@@ -68,8 +68,9 @@ export const DEFAULT_SETTINGS: UserSettings = {
   autoNightMode: false,
   nightStart: 20,
   nightEnd: 6,
-
+  fontSize: 15,
   fontWeight: 0,
+
   enabledHighlights: Object.fromEntries(Object.keys(DEFAULT_HIGHLIGHTS).map((k) => [k, true])),
   customHighlights: [],
   toolbar: Object.fromEntries(TOOLBAR_ITEMS.map((t) => [t.key, true])),
