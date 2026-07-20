@@ -178,6 +178,38 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="font-semibold text-slate-800 mb-3">New Flashcard</div>
 
+              <div className="mb-3">
+                <label className="text-xs font-semibold text-slate-600 block mb-1">Deck</label>
+                {showNewDeck ? (
+                  <div className="flex gap-2">
+                    <input
+                      value={newDeckName}
+                      onChange={(e) => setNewDeckName(e.target.value)}
+                      placeholder="New deck name"
+                      autoFocus
+                      className="flex-1 border rounded px-2 py-1.5 text-sm"
+                    />
+                    <button onClick={() => { setShowNewDeck(false); setNewDeckName(""); }} className="text-xs text-slate-500 px-2">Cancel</button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <select
+                      value={deckId}
+                      onChange={(e) => setDeckId(e.target.value)}
+                      className="flex-1 border rounded px-2 py-1.5 text-sm"
+                    >
+                      {decks.length === 0 && <option value="">— No decks yet —</option>}
+                      {decks.map((d: any) => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                    <button onClick={() => setShowNewDeck(true)} className="text-xs px-2 py-1 border rounded text-blue-600 hover:bg-blue-50 whitespace-nowrap">+ New deck</button>
+                  </div>
+                )}
+                <p className="text-[11px] text-slate-500 mt-1">All new cards you create will be saved to this deck.</p>
+              </div>
+
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* FRONT */}
                 <div className="border rounded p-3">
