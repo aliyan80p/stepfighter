@@ -225,8 +225,8 @@ body { overscroll-behavior-y: none; }
 /* Test runner: horizontally scrollable toolbars on small screens */
 @media (max-width: 767px) {
   .qbank-html img { max-width: 100%; }
-  .qbank-html table { display: block; overflow-x: auto; white-space: nowrap; }
-  .qbank-html table td, .qbank-html table th { padding: 0.4rem 0.5rem; }
+  .qbank-html table { width: 100%; table-layout: fixed; white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
+  .qbank-html table td, .qbank-html table th { padding: 0.4rem 0.5rem; white-space: normal; word-break: break-word; overflow-wrap: anywhere; font-size: 13px; }
   /* Give room around the answer choices box on phones */
   .qbank-explanation { font-size: 14px; }
 }
