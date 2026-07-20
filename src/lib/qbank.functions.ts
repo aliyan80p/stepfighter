@@ -27,8 +27,9 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     }
 
     const questionsCountQ = sources
-      ? supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId).in("source", sources)
-      : supabase.from("questions").select("*", { count: "exact", head: true }).eq("qbank_id", qbankId);
+      ? supabase.from("questions").select("id", { count: "exact", head: true }).eq("qbank_id", qbankId).in("source", sources)
+      : null;
+
 
     let attemptsQ = supabase.from("attempts").select("is_correct,question_id,selected_answer,created_at").eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true });
     let bookmarksQ = supabase.from("bookmarks").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("qbank_id", qbankId);
@@ -44,19 +45,32 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       }
     }
 
-    const [{ count: totalQ }, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }, { data: testsRaw }] = await Promise.all([
+    const [countRes, { data: subjectsRaw }, questionMeta, { data: attempts }, { count: bookmarks }, { data: testsRaw }] = await Promise.all([
       questionsCountQ,
       supabase.from("subjects").select("id,name,count").eq("qbank_id", qbankId).order("id"),
-      fetchAllQuestionRows(supabase, "id,subject_id", { qbankId, sources }),
+      // Only fetch per-question subject mapping when a source filter is active.
+      // Otherwise the pre-computed `subjects.count` column is accurate and avoids
+      // scanning every row in the qbank on each dashboard load.
+      sources
+        ? fetchAllQuestionRows(supabase, "id,subject_id", { qbankId, sources })
+        : Promise.resolve(null as any),
       attemptsQ,
       bookmarksQ,
       testsQ,
     ]);
-    const subjectCounts = new Map<number, number>();
-    for (const q of questionMeta) {
-      if (q.subject_id != null) subjectCounts.set(q.subject_id, (subjectCounts.get(q.subject_id) ?? 0) + 1);
+    let subjects: { id: number; name: string; count: number }[];
+    if (questionMeta) {
+      const subjectCounts = new Map<number, number>();
+      for (const q of questionMeta) {
+        if (q.subject_id != null) subjectCounts.set(q.subject_id, (subjectCounts.get(q.subject_id) ?? 0) + 1);
+      }
+      subjects = (subjectsRaw ?? []).map((s) => ({ ...s, count: subjectCounts.get(s.id) ?? 0 }));
+    } else {
+      subjects = (subjectsRaw ?? []).map((s) => ({ ...s, count: s.count ?? 0 }));
     }
-    const subjects = (subjectsRaw ?? []).map((s) => ({ ...s, count: subjectCounts.get(s.id) ?? 0 }));
+    const totalQ = countRes?.count ?? subjects.reduce((sum, s) => sum + (s.count ?? 0), 0);
+
+
     const uniqueDone = new Set((attempts ?? []).map((a) => a.question_id)).size;
     const correct = (attempts ?? []).filter((a) => a.is_correct).length;
     const incorrect = (attempts ?? []).filter((a) => a.is_correct === false && a.selected_answer != null).length;
