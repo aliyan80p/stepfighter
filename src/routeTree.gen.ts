@@ -31,6 +31,7 @@ import { Route as AuthenticatedQbanksSearchRouteImport } from './routes/_authent
 import { Route as AuthenticatedPerformanceScoreCalculatorRouteImport } from './routes/_authenticated/performance.score-calculator'
 import { Route as AuthenticatedPerformancePeerRankingRouteImport } from './routes/_authenticated/performance.peer-ranking'
 import { Route as AuthenticatedPerformanceOverallRouteImport } from './routes/_authenticated/performance.overall'
+import { Route as AuthenticatedPerformanceImprovementsRouteImport } from './routes/_authenticated/performance.improvements'
 import { Route as AuthenticatedPerformanceGraphsRouteImport } from './routes/_authenticated/performance.graphs'
 import { Route as AuthenticatedPerformanceChartsRouteImport } from './routes/_authenticated/performance.charts'
 import { Route as AuthenticatedPerformanceAiTestAnalysisRouteImport } from './routes/_authenticated/performance.ai-test-analysis'
@@ -159,6 +160,12 @@ const AuthenticatedPerformanceOverallRoute =
     path: '/performance/overall',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPerformanceImprovementsRoute =
+  AuthenticatedPerformanceImprovementsRouteImport.update({
+    id: '/performance/improvements',
+    path: '/performance/improvements',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPerformanceGraphsRoute =
   AuthenticatedPerformanceGraphsRouteImport.update({
     id: '/performance/graphs',
@@ -223,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
   '/performance/charts': typeof AuthenticatedPerformanceChartsRoute
   '/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
+  '/performance/improvements': typeof AuthenticatedPerformanceImprovementsRoute
   '/performance/overall': typeof AuthenticatedPerformanceOverallRoute
   '/performance/peer-ranking': typeof AuthenticatedPerformancePeerRankingRoute
   '/performance/score-calculator': typeof AuthenticatedPerformanceScoreCalculatorRoute
@@ -254,6 +262,7 @@ export interface FileRoutesByTo {
   '/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
   '/performance/charts': typeof AuthenticatedPerformanceChartsRoute
   '/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
+  '/performance/improvements': typeof AuthenticatedPerformanceImprovementsRoute
   '/performance/overall': typeof AuthenticatedPerformanceOverallRoute
   '/performance/peer-ranking': typeof AuthenticatedPerformancePeerRankingRoute
   '/performance/score-calculator': typeof AuthenticatedPerformanceScoreCalculatorRoute
@@ -287,6 +296,7 @@ export interface FileRoutesById {
   '/_authenticated/performance/ai-test-analysis': typeof AuthenticatedPerformanceAiTestAnalysisRoute
   '/_authenticated/performance/charts': typeof AuthenticatedPerformanceChartsRoute
   '/_authenticated/performance/graphs': typeof AuthenticatedPerformanceGraphsRoute
+  '/_authenticated/performance/improvements': typeof AuthenticatedPerformanceImprovementsRoute
   '/_authenticated/performance/overall': typeof AuthenticatedPerformanceOverallRoute
   '/_authenticated/performance/peer-ranking': typeof AuthenticatedPerformancePeerRankingRoute
   '/_authenticated/performance/score-calculator': typeof AuthenticatedPerformanceScoreCalculatorRoute
@@ -320,6 +330,7 @@ export interface FileRouteTypes {
     | '/performance/ai-test-analysis'
     | '/performance/charts'
     | '/performance/graphs'
+    | '/performance/improvements'
     | '/performance/overall'
     | '/performance/peer-ranking'
     | '/performance/score-calculator'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/performance/ai-test-analysis'
     | '/performance/charts'
     | '/performance/graphs'
+    | '/performance/improvements'
     | '/performance/overall'
     | '/performance/peer-ranking'
     | '/performance/score-calculator'
@@ -383,6 +395,7 @@ export interface FileRouteTypes {
     | '/_authenticated/performance/ai-test-analysis'
     | '/_authenticated/performance/charts'
     | '/_authenticated/performance/graphs'
+    | '/_authenticated/performance/improvements'
     | '/_authenticated/performance/overall'
     | '/_authenticated/performance/peer-ranking'
     | '/_authenticated/performance/score-calculator'
@@ -565,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerformanceOverallRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/performance/improvements': {
+      id: '/_authenticated/performance/improvements'
+      path: '/performance/improvements'
+      fullPath: '/performance/improvements'
+      preLoaderRoute: typeof AuthenticatedPerformanceImprovementsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/performance/graphs': {
       id: '/_authenticated/performance/graphs'
       path: '/performance/graphs'
@@ -648,6 +668,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPerformanceAiTestAnalysisRoute: typeof AuthenticatedPerformanceAiTestAnalysisRoute
   AuthenticatedPerformanceChartsRoute: typeof AuthenticatedPerformanceChartsRoute
   AuthenticatedPerformanceGraphsRoute: typeof AuthenticatedPerformanceGraphsRoute
+  AuthenticatedPerformanceImprovementsRoute: typeof AuthenticatedPerformanceImprovementsRoute
   AuthenticatedPerformanceOverallRoute: typeof AuthenticatedPerformanceOverallRoute
   AuthenticatedPerformancePeerRankingRoute: typeof AuthenticatedPerformancePeerRankingRoute
   AuthenticatedPerformanceScoreCalculatorRoute: typeof AuthenticatedPerformanceScoreCalculatorRoute
@@ -675,6 +696,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPerformanceAiTestAnalysisRoute,
   AuthenticatedPerformanceChartsRoute: AuthenticatedPerformanceChartsRoute,
   AuthenticatedPerformanceGraphsRoute: AuthenticatedPerformanceGraphsRoute,
+  AuthenticatedPerformanceImprovementsRoute:
+    AuthenticatedPerformanceImprovementsRoute,
   AuthenticatedPerformanceOverallRoute: AuthenticatedPerformanceOverallRoute,
   AuthenticatedPerformancePeerRankingRoute:
     AuthenticatedPerformancePeerRankingRoute,

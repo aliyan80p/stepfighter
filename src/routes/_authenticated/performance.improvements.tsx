@@ -72,7 +72,7 @@ function ImprovementsPage() {
   });
 
   const chartData = useMemo(
-    () => (overview.data?.perfOverTime ?? []).map((t, i) => ({ x: i + 1, pct: t.pct, name: t.name })),
+    () => (overview.data?.perfOverTime ?? []).map((t: any, i: number) => ({ x: i + 1, pct: t.pct, name: t.name })),
     [overview.data],
   );
 
