@@ -279,23 +279,27 @@ function TestResults() {
         <div className="divide-y divide-border">
           {filtered.length === 0 && <div className="p-6 text-muted-foreground">No questions match this filter.</div>}
           {filtered.map((r) => (
-            <div key={r.id} className="grid grid-cols-[70px_1fr_1.4fr_1.4fr_1.6fr_1fr_1fr_80px] gap-3 px-4 py-3 items-center hover:bg-muted/30">
-              <div><StatusDot status={r.status} /></div>
+            <div key={r.id} className="flex flex-col gap-2 md:grid md:grid-cols-[70px_1fr_1.4fr_1.4fr_1.6fr_1fr_1fr_80px] md:gap-3 px-4 py-3 md:items-center hover:bg-muted/30">
+              <div className="flex items-center gap-2">
+                <StatusDot status={r.status} />
+                <span className="md:hidden text-xs text-muted-foreground uppercase">{r.status}</span>
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">#{r.index}</span>
                 <span className="font-semibold">{r.id}</span>
               </div>
-              <div className="text-sm truncate" title={r.subject}>{r.subject}</div>
-              <div className="text-sm truncate" title={r.system}>{r.system}</div>
-              <div className="text-sm text-primary truncate" title={r.topic}>{r.topic}</div>
-              <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.others.toFixed(1)}%</span></div>
+              <div className="text-sm md:truncate" title={r.subject}><span className="md:hidden text-xs text-muted-foreground mr-1">Subject:</span>{r.subject}</div>
+              <div className="text-sm md:truncate" title={r.system}><span className="md:hidden text-xs text-muted-foreground mr-1">System:</span>{r.system}</div>
+              <div className="text-sm text-primary md:truncate" title={r.topic}><span className="md:hidden text-xs text-muted-foreground mr-1">Topic:</span>{r.topic}</div>
+              <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.others.toFixed(1)}% others</span></div>
               <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.time} sec</span></div>
-              <div className="text-right">
+              <div className="md:text-right">
                 <Link to="/test/$id" params={{ id }} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border hover:bg-muted">
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>
+
           ))}
         </div>
       </div>
