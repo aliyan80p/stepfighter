@@ -705,69 +705,44 @@ function TestRunner() {
     }
   };
 
-  const wrapSelection = (styler: (m: HTMLElement) => void) => {
+  const wrapSelection = (color: string, opts?: { strike?: boolean }) => {
     const range = restoreSavedRange();
     if (!range || range.collapsed) return;
     const startRoot = getHighlightRoot(range.startContainer);
-    const endRoot = getHighlightRoot(range.endContainer);
     const container = contentRef.current;
-    if (!startRoot || !endRoot || !container) return;
+    if (!startRoot || !container) return;
 
-    const plans: Array<{ root: HTMLElement; start: number; end: number }> = [];
-    if (startRoot === endRoot) {
-      const saved = savedSelectionRef.current;
-      const offsets = saved && saved.key === startRoot.dataset.hlkey
-        ? { start: saved.start, end: saved.end }
-        : getSelectionOffsets(startRoot, range);
-      plans.push({ root: startRoot, start: offsets.start, end: offsets.end });
-    } else {
-      const roots = Array.from(container.querySelectorAll<HTMLElement>("[data-hlkey]"));
-      const startIndex = roots.indexOf(startRoot);
-      const endIndex = roots.indexOf(endRoot);
-      if (startIndex === -1 || endIndex === -1) return;
-      const first = Math.min(startIndex, endIndex);
-      const last = Math.max(startIndex, endIndex);
-      const startOffset = textOffsetIn(startRoot, range.startContainer, range.startOffset);
-      const endOffset = textOffsetIn(endRoot, range.endContainer, range.endOffset);
-      if (startOffset == null || endOffset == null) return;
-
-      for (let i = first; i <= last; i += 1) {
-        const root = roots[i];
-        const length = root.textContent?.length ?? 0;
-        if (i === startIndex && i === endIndex) plans.push({ root, start: startOffset, end: endOffset });
-        else if (i === startIndex) plans.push({ root, start: startOffset, end: length });
-        else if (i === endIndex) plans.push({ root, start: 0, end: endOffset });
-        else plans.push({ root, start: 0, end: length });
-      }
+    // Restore selection so rangy operates on the intended range even if the
+    // browser cleared the visible selection.
+    const sel = window.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
 
-    for (const plan of plans.reverse()) wrapOffsetsWithin(plan.root, plan.start, plan.end, styler);
-    window.getSelection()?.removeAllRanges();
-    savedRangeRef.current = null;
-    savedSelectionRef.current = null;
-    savedTextRef.current = "";
-    setHlBar(null);
-    persistHighlights();
+    void applyHighlight(color, range, opts).then(() => {
+      window.getSelection()?.removeAllRanges();
+      savedRangeRef.current = null;
+      savedSelectionRef.current = null;
+      savedTextRef.current = "";
+      setHlBar(null);
+      persistHighlights();
+    });
   };
 
 
   const applyColor = (c: string) => {
-    wrapSelection(m => { m.style.backgroundColor = c; });
+    wrapSelection(c);
     setActiveHighlight(c);
   };
-  const applyStrike = () => wrapSelection(m => { m.style.textDecoration = "line-through"; m.style.textDecorationColor = "#ef4444"; });
+  const applyStrike = () => wrapSelection("#ef4444", { strike: true });
   const eraseHighlight = () => {
     const range = restoreSavedRange();
     if (!range) return;
     const anchor = range.commonAncestorContainer;
     const el = (anchor.nodeType === 1 ? anchor as Element : anchor.parentElement) as Element | null;
-    el?.closest("[data-hlkey]")?.querySelectorAll("mark.qbank-hl").forEach(m => {
-      if (range.intersectsNode(m)) {
-        const parent = m.parentNode!;
-        while (m.firstChild) parent.insertBefore(m.firstChild, m);
-        parent.removeChild(m);
-      }
-    });
+    const root = el?.closest<HTMLElement>("[data-hlkey]");
+    if (root) unwrapHighlightsInRange(root, range);
     window.getSelection()?.removeAllRanges();
     savedRangeRef.current = null;
     savedSelectionRef.current = null;
