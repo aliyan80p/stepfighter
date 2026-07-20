@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useConfirm } from "@/components/confirm-dialog";
 import { Search, Trash2, Pencil, ExternalLink, StickyNote } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notes/")({
@@ -32,7 +32,7 @@ function NotesBrowser() {
   const [subject, setSubject] = useState<string>("all");
   const [system, setSystem] = useState<string>("all");
   const [pageSize, setPageSize] = useState(25);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const qbanks = useMemo(
     () => Array.from(new Set(notes.map((n) => n.qbankName).filter(Boolean))) as string[],
@@ -170,7 +170,14 @@ function NotesBrowser() {
                 <Pencil className="h-4 w-4 text-blue-500" />
               </Button>
               <Button size="icon" variant="ghost" title="Delete"
-                onClick={() => setConfirmId(n.id)}>
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "Delete this note?",
+                    description: "This cannot be undone.",
+                    confirmLabel: "Delete",
+                  });
+                  if (ok) delMut.mutate(n.id);
+                }}>
                 <Trash2 className="h-4 w-4 text-red-500" />
               </Button>
             </div>
@@ -178,18 +185,7 @@ function NotesBrowser() {
         ))}
       </div>
 
-      <ConfirmDialog
-        open={!!confirmId}
-        onOpenChange={(o) => !o && setConfirmId(null)}
-        title="Delete this note?"
-        description="This cannot be undone."
-        confirmText="Delete"
-        variant="destructive"
-        onConfirm={() => {
-          if (confirmId) delMut.mutate(confirmId);
-          setConfirmId(null);
-        }}
-      />
+      {dialog}
     </div>
   );
 }
