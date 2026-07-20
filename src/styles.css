@@ -112,12 +112,12 @@
 .qbank-html img { max-width: 320px; height: auto; border: 1px solid #cbd5e1; border-radius: 4px; margin: 0.5rem 0; background: var(--color-muted); cursor: zoom-in; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .qbank-html img:hover { border-color: #1e3a8a; }
 .qbank-large-images .qbank-html img { max-width: 100%; }
-.qbank-html table { border-collapse: separate; border-spacing: 0; margin: 0.75rem 0; width: 100%; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
-.qbank-html table td, .qbank-html table th { border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 0.6rem 0.85rem; vertical-align: middle; background: #ffffff; }
+.qbank-html table { border-collapse: separate; border-spacing: 0; margin: 0.75rem 0; width: 100%; border: 1px solid #c9d3e0; border-radius: 8px; overflow: hidden; background: #eef1f5; }
+.qbank-html table td, .qbank-html table th { border-right: 1px solid #c9d3e0; border-bottom: 1px solid #c9d3e0; padding: 0.6rem 0.85rem; vertical-align: middle; }
 .qbank-html table td:last-child, .qbank-html table th:last-child { border-right: none; }
 .qbank-html table tr:last-child td, .qbank-html table tr:last-child th { border-bottom: none; }
-.qbank-html table th { background: #f3f4f6; font-weight: 700; text-align: center; }
-.qbank-html table td:first-child { font-weight: 700; background: #f9fafb; }
+.qbank-html table th { background: #dfe5ec; font-weight: 700; text-align: center; }
+.qbank-html table td:first-child { font-weight: 700; background: #e6eaf0; }
 .qbank-html p { margin: 0.5rem 0; line-height: 1.6; }
 .qbank-html ul, .qbank-html ol { padding-left: 1.5rem; margin: 0.5rem 0; }
 .qbank-html li { margin: 0.25rem 0; }
