@@ -363,6 +363,8 @@ export type Database = {
           created_at: string
           drive_file_id: string
           name: string
+          plain_url: string | null
+          plain_url_expires_at: string | null
           qbank_id: number
           size_bytes: number | null
         }
@@ -370,6 +372,8 @@ export type Database = {
           created_at?: string
           drive_file_id: string
           name: string
+          plain_url?: string | null
+          plain_url_expires_at?: string | null
           qbank_id: number
           size_bytes?: number | null
         }
@@ -377,6 +381,8 @@ export type Database = {
           created_at?: string
           drive_file_id?: string
           name?: string
+          plain_url?: string | null
+          plain_url_expires_at?: string | null
           qbank_id?: number
           size_bytes?: number | null
         }
