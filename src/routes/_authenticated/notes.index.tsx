@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Search, Trash2, Pencil, ExternalLink, StickyNote } from "lucide-react";
+import { NotesModal } from "@/components/notes-modal";
 
 export const Route = createFileRoute("/_authenticated/notes/")({
   component: NotesBrowser,
