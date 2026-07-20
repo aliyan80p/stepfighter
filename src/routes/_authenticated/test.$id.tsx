@@ -814,7 +814,8 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`w-full mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+          <div className={`w-full mx-0 px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+            {(() => null)()}
             {(() => null)()}
 
 
@@ -982,7 +983,7 @@ function TestRunner() {
             )}
 
             {showAnswers && question.explanation && (
-              <div className="mt-4">
+              <div className="mt-4 qbank-split-expl">
               <div className="border-b" style={{ borderColor: themeStyles.border }}>
                   <div
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
