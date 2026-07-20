@@ -247,6 +247,93 @@ export const getPeerRanking = createServerFn({ method: "GET" })
     };
   });
 
+// ============ Peer Ranking by Category (Subjects / Systems) ============
+export const getPeerCategoryBreakdown = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ qbankId: qb(), sources: z.array(z.string()).optional() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Resolve question set + subject/system mapping
+    let qQuery = supabaseAdmin
+      .from("questions")
+      .select("id,subject_id,system_id")
+      .eq("qbank_id", data.qbankId)
+      .limit(100000);
+    if (data.sources?.length) qQuery = qQuery.in("source", data.sources);
+    const { data: qs, error: qErr } = await qQuery;
+    if (qErr) throw new Error(qErr.message);
+
+    const qSubject = new Map<number, number | null>();
+    const qSystem = new Map<number, number | null>();
+    const ids: number[] = [];
+    for (const q of qs ?? []) {
+      qSubject.set(q.id, q.subject_id);
+      qSystem.set(q.id, q.system_id);
+      ids.push(q.id);
+    }
+
+    if (!ids.length) return { subjects: [], systems: [] };
+
+    let aQuery = supabaseAdmin
+      .from("attempts")
+      .select("user_id,question_id,is_correct")
+      .eq("qbank_id", data.qbankId)
+      .in("question_id", ids)
+      .limit(500000);
+    const { data: rows, error: aErr } = await aQuery;
+    if (aErr) throw new Error(aErr.message);
+
+    // per (category, user) totals
+    type Agg = Map<number, Map<string, { c: number; t: number }>>;
+    const subjAgg: Agg = new Map();
+    const sysAgg: Agg = new Map();
+    const bump = (agg: Agg, catId: number | null, uid: string, correct: boolean) => {
+      if (catId == null) return;
+      let m = agg.get(catId);
+      if (!m) { m = new Map(); agg.set(catId, m); }
+      const x = m.get(uid) ?? { c: 0, t: 0 };
+      x.t++; if (correct) x.c++;
+      m.set(uid, x);
+    };
+    for (const r of rows ?? []) {
+      bump(subjAgg, qSubject.get(r.question_id) ?? null, r.user_id, !!r.is_correct);
+      bump(sysAgg, qSystem.get(r.question_id) ?? null, r.user_id, !!r.is_correct);
+    }
+
+    const [{ data: subjectsRows }, { data: systemsRows }] = await Promise.all([
+      supabaseAdmin.from("subjects").select("id,name").eq("qbank_id", data.qbankId),
+      supabaseAdmin.from("systems").select("id,name").eq("qbank_id", data.qbankId),
+    ]);
+    const subjectName = new Map((subjectsRows ?? []).map((s) => [s.id, s.name]));
+    const systemName = new Map((systemsRows ?? []).map((s) => [s.id, s.name]));
+
+    const build = (agg: Agg, names: Map<number, string>) => {
+      const out: { id: number; name: string; you: number | null; peer: number; peerCount: number }[] = [];
+      for (const [catId, m] of agg.entries()) {
+        const you = m.get(userId);
+        const peers = Array.from(m.entries()).filter(([uid]) => uid !== userId);
+        if (!peers.length && !you) continue;
+        const peerAvg = peers.length
+          ? peers.reduce((a, [, v]) => a + (v.t ? v.c / v.t : 0), 0) / peers.length
+          : 0;
+        out.push({
+          id: catId,
+          name: names.get(catId) ?? `#${catId}`,
+          you: you && you.t ? Math.round((you.c / you.t) * 1000) / 10 : null,
+          peer: Math.round(peerAvg * 1000) / 10,
+          peerCount: peers.length,
+        });
+      }
+      return out.sort((a, b) => a.name.localeCompare(b.name));
+    };
+
+    return { subjects: build(subjAgg, subjectName), systems: build(sysAgg, systemName) };
+  });
+
 // ============ AI Test Analysis ============
 export const getAiTestAnalysis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
