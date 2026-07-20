@@ -146,6 +146,7 @@ function TestRunner() {
 
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [struck, setStruck] = useState<Set<number>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const [startedAt, setStartedAt] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
