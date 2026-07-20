@@ -144,9 +144,13 @@
 .qbank-theme-dark .qbank-explanation strong, .qbank-theme-dark .qbank-explanation b,
 .qbank-theme-dark .qbank-html strong, .qbank-theme-dark .qbank-html b { color: #f9fafb !important; }
 .qbank-theme-dark .qbank-html a { color: #93c5fd !important; }
-.qbank-theme-dark .qbank-html table { border-color: #475569 !important; }
-.qbank-theme-dark .qbank-html table td, .qbank-theme-dark .qbank-html table th { border-color: #475569 !important; }
-.qbank-theme-dark .qbank-html table th { background: #1e293b !important; }
+.qbank-theme-dark .qbank-html table { border-color: #475569 !important; background: #0f172a !important; }
+.qbank-theme-dark .qbank-html table td, .qbank-theme-dark .qbank-html table th { border-color: #475569 !important; background: #0f172a !important; color: #e5e7eb !important; }
+.qbank-theme-dark .qbank-html table th { background: #1e293b !important; color: #f9fafb !important; }
+.qbank-theme-dark .qbank-html table td:first-child { background: #172033 !important; color: #f9fafb !important; }
+.qbank-theme-dark .qbank-html [style*="color"], .qbank-theme-dark .qbank-html [style*="COLOR"] { color: #e5e7eb !important; }
+.qbank-theme-dark .qbank-html [style*="background"], .qbank-theme-dark .qbank-html [style*="BACKGROUND"] { background-color: transparent !important; }
+
 
 .qbank-theme-sepia, .qbank-theme-sepia .qbank-html, .qbank-theme-sepia .qbank-explanation,
 .qbank-theme-sepia .qbank-explanation p, .qbank-theme-sepia .qbank-explanation li,
