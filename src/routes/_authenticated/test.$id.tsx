@@ -167,19 +167,32 @@ function TestRunner() {
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Settings
-  const [fontSize, setFontSize] = useState(16);
+  // Settings — seeded from user's saved defaults
+  const userSettings = useHydratedSettings();
+  const [fontSize, setFontSize] = useState(DEFAULT_SETTINGS.fontSize + 1);
   const [fontWeight, setFontWeight] = useState(400);
   const [theme, setTheme] = useState<"light" | "dark" | "sepia">("light");
-  const [transparentExpl, setTransparentExpl] = useState(false);
-  const [largeImages, setLargeImages] = useState(false);
-  const [highlightOnly, setHighlightOnly] = useState(false);
-  const [multicolor, setMulticolor] = useState(true);
+  const [transparentExpl, setTransparentExpl] = useState(DEFAULT_SETTINGS.transparentExplanations);
+  const [largeImages, setLargeImages] = useState(DEFAULT_SETTINGS.largeImages);
+  const [highlightOnly, setHighlightOnly] = useState(DEFAULT_SETTINGS.highlightOnly);
+  const [multicolor, setMulticolor] = useState(DEFAULT_SETTINGS.multiHighlight);
   const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
-  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>({
-    "#ffeb3b": true, "#4ade80": true, "#38bdf8": true,
-    "#f472b6": true, "#fb923c": true, "#c084fc": true,
-  });
+  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>(DEFAULT_SETTINGS.enabledHighlights);
+  const [settingsApplied, setSettingsApplied] = useState(false);
+
+  // Apply user's saved defaults once hydrated
+  useEffect(() => {
+    if (settingsApplied) return;
+    setFontSize(Math.max(10, userSettings.fontSize + 1));
+    setFontWeight(400 + userSettings.fontWeight * 100);
+    setTheme(userSettings.defaultTheme === "dark" ? "dark" : "light");
+    setTransparentExpl(userSettings.transparentExplanations);
+    setLargeImages(userSettings.largeImages);
+    setHighlightOnly(userSettings.highlightOnly);
+    setMulticolor(userSettings.multiHighlight);
+    setEnabledHighlights(userSettings.enabledHighlights);
+    setSettingsApplied(true);
+  }, [userSettings, settingsApplied]);
 
   // Highlight toolbar state (hooks must live above early returns)
   const [hlBar, setHlBar] = useState<{ x: number; y: number } | null>(null);
