@@ -66,7 +66,9 @@ export const DEFAULT_SETTINGS: UserSettings = {
   confirmOmission: false,
   hidePercentages: false,
   autoNightMode: false,
-  fontSize: 15,
+  nightStart: 20,
+  nightEnd: 6,
+
   fontWeight: 0,
   enabledHighlights: Object.fromEntries(Object.keys(DEFAULT_HIGHLIGHTS).map((k) => [k, true])),
   customHighlights: [],
