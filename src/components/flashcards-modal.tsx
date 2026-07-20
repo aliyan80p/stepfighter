@@ -35,17 +35,15 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
 
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
-  const [front, setFront] = useState("");
-  const [back, setBack] = useState("");
-  const [frontImage, setFrontImage] = useState<string | null>(null);
-  const [backImage, setBackImage] = useState<string | null>(null);
+  const [frontHtml, setFrontHtml] = useState("");
+  const [backHtml, setBackHtml] = useState("");
+  const [tagsInput, setTagsInput] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [maximized, setMaximized] = useState(false);
   const [deckId, setDeckId] = useState<string>("");
   const [newDeckName, setNewDeckName] = useState("");
   const [showNewDeck, setShowNewDeck] = useState(false);
-  const frontFileRef = useRef<HTMLInputElement>(null);
-  const backFileRef = useRef<HTMLInputElement>(null);
+
 
   const { data: cards = [], isLoading } = useQuery({
     queryKey: ["flashcards", qbankId ?? null],
