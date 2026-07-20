@@ -873,11 +873,21 @@ function TestRunner() {
                   ? (i === correctIdx ? 55 + ((question.id * 7) % 25) : 2 + ((question.id * 3 + i * 11) % 18))
                   : null;
                 const isSelected = selected === i;
+                const isStruck = struck.has(i);
+                const toggleStruck = () => {
+                  setStruck(prev => {
+                    const next = new Set(prev);
+                    if (next.has(i)) next.delete(i); else next.add(i);
+                    return next;
+                  });
+                  if (selected === i) setSelected(null);
+                };
                 return (
                   <button
                     key={a.id}
                     disabled={isReview || (submitted && showAnswers)}
-                    onClick={() => setSelected(i)}
+                    onClick={() => { if (isStruck) { toggleStruck(); return; } setSelected(i); }}
+                    onContextMenu={(e) => { e.preventDefault(); if (isReview || (submitted && showAnswers)) return; toggleStruck(); }}
                     className="w-full text-left flex items-center gap-2 py-1.5 text-[15px]"
                     style={{ color: themeStyles.text }}
                   >
@@ -892,7 +902,7 @@ function TestRunner() {
                     >
                       {isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />}
                     </span>
-                    <span className="flex-1">
+                    <span className="flex-1" style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}>
                       <span className="font-normal">{letter}. </span>
                       <span data-hlkey={`a${i}`} className="qbank-html qbank-light inline" dangerouslySetInnerHTML={{ __html: htmlFor(`a${i}`, a.answer_text) }} />
                       {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
