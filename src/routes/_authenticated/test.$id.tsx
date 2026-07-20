@@ -1130,13 +1130,13 @@ function TestRunner() {
         }
         return (
           <div className="qbank-nav-scroll flex items-center justify-between gap-3 px-2 sm:px-4 py-0 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
-            <div className="font-semibold tracking-wide tabular-nums">
+            <div className="shrink-0 font-semibold tracking-wide tabular-nums">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
-            <div className="font-semibold tracking-wide hidden md:flex items-center gap-3">
+            <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
               <span>IMD QBank</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="shrink-0 flex items-center gap-3">
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
