@@ -267,18 +267,38 @@ function AuthedLayout() {
       </aside>
       )}
 
-      <main className="flex-1 overflow-auto min-w-0 relative">
+      <main className="flex-1 overflow-auto min-w-0 flex flex-col">
         {!hideSidebar && !sidebarOpen && (
           <button
             type="button"
             aria-label="Open sidebar"
             onClick={() => setSidebarOpen(true)}
-            className="fixed top-3 left-3 z-30 flex items-center justify-center h-9 w-9 rounded-md border border-border bg-background/90 backdrop-blur shadow-sm hover:bg-accent hover:text-accent-foreground"
+            className="hidden md:flex fixed top-3 left-3 z-30 items-center justify-center h-9 w-9 rounded-md border border-border bg-background/90 backdrop-blur shadow-sm hover:bg-accent hover:text-accent-foreground"
           >
             <Menu className="h-4 w-4" />
           </button>
         )}
-        <Outlet />
+        {!hideSidebar && !sidebarOpen && (
+          <div className="md:hidden sticky top-0 z-30 flex items-center gap-2 h-12 px-3 border-b border-border bg-background/95 backdrop-blur pt-[env(safe-area-inset-top)]">
+            <button
+              type="button"
+              aria-label="Open sidebar"
+              onClick={() => setSidebarOpen(true)}
+              className="flex items-center justify-center h-9 w-9 -ml-1 rounded-md hover:bg-accent hover:text-accent-foreground"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
+                IMD
+              </div>
+              <span className="font-semibold truncate">QBank</span>
+            </Link>
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
