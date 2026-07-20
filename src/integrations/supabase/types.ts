@@ -638,6 +638,7 @@ export type Database = {
           qbank_id: number
           question_ids: number[]
           right_count: number
+          study_plan_index: number | null
           subject_label: string | null
           system_label: string | null
           user_id: string
@@ -653,6 +654,7 @@ export type Database = {
           qbank_id: number
           question_ids: number[]
           right_count?: number
+          study_plan_index?: number | null
           subject_label?: string | null
           system_label?: string | null
           user_id: string
@@ -668,6 +670,7 @@ export type Database = {
           qbank_id?: number
           question_ids?: number[]
           right_count?: number
+          study_plan_index?: number | null
           subject_label?: string | null
           system_label?: string | null
           user_id?: string
