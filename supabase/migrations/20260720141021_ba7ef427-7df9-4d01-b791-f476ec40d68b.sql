@@ -1,0 +1,2 @@
+-- content will be replaced with the full 585-row VALUES list
+-- see /tmp/step2fix/insert.sql (39KB)
