@@ -102,12 +102,12 @@ function OverallPerformance() {
         </div>
 
         {/* Filter dropdown */}
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-muted-foreground">Filter by QBank</label>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <label className="text-sm text-muted-foreground shrink-0">Filter by QBank</label>
           <select
             value={optKey}
             onChange={(e) => setOptKey(e.target.value)}
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm min-w-[280px]"
+            className="min-w-0 flex-1 sm:flex-none sm:min-w-[280px] max-w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           >
             {activeSlug === "step2" ? (
               <>
