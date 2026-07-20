@@ -156,6 +156,14 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
     return arr;
   }, [results, sortKey, sortDir]);
 
+  // Auto-open modal when arriving with ?open=<id>
+  useEffect(() => {
+    if (autoOpenId == null) return;
+    const idx = sorted.findIndex((r) => r.id === autoOpenId);
+    if (idx >= 0) setViewingIdx(idx);
+  }, [autoOpenId, sorted]);
+
+
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const start = (currentPage - 1) * pageSize;
