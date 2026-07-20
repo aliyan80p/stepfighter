@@ -101,7 +101,7 @@ function GraphsPage() {
               <Stat icon={Layers} label="Systems" value={String(data.systemBreakdown.length)} />
             </div>
 
-            <Card title="Accuracy over time" subtitle={`Daily correct % (last ${days} days)`}>
+            <Card title="Score over time" subtitle={`Daily score % (last ${days} days, omitted counted as wrong)`}>
               <LineChart data={data.daily.map((d) => ({ x: d.date.slice(5), y: d.pct }))} color="hsl(142 71% 45%)" yMax={100} suffix="%" />
             </Card>
 
@@ -114,13 +114,14 @@ function GraphsPage() {
             </Card>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <Card title="By Subject" subtitle="Accuracy per subject">
+              <Card title="By Subject" subtitle="Score per subject (omitted = wrong)">
                 <BreakdownList rows={data.subjectBreakdown} />
               </Card>
-              <Card title="By System" subtitle="Accuracy per system">
+              <Card title="By System" subtitle="Score per system (omitted = wrong)">
                 <BreakdownList rows={data.systemBreakdown} />
               </Card>
             </div>
+
 
             {tests.length > 0 && (
               <>
