@@ -86,7 +86,7 @@ function ResetPage() {
             <div className="text-sm">
               <strong>Warning:</strong> This action cannot be undone. You have{" "}
               <strong>{remaining}</strong> of <strong>{limit}</strong> reset
-              {limit === 1 ? "" : "s"} remaining for this course.
+              {(limit as number) === 1 ? "" : "s"} remaining for this course.
             </div>
           </div>
 
