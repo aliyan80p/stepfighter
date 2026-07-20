@@ -137,18 +137,64 @@ function OverallTab({ data }: { data: any }) {
 
 function AnalysisTab({ data }: { data: any }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-        <div className="flex items-center gap-2 font-semibold mb-3"><BarChart3 className="h-4 w-4 text-primary" /> By Subject</div>
-        <Breakdown rows={data.subjectBreakdown} />
+    <div className="space-y-6">
+      <AnalysisTable title="Subject Analysis" headerLabel="Subjects" placeholder="Search By Subjects" rows={data.subjectBreakdown} />
+      <AnalysisTable title="System Analysis" headerLabel="Systems" placeholder="Search By System" rows={data.systemBreakdown} />
+    </div>
+  );
+}
+
+function AnalysisTable({
+  title, headerLabel, placeholder, rows,
+}: {
+  title: string; headerLabel: string; placeholder: string;
+  rows: { name: string; correct: number; incorrect: number; omitted: number; total: number }[];
+}) {
+  const [q, setQ] = useState("");
+  const filtered = rows.filter((r) => r.name.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between gap-4 p-4 md:p-5">
+        <div className="text-blue-600 dark:text-blue-400 font-semibold">{title}</div>
+        <div className="relative w-64 max-w-full">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <input
+            value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder={placeholder}
+            className="w-full h-9 pl-9 pr-3 rounded-full bg-muted/60 border border-transparent focus:border-input focus:bg-background text-sm outline-none"
+          />
+        </div>
       </div>
-      <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-        <div className="flex items-center gap-2 font-semibold mb-3"><TrendingUp className="h-4 w-4 text-primary" /> By System</div>
-        <Breakdown rows={data.systemBreakdown} />
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-blue-500 text-white">
+              <th className="text-left font-semibold uppercase tracking-wide text-xs px-4 py-3">{headerLabel}</th>
+              <th className="text-left font-semibold uppercase tracking-wide text-xs px-4 py-3 border-l border-blue-400/40">Total Q</th>
+              <th className="text-left font-semibold uppercase tracking-wide text-xs px-4 py-3 border-l border-blue-400/40">Correct</th>
+              <th className="text-left font-semibold uppercase tracking-wide text-xs px-4 py-3 border-l border-blue-400/40">Incorrect</th>
+              <th className="text-left font-semibold uppercase tracking-wide text-xs px-4 py-3 border-l border-blue-400/40">Omitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan={5} className="text-center text-muted-foreground py-8">No data</td></tr>
+            ) : filtered.map((r) => (
+              <tr key={r.name} className="border-b border-border last:border-0 hover:bg-muted/40">
+                <td className="px-4 py-3 font-medium">{r.name}</td>
+                <td className="px-4 py-3">{r.total}</td>
+                <td className="px-4 py-3 text-emerald-600 font-semibold">{r.correct}</td>
+                <td className="px-4 py-3 text-rose-600 font-semibold">{r.incorrect}</td>
+                <td className="px-4 py-3 text-blue-600 font-semibold">{r.omitted}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
+
 
 function TotalCard({ bg, label, value, icon }: any) {
   return (
