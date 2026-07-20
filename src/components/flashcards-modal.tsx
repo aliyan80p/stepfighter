@@ -237,7 +237,8 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
 function CardTile({ card, onClick, onDelete }: { card: any; onClick: () => void; onDelete: () => void }) {
   return (
     <div className="relative group h-24 border border-slate-200 rounded-md p-2 text-xs text-slate-700 hover:border-blue-400 cursor-pointer overflow-hidden bg-white" onClick={onClick}>
-      <div className="line-clamp-5">{card.front}</div>
+      {card.front_image && <img src={card.front_image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />}
+      <div className="relative line-clamp-5">{card.front}</div>
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
         className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-0.5 bg-white/80 rounded hover:bg-red-50"
