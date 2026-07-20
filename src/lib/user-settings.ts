@@ -19,6 +19,8 @@ export type UserSettings = {
   confirmOmission: boolean;
   hidePercentages: boolean;
   autoNightMode: boolean;
+  nightStart: number; // hour 0-23
+  nightEnd: number;   // hour 0-23
   // Reading
   fontSize: number;
   fontWeight: number;
@@ -28,6 +30,7 @@ export type UserSettings = {
   // Toolbar
   toolbar: Record<string, boolean>;
 };
+
 
 export const DEFAULT_HIGHLIGHTS: Record<string, { label: string; color: string }> = {
   "#ffeb3b": { label: "Yellow Highlight", color: "#ffeb3b" },
@@ -39,14 +42,14 @@ export const DEFAULT_HIGHLIGHTS: Record<string, { label: string; color: string }
 };
 
 export const TOOLBAR_ITEMS: { key: string; label: string }[] = [
-  { key: "notes", label: "Notes" },
-  { key: "notebook", label: "Notebook" },
-  { key: "library", label: "Library" },
-  { key: "newFlashcard", label: "New flashcard" },
-  { key: "existingFlashcard", label: "Existing flashcard" },
-  { key: "aiFlashcard", label: "AI flashcard" },
-  { key: "copy", label: "Copy" },
+  { key: "notes", label: "Add to Notes" },
+  { key: "notebook", label: "Add to Notebook" },
+  { key: "library", label: "Medical Library" },
+  { key: "newFlashcard", label: "New Flashcard" },
+  { key: "existingFlashcard", label: "Existing Flashcard" },
+  { key: "copy", label: "Copy Text" },
 ];
+
 
 export const DEFAULT_SETTINGS: UserSettings = {
   darkMode: false,
@@ -63,8 +66,11 @@ export const DEFAULT_SETTINGS: UserSettings = {
   confirmOmission: false,
   hidePercentages: false,
   autoNightMode: false,
+  nightStart: 20,
+  nightEnd: 6,
   fontSize: 15,
   fontWeight: 0,
+
   enabledHighlights: Object.fromEntries(Object.keys(DEFAULT_HIGHLIGHTS).map((k) => [k, true])),
   customHighlights: [],
   toolbar: Object.fromEntries(TOOLBAR_ITEMS.map((t) => [t.key, true])),

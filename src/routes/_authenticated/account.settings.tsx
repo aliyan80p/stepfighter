@@ -79,8 +79,26 @@ function SettingsPage() {
               value={s.confirmOmission} onChange={(v) => set({ confirmOmission: v })} />
             <ToggleRow label="Hide percentages" hint="Hide detailed answer percentage breakdowns by default."
               value={s.hidePercentages} onChange={(v) => set({ hidePercentages: v })} />
-            <ToggleRow label="Automatic night mode" hint="Enable quiz automatic dark behavior when configured in quiz mode."
+            <ToggleRow label="Automatic night mode" hint="Auto-switch quiz to dark mode based on scheduled time."
               value={s.autoNightMode} onChange={(v) => set({ autoNightMode: v })} />
+            <div className="flex items-center justify-between gap-4 py-2 border-t border-border">
+              <div>
+                <div className="font-semibold text-sm">Night mode schedule</div>
+                <div className="text-xs text-blue-600/80">Start and end hours (24h).</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <select value={s.nightStart} onChange={(e) => set({ nightStart: Number(e.target.value) })}
+                  className="text-sm border border-border rounded px-2 py-1 bg-card">
+                  {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, "0")}:00</option>)}
+                </select>
+                <span className="text-muted-foreground text-sm">→</span>
+                <select value={s.nightEnd} onChange={(e) => set({ nightEnd: Number(e.target.value) })}
+                  className="text-sm border border-border rounded px-2 py-1 bg-card">
+                  {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, "0")}:00</option>)}
+                </select>
+              </div>
+            </div>
+
           </Card>
         </div>
 
