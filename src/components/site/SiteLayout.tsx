@@ -108,9 +108,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-4 py-5 text-xs text-slate-400 flex flex-col md:flex-row justify-between gap-2">
+          <div className="max-w-7xl mx-auto px-4 py-5 text-xs text-slate-400 text-center md:text-left">
             <span>© {new Date().getFullYear()} StepFighter. All rights reserved.</span>
-            <span>Not affiliated with the NBME, FSMB, or the USMLE program.</span>
           </div>
         </div>
       </footer>
