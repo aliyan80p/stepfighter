@@ -278,27 +278,16 @@ mark.qbank-hl[data-strike] {
 }
 
 /* Inline media anchor links (Fighter "Exhibit Display" pattern).
-   Any <a href="....mp4/.mp3/.wav"> inside qbank content is decorated with a
-   small ▶ / 🔊 glyph and opens the ExhibitModal instead of navigating. */
+   Plain blue underlined links — no glyph, matches Fighter exactly. */
 a.qbank-media-anchor {
   color: #1a4b7c;
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
-  font-weight: 600;
 }
 a.qbank-media-anchor:hover { color: #0ea5e9; }
-.qbank-media-anchor__glyph {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.2em;
-  margin-right: 0.25em;
-  font-size: 0.85em;
-  color: #0ea5e9;
-}
 .qbank-theme-dark a.qbank-media-anchor { color: #93c5fd; }
-.qbank-theme-dark .qbank-media-anchor__glyph { color: #7dd3fc; }
+
 
 /* Split-screen explanations: question/answers on the left, explanation on the right */
 @media (min-width: 1024px) {

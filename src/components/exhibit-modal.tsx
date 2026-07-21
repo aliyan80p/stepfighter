@@ -105,10 +105,13 @@ export function ExhibitModal({
               controls
               controlsList="nodownload"
               preload="metadata"
-              className="max-w-full max-h-full rounded"
-              style={{ maxHeight: maximized ? "85vh" : "60vh" }}
+              width={maximized ? undefined : 300}
+              height={maximized ? undefined : 150}
+              className={maximized ? "max-w-full max-h-full rounded" : "rounded"}
+              style={maximized ? { maxHeight: "85vh" } : undefined}
             />
           )}
+
           {content.kind === "audio" && (
             <div className="w-full max-w-lg flex flex-col items-center gap-3 p-4">
               <div className="text-xs uppercase tracking-wider text-slate-500">Audio exhibit</div>

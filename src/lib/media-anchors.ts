@@ -42,14 +42,8 @@ export function attachMediaAnchorHandlers(
     a.dataset.mediaDecorated = "1";
     a.dataset.mediaKind = kind;
     a.classList.add("qbank-media-anchor");
-    // Prepend a small play glyph if not already there.
-    if (!a.querySelector(".qbank-media-anchor__glyph")) {
-      const glyph = document.createElement("span");
-      glyph.className = "qbank-media-anchor__glyph";
-      glyph.setAttribute("aria-hidden", "true");
-      glyph.textContent = kind === "audio" ? "🔊" : "▶";
-      a.insertBefore(glyph, a.firstChild);
-    }
+    // Fighter renders plain blue underlined links — no glyph.
+
   });
 
   const onClick = (e: MouseEvent) => {
