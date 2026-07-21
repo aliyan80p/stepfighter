@@ -995,38 +995,6 @@ function TestRunner() {
         <div
           className="flex-1 overflow-auto"
           ref={contentRef}
-          onTouchStart={(e) => {
-            if (e.touches.length !== 1) return;
-            const sel = window.getSelection();
-            if (sel && !sel.isCollapsed) return;
-            const t = e.touches[0];
-            swipeStartRef.current = { x: t.clientX, y: t.clientY, locked: false };
-          }}
-          onTouchMove={(e) => {
-            const s = swipeStartRef.current;
-            if (!s || e.touches.length !== 1) return;
-            const t = e.touches[0];
-            const dx = t.clientX - s.x;
-            const dy = t.clientY - s.y;
-            if (!s.locked) {
-              if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-              if (Math.abs(dy) > Math.abs(dx)) {
-                swipeStartRef.current = null;
-                return;
-              }
-              s.locked = true;
-            }
-          }}
-          onTouchEnd={(e) => {
-            const s = swipeStartRef.current;
-            swipeStartRef.current = null;
-            if (!s || !s.locked) return;
-            const t = e.changedTouches[0];
-            const dx = t.clientX - s.x;
-            const threshold = 50;
-            if (dx <= -threshold && idx < total - 1) goToQuestion(idx + 1, "right");
-            else if (dx >= threshold && idx > 0) goToQuestion(idx - 1, "left");
-          }}
         >
           <div
             key={`q-slide-${question.id}`}
