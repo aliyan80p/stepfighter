@@ -1322,7 +1322,7 @@ function TestRunner() {
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
             <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
-              <span>IMD QBank</span>
+              <span>StepFighter</span>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {!isReview && (
