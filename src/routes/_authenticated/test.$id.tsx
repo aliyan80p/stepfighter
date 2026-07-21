@@ -662,13 +662,25 @@ function TestRunner() {
       const vh = window.innerHeight;
       const barHalfWidth = Math.min(180, (vw - 16) / 2);
       const barHeight = 48;
-      // Prefer above the selection; flip below if not enough room at top.
+      // iOS/iPadOS shows a native selection edit menu (Copy/Look Up/Translate)
+      // that we cannot suppress. It anchors above the selection by default, so
+      // on iOS we prefer BELOW the selection and add extra padding to clear
+      // the native callout (~48px). On other platforms, prefer above as before.
+      const ua = navigator.userAgent || "";
+      const isIOS = /iPad|iPhone|iPod/.test(ua) || (/(Macintosh)/.test(ua) && "ontouchend" in document);
+      const nativeCalloutGap = isIOS ? 52 : 0;
       const spaceAbove = rect.top;
-      const placement: "above" | "below" = spaceAbove >= barHeight + 12 ? "above" : "below";
+      const spaceBelow = vh - rect.bottom;
+      let placement: "above" | "below";
+      if (isIOS) {
+        placement = spaceBelow >= barHeight + nativeCalloutGap + 12 ? "below" : "above";
+      } else {
+        placement = spaceAbove >= barHeight + 12 ? "above" : "below";
+      }
       const x = Math.max(barHalfWidth + 8, Math.min(vw - barHalfWidth - 8, rect.left + rect.width / 2));
       const y = placement === "above"
-        ? Math.max(barHeight + 8, rect.top - 6)
-        : Math.min(vh - 12, rect.bottom + 6);
+        ? Math.max(barHeight + 8, rect.top - 6 - nativeCalloutGap)
+        : Math.min(vh - 12, rect.bottom + 6 + nativeCalloutGap);
       setHlBar({ x, y, placement });
     };
     if (isTouch) window.setTimeout(run, 80); else run();
