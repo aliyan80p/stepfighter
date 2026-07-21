@@ -37,21 +37,6 @@ type Tier = {
 
 const tiers: Tier[] = [
   {
-    key: "3-months",
-    label: "3 Months",
-    duration: "3 Months",
-    price: "PKR 8,000 / $32",
-    perMonth: "PKR 2,667 / month",
-    badge: "Flexible Start",
-    perks: [
-      "Full access to all QBanks",
-      "CMS Forms + NBME-style assessments",
-      "AI test analysis + score predictor",
-      "Web, tablet & mobile access",
-      "24/7 WhatsApp support",
-    ],
-  },
-  {
     key: "6-months",
     label: "6 Months",
     duration: "6 Months",
@@ -59,12 +44,11 @@ const tiers: Tier[] = [
     perMonth: "PKR 1,625 / month",
     badge: "Most Popular",
     highlight: true,
-    save: "Save PKR 2,250 vs 3 months",
     perks: [
-      "Everything in 3 Months",
+      "Full access to all QBanks",
+      "CMS Forms + NBME-style assessments",
+      "AI test analysis + score predictor",
       "Priority activation",
-      "Save vs. shorter plans",
-      "Full exam-season coverage",
       "24/7 WhatsApp support",
     ],
   },
@@ -75,7 +59,7 @@ const tiers: Tier[] = [
     price: "PKR 14,750 / $59",
     perMonth: "PKR 1,229 / month",
     badge: "Best Value",
-    save: "Save PKR 7,250 vs 3 months",
+    save: "Save PKR 4,750 / $19",
     perks: [
       "Everything in 6 Months",
       "Best price per month",
@@ -107,7 +91,7 @@ function UpgradePage() {
           </p>
         </header>
 
-        <section className="grid gap-5 md:grid-cols-3">
+        <section className="grid gap-5 md:grid-cols-2 max-w-4xl mx-auto">
           {tiers.map((t) => (
             <TierCard key={t.key} tier={t} />
           ))}
