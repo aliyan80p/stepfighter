@@ -48,6 +48,7 @@ function escapeAttr(value: string): string {
 type RewriteMediaOptions = {
   deferMedia?: boolean;
   qbankId?: number;
+  mediaToken?: string;
 };
 
 function renderImage(url: string, alt: string): string {
@@ -69,10 +70,11 @@ function withMediaAnchorClass(openTag: string): string {
 export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): string {
   if (!html) return html;
   const qb = options.qbankId ?? 1;
+  const token = options.mediaToken;
   let out = html.replace(
     /(<(?:img|source|video|audio)\b[^>]*\bsrc=)(["'])([^"']+)\2/gi,
     (full, prefix, q, src) => {
-      const url = resolve(src, qb);
+      const url = resolve(src, qb, token);
       return url ? `${prefix}${q}${url}${q}` : full;
     },
   );
@@ -87,7 +89,7 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
     /<a\b([^>]*?)\bhref=["']([^"']+\.(?:png|jpe?g|gif|webp|bmp|svg))["']([^>]*)>(.*?)<\/a>/gis,
     (full, _before, href, _after, labelHtml) => {
       if (/<img\b/i.test(labelHtml)) return full;
-      const url = resolve(href, qb);
+      const url = resolve(href, qb, token);
       if (!url) return full;
       const label = stripTags(labelHtml);
       const media = renderImage(url, label || "Related image");
@@ -98,7 +100,7 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
   out = out.replace(
     /<a\b([^>]*?)\bhref=(["'])([^"']+\.(?:mp4|webm|mov|m4v|ogv|mp3|wav|ogg|m4a|aac))\2([^>]*)>/gi,
     (full, before, q, href, after) => {
-      const url = resolve(href, qb);
+      const url = resolve(href, qb, token);
       if (!url) return withMediaAnchorClass(full);
       return withMediaAnchorClass(`<a${before}href=${q}${url}${q}${after}>`);
     },
