@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertQbankAccess } from "@/lib/entitlements.functions";
 import { z } from "zod";
+
 
 const qb = () => z.number().int().positive().default(1);
 
@@ -287,6 +289,7 @@ export const getPoolCount = createServerFn({ method: "POST" })
   });
 
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
+  await assertQbankAccess(supabase, userId, data.qbankId);
   const { data: inserted, error } = await supabase
     .from("tests")
     .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: data.qbankId })
@@ -295,6 +298,7 @@ async function insertTest(supabase: any, userId: string, ids: number[], data: z.
   if (error) throw error;
   return { id: inserted.id as number };
 }
+
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -345,6 +349,7 @@ export const getTest = createServerFn({ method: "GET" })
     const { data: test, error } = await supabase.from("tests").select("*").eq("id", data.id).eq("user_id", userId).single();
     if (error || !test) throw new Error("Test not found");
     const qbankId = (test.qbank_id ?? 1) as number;
+    await assertQbankAccess(supabase, userId, qbankId);
     const { data: questions } = await supabase
       .from("questions")
       .select("id,title,question,explanation,correct_answer,subject_id,system_id,media_name,other_medias")

@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
 import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/tests'
 import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticated/new-test'
 import { Route as AuthenticatedMedicalLibraryRouteImport } from './routes/_authenticated/medical-library'
@@ -40,6 +42,11 @@ import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_auth
 import { Route as AuthenticatedAccountResetRouteImport } from './routes/_authenticated/account.reset'
 import { Route as AuthenticatedTestIdResultsRouteImport } from './routes/_authenticated/test.$id.results'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -53,6 +60,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedUpgradeRoute = AuthenticatedUpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTestsRoute = AuthenticatedTestsRouteImport.update({
   id: '/tests',
@@ -211,11 +223,13 @@ const AuthenticatedTestIdResultsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/bookmarks': typeof AuthenticatedBookmarksRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/new-test': typeof AuthenticatedNewTestRoute
   '/tests': typeof AuthenticatedTestsRoute
+  '/upgrade': typeof AuthenticatedUpgradeRoute
   '/account/reset': typeof AuthenticatedAccountResetRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
@@ -242,11 +256,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/bookmarks': typeof AuthenticatedBookmarksRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/new-test': typeof AuthenticatedNewTestRoute
   '/tests': typeof AuthenticatedTestsRoute
+  '/upgrade': typeof AuthenticatedUpgradeRoute
   '/account/reset': typeof AuthenticatedAccountResetRoute
   '/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
@@ -275,11 +291,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/bookmarks': typeof AuthenticatedBookmarksRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/_authenticated/new-test': typeof AuthenticatedNewTestRoute
   '/_authenticated/tests': typeof AuthenticatedTestsRoute
+  '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/_authenticated/account/reset': typeof AuthenticatedAccountResetRoute
   '/_authenticated/account/settings': typeof AuthenticatedAccountSettingsRoute
   '/_authenticated/courses/my-courses': typeof AuthenticatedCoursesMyCoursesRoute
@@ -308,11 +326,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/bookmarks'
     | '/dashboard'
     | '/medical-library'
     | '/new-test'
     | '/tests'
+    | '/upgrade'
     | '/account/reset'
     | '/account/settings'
     | '/courses/my-courses'
@@ -339,11 +359,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/reset-password'
     | '/bookmarks'
     | '/dashboard'
     | '/medical-library'
     | '/new-test'
     | '/tests'
+    | '/upgrade'
     | '/account/reset'
     | '/account/settings'
     | '/courses/my-courses'
@@ -371,11 +393,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/reset-password'
     | '/_authenticated/bookmarks'
     | '/_authenticated/dashboard'
     | '/_authenticated/medical-library'
     | '/_authenticated/new-test'
     | '/_authenticated/tests'
+    | '/_authenticated/upgrade'
     | '/_authenticated/account/reset'
     | '/_authenticated/account/settings'
     | '/_authenticated/courses/my-courses'
@@ -404,6 +428,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiMediaSplatRoute: typeof ApiMediaSplatRoute
   ApiPublicNbmeExportRoute: typeof ApiPublicNbmeExportRoute
   ApiPublicWarmMediaRoute: typeof ApiPublicWarmMediaRoute
@@ -411,6 +436,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -431,6 +463,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/upgrade': {
+      id: '/_authenticated/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof AuthenticatedUpgradeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tests': {
       id: '/_authenticated/tests'
@@ -641,6 +680,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMedicalLibraryRoute: typeof AuthenticatedMedicalLibraryRoute
   AuthenticatedNewTestRoute: typeof AuthenticatedNewTestRoute
   AuthenticatedTestsRoute: typeof AuthenticatedTestsRoute
+  AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
   AuthenticatedAccountResetRoute: typeof AuthenticatedAccountResetRoute
   AuthenticatedAccountSettingsRoute: typeof AuthenticatedAccountSettingsRoute
   AuthenticatedCoursesMyCoursesRoute: typeof AuthenticatedCoursesMyCoursesRoute
@@ -667,6 +707,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMedicalLibraryRoute: AuthenticatedMedicalLibraryRoute,
   AuthenticatedNewTestRoute: AuthenticatedNewTestRoute,
   AuthenticatedTestsRoute: AuthenticatedTestsRoute,
+  AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
   AuthenticatedAccountResetRoute: AuthenticatedAccountResetRoute,
   AuthenticatedAccountSettingsRoute: AuthenticatedAccountSettingsRoute,
   AuthenticatedCoursesMyCoursesRoute: AuthenticatedCoursesMyCoursesRoute,
@@ -702,6 +743,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiMediaSplatRoute: ApiMediaSplatRoute,
   ApiPublicNbmeExportRoute: ApiPublicNbmeExportRoute,
   ApiPublicWarmMediaRoute: ApiPublicWarmMediaRoute,

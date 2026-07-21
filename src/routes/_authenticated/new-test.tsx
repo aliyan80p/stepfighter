@@ -286,7 +286,9 @@ function NewTest() {
         if (r.skipped > 0) toast.message(`${r.skipped} ID(s) were not found and skipped`);
         navigate({ to: "/test/$id", params: { id: String(r.id) } });
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Failed to create test");
+        const msg = e instanceof Error ? e.message : "Failed to create test";
+        if (msg.includes("ACCESS_DENIED")) { navigate({ to: "/upgrade" }); return; }
+        toast.error(msg);
       } finally { setLoading(false); }
       return;
     }
@@ -297,8 +299,11 @@ function NewTest() {
       const r = await createFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
       navigate({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to create test");
+      const msg = e instanceof Error ? e.message : "Failed to create test";
+      if (msg.includes("ACCESS_DENIED")) { navigate({ to: "/upgrade" }); return; }
+      toast.error(msg);
     } finally { setLoading(false); }
+
   };
 
 

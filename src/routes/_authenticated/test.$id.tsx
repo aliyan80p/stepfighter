@@ -177,10 +177,18 @@ function TestRunner() {
   const finFn = useServerFn(finishTest);
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["test", testId],
     queryFn: () => getFn({ data: { id: testId } }),
+    retry: false,
   });
+
+  useEffect(() => {
+    if (error && String((error as Error).message).includes("ACCESS_DENIED")) {
+      nav({ to: "/upgrade" });
+    }
+  }, [error, nav]);
+
 
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
