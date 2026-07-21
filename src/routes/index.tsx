@@ -192,7 +192,7 @@ function Home() {
               <GraduationCap className={`h-8 w-8 mb-3 ${c.id === "combo" ? "text-amber-400" : "text-[#1a4b7c]"}`} />
               <h4 className={`text-xl font-bold mb-2 ${c.id === "combo" ? "text-white" : "text-[#0d2b4e]"}`}>{c.short}</h4>
               <p className={`text-sm leading-relaxed mb-4 ${c.id === "combo" ? "text-slate-300" : "text-slate-600"}`}>{c.blurb}</p>
-              <div className={`text-xs font-bold uppercase tracking-widest mb-3 ${c.id === "combo" ? "text-amber-400" : "text-amber-600"}`}>{c.qcount}</div>
+              <div className={`text-xs font-bold uppercase tracking-widest mb-3 ${c.id === "combo" ? "text-amber-400" : "text-amber-600"}`}>{c.tagline}</div>
               <div className={`text-sm font-semibold ${c.id === "combo" ? "text-white" : "text-[#1a4b7c]"}`}>
                 From ${c.price["6mo"].usd} <span className={`text-xs font-normal ${c.id === "combo" ? "text-slate-300" : "text-slate-500"}`}>/ 6 mo</span>
               </div>
