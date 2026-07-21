@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { contentTypeFromBytes, decryptImdMedia } from "@/lib/imd-media-crypto";
+import { contentTypeFromBytes, decryptImdMedia, looksLikePlainMedia } from "@/lib/imd-media-crypto";
 
 const BUCKET = "qbank-media";
 const PLAIN_BUCKET = "qbank-media-plain";
@@ -184,9 +184,10 @@ async function fetchPlainObject(
   const cached = plainNameCache.get(cacheKey);
   const dir = storagePath.includes("/") ? storagePath.slice(0, storagePath.lastIndexOf("/") + 1) : "";
   const leaf = storagePath.slice(dir.length);
+  const candidatePaths = Array.from(new Set([storagePath, ...candidateNames(leaf).map((candidate) => dir + candidate)]));
   const paths = cached === undefined
-    ? Array.from(new Set([storagePath, ...candidateNames(leaf).map((candidate) => dir + candidate)]))
-    : cached ? [cached] : [];
+    ? candidatePaths
+    : cached ? [cached, ...candidatePaths.filter((path) => path !== cached)] : [];
 
   for (const path of paths) {
     const headers: Record<string, string> = { Authorization: `Bearer ${srk}`, apikey: srk };
@@ -195,6 +196,15 @@ async function fetchPlainObject(
       `${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
       { headers },
     );
+    if ((res.ok || res.status === 206) && !range && contentTypeFor(path).startsWith("image/")) {
+      const bytes = Buffer.from(await res.arrayBuffer());
+      if (!looksLikePlainMedia(bytes)) {
+        if (plainNameCache.get(cacheKey) === path) plainNameCache.delete(cacheKey);
+        continue;
+      }
+      plainNameCache.set(cacheKey, path);
+      return rangeResponse(bytes, contentTypeFromBytes(bytes, contentTypeFor(path)), null);
+    }
     if (res.ok || res.status === 206) {
       plainNameCache.set(cacheKey, path);
       return upstreamMediaResponse(res, contentTypeFor(path));
