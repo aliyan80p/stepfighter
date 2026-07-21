@@ -28,7 +28,7 @@ function QBankPage() {
       <section className="bg-gradient-to-br from-[#0d2b4e] to-[#1a4b7c] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-3">Question Banks</div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">16,000+ board-style questions</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Board-style questions for every Step</h1>
           <p className="text-lg text-slate-200">Every Step, every self-assessment, every CMS form — subscribe to just what you need.</p>
         </div>
       </section>
