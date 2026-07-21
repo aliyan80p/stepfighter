@@ -829,23 +829,17 @@ function TestRunner() {
     const startRoot = getHighlightRoot(range.startContainer);
     const container = contentRef.current;
     if (!startRoot || !container) return;
-
-    // Restore selection so rangy operates on the intended range even if the
-    // browser cleared the visible selection.
-    const sel = window.getSelection();
-    if (sel) {
-      sel.removeAllRanges();
-      sel.addRange(range);
+    try {
+      highlightRange(startRoot, range, { color, strike: !!opts?.strike });
+    } catch (err) {
+      console.warn("highlight failed", err);
     }
-
-    void applyHighlight(color, range, opts).then(() => {
-      window.getSelection()?.removeAllRanges();
-      savedRangeRef.current = null;
-      savedSelectionRef.current = null;
-      savedTextRef.current = "";
-      setHlBar(null);
-      persistHighlights();
-    });
+    window.getSelection()?.removeAllRanges();
+    savedRangeRef.current = null;
+    savedSelectionRef.current = null;
+    savedTextRef.current = "";
+    setHlBar(null);
+    persistHighlights();
   };
 
 
