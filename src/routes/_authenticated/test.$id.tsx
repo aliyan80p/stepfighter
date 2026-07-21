@@ -1170,7 +1170,7 @@ function TestRunner() {
                     {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
                   </div>
                   <div className="text-xs mt-1 opacity-70">The correct answer is:</div>
-                  <div className="font-semibold mt-1" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1 })}` }} />
+                  <div className="font-semibold mt-1" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1, mediaToken })}` }} />
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="flex items-center gap-2">
