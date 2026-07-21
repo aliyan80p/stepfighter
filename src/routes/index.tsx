@@ -122,13 +122,13 @@ function Home() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           {[
-            { n: "16,000+", l: "Questions" },
-            { n: "40+", l: "SA forms" },
-            { n: "22", l: "CMS forms" },
-            { n: "3", l: "Full Steps" },
+            { n: "Step 1", l: "Foundation" },
+            { n: "Step 2 CK", l: "Clinical" },
+            { n: "Step 3", l: "Licensing" },
+            { n: "CMS", l: "Specialty forms" },
           ].map((s) => (
             <div key={s.l} className="border border-slate-200 rounded-lg p-6 text-center hover:border-[#1a4b7c] transition-colors">
-              <div className="text-3xl font-bold text-[#1a4b7c]">{s.n}</div>
+              <div className="text-2xl font-bold text-[#1a4b7c]">{s.n}</div>
               <div className="text-xs uppercase tracking-widest font-semibold text-slate-500 mt-1">{s.l}</div>
             </div>
           ))}
