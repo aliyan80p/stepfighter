@@ -632,7 +632,7 @@ function TestRunner() {
       if (!rect) { setHlBar(null); return; }
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const barHalfWidth = 140; // approx pill half-width for clamping
+      const barHalfWidth = Math.min(180, (vw - 16) / 2);
       const barHeight = 48;
       // Prefer above the selection; flip below if not enough room at top.
       const spaceAbove = rect.top;

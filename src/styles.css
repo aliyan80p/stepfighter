@@ -262,9 +262,9 @@ mark.qbank-hl[data-strike] {
   border: 2px solid rgba(255,255,255,0.25);
 }
 @media (max-width: 480px) {
-  .qbank-hl-toolbar { padding: 8px 10px; gap: 6px; }
-  .qbank-hl-toolbar button { min-width: 36px; min-height: 36px; }
-  .qbank-hl-toolbar .swatch { width: 26px; height: 26px; }
+  .qbank-hl-toolbar { padding: 6px 8px; gap: 2px; max-width: calc(100vw - 16px); }
+  .qbank-hl-toolbar button { min-width: 32px; min-height: 32px; }
+  .qbank-hl-toolbar .swatch { width: 20px; height: 20px; border-width: 1.5px; }
 }
 
 
