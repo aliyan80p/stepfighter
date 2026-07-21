@@ -1113,10 +1113,7 @@ function TestRunner() {
                         isSelected ? "border-gray-600" : "border-gray-400"
                       }`}
                     >
-                      {/* Reversed dots: only in real exam mode (black dot on unselected); otherwise standard (black dot on selected) */}
-                      {isRealExam && !isReview
-                        ? !isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />
-                        : isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />}
+                      {isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />}
                     </span>
                     <span className="flex-1 min-w-0">
                       <span
