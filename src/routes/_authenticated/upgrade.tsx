@@ -91,7 +91,7 @@ function UpgradePage() {
           </p>
         </header>
 
-        <section className="grid gap-5 md:grid-cols-3">
+        <section className="grid gap-5 md:grid-cols-2 max-w-4xl mx-auto">
           {tiers.map((t) => (
             <TierCard key={t.key} tier={t} />
           ))}
