@@ -12,9 +12,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "StepFighter — USMLE Step 1, Step 2 CK & Step 3 QBank" },
-      { name: "description", content: "High-yield USMLE preparation with 16,000+ board-style questions, NBME-style self-assessments, CMS forms and AI analytics for Step 1, Step 2 CK and Step 3." },
+      { name: "description", content: "High-yield USMLE preparation with board-style questions, NBME-style self-assessments, CMS forms and AI analytics for Step 1, Step 2 CK and Step 3." },
       { property: "og:title", content: "StepFighter — Sharper prep. Sharper score." },
-      { property: "og:description", content: "16,000+ board-style USMLE questions across Step 1, Step 2 CK and Step 3, on desktop, iPad and mobile." },
+      { property: "og:description", content: "Board-style USMLE questions across Step 1, Step 2 CK and Step 3, on desktop, iPad and mobile." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
