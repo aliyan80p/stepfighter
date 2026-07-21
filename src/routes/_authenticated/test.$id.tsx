@@ -1320,15 +1320,14 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
             <div className="shrink-0 font-semibold tracking-wide tabular-nums">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
-            <div className="shrink-0 font-semibold tracking-wide hidden lg:flex items-center gap-3 order-last ml-auto">
+            <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
               <span>StepFighter</span>
             </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 ml-auto lg:ml-0">
-
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
