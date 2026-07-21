@@ -94,8 +94,8 @@ function ScoreCalculator() {
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {isCorrectMode
-                ? `Number correct (out of ${formula.totalQuestions})`
+              {isPercentMode
+                ? `Number wrong (out of ${formula.totalQuestions})`
                 : `Number wrong (out of ${formula.totalQuestions})`}
             </label>
             <div className="mt-1.5 flex items-center gap-3">
@@ -119,8 +119,8 @@ function ScoreCalculator() {
                 className="flex-1 accent-primary"
               />
               <div className="text-xs text-muted-foreground w-24 text-right">
-                {isCorrectMode
-                  ? `${formula.totalQuestions - input} wrong`
+                {isPercentMode
+                  ? `${formula.totalQuestions - input} correct`
                   : `${formula.totalQuestions - input} correct`}
               </div>
             </div>
@@ -131,7 +131,7 @@ function ScoreCalculator() {
             <span>
               Each question on {formula.label.split(" · ")[1]} is worth{" "}
               <strong className="text-foreground">{pointsPerQ} points</strong>.
-              {isCorrectMode && " Input is number correct (converted to % correct)."}
+              {isPercentMode && " Input is number wrong (Fighter converts to % wrong internally)."}
             </span>
           </div>
         </div>
@@ -167,11 +167,11 @@ function ScoreCalculator() {
             <div className="text-xs text-muted-foreground">
               y = {formula.slope.toFixed(4)}x {formula.intercept >= 0 ? "+" : "-"}{" "}
               {Math.abs(formula.intercept).toFixed(2)}
-              {isCorrectMode && "   (x = % correct)"}
+              {isPercentMode && "   (x = % wrong)"}
             </div>
           </div>
           <div className="text-[11px] text-muted-foreground">
-            {isCorrectMode ? "correct → predicted score" : "wrong → predicted score"}
+            {isPercentMode ? "wrong → predicted score" : "wrong → predicted score"}
           </div>
         </div>
         <div className="w-full h-[320px]">
@@ -181,7 +181,7 @@ function ScoreCalculator() {
               <XAxis
                 dataKey="x"
                 tick={{ fontSize: 12 }}
-                label={{ value: isCorrectMode ? "Number correct" : "Number wrong", position: "insideBottom", offset: -5, style: { fontSize: 11, fill: "#64748b" } }}
+                label={{ value: isPercentMode ? "Number wrong" : "Number wrong", position: "insideBottom", offset: -5, style: { fontSize: 11, fill: "#64748b" } }}
               />
               <YAxis
                 domain={[Math.min(...curve.map((c) => c.score)) - 10, Math.max(...curve.map((c) => c.score)) + 5]}
@@ -190,7 +190,7 @@ function ScoreCalculator() {
               />
               <Tooltip
                 formatter={(v: number) => [`${v}`, "Predicted"]}
-                labelFormatter={(l) => (isCorrectMode ? `${l} correct` : `${l} wrong`)}
+                labelFormatter={(l) => (isPercentMode ? `${l} wrong` : `${l} wrong`)}
                 contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
               />
               <Line type="monotone" dataKey="score" stroke="#1a4b7c" strokeWidth={2.5} dot={false} />
