@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.functions";
 import { rewriteMedia } from "@/lib/media";
 import {
@@ -33,6 +33,30 @@ import { highlightRange, unwrapHighlightsInRange } from "@/lib/highlighter";
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
 });
+
+/**
+ * Renders arbitrary HTML into a div imperatively, only reseeding innerHTML
+ * when `seedKey` changes. This preserves in-place DOM mutations from the
+ * highlighter across parent re-renders (timer ticks, selection state, etc.)
+ * so that <img>/<video> inside the HTML never remount and never flash.
+ */
+function HighlightableHtml({
+  html,
+  seedKey,
+  ...rest
+}: { html: string; seedKey: string | number } & React.HTMLAttributes<HTMLDivElement>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const lastSeed = useRef<string | number | null>(null);
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    if (lastSeed.current !== seedKey) {
+      ref.current.innerHTML = html;
+      lastSeed.current = seedKey;
+    }
+  });
+  return <div ref={ref} {...rest} />;
+}
+
 
 // USMLE-Fighter palette
 const NAV_BG = "#1e3a8a";       // deep blue top/bottom bars
@@ -510,7 +534,11 @@ function TestRunner() {
       if (el.querySelector("mark.qbank-hl")) snap[el.dataset.hlkey!] = el.innerHTML;
     });
     try { localStorage.setItem(`qbank-hl-${question.id}`, JSON.stringify(snap)); } catch {}
-    setHighlightHtml(snap);
+    // Intentionally do NOT setHighlightHtml here — the DOM is already mutated
+    // in place by the highlighter. Updating state would change the __html seed,
+    // which would cause HighlightableHtml to reseed and remount inline media
+    // (causing an image blink) and would also fight ongoing highlight actions.
+    // State is re-hydrated from localStorage on question change.
   };
 
   const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1 });
@@ -949,7 +977,7 @@ function TestRunner() {
 
 
             
-            <div data-hlkey="q" className="qbank-html qbank-light" dangerouslySetInnerHTML={{ __html: htmlFor("q", question.question, true) }} />
+            <HighlightableHtml seedKey={`q-${question.id}`} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
 
             {mediaItems.length > 0 && (
               <div className="mt-3 flex flex-wrap items-start justify-center gap-3">
@@ -1160,10 +1188,11 @@ function TestRunner() {
                     textRendering: "optimizeLegibility",
                   }}
                 >
-                  <div
+                  <HighlightableHtml
+                    seedKey={`e-${question.id}`}
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
-                    dangerouslySetInnerHTML={{ __html: htmlFor("e", question.explanation, true) }}
+                    html={htmlFor("e", question.explanation, true)}
                   />
                 </div>
 
