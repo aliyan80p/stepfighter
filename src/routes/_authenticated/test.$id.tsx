@@ -485,8 +485,10 @@ function TestRunner() {
     }
   }, [blockElapsed, timedMode, isRealExam, isReview, total]);
 
-  const goToQuestion = (nextIndex: number) => {
+  const goToQuestion = (nextIndex: number, dir?: "left" | "right") => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
+    if (bounded === idx) return;
+    if (dir) setSlideFrom(dir);
     setIdx(bounded);
     setHlBar(null);
     savedRangeRef.current = null;
@@ -495,6 +497,10 @@ function TestRunner() {
     requestAnimationFrame(() => {
       contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
+    if (dir) {
+      // clear the animation flag after it plays so subsequent renders don't re-animate
+      window.setTimeout(() => setSlideFrom(null), 320);
+    }
   };
 
   const goFullscreen = () => {
