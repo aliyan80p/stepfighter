@@ -24,23 +24,30 @@ export const Route = createFileRoute("/_authenticated/performance/score-calculat
 
 function ScoreCalculator() {
   const [formulaId, setFormulaId] = useState<string>(SCORE_FORMULAS[0].id);
-  const [wrong, setWrong] = useState<number>(20);
+  const [input, setInput] = useState<number>(20);
 
   const formula = SCORE_FORMULAS.find((f) => f.id === formulaId) ?? SCORE_FORMULAS[0];
-  const predicted = predictScore(formula, wrong);
-  const pointsPerQ = Math.abs(formula.slope).toFixed(3);
+  const isCorrectMode = formula.inputMode === "correctPercent";
+  const predicted = predictScore(formula, input);
+  const pointsPerQ = Math.abs(formula.slope).toFixed(4);
 
   const curve = useMemo(() => {
-    const rows = [];
-    for (let x = 0; x <= formula.totalQuestions; x += Math.max(1, Math.round(formula.totalQuestions / 40))) {
-      rows.push({ wrong: x, score: predictScore(formula, x) });
+    const rows: { x: number; score: number }[] = [];
+    const step = Math.max(1, Math.round(formula.totalQuestions / 40));
+    for (let x = 0; x <= formula.totalQuestions; x += step) {
+      rows.push({ x, score: predictScore(formula, x) });
     }
-    // Ensure last point present
-    if (rows[rows.length - 1].wrong !== formula.totalQuestions) {
-      rows.push({ wrong: formula.totalQuestions, score: predictScore(formula, formula.totalQuestions) });
+    if (rows[rows.length - 1].x !== formula.totalQuestions) {
+      rows.push({ x: formula.totalQuestions, score: predictScore(formula, formula.totalQuestions) });
     }
     return rows;
   }, [formula]);
+
+  const setFormula = (id: string) => {
+    const next = SCORE_FORMULAS.find((f) => f.id === id) ?? SCORE_FORMULAS[0];
+    setFormulaId(id);
+    setInput((prev) => Math.min(prev, next.totalQuestions));
+  };
 
   const step1 = SCORE_FORMULAS.filter((f) => f.step === "step1");
   const step2 = SCORE_FORMULAS.filter((f) => f.step === "step2ck");
