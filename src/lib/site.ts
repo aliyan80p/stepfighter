@@ -30,7 +30,7 @@ export type Course = {
   name: string;
   short: string;
   blurb: string;
-  qcount: string;
+  tagline: string;
   extras: string[];
   price: Record<Duration, { usd: number; pkr: number }>;
 };
@@ -41,8 +41,8 @@ export const COURSES: Course[] = [
     name: "USMLE Step 1",
     short: "Step 1",
     blurb: "Foundational science woven into clinical vignettes — pathology, pharm, micro, physio, biochem.",
-    qcount: "5,200+ questions",
-    extras: ["4 Step 1 self-assessments (SA1–SA4)", "Full NBME 9–31 score calibration", "AI performance dashboard"],
+    tagline: "Foundational science",
+    extras: ["Step 1 self-assessments (SA1–SA4)", "Full NBME 9–31 score calibration", "AI performance dashboard"],
     price: { "6mo": { usd: 29, pkr: 7900 }, "12mo": { usd: 45, pkr: 12500 } },
   },
   {
@@ -50,8 +50,8 @@ export const COURSES: Course[] = [
     name: "USMLE Step 2 CK",
     short: "Step 2 CK",
     blurb: "Clinical reasoning, management and wards-level judgment across every core rotation.",
-    qcount: "6,800+ questions",
-    extras: ["9 Step 2 CK self-assessments (SA1–SA9)", "22 CMS specialty forms", "Ambulatory + inpatient coverage"],
+    tagline: "Clinical mastery",
+    extras: ["Step 2 CK self-assessments (SA1–SA9)", "CMS specialty forms", "Ambulatory + inpatient coverage"],
     price: { "6mo": { usd: 35, pkr: 9500 }, "12mo": { usd: 49, pkr: 13500 } },
   },
   {
@@ -59,7 +59,7 @@ export const COURSES: Course[] = [
     name: "USMLE Step 3",
     short: "Step 3",
     blurb: "FIP + ACM practice for the final licensing exam — clinic, ER and inpatient scenarios.",
-    qcount: "4,000+ questions",
+    tagline: "Final licensing",
     extras: ["Step 3 SA1 + SA2 assessments", "CCS-style case reasoning", "Biostatistics + ethics drills"],
     price: { "6mo": { usd: 29, pkr: 7900 }, "12mo": { usd: 45, pkr: 12500 } },
   },
@@ -68,8 +68,8 @@ export const COURSES: Course[] = [
     name: "All-Steps Combo",
     short: "Combo",
     blurb: "Every question, every form, every Step — the full StepFighter library in one subscription.",
-    qcount: "16,000+ questions",
-    extras: ["Step 1 + Step 2 CK + Step 3", "All 40+ self-assessment forms", "All 22 CMS forms", "Priority WhatsApp support"],
+    tagline: "Full library",
+    extras: ["Step 1 + Step 2 CK + Step 3", "All self-assessment forms", "All CMS forms", "Priority WhatsApp support"],
     price: { "6mo": { usd: 69, pkr: 18500 }, "12mo": { usd: 99, pkr: 26500 } },
   },
 ];

@@ -7,7 +7,7 @@ export const Route = createFileRoute("/qbank")({
   head: () => ({
     meta: [
       { title: "QBanks — StepFighter USMLE Question Banks" },
-      { name: "description", content: "Explore StepFighter's USMLE QBanks: Step 1, Step 2 CK with 22 CMS forms, Step 3, and 40+ NBME-style self-assessments. Per-Step subscriptions or bundle all three." },
+      { name: "description", content: "Explore StepFighter's USMLE QBanks: Step 1, Step 2 CK with CMS forms, Step 3, and NBME-style self-assessments. Per-Step subscriptions or bundle all three." },
       { property: "og:title", content: "StepFighter QBanks" },
       { property: "og:description", content: "Step 1, Step 2 CK, Step 3, CMS forms and NBME-style self-assessments — subscribe per Step." },
     ],
@@ -28,7 +28,7 @@ function QBankPage() {
       <section className="bg-gradient-to-br from-[#0d2b4e] to-[#1a4b7c] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-3">Question Banks</div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">16,000+ board-style questions</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Board-style questions for every Step</h1>
           <p className="text-lg text-slate-200">Every Step, every self-assessment, every CMS form — subscribe to just what you need.</p>
         </div>
       </section>
@@ -42,7 +42,7 @@ function QBankPage() {
                 <BookOpen className="h-8 w-8 text-[#1a4b7c]" />
                 <h2 className="text-2xl font-bold text-[#0d2b4e]">{c.name}</h2>
               </div>
-              <div className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-black rounded-full mb-3">{c.qcount}</div>
+              <div className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-black rounded-full mb-3">{c.tagline}</div>
               <div className="text-xs text-slate-500">
                 From <span className="font-bold text-[#0d2b4e]">${c.price["6mo"].usd}</span> / 6 mo · <span className="font-bold text-[#0d2b4e]">${c.price["12mo"].usd}</span> / 12 mo
               </div>

@@ -78,7 +78,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             </div>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
               A high-yield USMLE preparation platform built by physicians for IMGs and US medical students.
-              16,000+ board-style questions across Step 1, Step 2 CK, and Step 3 with NBME-style self-assessments.
+              Board-style questions across Step 1, Step 2 CK, and Step 3 with NBME-style self-assessments.
             </p>
             <div className="mt-6 flex gap-3">
               <a href={waLink("Hi, I'd like to know more about StepFighter plans.")} target="_blank" rel="noreferrer"

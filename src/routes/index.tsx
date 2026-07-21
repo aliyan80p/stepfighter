@@ -12,9 +12,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "StepFighter — USMLE Step 1, Step 2 CK & Step 3 QBank" },
-      { name: "description", content: "High-yield USMLE preparation with 16,000+ board-style questions, NBME-style self-assessments, CMS forms and AI analytics for Step 1, Step 2 CK and Step 3." },
+      { name: "description", content: "High-yield USMLE preparation with board-style questions, NBME-style self-assessments, CMS forms and AI analytics for Step 1, Step 2 CK and Step 3." },
       { property: "og:title", content: "StepFighter — Sharper prep. Sharper score." },
-      { property: "og:description", content: "16,000+ board-style USMLE questions across Step 1, Step 2 CK and Step 3, on desktop, iPad and mobile." },
+      { property: "og:description", content: "Board-style USMLE questions across Step 1, Step 2 CK and Step 3, on desktop, iPad and mobile." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -36,8 +36,8 @@ function Home() {
             USMLE score with the <span className="text-[#1a4b7c]">most high-yield</span> QBank.
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            16,000+ board-style questions across Step 1, Step 2 CK and Step 3 — plus 40+ NBME-style self-assessments,
-            22 CMS specialty forms and AI-verified explanations. Subscribe to just the Step you need.
+            Board-style questions across Step 1, Step 2 CK and Step 3 — plus NBME-style self-assessments,
+            CMS specialty forms and AI-verified explanations. Subscribe to just the Step you need.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link to="/auth" search={{ mode: "signup" }}
@@ -122,13 +122,13 @@ function Home() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           {[
-            { n: "16,000+", l: "Questions" },
-            { n: "40+", l: "SA forms" },
-            { n: "22", l: "CMS forms" },
-            { n: "3", l: "Full Steps" },
+            { n: "Step 1", l: "Foundation" },
+            { n: "Step 2 CK", l: "Clinical" },
+            { n: "Step 3", l: "Licensing" },
+            { n: "CMS", l: "Specialty forms" },
           ].map((s) => (
             <div key={s.l} className="border border-slate-200 rounded-lg p-6 text-center hover:border-[#1a4b7c] transition-colors">
-              <div className="text-3xl font-bold text-[#1a4b7c]">{s.n}</div>
+              <div className="text-2xl font-bold text-[#1a4b7c]">{s.n}</div>
               <div className="text-xs uppercase tracking-widest font-semibold text-slate-500 mt-1">{s.l}</div>
             </div>
           ))}
@@ -154,7 +154,7 @@ function Home() {
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { i: BookOpen, t: "Massive Question Library", d: "16,000+ questions from NBME-style banks, CMS forms and full-length self-assessments." },
+              { i: BookOpen, t: "Massive Question Library", d: "NBME-style banks, CMS forms and full-length self-assessments across all three Steps." },
               { i: BarChart3, t: "Detailed Explanations", d: "High-yield explanations with images, tables and clinical correlates for every option." },
               { i: Timer, t: "Real Exam Simulation", d: "Prometric-style interface with authentic timers, block navigation and question flagging." },
               { i: Layers, t: "Custom Test Builder", d: "Build blocks by system, subject, difficulty — unused, incorrect or flagged." },
@@ -192,7 +192,7 @@ function Home() {
               <GraduationCap className={`h-8 w-8 mb-3 ${c.id === "combo" ? "text-amber-400" : "text-[#1a4b7c]"}`} />
               <h4 className={`text-xl font-bold mb-2 ${c.id === "combo" ? "text-white" : "text-[#0d2b4e]"}`}>{c.short}</h4>
               <p className={`text-sm leading-relaxed mb-4 ${c.id === "combo" ? "text-slate-300" : "text-slate-600"}`}>{c.blurb}</p>
-              <div className={`text-xs font-bold uppercase tracking-widest mb-3 ${c.id === "combo" ? "text-amber-400" : "text-amber-600"}`}>{c.qcount}</div>
+              <div className={`text-xs font-bold uppercase tracking-widest mb-3 ${c.id === "combo" ? "text-amber-400" : "text-amber-600"}`}>{c.tagline}</div>
               <div className={`text-sm font-semibold ${c.id === "combo" ? "text-white" : "text-[#1a4b7c]"}`}>
                 From ${c.price["6mo"].usd} <span className={`text-xs font-normal ${c.id === "combo" ? "text-slate-300" : "text-slate-500"}`}>/ 6 mo</span>
               </div>
