@@ -145,7 +145,7 @@ function ToggleSwitch({
   label, rightLabel, checked, onChange,
 }: { label: string; rightLabel?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center gap-2 text-white/90">
+    <div className="shrink-0 flex items-center gap-2 text-white/90">
       <span className="text-[11px] font-medium">{label}</span>
       <button
         role="switch"
