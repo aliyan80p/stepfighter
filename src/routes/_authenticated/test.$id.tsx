@@ -503,7 +503,7 @@ function TestRunner() {
     else document.exitFullscreen?.();
   };
 
-  if (isLoading || !data || !question) return <div className="p-8">Loading…</div>;
+  if (isLoading || !data || !question) return <div className="p-8"><Loader label="Loading question…" /></div>;
   if (data.test.done && !isReview) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
@@ -923,7 +923,7 @@ function TestRunner() {
         <div className="flex items-center gap-1 shrink-0">
           {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
           {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
-          <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
+          <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
           <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
           {false && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           
