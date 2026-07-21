@@ -247,8 +247,11 @@ function AssessmentsPage() {
               <tbody>
                 {filteredBlocks.map((b) => {
                   const t = b.test;
-                  const st = !t ? "Not Started" : t.done ? "Completed" : "Suspended";
-                  const stClass = !t ? "text-slate-500" : t.done ? "text-emerald-600" : "text-amber-600";
+                  const locked = !t && isBlockLocked(b.blockIndex);
+                  const st = locked ? "Locked" : !t ? "Not Started" : t.done ? "Completed" : "Suspended";
+                  const stClass = locked
+                    ? "text-slate-400"
+                    : !t ? "text-slate-500" : t.done ? "text-emerald-600" : "text-amber-600";
                   const dateStr = t ? new Date(t.createdAt).toString().replace(/\s\(.*\)$/, "") : "—";
                   return (
                     <tr key={b.blockIndex} className="border-b border-slate-100 last:border-0 hover:bg-indigo-50/40">
@@ -272,9 +275,12 @@ function AssessmentsPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => handleStart(b.blockIndex)}
-                            className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-indigo-500 to-violet-600 hover:opacity-90 px-3 py-1.5 text-white text-xs font-medium shadow"
+                            disabled={locked}
+                            title={locked ? "Complete the previous block to unlock" : undefined}
+                            className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-indigo-500 to-violet-600 hover:opacity-90 px-3 py-1.5 text-white text-xs font-medium shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500"
                           >
-                            <Play className="h-3 w-3" /> {t ? (t.done ? "Review" : "Resume") : "Start"}
+                            {locked ? <Lock className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                            {locked ? "Locked" : t ? (t.done ? "Review" : "Resume") : "Start"}
                           </button>
                           <button
                             onClick={() => t && handleResults(t.id)}
