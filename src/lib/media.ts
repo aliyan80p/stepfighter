@@ -7,7 +7,7 @@ for (const k of Object.keys({ ...imgManifest, ...vidManifest } as Record<string,
 }
 
 const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1", 3: "step3" };
-const MEDIA_VERSION = "20260721-plain-repair";
+const MEDIA_VERSION = "20260721-highres-repair";
 
 function mediaRoute(prefix: string, name: string): string {
   return `${prefix}${encodeURIComponent(name)}?v=${MEDIA_VERSION}`;
