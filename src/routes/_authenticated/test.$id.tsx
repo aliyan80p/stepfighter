@@ -630,14 +630,18 @@ function TestRunner() {
       if (opts?.suppressToolbar) return;
       const rect = getRangeBox(range);
       if (!rect) { setHlBar(null); return; }
-      // Keep native selection visible on ALL devices so users can extend it,
-      // use browser Copy, or long-press context menu on mobile.
-      // Toolbar sits below the selection on touch (avoids OS callout above)
-      // and above on desktop.
       const vw = window.innerWidth;
-      const x = Math.max(80, Math.min(vw - 80, rect.left + rect.width / 2));
-      const y = isTouch ? rect.bottom + 44 : Math.max(40, rect.top - 8);
-      setHlBar({ x, y });
+      const vh = window.innerHeight;
+      const barHalfWidth = 140; // approx pill half-width for clamping
+      const barHeight = 48;
+      // Prefer above the selection; flip below if not enough room at top.
+      const spaceAbove = rect.top;
+      const placement: "above" | "below" = spaceAbove >= barHeight + 12 ? "above" : "below";
+      const x = Math.max(barHalfWidth + 8, Math.min(vw - barHalfWidth - 8, rect.left + rect.width / 2));
+      const y = placement === "above"
+        ? Math.max(barHeight + 8, rect.top - 6)
+        : Math.min(vh - 12, rect.bottom + 6);
+      setHlBar({ x, y, placement });
     };
     if (isTouch) window.setTimeout(run, 80); else run();
   };
