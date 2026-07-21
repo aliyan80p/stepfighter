@@ -7,7 +7,7 @@ export const Route = createFileRoute("/qbank")({
   head: () => ({
     meta: [
       { title: "QBanks — StepFighter USMLE Question Banks" },
-      { name: "description", content: "Explore StepFighter's USMLE QBanks: Step 1, Step 2 CK with 22 CMS forms, Step 3, and 40+ NBME-style self-assessments. Per-Step subscriptions or bundle all three." },
+      { name: "description", content: "Explore StepFighter's USMLE QBanks: Step 1, Step 2 CK with CMS forms, Step 3, and NBME-style self-assessments. Per-Step subscriptions or bundle all three." },
       { property: "og:title", content: "StepFighter QBanks" },
       { property: "og:description", content: "Step 1, Step 2 CK, Step 3, CMS forms and NBME-style self-assessments — subscribe per Step." },
     ],
