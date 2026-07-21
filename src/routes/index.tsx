@@ -3,9 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "IMD QBank — USMLE Step 1, Step 2 CK & Step 3 Prep" },
+      { title: "StepFighter — USMLE Step 1, Step 2 CK & Step 3 Prep" },
       { name: "description", content: "16,000+ board-style USMLE questions across Step 1, Step 2 CK, and Step 3, with NBME-style self-assessments, AI performance analysis, and a real-exam simulator." },
-      { property: "og:title", content: "IMD QBank — USMLE Board Prep" },
+      { property: "og:title", content: "StepFighter — USMLE Board Prep" },
       { property: "og:description", content: "Board-style USMLE questions with AI analysis and real-exam simulation." },
     ],
   }),
@@ -267,7 +267,7 @@ function LandingPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-zinc-900 text-zinc-600 text-[10px] uppercase tracking-widest">
-          © 2026 IMD QBank. Not affiliated with the NBME, FSMB, or the USMLE program.
+          © 2026 StepFighter. Not affiliated with the NBME, FSMB, or the USMLE program.
         </div>
       </footer>
     </div>

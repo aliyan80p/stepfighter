@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/upgrade")({
   head: () => ({
     meta: [
-      { title: "Upgrade — IMD QBank" },
+      { title: "Upgrade — StepFighter" },
       { name: "description", content: "Choose a plan and keep practicing USMLE questions with full access." },
     ],
   }),

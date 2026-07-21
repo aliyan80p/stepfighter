@@ -9,8 +9,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset password — IMD QBank" },
-      { name: "description", content: "Set a new password for your IMD QBank account." },
+      { title: "Reset password — StepFighter" },
+      { name: "description", content: "Set a new password for your StepFighter account." },
     ],
   }),
   component: ResetPasswordPage,
@@ -58,7 +58,7 @@ function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <Link to="/" className="block text-center mb-6">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">IMD</span>
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">SF</span>
         </Link>
         <div className="rounded-lg border border-border bg-card p-6">
           <h1 className="text-xl font-semibold">Reset your password</h1>

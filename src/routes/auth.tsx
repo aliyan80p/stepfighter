@@ -12,8 +12,8 @@ import { CheckCircle2 } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — IMD QBank" },
-      { name: "description", content: "Sign in to IMD QBank or start your 14-day free trial." },
+      { title: "Sign in — StepFighter" },
+      { name: "description", content: "Sign in to StepFighter or start your 14-day free trial." },
     ],
   }),
   validateSearch: z.object({ mode: z.enum(["signin", "signup"]).optional() }),
@@ -146,7 +146,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
         <Link to="/" className="block text-center mb-6">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">IMD</span>
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">SF</span>
         </Link>
         <div className="rounded-lg border border-border bg-card p-6">
           <h1 className="text-xl font-semibold">
