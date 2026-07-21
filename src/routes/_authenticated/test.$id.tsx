@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.functions";
-import { rewriteMedia } from "@/lib/media";
+import { rewriteMedia, withMediaToken } from "@/lib/media";
+import { useMediaToken } from "@/lib/use-media-token";
 import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
@@ -313,7 +314,9 @@ function TestRunner() {
     : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
 
   const question = data?.questions[idx];
-  const allMediaItems = getQuestionMedia(question, data?.qbankId ?? 1);
+  const mediaToken = useMediaToken(data?.qbankId);
+  const allMediaItems = getQuestionMedia(question, data?.qbankId ?? 1)
+    .map((item) => ({ ...item, url: withMediaToken(item.url, mediaToken) }));
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
@@ -563,9 +566,9 @@ function TestRunner() {
     // State is re-hydrated from localStorage on question change.
   };
 
-  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1 });
+  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1, mediaToken });
   const answerHtmlFor = (key: string, letter: string, html: string) => (
-    rewriteMedia(highlightHtml[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1 })
+    rewriteMedia(highlightHtml[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1, mediaToken })
   );
 
   const getHighlightRoot = (node: Node) => {
@@ -1167,7 +1170,7 @@ function TestRunner() {
                     {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
                   </div>
                   <div className="text-xs mt-1 opacity-70">The correct answer is:</div>
-                  <div className="font-semibold mt-1" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1 })}` }} />
+                  <div className="font-semibold mt-1" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1, mediaToken })}` }} />
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
                   <div className="flex items-center gap-2">

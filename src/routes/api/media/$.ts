@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { contentTypeFromBytes, decryptImdMedia, looksLikePlainMedia } from "@/lib/imd-media-crypto";
+import { verifyMediaToken } from "@/lib/media-token.server";
 
 const BUCKET = "qbank-media";
 const PLAIN_BUCKET = "qbank-media-plain";
@@ -340,6 +341,15 @@ export const Route = createFileRoute("/api/media/$")({
           qbankId = QBANK_SLUGS[qbankSlug];
         }
         if (!name) return new Response("Bad request", { status: 400 });
+
+        // Require a valid, entitlement-checked media token bound to this qbank.
+        // The token is minted by getMediaToken() only for users whose plan
+        // grants access to this qbank, so unauthenticated / unpaid callers
+        // cannot fetch decrypted files even by guessing filenames.
+        const url = new URL(request.url);
+        const token = url.searchParams.get("t");
+        const auth = verifyMediaToken(token, qbankId);
+        if (!auth.ok) return new Response("Unauthorized", { status: 401 });
 
         const supaUrl = process.env.SUPABASE_URL;
         const srk = process.env.SUPABASE_SERVICE_ROLE_KEY;
