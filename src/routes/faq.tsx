@@ -19,7 +19,7 @@ export const Route = createFileRoute("/faq")({
 const faqs = [
   {
     q: "What Steps does StepFighter cover?",
-    a: "We cover Step 1, Step 2 CK and Step 3 with 16,000+ board-style questions plus 85+ NBME-style self-assessments and CMS specialty forms.",
+    a: "We cover Step 1, Step 2 CK and Step 3 with board-style questions plus NBME-style self-assessments and CMS specialty forms.",
   },
   {
     q: "Is there a free trial?",
