@@ -934,18 +934,11 @@ function TestRunner() {
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left navigator */}
         {sidebarOpen && (
-        <>
-          {/* Mobile overlay backdrop */}
-          <button
-            type="button"
-            aria-label="Close question list"
-            className="md:hidden fixed inset-0 z-30 bg-black/40"
-            onClick={() => setSidebarOpen(false)}
-          />
         <aside
-          className="w-14 overflow-auto border-r z-40 md:static absolute inset-y-0 left-0"
+          className="w-14 shrink-0 overflow-auto border-r"
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
+
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
             const hideResult = !isReview && !tutorMode;
