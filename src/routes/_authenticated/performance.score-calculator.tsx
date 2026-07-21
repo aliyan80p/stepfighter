@@ -119,9 +119,7 @@ function ScoreCalculator() {
                 className="flex-1 accent-primary"
               />
               <div className="text-xs text-muted-foreground w-24 text-right">
-                {isPercentMode
-                  ? `${formula.totalQuestions - input} correct`
-                  : `${formula.totalQuestions - input} correct`}
+                {formula.totalQuestions - input} correct
               </div>
             </div>
           </div>
