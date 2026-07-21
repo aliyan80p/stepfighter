@@ -1184,10 +1184,11 @@ function TestRunner() {
                     textRendering: "optimizeLegibility",
                   }}
                 >
-                  <div
+                  <HighlightableHtml
+                    seedKey={`e-${question.id}`}
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
-                    dangerouslySetInnerHTML={{ __html: htmlFor("e", question.explanation, true) }}
+                    html={htmlFor("e", question.explanation, true)}
                   />
                 </div>
 
