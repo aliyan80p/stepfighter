@@ -277,8 +277,7 @@ mark.qbank-hl[data-strike] {
   margin: 0.75rem 0;
 }
 
-/* Inline media anchor links (Fighter "Exhibit Display" pattern).
-   Plain blue underlined links — no glyph, matches Fighter exactly. */
+/* Inline media anchor links (Fighter "Exhibit Display" pattern). */
 a.qbank-media-anchor {
   color: #1a4b7c;
   text-decoration: underline;
@@ -287,6 +286,38 @@ a.qbank-media-anchor {
 }
 a.qbank-media-anchor:hover { color: #0ea5e9; }
 .qbank-theme-dark a.qbank-media-anchor { color: #93c5fd; }
+
+/* Video anchors render as a Fighter-style blue button. */
+a.qbank-media-anchor[data-media-kind="video"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  margin: 0 2px;
+  background: #1a4b7c;
+  color: #ffffff;
+  border: 1px solid #143c63;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9em;
+  line-height: 1.4;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+}
+a.qbank-media-anchor[data-media-kind="video"]::before {
+  content: "▶";
+  font-size: 0.75em;
+}
+a.qbank-media-anchor[data-media-kind="video"]:hover {
+  background: #22608f;
+  color: #ffffff;
+}
+.qbank-theme-dark a.qbank-media-anchor[data-media-kind="video"] {
+  background: #2563a8;
+  border-color: #1e4f87;
+  color: #ffffff;
+}
+
 
 
 /* Split-screen explanations: question/answers on the left, explanation on the right */
