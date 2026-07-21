@@ -112,7 +112,6 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
     } catch (e: any) { toast.error(e?.message ?? "Failed to delete"); }
   };
 
-  return (
   const content = (
     <div className="fixed inset-0 z-[2147483000] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
