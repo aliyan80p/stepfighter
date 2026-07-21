@@ -110,7 +110,7 @@ function TestResults() {
   };
 
   if (isLoading || !data) {
-    return <div className="p-8 text-muted-foreground">Loading results…</div>;
+    return <div className="p-8"><Loader label="Loading results…" /></div>;
   }
 
   const mode = data.test.mode;
