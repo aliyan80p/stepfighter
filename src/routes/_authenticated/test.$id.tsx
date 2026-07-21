@@ -1295,7 +1295,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="sticky bottom-0 z-40 flex items-center justify-between gap-2 px-1 sm:px-4 py-1 text-gray-800 text-xs leading-tight border-t bg-white/95 backdrop-blur" style={{ paddingBottom: "calc(0.25rem + env(safe-area-inset-bottom, 0px))" }}>
+          <div className="sticky z-40 mx-2 mb-[max(12px,env(safe-area-inset-bottom))] rounded-lg flex items-center justify-between gap-2 px-1 sm:px-4 py-1 text-white text-xs leading-tight shadow-lg" style={{ background: NAV_BG, bottom: "max(12px, env(safe-area-inset-bottom))" }}>
             <div className="shrink-0 font-semibold tracking-wide tabular-nums hidden sm:block">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
