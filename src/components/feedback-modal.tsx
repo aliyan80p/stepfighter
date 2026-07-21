@@ -79,4 +79,5 @@ export function FeedbackModal({ open, onClose, qbankId, questionId }: Props) {
       </div>
     </div>
   );
+  return typeof document !== "undefined" ? createPortal(content, document.body) : content;
 }
