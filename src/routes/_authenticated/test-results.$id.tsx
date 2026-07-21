@@ -14,6 +14,7 @@ import {
   ArrowRightLeft, RefreshCw, Repeat,
 } from "lucide-react";
 import { Loader } from "@/components/loader";
+import { TestAnalysisPane } from "./performance.ai-test-analysis";
 
 
 export const Route = createFileRoute("/_authenticated/test-results/$id")({
