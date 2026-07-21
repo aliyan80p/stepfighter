@@ -291,24 +291,39 @@ function CrossTable({
 }) {
   const primaryLabel = primaryKey === "subject" ? "SUBJECTS" : "SYSTEMS";
   const primaryField = primaryKey === "subject" ? "subject_id" : "system_id";
-  const childField = primaryKey === "subject" ? "system_id" : "subject_id";
   const primaryNames = primaryKey === "subject" ? subjectMap : systemMap;
-  const childNames = primaryKey === "subject" ? systemMap : subjectMap;
+  // Under Subjects → show Systems as children. Under Systems → show Topics.
+  const childKeyOf = (q: any): string => {
+    if (primaryKey === "subject") {
+      return q.system_id != null ? `s:${q.system_id}` : "s:none";
+    }
+    const t = (q.title ?? "").toString().trim();
+    return t ? `t:${t.toLowerCase()}` : "t:none";
+  };
+  const childNameOf = (key: string, sampleQ: any): string => {
+    if (primaryKey === "subject") {
+      if (key === "s:none") return "—";
+      const id = Number(key.slice(2));
+      return systemMap[id] ?? `#${id}`;
+    }
+    if (key === "t:none") return "—";
+    return (sampleQ.title ?? "—").toString();
+  };
 
   const grouped = useMemo(() => {
-    const out = new Map<number, { children: Map<number, any[]>; all: any[] }>();
+    const out = new Map<number, { children: Map<string, any[]>; all: any[] }>();
     for (const q of questions) {
       const p = q[primaryField];
       if (p == null) continue;
       let g = out.get(p);
       if (!g) { g = { children: new Map(), all: [] }; out.set(p, g); }
       g.all.push(q);
-      const c = q[childField] ?? -1;
+      const c = childKeyOf(q);
       if (!g.children.has(c)) g.children.set(c, []);
       g.children.get(c)!.push(q);
     }
     return out;
-  }, [questions, primaryField, childField]);
+  }, [questions, primaryField, primaryKey]);
 
   const stats = (qs: any[]) => {
     let c = 0, i = 0, o = 0;
@@ -359,7 +374,7 @@ function CrossTable({
               <tr><td colSpan={5} className="text-center text-muted-foreground py-8">No data</td></tr>
             ) : rows.map((r) => {
               const open = expanded.has(r.id);
-              const childRows = Array.from(r.children.entries()).map(([cid, qs]) => ({ id: cid, name: cid === -1 ? "—" : (childNames[cid] ?? `#${cid}`), ...stats(qs) }))
+              const childRows = Array.from(r.children.entries()).map(([cid, qs]) => ({ id: cid, name: childNameOf(cid, qs[0]), ...stats(qs) }))
                 .sort((a, b) => a.name.localeCompare(b.name));
               return (
                 <FragmentRows
