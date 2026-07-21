@@ -129,7 +129,7 @@ function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { ico
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="shrink-0 flex flex-col items-center justify-center px-2 sm:px-3 py-1 text-gray-700 hover:text-gray-900 hover:bg-black/5 rounded transition-colors min-w-[56px] sm:min-w-[64px] leading-tight"
+      className="shrink-0 flex flex-col items-center justify-center px-2 sm:px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[56px] sm:min-w-[64px] leading-tight"
     >
       {imgSrc ? (
         <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
@@ -1260,7 +1260,7 @@ function TestRunner() {
         const examUI = isRealExam && !isReview;
         if (examUI) {
           return (
-            <div className="sticky bottom-0 z-40 flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-gray-800 text-xs border-t bg-white/95 backdrop-blur" style={{ paddingBottom: "calc(0.375rem + env(safe-area-inset-bottom, 0px))" }}>
+            <div className="sticky z-40 mx-2 mb-[max(12px,env(safe-area-inset-bottom))] rounded-lg flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs shadow-lg" style={{ background: NAV_BG, bottom: "max(12px, env(safe-area-inset-bottom))" }}>
               <div className="font-semibold tracking-wide tabular-nums">
                 {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
               </div>
@@ -1268,7 +1268,7 @@ function TestRunner() {
                 type="button"
                 onClick={() => setBreakModal("suspend")}
                 title="Unauthorized Break"
-                className="flex flex-col items-center leading-none text-gray-800"
+                className="flex flex-col items-center leading-none text-white"
               >
                 <span className="flex items-center justify-center h-6 w-6">
                   <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
@@ -1286,7 +1286,7 @@ function TestRunner() {
                   });
                   if (ok) finish();
                 }}
-                className="inline-flex items-center gap-2 rounded-sm hover:bg-black/5 px-2 py-1 text-gray-800 text-xs font-semibold"
+                className="inline-flex items-center gap-2 rounded-sm hover:bg-white/10 px-2 py-1 text-white text-xs font-semibold"
               >
                 <img src={endBlockIcon.url} alt="" className="h-6 w-6 object-contain" />
                 End Block
@@ -1295,7 +1295,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="sticky bottom-0 z-40 flex items-center justify-between gap-2 px-1 sm:px-4 py-1 text-gray-800 text-xs leading-tight border-t bg-white/95 backdrop-blur" style={{ paddingBottom: "calc(0.25rem + env(safe-area-inset-bottom, 0px))" }}>
+          <div className="sticky z-40 mx-2 mb-[max(12px,env(safe-area-inset-bottom))] rounded-lg flex items-center justify-between gap-2 px-1 sm:px-4 py-1 text-white text-xs leading-tight shadow-lg" style={{ background: NAV_BG, bottom: "max(12px, env(safe-area-inset-bottom))" }}>
             <div className="shrink-0 font-semibold tracking-wide tabular-nums hidden sm:block">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
