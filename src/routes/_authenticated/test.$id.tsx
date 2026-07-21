@@ -821,7 +821,7 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
+    <div ref={rootRef} className="flex flex-col" style={{ height: "100dvh", background: themeStyles.pageBg, color: themeStyles.text, paddingBottom: "env(safe-area-inset-bottom)" }}>
       {hlBar && (
         <div
           data-hl-toolbar
