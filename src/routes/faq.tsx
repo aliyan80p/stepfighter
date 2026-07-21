@@ -61,10 +61,6 @@ const faqs = [
     q: "Do you offer group / institution discounts?",
     a: "Yes. Message us on WhatsApp for group pricing (5+ users) or medical school partnerships.",
   },
-  {
-    q: "Is StepFighter affiliated with the NBME or USMLE?",
-    a: "No. StepFighter is an independent preparation platform and is not affiliated with the NBME, FSMB or the USMLE program.",
-  },
 ];
 
 function FAQ() {

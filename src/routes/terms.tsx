@@ -52,7 +52,7 @@ function Terms() {
         </ul>
 
         <h2>9. Disclaimer</h2>
-        <p>The Service is provided "as is." StepFighter is not affiliated with the NBME, FSMB or the USMLE program. Score predictions are estimates and do not guarantee any exam outcome.</p>
+        <p>The Service is provided "as is." Score predictions are estimates and do not guarantee any exam outcome.</p>
 
         <h2>10. Limitation of Liability</h2>
         <p>To the maximum extent permitted by law, StepFighter is not liable for indirect, incidental, or consequential damages. Total liability is limited to the amount you paid in the preceding 12 months.</p>
