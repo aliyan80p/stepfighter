@@ -42,10 +42,16 @@ function renderImage(url: string, alt: string): string {
   return `<img src="${url}" alt="${escapeAttr(alt)}" class="qbank-inline-media" loading="lazy" decoding="async" />`;
 }
 
-function renderVideo(url: string): string {
-  return `<video controls preload="metadata" class="qbank-inline-media" style="max-width:100%"><source src="${url}"></video>`;
+function withMediaAnchorClass(openTag: string): string {
+  if (/\bclass\s*=/.test(openTag)) {
+    return openTag.replace(/\bclass=(['"])(.*?)\1/i, (match, quote, classes) => {
+      return String(classes).split(/\s+/).includes("qbank-media-anchor")
+        ? match
+        : `class=${quote}${classes} qbank-media-anchor${quote}`;
+    });
+  }
+  return openTag.replace(/^<a\b/i, '<a class="qbank-media-anchor"');
 }
-
 
 /** Rewrite media URLs in question HTML to point to the decrypting media route. */
 export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): string {
@@ -78,13 +84,11 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
     },
   );
   out = out.replace(
-    /<a\b[^>]*\bhref=["']([^"']+\.(?:mp4|webm|mov|m4v))["'][^>]*>(.*?)<\/a>/gis,
-    (full, href, labelHtml) => {
+    /<a\b([^>]*?)\bhref=(["'])([^"']+\.(?:mp4|webm|mov|m4v|ogv|mp3|wav|ogg|m4a|aac))\2([^>]*)>/gi,
+    (full, before, q, href, after) => {
       const url = resolve(href, qb);
-      if (!url) return full;
-      const media = renderVideo(url);
-      if (options.deferMedia) return parkMedia(media, labelHtml);
-      return media;
+      if (!url) return withMediaAnchorClass(full);
+      return withMediaAnchorClass(`<a${before}href=${q}${url}${q}${after}>`);
     },
   );
 

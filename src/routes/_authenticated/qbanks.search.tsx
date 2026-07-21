@@ -18,6 +18,8 @@ import { SciCalculator, SettingsPanel } from "./test.$id";
 import { NotesModal } from "@/components/notes-modal";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
+import { ExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
+import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
@@ -344,6 +346,7 @@ function QuestionModal({
   };
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
@@ -351,6 +354,7 @@ function QuestionModal({
   const [showFeedback, setShowFeedback] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [marked, setMarked] = useState<Record<number, boolean>>({});
+  const [anchorExhibit, setAnchorExhibit] = useState<ExhibitContent | null>(null);
 
   // Settings state (matches test runner)
   const [fontSize, setFontSize] = useState(15);
@@ -392,6 +396,14 @@ function QuestionModal({
   };
 
   const isMarked = !!marked[r.id];
+
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    return attachMediaAnchorHandlers(root, (hit) => {
+      setAnchorExhibit({ kind: hit.kind, src: hit.src });
+    });
+  }, [r.id, modalQbankId]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center" onClick={onClose}>
@@ -462,7 +474,7 @@ function QuestionModal({
           )}
 
         {/* Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto" ref={contentRef}>
           <div
             className={`w-full mx-auto px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`}
             style={{ fontSize, fontWeight, color: themeStyles.text }}
@@ -615,6 +627,7 @@ function QuestionModal({
             enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
           />
         )}
+        <ExhibitModal content={anchorExhibit} onClose={() => setAnchorExhibit(null)} />
       </div>
     </div>
   );
