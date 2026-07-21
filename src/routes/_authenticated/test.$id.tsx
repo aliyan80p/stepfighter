@@ -63,7 +63,7 @@ function HighlightableHtml({
 
 
 // USMLE-Fighter palette
-const NAV_BG = "#1e3a8a";       // deep blue top/bottom bars
+const NAV_BG = "#1a4b7c";       // USMLE Fighter navy top/bottom bars
 const NAV_ACCENT = "#2a4ba0";
 const PAGE_BG = "#f5f7fa";
 const SIDE_BG = "#eef1f5";
