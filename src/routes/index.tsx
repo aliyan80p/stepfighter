@@ -1,275 +1,248 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SiteLayout } from "@/components/site/SiteLayout";
+import { waLink } from "@/lib/site";
+import { CheckCircle2, BookOpen, Layers, BarChart3, Timer, Brain, Users, Star, ArrowRight, MessageCircle, ShieldCheck, GraduationCap, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "StepFighter — USMLE Step 1, Step 2 CK & Step 3 Prep" },
-      { name: "description", content: "16,000+ board-style USMLE questions across Step 1, Step 2 CK, and Step 3, with NBME-style self-assessments, AI performance analysis, and a real-exam simulator." },
-      { property: "og:title", content: "StepFighter — USMLE Board Prep" },
-      { property: "og:description", content: "Board-style USMLE questions with AI analysis and real-exam simulation." },
+      { title: "StepFighter — USMLE Step 1, Step 2 CK & Step 3 QBank" },
+      { name: "description", content: "High-yield USMLE preparation with 16,000+ board-style questions, NBME-style self-assessments, real-exam simulation, and AI performance analytics for Step 1, Step 2 CK and Step 3." },
+      { property: "og:title", content: "StepFighter — Your Gateway to USMLE Success" },
+      { property: "og:description", content: "16,000+ board-style USMLE questions, CMS forms, NBME-style self-assessments and AI analytics." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: LandingPage,
+  component: Home,
 });
 
-const display = { fontFamily: "'Instrument Serif', serif" };
-const body = { fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif" };
-
-function LandingPage() {
+function Home() {
   return (
-    <div
-      className="w-full min-h-screen bg-[#0a0a0c] text-zinc-300 antialiased selection:bg-amber-400 selection:text-black"
-      style={body}
-    >
-      {/* Nav */}
-      <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between relative z-20">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-400 text-black font-bold text-sm">
-            SF
-          </div>
-          <span className="text-white font-semibold tracking-tight">QBank</span>
-        </Link>
-        <div className="hidden md:flex items-center gap-8 text-sm text-zinc-400">
-          <a href="#curriculum" className="hover:text-white transition-colors">Curriculum</a>
-          <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link to="/auth" className="text-sm text-zinc-300 hover:text-white transition-colors">Sign in</Link>
-          <Link
-            to="/auth"
-            search={{ mode: "signup" }}
-            className="px-4 py-2 bg-amber-400 text-black font-semibold text-sm hover:bg-white transition-colors"
-          >
-            Get started
-          </Link>
-        </div>
-      </nav>
-
+    <SiteLayout>
       {/* Hero */}
-      <section className="relative pt-16 pb-24 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[700px] bg-gradient-to-b from-amber-500/10 via-transparent to-transparent opacity-60 pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/50 text-amber-400 text-xs font-bold uppercase tracking-widest mb-8">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
-              </span>
-              Updated for 2026
+      <section className="relative bg-gradient-to-br from-[#0d2b4e] via-[#1a4b7c] to-[#0d2b4e] text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.1)_1px,transparent_1px)] [background-size:40px_40px]" />
+        <div className="relative max-w-7xl mx-auto px-4 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400 text-[#0d2b4e] text-xs font-black uppercase tracking-widest rounded-sm mb-6">
+              <Trophy className="h-3 w-3" /> Updated for 2026 Exams
             </div>
-            <h1
-              className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight text-white mb-6 leading-[0.95]"
-              style={display}
-            >
-              Dominate the boards with{" "}
-              <span className="italic text-amber-400 underline decoration-1 underline-offset-8">
-                surgical
-              </span>{" "}
-              precision.
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
+              Your Gateway to <span className="text-amber-400">USMLE Success</span>
             </h1>
-            <p className="text-lg md:text-xl text-zinc-400 mb-10 leading-relaxed max-w-2xl">
-              16,000+ board-style questions across Step 1, Step 2 CK, and Step 3.
-              Real-exam simulation, AI performance analysis, and NBME-style self assessments —
-              engineered to lift your score, not your stress.
+            <p className="text-lg text-slate-200 mb-8 leading-relaxed">
+              Prepare smarter with 16,000+ board-style questions across Step 1, Step 2 CK, and Step 3.
+              High-yield explanations, NBME-style self-assessments, and AI-powered performance analytics —
+              trusted by IMGs and US medical students worldwide.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                className="px-8 py-4 bg-amber-400 text-black font-bold hover:bg-white transition-all transform hover:-translate-y-0.5"
-              >
-                START PRACTICING
+            <div className="flex flex-wrap gap-3">
+              <Link to="/auth" search={{ mode: "signup" }}
+                className="px-6 py-3 bg-amber-400 text-[#0d2b4e] font-bold rounded-md hover:bg-white transition-colors inline-flex items-center gap-2">
+                Start Free Trial <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                to="/auth"
-                className="px-8 py-4 border border-zinc-700 text-white font-bold hover:bg-zinc-900 transition-all"
-              >
-                SIGN IN
-              </Link>
+              <a href={waLink("Hi, I want to know about StepFighter subscription plans.")}
+                target="_blank" rel="noreferrer"
+                className="px-6 py-3 bg-[#25D366] text-white font-bold rounded-md hover:opacity-90 inline-flex items-center gap-2">
+                <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+              </a>
+            </div>
+            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-slate-300">
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-amber-400" /> 14-day free trial</div>
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-amber-400" /> No credit card required</div>
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-amber-400" /> Cancel anytime</div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Trust strip */}
-      <section className="border-y border-zinc-800 bg-zinc-900/30">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { n: "16,000+", l: "Board-style questions" },
-              { n: "Step 1/2/3", l: "Full exam coverage" },
-              { n: "85+", l: "NBME & CMS forms" },
-              { n: "AI", l: "Performance diagnostics" },
-            ].map((s) => (
-              <div key={s.l}>
-                <div className="text-3xl md:text-4xl font-light text-white mb-1" style={display}>
-                  {s.n}
-                </div>
-                <div className="text-[11px] uppercase tracking-widest text-zinc-500 font-bold">
-                  {s.l}
-                </div>
+          <div className="relative">
+            <div className="bg-white rounded-lg shadow-2xl p-6 text-slate-800">
+              <div className="flex items-center justify-between border-b pb-3 mb-4">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Question 42 of 40</div>
+                <div className="text-xs font-bold text-[#1a4b7c] flex items-center gap-1"><Timer className="h-3 w-3" /> 01:12:34</div>
               </div>
-            ))}
+              <p className="text-sm leading-relaxed mb-4">
+                A 58-year-old man presents to the emergency department with sudden onset chest pain radiating to the left arm.
+                ECG shows ST-elevation in leads II, III, and aVF. Which coronary artery is most likely occluded?
+              </p>
+              <div className="space-y-2 text-sm">
+                {[
+                  { l: "A", t: "Left anterior descending", ok: false },
+                  { l: "B", t: "Right coronary artery", ok: true },
+                  { l: "C", t: "Left circumflex", ok: false },
+                  { l: "D", t: "Left main coronary", ok: false },
+                ].map((o) => (
+                  <div key={o.l} className={`flex items-center gap-3 p-2 rounded border ${o.ok ? "border-green-500 bg-green-50" : "border-slate-200"}`}>
+                    <span className={`h-6 w-6 rounded-full grid place-items-center text-xs font-bold ${o.ok ? "bg-green-500 text-white" : "bg-slate-100"}`}>{o.l}</span>
+                    <span>{o.t}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-3 border-t text-xs text-slate-500">
+                Inferior STEMI → RCA supplies inferior wall in ~80% of population.
+              </div>
+            </div>
+            <div className="absolute -bottom-4 -right-4 bg-amber-400 text-[#0d2b4e] rounded-lg shadow-xl px-4 py-3 font-bold text-sm hidden md:block">
+              ✓ AI-verified explanations
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features bento */}
-      <section id="features" className="py-24 max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-16 gap-6">
-          <h2 className="text-4xl md:text-5xl font-light text-white" style={display}>
-            Engineered for mastery
-          </h2>
-          <p className="text-zinc-500 max-w-xs text-sm">
-            Every tool is calibrated to match the pressure and clinical complexity of the actual exam.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 group p-8 bg-zinc-900 border border-zinc-800 hover:border-amber-400/50 transition-colors relative overflow-hidden">
-            <div className="relative z-10">
-              <h3 className="text-2xl text-white mb-4" style={display}>
-                AI performance analysis
-              </h3>
-              <p className="text-zinc-400 max-w-md">
-                Pinpoint gaps by subject and system. We don't just show what you got wrong —
-                we surface the pattern behind it so you fix the reasoning, not the flashcard.
-              </p>
-            </div>
-            <div className="absolute -bottom-12 -right-12 w-64 h-64 bg-amber-400/5 rounded-full blur-3xl group-hover:bg-amber-400/10 transition-colors" />
-          </div>
-
+      {/* Stats */}
+      <section className="bg-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { t: "Real-exam simulator", d: "Interface, timers, and pacing modeled on the Prometric environment to eliminate test-day surprises." },
-            { t: "Tutor & exam modes", d: "Switch between guided learning with instant explanations or timed high-stakes blocks." },
-            { t: "Custom test builder", d: "Filter by system, subject, unused, incorrect, or flagged — build the exact drill you need." },
-            { t: "Media-rich explanations", d: "Every question ships with high-yield imagery, tables, and clinical correlates." },
+            { n: "16,000+", l: "Board-style questions" },
+            { n: "85+", l: "NBME & CMS forms" },
+            { n: "3", l: "Full Step exams covered" },
+            { n: "24/7", l: "Instant activation support" },
+          ].map((s) => (
+            <div key={s.l} className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-[#1a4b7c]">{s.n}</div>
+              <div className="text-xs uppercase tracking-widest text-slate-500 mt-1 font-semibold">{s.l}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Why Choose */}
+      <section className="max-w-7xl mx-auto px-4 py-20">
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Why StepFighter</div>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e] mb-4">Everything you need in one platform</h2>
+          <p className="text-slate-600">Built to mirror the real Prometric exam experience — from question stems to timing to interface.</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { i: BookOpen, t: "Massive Question Library", d: "16,000+ questions from official NBME-style banks including CMS forms and full-length self-assessments." },
+            { i: Brain, t: "AI Performance Analytics", d: "Track weak systems, subjects and topics with drill-down analytics and a personalized score predictor." },
+            { i: Timer, t: "Real Exam Simulation", d: "Prometric-style interface with authentic timers, block navigation and question flagging." },
+            { i: Layers, t: "Custom Test Builder", d: "Build blocks by system, subject, difficulty, unused, incorrect, or flagged — the exact drill you need." },
+            { i: BarChart3, t: "Detailed Explanations", d: "High-yield explanations with images, tables, and clinical correlates for every option." },
+            { i: ShieldCheck, t: "Regularly Updated", d: "Content reviewed and updated by USMLE-scoring physicians to match the latest content outline." },
           ].map((f) => (
-            <div
-              key={f.t}
-              className="p-8 bg-zinc-900 border border-zinc-800 hover:border-amber-400/50 transition-colors"
-            >
-              <h3 className="text-xl text-white mb-3" style={display}>{f.t}</h3>
-              <p className="text-sm text-zinc-500 leading-relaxed">{f.d}</p>
+            <div key={f.t} className="border border-slate-200 rounded-lg p-6 hover:border-[#1a4b7c] hover:shadow-lg transition-all">
+              <div className="h-12 w-12 rounded-md bg-[#1a4b7c]/10 text-[#1a4b7c] grid place-items-center mb-4">
+                <f.i className="h-6 w-6" />
+              </div>
+              <h3 className="font-bold text-[#0d2b4e] mb-2 text-lg">{f.t}</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">{f.d}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Curriculum */}
-      <section id="curriculum" className="py-24 bg-zinc-900/50 border-y border-zinc-800">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-xs uppercase tracking-[0.3em] text-amber-500 font-bold mb-12">
-            The curriculum
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="bg-slate-50 py-20 border-y border-slate-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Curriculum</div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e] mb-4">Complete USMLE coverage</h2>
+            <p className="text-slate-600">One subscription unlocks every Step, every self-assessment, every CMS form.</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { n: "01", t: "Step 1", d: "Foundational science and pathophysiology, integrated with clinical vignettes." },
-              { n: "02", t: "Step 2 CK", d: "Diagnostic reasoning, management, and the wards-level clinical judgment." },
-              { n: "03", t: "Step 3", d: "Comprehensive practice for the final licensing exam and residency prep." },
-              { n: "04", t: "Self-Assessments", d: "Full-length NBME-style exams and CMS specialty forms for gauge readiness." },
-            ].map((p) => (
-              <div key={p.t} className="bg-zinc-950 p-1 border border-zinc-800 group cursor-pointer">
-                <div className="p-8 border border-transparent group-hover:border-zinc-700 transition-colors h-full">
-                  <div className="text-zinc-500 text-xs mb-6 font-mono">{p.n}</div>
-                  <h4 className="text-2xl text-white mb-4" style={display}>{p.t}</h4>
-                  <p className="text-sm text-zinc-500 mb-8 leading-relaxed">{p.d}</p>
-                  <div className="h-[1px] w-8 group-hover:w-full bg-amber-400 transition-all duration-500" />
-                </div>
+              { t: "Step 1", d: "Foundational science, pathophysiology and pharmacology integrated with clinical vignettes.", q: "5,200+ Q" },
+              { t: "Step 2 CK", d: "Diagnostic reasoning, management, wards-level judgment. Includes 22 CMS specialty forms.", q: "6,800+ Q" },
+              { t: "Step 3", d: "Comprehensive practice for the final licensing exam and residency preparation.", q: "4,000+ Q" },
+              { t: "Self-Assessments", d: "Full-length NBME-style exams. Predict your real score before test day.", q: "40+ Forms" },
+            ].map((c, i) => (
+              <div key={c.t} className="bg-white rounded-lg border border-slate-200 p-6 hover:border-[#1a4b7c] hover:-translate-y-1 transition-all">
+                <div className="text-xs font-mono text-slate-400 mb-3">0{i + 1}</div>
+                <GraduationCap className="h-8 w-8 text-[#1a4b7c] mb-3" />
+                <h4 className="text-xl font-bold text-[#0d2b4e] mb-2">{c.t}</h4>
+                <p className="text-sm text-slate-600 mb-4 leading-relaxed">{c.d}</p>
+                <div className="text-xs font-bold text-amber-600 uppercase tracking-widest">{c.q}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonial */}
-      <section className="py-24 border-b border-zinc-800">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="text-amber-400 mb-8 text-5xl leading-none italic" style={display}>
-            &ldquo;
-          </div>
-          <blockquote
-            className="text-2xl md:text-3xl font-medium text-white mb-10 tracking-tight leading-snug"
-            style={display}
-          >
-            The explanations connect the dots between basic science and bedside reasoning better
-            than anything else I've used. Working through the bank once moved my score more than
-            a full month of textbook review.
-          </blockquote>
-          <div className="flex items-center justify-center gap-4">
-            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-amber-400 to-amber-600" />
-            <div className="text-left">
-              <div className="text-white font-bold text-sm">Anonymous PGY-1</div>
-              <div className="text-zinc-500 text-[11px] uppercase tracking-widest">Verified user</div>
-            </div>
-          </div>
+      {/* Testimonials */}
+      <section className="max-w-7xl mx-auto px-4 py-20">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Testimonials</div>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e] mb-4">Trusted by future physicians</h2>
         </div>
-      </section>
-
-      {/* CTA */}
-      <section id="pricing" className="py-20 relative overflow-hidden bg-amber-400">
-        <div className="relative z-10 max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-10">
-          <div>
-            <h2
-              className="text-4xl md:text-5xl font-medium text-black tracking-tight mb-3"
-              style={display}
-            >
-              Stop guessing. Start knowing.
-            </h2>
-            <p className="text-black/70 font-medium text-lg">
-              Full access to Step 1, Step 2 CK, Step 3, and every self-assessment.
-            </p>
-          </div>
-          <div className="flex flex-col items-start md:items-center">
-            <Link
-              to="/auth"
-              search={{ mode: "signup" }}
-              className="px-10 py-5 bg-black text-white font-bold text-lg hover:bg-zinc-900 transition-colors"
-            >
-              CREATE YOUR ACCOUNT
-            </Link>
-            <p className="mt-4 text-black/60 text-xs font-bold uppercase tracking-widest">
-              Cancel anytime
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-black py-16 border-t border-zinc-900">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-400 text-black font-bold text-sm">
-                SF
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { n: "Dr. A. Khan", r: "IMG · Matched IM 2025", t: "The question quality is on par with UWorld and the explanations connect basic science to bedside reasoning. Moved my NBME score by 18 points." },
+            { n: "S. Patel, MS4", r: "Step 2 CK: 264", t: "The CMS forms alone were worth the subscription. The interface feels exactly like the real exam. Highly recommended." },
+            { n: "Dr. M. Ali", r: "IMG · Step 3: 240", t: "Affordable, fast activation, responsive support on WhatsApp. Beats the big brands on value by miles." },
+          ].map((t) => (
+            <div key={t.n} className="border border-slate-200 rounded-lg p-6 bg-white">
+              <div className="flex gap-1 mb-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                ))}
               </div>
-              <span className="text-white font-semibold tracking-tight">QBank</span>
+              <p className="text-sm text-slate-700 leading-relaxed mb-4">"{t.t}"</p>
+              <div className="border-t pt-3">
+                <div className="font-bold text-[#0d2b4e] text-sm">{t.n}</div>
+                <div className="text-xs text-slate-500">{t.r}</div>
+              </div>
             </div>
-            <p className="text-zinc-500 max-w-sm text-sm leading-relaxed">
-              A precision board-prep platform for medical students and residents.
-              Built around real clinical reasoning, not rote memorization.
-            </p>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing preview */}
+      <section className="bg-gradient-to-br from-[#0d2b4e] to-[#1a4b7c] text-white py-20">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-3">Simple Pricing</div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Affordable plans for every budget</h2>
+            <p className="text-slate-300">Register instantly on WhatsApp. Full access to all Steps, all self-assessments, all CMS forms.</p>
           </div>
-          <div>
-            <h5 className="text-white font-bold mb-5 text-xs uppercase tracking-widest">Product</h5>
-            <ul className="space-y-3 text-zinc-500 text-sm">
-              <li><a href="#curriculum" className="hover:text-amber-400 transition-colors">Curriculum</a></li>
-              <li><a href="#features" className="hover:text-amber-400 transition-colors">Features</a></li>
-              <li><a href="#pricing" className="hover:text-amber-400 transition-colors">Pricing</a></li>
-            </ul>
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {[
+              { d: "6 Months", p: "$39", pkr: "PKR 9,750", pop: false },
+              { d: "12 Months", p: "$59", pkr: "PKR 14,750", pop: true, save: "Save 25%" },
+            ].map((t) => (
+              <div key={t.d} className={`relative rounded-lg p-8 ${t.pop ? "bg-white text-slate-800 shadow-2xl scale-105" : "bg-white/10 border border-white/20"}`}>
+                {t.pop && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-[#0d2b4e] text-xs font-black px-3 py-1 rounded-full">MOST POPULAR</div>}
+                <div className={`text-sm font-bold uppercase tracking-widest mb-2 ${t.pop ? "text-[#1a4b7c]" : "text-amber-400"}`}>{t.d}</div>
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-5xl font-bold">{t.p}</span>
+                </div>
+                <div className={`text-sm mb-4 ${t.pop ? "text-slate-500" : "text-slate-300"}`}>{t.pkr}</div>
+                {t.save && <div className="inline-block px-2 py-1 bg-amber-400 text-[#0d2b4e] text-xs font-bold rounded mb-4">{t.save}</div>}
+                <ul className={`space-y-2 text-sm mb-6 ${t.pop ? "text-slate-700" : "text-slate-200"}`}>
+                  <li className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" /> Full access to all QBanks</li>
+                  <li className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" /> All CMS forms + NBME assessments</li>
+                  <li className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" /> AI analytics + score predictor</li>
+                  <li className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" /> WhatsApp support</li>
+                </ul>
+                <a href={waLink(`Hello, I want to subscribe to StepFighter ${t.d} plan.`)} target="_blank" rel="noreferrer"
+                   className={`block text-center py-3 rounded-md font-bold ${t.pop ? "bg-[#1a4b7c] text-white hover:bg-[#0d2b4e]" : "bg-amber-400 text-[#0d2b4e] hover:bg-white"}`}>
+                  Register on WhatsApp
+                </a>
+              </div>
+            ))}
           </div>
-          <div>
-            <h5 className="text-white font-bold mb-5 text-xs uppercase tracking-widest">Account</h5>
-            <ul className="space-y-3 text-zinc-500 text-sm">
-              <li><Link to="/auth" className="hover:text-amber-400 transition-colors">Sign in</Link></li>
-              <li><Link to="/auth" search={{ mode: "signup" }} className="hover:text-amber-400 transition-colors">Create account</Link></li>
-            </ul>
+          <div className="text-center mt-8">
+            <Link to="/pricing" className="text-amber-400 hover:text-white text-sm font-semibold inline-flex items-center gap-1">
+              See full pricing details <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-zinc-900 text-zinc-600 text-[10px] uppercase tracking-widest">
-          © 2026 StepFighter. Not affiliated with the NBME, FSMB, or the USMLE program.
+      </section>
+
+      {/* Final CTA */}
+      <section className="max-w-7xl mx-auto px-4 py-20 text-center">
+        <Users className="h-12 w-12 text-[#1a4b7c] mx-auto mb-4" />
+        <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e] mb-4">Join thousands preparing with StepFighter</h2>
+        <p className="text-slate-600 max-w-xl mx-auto mb-8">Start your 14-day free trial today. No credit card required.</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link to="/auth" search={{ mode: "signup" }} className="px-8 py-4 bg-[#1a4b7c] text-white font-bold rounded-md hover:bg-[#0d2b4e]">
+            Start Free Trial
+          </Link>
+          <a href={waLink("Hi, I want to activate my StepFighter account.")} target="_blank" rel="noreferrer"
+             className="px-8 py-4 bg-[#25D366] text-white font-bold rounded-md hover:opacity-90 inline-flex items-center gap-2">
+            <MessageCircle className="h-4 w-4" /> Activate via WhatsApp
+          </a>
         </div>
-      </footer>
-    </div>
+      </section>
+    </SiteLayout>
   );
 }
