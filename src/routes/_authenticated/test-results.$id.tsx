@@ -14,6 +14,7 @@ import {
   ArrowRightLeft, RefreshCw, Repeat,
 } from "lucide-react";
 import { Loader } from "@/components/loader";
+import { TestAnalysisPane } from "./performance.ai-test-analysis";
 
 
 export const Route = createFileRoute("/_authenticated/test-results/$id")({
@@ -138,7 +139,13 @@ function TestResults() {
         </div>
       </div>
 
+      {tab === "analysis" ? (
+        <TestAnalysisPane testId={Number(id)} />
+      ) : (
+      <>
       {/* Workspace toolbar */}
+
+
       <div className="rounded-2xl border border-border bg-card p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Workspace</div>
@@ -313,7 +320,10 @@ function TestResults() {
           omittedIds={rows.filter((r) => r.status === "omitted").map((r) => r.id)}
         />
       )}
+      </>
+      )}
     </div>
+
   );
 }
 
