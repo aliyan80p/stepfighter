@@ -382,8 +382,22 @@ body { overscroll-behavior-y: none; }
 .qbank-slide-in-right { animation: qbank-slide-in-right 180ms cubic-bezier(0.32, 0.72, 0, 1); }
 .qbank-slide-in-left  { animation: qbank-slide-in-left  180ms cubic-bezier(0.32, 0.72, 0, 1); }
 
-/* Bottom test nav — clear mobile browser floating URL bar */
-.qbank-bottom-bar { padding-bottom: calc(0.375rem + env(safe-area-inset-bottom)); }
-@media (max-width: 640px) {
-  .qbank-bottom-bar { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+/* Bottom test nav — fixed above mobile floating URL bars without inflating the bar */
+.qbank-test-shell {
+  --qbank-bottom-raise: 0px;
+}
+.qbank-bottom-bar {
+  position: relative;
+  z-index: 20;
+  padding-bottom: calc(0.375rem + env(safe-area-inset-bottom));
+}
+@media (max-width: 640px) and (hover: none) and (pointer: coarse) {
+  .qbank-test-shell {
+    padding-bottom: var(--qbank-bottom-raise);
+  }
+  .qbank-bottom-bar {
+    transform: translateY(calc(-1 * var(--qbank-bottom-raise)));
+    margin-bottom: calc(-1 * var(--qbank-bottom-raise));
+    padding-bottom: calc(0.375rem + env(safe-area-inset-bottom));
+  }
 }
