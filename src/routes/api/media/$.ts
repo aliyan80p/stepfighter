@@ -406,7 +406,12 @@ export const Route = createFileRoute("/api/media/$")({
         const type = contentTypeFromBytes(data, contentTypeFor(resolvedName));
 
         void (async () => {
-          await uploadPlain(`${storagePrefix}${resolvedName}`, data, type, supaUrl, srk);
+          const resolvedPath = `${storagePrefix}${resolvedName}`;
+          const requestedPath = `${storagePrefix}${name}`;
+          await uploadPlain(resolvedPath, data, type, supaUrl, srk);
+          if (requestedPath !== resolvedPath) {
+            await uploadPlain(requestedPath, data, type, supaUrl, srk);
+          }
           const s = await getPlainSignedUrl(`${storagePrefix}${resolvedName}`, cacheKey, supaUrl, srk);
           if (s) await persistPlainUrl(qbankId, resolvedName, s.url, s.expiresAt, supaUrl, srk);
         })();
