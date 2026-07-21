@@ -202,8 +202,12 @@ async function fetchPlainObject(
         if (plainNameCache.get(cacheKey) === path) plainNameCache.delete(cacheKey);
         continue;
       }
+      const type = contentTypeFromBytes(bytes, contentTypeFor(path));
+      if (path !== storagePath) {
+        void uploadPlain(storagePath, bytes, type, supaUrl, srk);
+      }
       plainNameCache.set(cacheKey, path);
-      return rangeResponse(bytes, contentTypeFromBytes(bytes, contentTypeFor(path)), null);
+      return rangeResponse(bytes, type, null);
     }
     if (res.ok || res.status === 206) {
       plainNameCache.set(cacheKey, path);

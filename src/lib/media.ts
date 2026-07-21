@@ -7,6 +7,7 @@ for (const k of Object.keys({ ...imgManifest, ...vidManifest } as Record<string,
 }
 
 const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1", 3: "step3" };
+const MEDIA_VERSION = "20260721-plain-repair";
 
 function resolve(src: string, qbankId = 1): string | null {
   if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
@@ -17,7 +18,7 @@ function resolve(src: string, qbankId = 1): string | null {
   if (qbankId === 1 && manifestName[base]) return `${prefix}${encodeURIComponent(manifestName[base])}`;
   const strippedLower = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
   if (qbankId === 1 && strippedLower !== base && manifestName[strippedLower]) return `${prefix}${encodeURIComponent(manifestName[strippedLower])}`;
-  return `${prefix}${encodeURIComponent(original)}`;
+  return `${prefix}${encodeURIComponent(original)}?v=${MEDIA_VERSION}`;
 }
 
 function stripTags(html: string): string {
