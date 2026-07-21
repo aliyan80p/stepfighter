@@ -777,34 +777,53 @@ function TestRunner() {
   return (
     <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
       {hlBar && (
-
         <div
           data-hl-toolbar
-          className="fixed z-50 flex items-center gap-1 bg-gray-900 text-white rounded-full shadow-xl px-2 py-1.5 -translate-x-1/2 -translate-y-full touch-manipulation"
+          data-placement={hlBar.placement}
+          className="qbank-hl-toolbar"
           style={{ left: hlBar.x, top: hlBar.y }}
           onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
         >
           {(multicolor ? HL_COLORS.filter(c => enabledHighlights[c]) : [HL_COLORS[0]]).map(c => (
             <button
               key={c}
+              type="button"
               onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); applyColor(c); }}
-              className="h-6 w-6 sm:h-5 sm:w-5 rounded-full border border-white/20 hover:scale-110 transition-transform"
-              style={{ background: c }}
               title="Highlight"
-            />
+              aria-label={`Highlight ${c}`}
+            >
+              <span className="swatch" style={{ background: c }} />
+            </button>
           ))}
-          <div className="w-px h-5 bg-white/20 mx-1" />
-          <button onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); eraseHighlight(); }} className="p-1.5 sm:p-1 hover:bg-white/10 rounded" title="Remove highlight">
+          <button
+            type="button"
+            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); applyStrike(); }}
+            title="Strikethrough"
+            aria-label="Strikethrough"
+          >
+            <span style={{ textDecoration: "line-through", textDecorationColor: "#ef4444", fontWeight: 700 }}>S</span>
+          </button>
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />
+          <button
+            type="button"
+            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); eraseHighlight(); }}
+            title="Remove highlight"
+            aria-label="Remove highlight"
+          >
             <Eraser className="h-4 w-4" />
           </button>
-          <button onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }} className="p-1.5 sm:p-1 hover:bg-white/10 rounded" title="Copy">
+          <button
+            type="button"
+            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }}
+            title="Copy"
+            aria-label="Copy"
+          >
             <Copy className="h-4 w-4" />
           </button>
         </div>
-
       )}
       {/* Top nav */}
       <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: NAV_BG }}>
