@@ -113,7 +113,8 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+  const content = (
+    <div className="fixed inset-0 z-[2147483000] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
         className={`bg-white rounded-lg shadow-xl flex flex-col overflow-hidden ${maximized ? "w-full h-full" : "w-full max-w-5xl max-h-[85vh]"}`}
         onClick={(e) => e.stopPropagation()}
