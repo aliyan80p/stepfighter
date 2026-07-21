@@ -208,6 +208,11 @@ function TestRunner() {
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Mobile swipe navigation between questions
+  const swipeStartRef = useRef<{ x: number; y: number; locked: boolean } | null>(null);
+  const [swipeDx, setSwipeDx] = useState(0);
+  const [slideFrom, setSlideFrom] = useState<"left" | "right" | null>(null);
+
   // Settings — seeded from user's saved defaults
   const userSettings = useHydratedSettings();
   const [fontSize, setFontSize] = useState(DEFAULT_SETTINGS.fontSize + 1);
@@ -480,8 +485,10 @@ function TestRunner() {
     }
   }, [blockElapsed, timedMode, isRealExam, isReview, total]);
 
-  const goToQuestion = (nextIndex: number) => {
+  const goToQuestion = (nextIndex: number, dir?: "left" | "right") => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
+    if (bounded === idx) return;
+    if (dir) setSlideFrom(dir);
     setIdx(bounded);
     setHlBar(null);
     savedRangeRef.current = null;
@@ -490,6 +497,10 @@ function TestRunner() {
     requestAnimationFrame(() => {
       contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
+    if (dir) {
+      // clear the animation flag after it plays so subsequent renders don't re-animate
+      window.setTimeout(() => setSlideFrom(null), 320);
+    }
   };
 
   const goFullscreen = () => {
@@ -981,8 +992,59 @@ function TestRunner() {
 
 
         {/* Content */}
-        <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+        <div
+          className="flex-1 overflow-auto"
+          ref={contentRef}
+          onTouchStart={(e) => {
+            if (e.touches.length !== 1) return;
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) return;
+            const t = e.touches[0];
+            swipeStartRef.current = { x: t.clientX, y: t.clientY, locked: false };
+          }}
+          onTouchMove={(e) => {
+            const s = swipeStartRef.current;
+            if (!s || e.touches.length !== 1) return;
+            const t = e.touches[0];
+            const dx = t.clientX - s.x;
+            const dy = t.clientY - s.y;
+            if (!s.locked) {
+              if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+              if (Math.abs(dy) > Math.abs(dx)) {
+                swipeStartRef.current = null;
+                return;
+              }
+              s.locked = true;
+            }
+            // At edges, apply resistance
+            const atStart = idx === 0 && dx > 0;
+            const atEnd = idx === total - 1 && dx < 0;
+            const clamped = atStart || atEnd ? dx * 0.25 : dx;
+            setSwipeDx(clamped);
+          }}
+          onTouchEnd={() => {
+            const s = swipeStartRef.current;
+            swipeStartRef.current = null;
+            const dx = swipeDx;
+            setSwipeDx(0);
+            if (!s || !s.locked) return;
+            const threshold = 60;
+            if (dx <= -threshold && idx < total - 1) goToQuestion(idx + 1, "right");
+            else if (dx >= threshold && idx > 0) goToQuestion(idx - 1, "left");
+          }}
+        >
+          <div
+            key={`q-slide-${question.id}`}
+            className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${slideFrom === "right" ? "qbank-slide-in-right" : slideFrom === "left" ? "qbank-slide-in-left" : ""}`}
+            style={{
+              fontSize,
+              fontWeight,
+              color: themeStyles.text,
+              transform: swipeDx ? `translate3d(${swipeDx}px,0,0)` : undefined,
+              transition: swipeDx ? "none" : "transform 220ms cubic-bezier(0.2,0.7,0.2,1)",
+              willChange: swipeDx ? "transform" : undefined,
+            }}
+          >
             {(() => null)()}
             {(() => null)()}
 
