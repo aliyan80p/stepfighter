@@ -58,7 +58,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   defaultTheme: "default",
   splitExplanations: false,
   transparentExplanations: true,
-  largeImages: false,
+  largeImages: true,
   highlightOnly: true,
   multiHighlight: true,
   showTimer: true,

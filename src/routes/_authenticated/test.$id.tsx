@@ -835,7 +835,7 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className={`flex flex-col h-screen ${isRealExam && !isReview ? "qbank-exam-ui" : ""}`} style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
+    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
       {hlBar && (
         <div
           data-hl-toolbar
