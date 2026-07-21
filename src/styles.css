@@ -341,11 +341,11 @@ body { overscroll-behavior-y: none; }
      Avoid `table-layout: fixed` + `word-break: break-word`, which force per-character
      wrapping and leave empty horizontal space on the right on iOS/Android. */
   .qbank-html table { width: 100%; table-layout: auto; white-space: normal; word-break: normal; overflow-wrap: break-word; }
-  .qbank-html table td, .qbank-html table th { padding: 0.4rem 0.5rem; white-space: normal; word-break: normal; overflow-wrap: break-word; hyphens: auto; font-size: 13px; }
+  .qbank-html table td, .qbank-html table th { padding: 0.4rem 0.5rem; white-space: normal; word-break: normal; overflow-wrap: break-word; hyphens: auto; font-size: inherit; }
   /* Horizontally scroll only when a table genuinely can't fit */
   .qbank-html { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  /* Give room around the answer choices box on phones */
-  .qbank-explanation { font-size: 14px; }
+  /* Explanation inherits the user's Settings font-size on mobile too */
+  .qbank-explanation { font-size: inherit; }
 }
 
 /* Toolbar scroller helper used by the top/bottom nav */
