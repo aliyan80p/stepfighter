@@ -36,10 +36,32 @@ function normalizeMediaLeafCase(name: string): string {
   );
 }
 
+function extensionVariants(name: string): string[] {
+  const dot = name.lastIndexOf(".");
+  if (dot < 0) return [name];
+  const base = name.slice(0, dot);
+  const ext = name.slice(dot + 1);
+  const variants = new Set<string>([
+    name,
+    `${base}.${ext.toLowerCase()}`,
+    `${base}.${ext.toUpperCase()}`,
+  ]);
+  if (/^jpg$/i.test(ext)) {
+    variants.add(`${base}.jpeg`);
+    variants.add(`${base}.JPEG`);
+  } else if (/^jpeg$/i.test(ext)) {
+    variants.add(`${base}.jpg`);
+    variants.add(`${base}.JPG`);
+  }
+  return Array.from(variants);
+}
+
 function candidateNames(name: string): string[] {
   const set = new Set<string>();
   const normalized = normalizeMediaLeafCase(name);
-  const bases = [normalized, name, stripPrefix(normalized), stripPrefix(name)];
+  const baseSeeds = [normalized, name, stripPrefix(normalized), stripPrefix(name)];
+  const bases: string[] = [];
+  for (const b of baseSeeds) for (const v of extensionVariants(b)) bases.push(v);
   for (const b of bases) {
     set.add(b);
     if (/^[a-z]/.test(b)) set.add(b[0].toUpperCase() + b.slice(1));
