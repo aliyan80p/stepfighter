@@ -320,7 +320,10 @@ function TestResults() {
           omittedIds={rows.filter((r) => r.status === "omitted").map((r) => r.id)}
         />
       )}
+      </>
+      )}
     </div>
+
   );
 }
 
