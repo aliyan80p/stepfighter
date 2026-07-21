@@ -1,12 +1,12 @@
 import imgManifest from "@/data/media-manifest.json";
 import vidManifest from "@/data/video-manifest.json";
 
-const map: Record<string, string> = {};
-for (const [k, v] of Object.entries({ ...imgManifest, ...vidManifest } as Record<string, string>)) {
-  map[k.toLowerCase()] = v;
+const manifestName: Record<string, string> = {};
+for (const k of Object.keys({ ...imgManifest, ...vidManifest } as Record<string, string>)) {
+  manifestName[k.toLowerCase()] = k;
 }
 
-const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1" };
+const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1", 3: "step3" };
 
 function resolve(src: string, qbankId = 1): string | null {
   if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
@@ -14,9 +14,9 @@ function resolve(src: string, qbankId = 1): string | null {
   const prefix = slug ? `/api/media/${slug}/` : `/api/media/`;
   const original = src.split("/").pop() ?? src;
   const base = original.toLowerCase();
-  if (qbankId === 1 && map[base]) return `${prefix}${encodeURIComponent(base)}`;
+  if (qbankId === 1 && manifestName[base]) return `${prefix}${encodeURIComponent(manifestName[base])}`;
   const strippedLower = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
-  if (qbankId === 1 && strippedLower !== base && map[strippedLower]) return `${prefix}${encodeURIComponent(strippedLower)}`;
+  if (qbankId === 1 && strippedLower !== base && manifestName[strippedLower]) return `${prefix}${encodeURIComponent(manifestName[strippedLower])}`;
   const strippedOriginal = original.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
   return `${prefix}${encodeURIComponent(strippedOriginal)}`;
 }

@@ -6,6 +6,7 @@ const PLAIN_BUCKET = "qbank-media-plain";
 
 // Per-worker caches
 const plainUrlCache = new Map<string, { url: string; exp: number }>();
+const plainNameCache = new Map<string, string | null>();
 const nameCache = new Map<string, string | null>();
 const driveIdCache = new Map<string, string | null>();
 
@@ -28,9 +29,17 @@ function contentTypeFor(name: string): string {
 
 const HIGHRES_PREFIXES = ["highresdefault_", "hqdefault_", "sddefault_", "mqdefault_", "default_"];
 
+function normalizeMediaLeafCase(name: string): string {
+  return name.replace(
+    /^((?:highresdefault_|hqdefault_|sddefault_|mqdefault_|default_)?)([ul])(\d)/i,
+    (_match, prefix: string, letter: string, digit: string) => `${prefix}${letter.toUpperCase()}${digit}`,
+  );
+}
+
 function candidateNames(name: string): string[] {
   const set = new Set<string>();
-  const bases = [name, stripPrefix(name)];
+  const normalized = normalizeMediaLeafCase(name);
+  const bases = [normalized, name, stripPrefix(normalized), stripPrefix(name)];
   for (const b of bases) {
     set.add(b);
     if (/^[a-z]/.test(b)) set.add(b[0].toUpperCase() + b.slice(1));
@@ -125,6 +134,52 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
   headers.set("Content-Length", String(slice.byteLength));
   headers.set("Content-Range", `bytes ${start}-${end}/${total}`);
   return new Response(bodyFrom(slice), { status: 206, headers });
+}
+
+function upstreamMediaResponse(res: Response, fallbackContentType: string): Response {
+  const headers = new Headers();
+  headers.set("Content-Type", res.headers.get("content-type") || fallbackContentType);
+  headers.set("Accept-Ranges", res.headers.get("accept-ranges") || "bytes");
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  headers.set("Content-Disposition", "inline");
+  const contentLength = res.headers.get("content-length");
+  const contentRange = res.headers.get("content-range");
+  if (contentLength) headers.set("Content-Length", contentLength);
+  if (contentRange) headers.set("Content-Range", contentRange);
+  return new Response(res.body, {
+    status: res.status === 206 ? 206 : 200,
+    headers,
+  });
+}
+
+async function fetchPlainObject(
+  storagePath: string,
+  cacheKey: string,
+  supaUrl: string,
+  srk: string,
+  range: string | null,
+): Promise<Response | null> {
+  const cached = plainNameCache.get(cacheKey);
+  const dir = storagePath.includes("/") ? storagePath.slice(0, storagePath.lastIndexOf("/") + 1) : "";
+  const leaf = storagePath.slice(dir.length);
+  const paths = cached === undefined
+    ? Array.from(new Set([storagePath, ...candidateNames(leaf).map((candidate) => dir + candidate)]))
+    : cached ? [cached] : [];
+
+  for (const path of paths) {
+    const headers: Record<string, string> = { Authorization: `Bearer ${srk}`, apikey: srk };
+    if (range) headers.Range = range;
+    const res = await fetch(
+      `${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
+      { headers },
+    );
+    if (res.ok || res.status === 206) {
+      plainNameCache.set(cacheKey, path);
+      return upstreamMediaResponse(res, contentTypeFor(path));
+    }
+  }
+  if (cached === undefined) plainNameCache.set(cacheKey, null);
+  return null;
 }
 
 async function fetchPlainUrlFromDb(
@@ -257,7 +312,15 @@ export const Route = createFileRoute("/api/media/$")({
         const storagePrefix = qbankSlug ? `${qbankSlug}/` : "";
         const cacheKey = `${qbankId}:${name}`;
 
-        // Fastest path: DB-cached signed URL (survives worker restarts)
+        const range = request.headers.get("range");
+
+        // Fastest path: stream warmed media through this same route instead of
+        // redirecting the browser to a signed storage URL.  This avoids blank
+        // images on stricter browsers/devices while still using the warmed copy.
+        const plainObject = await fetchPlainObject(`${storagePrefix}${name}`, cacheKey, supaUrl, srk, range);
+        if (plainObject) return plainObject;
+
+        // Backward-compatible fallback: DB-cached signed URL (survives worker restarts)
         const dbUrl = await fetchPlainUrlFromDb(qbankId, name, supaUrl, srk);
         if (dbUrl) {
           plainUrlCache.set(cacheKey, { url: dbUrl, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 });
@@ -276,8 +339,6 @@ export const Route = createFileRoute("/api/media/$")({
             headers: { Location: signed.url, "Cache-Control": "public, max-age=86400" },
           });
         }
-
-        const range = request.headers.get("range");
 
         // Slow path: get encrypted source
         let encrypted: { bytes: Buffer; resolvedName: string } | null = null;
