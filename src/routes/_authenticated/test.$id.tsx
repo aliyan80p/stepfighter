@@ -338,6 +338,40 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [blockStartedAt, userSettings.stopTimerOnBlur]);
 
+  // Keep the mobile bottom controls above floating browser chrome without
+  // making the blue bar itself taller.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof window === "undefined") return;
+
+    const updateBottomRaise = () => {
+      const isPhoneLike = window.matchMedia?.("(max-width: 640px) and (hover: none) and (pointer: coarse)").matches;
+      if (!isPhoneLike) {
+        root.style.setProperty("--qbank-bottom-raise", "0px");
+        return;
+      }
+
+      const visualViewport = window.visualViewport;
+      const obscuredBottom = visualViewport
+        ? Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop)
+        : 0;
+      const raise = Math.min(96, Math.round(obscuredBottom));
+      root.style.setProperty("--qbank-bottom-raise", `${raise}px`);
+    };
+
+    updateBottomRaise();
+    window.addEventListener("resize", updateBottomRaise);
+    window.addEventListener("orientationchange", updateBottomRaise);
+    window.visualViewport?.addEventListener("resize", updateBottomRaise);
+    window.visualViewport?.addEventListener("scroll", updateBottomRaise);
+    return () => {
+      window.removeEventListener("resize", updateBottomRaise);
+      window.removeEventListener("orientationchange", updateBottomRaise);
+      window.visualViewport?.removeEventListener("resize", updateBottomRaise);
+      window.visualViewport?.removeEventListener("scroll", updateBottomRaise);
+    };
+  }, []);
+
   // Auto night mode — switch to dark theme within the user's scheduled window
   useEffect(() => {
     if (!userSettings.autoNightMode) return;
@@ -832,7 +866,7 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
+    <div ref={rootRef} className="qbank-test-shell flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
       {hlBar && (
         <div
           data-hl-toolbar
