@@ -129,7 +129,7 @@ function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { ico
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="shrink-0 flex flex-col items-center justify-center px-2 sm:px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[56px] sm:min-w-[64px] leading-tight"
+      className="shrink-0 flex flex-col items-center justify-center px-2 sm:px-3 py-1 text-gray-700 hover:text-gray-900 hover:bg-black/5 rounded transition-colors min-w-[56px] sm:min-w-[64px] leading-tight"
     >
       {imgSrc ? (
         <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
@@ -1257,7 +1257,89 @@ function TestRunner() {
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
 
-        return null;
+        const examUI = isRealExam && !isReview;
+        if (examUI) {
+          return (
+            <div className="sticky bottom-0 z-40 flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-gray-800 text-xs border-t bg-white/95 backdrop-blur" style={{ paddingBottom: "calc(0.375rem + env(safe-area-inset-bottom, 0px))" }}>
+              <div className="font-semibold tracking-wide tabular-nums">
+                {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
+              </div>
+              <button
+                type="button"
+                onClick={() => setBreakModal("suspend")}
+                title="Unauthorized Break"
+                className="flex flex-col items-center leading-none text-gray-800"
+              >
+                <span className="flex items-center justify-center h-6 w-6">
+                  <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
+                </span>
+                <span className="text-[10px] font-semibold mt-0.5">Lock</span>
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "End this block?",
+                    description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                    confirmLabel: "End Block",
+                    tone: "danger",
+                  });
+                  if (ok) finish();
+                }}
+                className="inline-flex items-center gap-2 rounded-sm hover:bg-black/5 px-2 py-1 text-gray-800 text-xs font-semibold"
+              >
+                <img src={endBlockIcon.url} alt="" className="h-6 w-6 object-contain" />
+                End Block
+              </button>
+            </div>
+          );
+        }
+        return (
+          <div className="sticky bottom-0 z-40 flex items-center justify-between gap-2 px-1 sm:px-4 py-1 text-gray-800 text-xs leading-tight border-t bg-white/95 backdrop-blur" style={{ paddingBottom: "calc(0.25rem + env(safe-area-inset-bottom, 0px))" }}>
+            <div className="shrink-0 font-semibold tracking-wide tabular-nums hidden sm:block">
+              {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
+            </div>
+            <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
+              <span>IMD QBank</span>
+            </div>
+            <div className="flex items-center gap-x-2 gap-y-1 overflow-x-auto flex-nowrap sm:flex-wrap min-w-0 w-full sm:w-auto">
+              {!isReview && (
+                <>
+                  <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
+                  <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
+                  <div className="w-px h-6 bg-black/10 mx-1 hidden sm:block" />
+                </>
+              )}
+              <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
+              <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+              <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
+              {isReview ? (
+                <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+              ) : (
+                <>
+                  <TopBtn imgSrc={suspendIcon.url} label="Suspend" onClick={async () => {
+                    const ok = await confirm({
+                      title: "Suspend this test?",
+                      description: "Your progress is saved and you can resume the test later from the Tests page.",
+                      confirmLabel: "Suspend",
+                      tone: "warning",
+                    });
+                    if (ok) nav({ to: "/tests" });
+                  }} />
+                  <TopBtn imgSrc={endBlockIcon.url} label="End Block" onClick={async () => {
+                    const ok = await confirm({
+                      title: "End this block?",
+                      description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                      confirmLabel: "End Block",
+                      tone: "danger",
+                    });
+                    if (ok) finish();
+                  }} />
+                </>
+              )}
+            </div>
+          </div>
+        );
       })()}
 
       {breakModal && (
