@@ -1295,14 +1295,15 @@ function TestRunner() {
           );
         }
         return (
-          <div className="sticky bottom-0 z-40 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG, paddingBottom: "calc(0.25rem + env(safe-area-inset-bottom, 0px))" }}>
-            <div className="shrink-0 font-semibold tracking-wide tabular-nums">
+          <div className="sticky bottom-0 z-40 flex items-center justify-between gap-2 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG, paddingBottom: "calc(0.25rem + env(safe-area-inset-bottom, 0px))" }}>
+            <div className="shrink-0 font-semibold tracking-wide tabular-nums hidden sm:block">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
             <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
               <span>IMD QBank</span>
             </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <div className="flex items-center gap-x-2 gap-y-1 overflow-x-auto flex-nowrap sm:flex-wrap min-w-0 w-full sm:w-auto">
+
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
