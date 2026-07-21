@@ -77,7 +77,7 @@ function ScoreCalculator() {
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Assessment
             </label>
-            <Select value={formulaId} onValueChange={setFormulaId}>
+            <Select value={formulaId} onValueChange={setFormula}>
               <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-[60vh]">
                 <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">Step 1</div>
@@ -94,17 +94,19 @@ function ScoreCalculator() {
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Number wrong (out of {formula.totalQuestions})
+              {isCorrectMode
+                ? `Number correct (out of ${formula.totalQuestions})`
+                : `Number wrong (out of ${formula.totalQuestions})`}
             </label>
             <div className="mt-1.5 flex items-center gap-3">
               <Input
                 type="number"
                 min={0}
                 max={formula.totalQuestions}
-                value={wrong}
+                value={input}
                 onChange={(e) => {
                   const n = Math.max(0, Math.min(formula.totalQuestions, Number(e.target.value) || 0));
-                  setWrong(n);
+                  setInput(n);
                 }}
                 className="w-32"
               />
@@ -112,12 +114,14 @@ function ScoreCalculator() {
                 type="range"
                 min={0}
                 max={formula.totalQuestions}
-                value={wrong}
-                onChange={(e) => setWrong(Number(e.target.value))}
+                value={input}
+                onChange={(e) => setInput(Number(e.target.value))}
                 className="flex-1 accent-primary"
               />
               <div className="text-xs text-muted-foreground w-24 text-right">
-                {formula.totalQuestions - wrong} correct
+                {isCorrectMode
+                  ? `${formula.totalQuestions - input} wrong`
+                  : `${formula.totalQuestions - input} correct`}
               </div>
             </div>
           </div>
@@ -125,12 +129,13 @@ function ScoreCalculator() {
           <div className="text-[11px] text-muted-foreground flex items-start gap-2 pt-2 border-t">
             <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
             <span>
-              Each question on {formula.label.split(" · ")[1]} is worth approximately{" "}
+              Each question on {formula.label.split(" · ")[1]} is worth{" "}
               <strong className="text-foreground">{pointsPerQ} points</strong>.
-              {!formula.verified && " Coefficients are close approximations of the published curve."}
+              {isCorrectMode && " Input is number correct (converted to % correct)."}
             </span>
           </div>
         </div>
+
 
         {/* Predicted score card */}
         <div className="relative overflow-hidden rounded-2xl p-6 text-white shadow-xl">
