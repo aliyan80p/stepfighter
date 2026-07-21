@@ -110,12 +110,13 @@ function Home() {
             Fully responsive · Desktop · iPad · Android · iPhone · Works offline (PWA)
           </p>
 
-          {/* Feature screenshot strip */}
-          <div className="mt-14 grid md:grid-cols-3 gap-6">
+          {/* Feature screenshot strip — real UI captures */}
+          <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { u: "/__l5e/assets-v1/9c97374c-9f3d-4423-86ce-1440635ebd32/desktop_new_test.png", t: "Custom Quiz Builder", d: "Tutor or exam mode, timed or untimed, filtered by subject, system, topic." },
+              { u: "/__l5e/assets-v1/2b3c6f3a-0be4-462d-bd1f-c72d56cccd8c/tutor_mode.png", t: "Tutor Mode", d: "Instant explanations, answer stats, lab values, notes, calculator — learn as you solve." },
+              { u: "/__l5e/assets-v1/1a0d0c54-250d-43dd-a7c7-b933daecab8c/exam_mode.png", t: "Real Exam Mode", d: "Prometric-style interface with timer, block navigation, item marking and lock — true test conditions." },
+              { u: "/__l5e/assets-v1/9c97374c-9f3d-4423-86ce-1440635ebd32/desktop_new_test.png", t: "Custom Quiz Builder", d: "Tutor or exam, timed or untimed, filtered by subject, system and topic." },
               { u: "/__l5e/assets-v1/b9e527e7-e8a2-4666-a40d-8f4f49ec8004/desktop_performance.png", t: "Performance Analytics", d: "Score, correct, incorrect, answer changes and test count — updated in real time." },
-              { u: "/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png", t: "Study Dashboard", d: "Every metric that matters, in one glance — QBank usage, accuracy, momentum." },
             ].map((s) => (
               <div key={s.t} className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
                 <div className="aspect-[16/10] overflow-hidden bg-slate-100 border-b border-slate-200">
