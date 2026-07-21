@@ -935,7 +935,7 @@ function TestRunner() {
         {/* Left navigator */}
         {sidebarOpen && (
         <aside
-          className="w-14 shrink-0 overflow-auto border-r"
+          className="w-14 md:w-24 shrink-0 overflow-auto border-r"
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
 
