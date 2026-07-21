@@ -129,7 +129,7 @@ function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { ico
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="shrink-0 flex flex-col items-center justify-center px-1 sm:px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[36px] sm:min-w-[64px] leading-tight"
+      className="shrink-0 flex flex-col items-center justify-center px-2 sm:px-3 py-1 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[56px] sm:min-w-[64px] leading-tight"
     >
       {imgSrc ? (
         <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
