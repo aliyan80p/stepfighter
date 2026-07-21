@@ -6,7 +6,7 @@ import {
   ShieldCheck, GraduationCap, Trophy, Highlighter, StickyNote, FileText, Smartphone,
   Wallet, UserPlus, KeyRound,
 } from "lucide-react";
-import devicesHero from "@/assets/screens/devices-hero.jpg";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
