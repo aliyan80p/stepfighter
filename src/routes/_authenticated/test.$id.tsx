@@ -206,6 +206,8 @@ function TestRunner() {
   const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
   const [breakModal, setBreakModal] = useState<null | "suspend" | "end">(null);
   const [modeInitFor, setModeInitFor] = useState<number | null>(null);
+  const [showLabValues, setShowLabValues] = useState(false);
+  const [anchorExhibit, setAnchorExhibit] = useState<ExhibitContent | null>(null);
   const { confirm, dialog: confirmDialog } = useConfirm();
 
 
