@@ -289,6 +289,7 @@ export const getPoolCount = createServerFn({ method: "POST" })
   });
 
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
+  await assertQbankAccess(supabase, userId, data.qbankId);
   const { data: inserted, error } = await supabase
     .from("tests")
     .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: data.qbankId })
@@ -297,6 +298,7 @@ async function insertTest(supabase: any, userId: string, ids: number[], data: z.
   if (error) throw error;
   return { id: inserted.id as number };
 }
+
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];

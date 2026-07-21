@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { TrialBanner } from "@/components/trial-banner";
+
 
 
 
@@ -259,10 +261,12 @@ function AuthedLayout() {
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">
+          <TrialBanner />
           <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
             <LogOut className="h-4 w-4 mr-2" /> Logout
           </Button>
         </div>
+
 
       </aside>
       )}
