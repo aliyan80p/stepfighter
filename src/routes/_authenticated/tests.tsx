@@ -20,6 +20,7 @@ import {
   FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy, PlayCircle, Rocket, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Loader } from "@/components/loader";
 
 
 export const Route = createFileRoute("/_authenticated/tests")({

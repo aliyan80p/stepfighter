@@ -13,6 +13,7 @@ import {
   TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2, X, Copy, Check,
   ArrowRightLeft, RefreshCw, Repeat,
 } from "lucide-react";
+import { Loader } from "@/components/loader";
 
 
 export const Route = createFileRoute("/_authenticated/test-results/$id")({
