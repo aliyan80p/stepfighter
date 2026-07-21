@@ -83,8 +83,28 @@ function AssessmentsPage() {
     });
   }, [blocks, status]);
 
+  const completedBlocks = useMemo(
+    () => new Set(blocks.filter((b) => b.test?.done).map((b) => b.blockIndex)),
+    [blocks],
+  );
+  const maxBlockIndex = useMemo(
+    () => blocks.reduce((m, b) => Math.max(m, b.blockIndex), 0),
+    [blocks],
+  );
+  const isBlockLocked = (blockIndex: number) => {
+    for (let i = 1; i < blockIndex; i++) {
+      if (i > maxBlockIndex) break;
+      if (!completedBlocks.has(i)) return true;
+    }
+    return false;
+  };
+
   const handleStart = async (blockIndex: number) => {
     if (!current) return;
+    if (isBlockLocked(blockIndex)) {
+      toast.error("Complete the previous block before starting this one.");
+      return;
+    }
     try {
       const r = await startFn({ data: { qbankId: current.qbankId, source: current.source, blockIndex } });
       nav({ to: "/test/$id", params: { id: String(r.id) } });
