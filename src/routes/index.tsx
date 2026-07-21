@@ -154,7 +154,7 @@ function Home() {
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {[
-              { i: BookOpen, t: "Massive Question Library", d: "16,000+ questions from NBME-style banks, CMS forms and full-length self-assessments." },
+              { i: BookOpen, t: "Massive Question Library", d: "NBME-style banks, CMS forms and full-length self-assessments across all three Steps." },
               { i: BarChart3, t: "Detailed Explanations", d: "High-yield explanations with images, tables and clinical correlates for every option." },
               { i: Timer, t: "Real Exam Simulation", d: "Prometric-style interface with authentic timers, block navigation and question flagging." },
               { i: Layers, t: "Custom Test Builder", d: "Build blocks by system, subject, difficulty — unused, incorrect or flagged." },
