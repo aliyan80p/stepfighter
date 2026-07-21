@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.functions";
-import { rewriteMedia } from "@/lib/media";
+import { rewriteMedia, withMediaToken } from "@/lib/media";
+import { useMediaToken } from "@/lib/use-media-token";
 import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
