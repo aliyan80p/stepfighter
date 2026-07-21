@@ -656,6 +656,12 @@ function TestRunner() {
       savedRangeRef.current = range.cloneRange();
       savedTextRef.current = range.toString();
       if (opts?.suppressToolbar) return;
+      // Multi-highlight OFF: auto-apply the default yellow highlight on release,
+      // skipping the color picker entirely.
+      if (!multicolor) {
+        wrapSelection(HL_COLORS[0]);
+        return;
+      }
       const rect = getRangeBox(range);
       if (!rect) { setHlBar(null); return; }
       const vw = window.innerWidth;
