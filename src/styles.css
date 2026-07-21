@@ -237,6 +237,22 @@ mark.qbank-hl *, .qbank-theme-dark mark.qbank-hl *, .qbank-theme-sepia mark.qban
   height: auto;
 }
 
+/* Uniform sizing: force every question image (annotated + highresdefault) to
+   render at the same width regardless of the source file's native pixel size. */
+.qbank-html img,
+.qbank-deferred-media img,
+.qbank-inline-media-wrap .qbank-inline-media {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  object-fit: contain;
+}
+.qbank-large-images .qbank-html img,
+.qbank-large-images .qbank-deferred-media img,
+.qbank-large-images .qbank-inline-media-wrap .qbank-inline-media {
+  max-width: 100%;
+}
+
 /* ---------- Mobile / tablet responsive polish ---------- */
 html, body { -webkit-text-size-adjust: 100%; }
 body { overscroll-behavior-y: none; }
