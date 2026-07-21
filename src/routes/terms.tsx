@@ -41,7 +41,7 @@ function Terms() {
         <p>See our <a href="/refund">Refund Policy</a>. Full refunds are available within 3 days of activation.</p>
 
         <h2>7. Intellectual Property</h2>
-        <p>All content on the Service — including question stems, explanations, images, videos, tables, code and design — is owned by StepFighter or its licensors. You may not copy, reproduce, distribute, publish, upload, post, transmit or resell any content without prior written permission.</p>
+        <p>StepFighter owns the platform, software, algorithms, analytics, user interface, and the curated compilation of study materials. The question banks and media were sourced from licensed material supplied by the account owner, decrypted and imported at the owner's direction, then corrected, categorized, and reorganized by StepFighter's AI-assisted tooling. This curated content and platform output are protected. You may not copy, reproduce, distribute, publish, upload, post, transmit, reverse engineer, scrape, or resell any content or platform code without prior written permission.</p>
 
         <h2>8. Prohibited Conduct</h2>
         <ul>
@@ -52,7 +52,7 @@ function Terms() {
         </ul>
 
         <h2>9. Disclaimer</h2>
-        <p>The Service is provided "as is." Score predictions are estimates and do not guarantee any exam outcome.</p>
+        <p>The Service is provided "as is" for educational and self-assessment purposes only. StepFighter is an independent study platform and is not a substitute for accredited medical education, clinical training, or professional medical judgment. Score predictions are estimates and do not guarantee any exam outcome. Use the Service as a supplement to your curriculum, not a replacement for it.</p>
 
         <h2>10. Limitation of Liability</h2>
         <p>To the maximum extent permitted by law, StepFighter is not liable for indirect, incidental, or consequential damages. Total liability is limited to the amount you paid in the preceding 12 months.</p>
