@@ -1,10 +1,8 @@
 import imgManifest from "@/data/media-manifest.json";
 import vidManifest from "@/data/video-manifest.json";
 
-const map: Record<string, string> = {};
 const manifestName: Record<string, string> = {};
-for (const [k, v] of Object.entries({ ...imgManifest, ...vidManifest } as Record<string, string>)) {
-  map[k.toLowerCase()] = v;
+for (const k of Object.keys({ ...imgManifest, ...vidManifest } as Record<string, string>)) {
   manifestName[k.toLowerCase()] = k;
 }
 
