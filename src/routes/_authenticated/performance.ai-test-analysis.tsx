@@ -293,7 +293,6 @@ function CrossTable({
   const primaryField = primaryKey === "subject" ? "subject_id" : "system_id";
   const primaryNames = primaryKey === "subject" ? subjectMap : systemMap;
   // Under Subjects → show Systems as children. Under Systems → show Topics.
-  const childHeader = primaryKey === "subject" ? "System" : "Topic";
   const childKeyOf = (q: any): string => {
     if (primaryKey === "subject") {
       return q.system_id != null ? `s:${q.system_id}` : "s:none";
