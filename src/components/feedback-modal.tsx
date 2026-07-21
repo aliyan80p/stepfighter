@@ -43,7 +43,8 @@ export function FeedbackModal({ open, onClose, qbankId, questionId }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={close}>
+  const content = (
+    <div className="fixed inset-0 z-[2147483000] flex items-center justify-center bg-black/50 p-4" onClick={close}>
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-2 border-b">
           <div className="font-semibold text-slate-800">Feedback</div>
