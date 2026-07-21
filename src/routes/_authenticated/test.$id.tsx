@@ -977,8 +977,8 @@ function TestRunner() {
             );
           })}
         </aside>
-        </>
         )}
+
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
