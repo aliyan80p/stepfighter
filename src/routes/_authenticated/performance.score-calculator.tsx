@@ -27,7 +27,7 @@ function ScoreCalculator() {
   const [input, setInput] = useState<number>(20);
 
   const formula = SCORE_FORMULAS.find((f) => f.id === formulaId) ?? SCORE_FORMULAS[0];
-  const isCorrectMode = formula.inputMode === "correctPercent";
+  const isCorrectMode = formula.inputMode === "wrongPercent";
   const predicted = predictScore(formula, input);
   const pointsPerQ = Math.abs(formula.slope).toFixed(4);
 
