@@ -1286,7 +1286,7 @@ function TestRunner() {
                   });
                   if (ok) finish();
                 }}
-                className="inline-flex items-center gap-2 rounded-sm hover:bg-black/5 px-2 py-1 text-gray-800 text-xs font-semibold"
+                className="inline-flex items-center gap-2 rounded-sm hover:bg-white/10 px-2 py-1 text-white text-xs font-semibold"
               >
                 <img src={endBlockIcon.url} alt="" className="h-6 w-6 object-contain" />
                 End Block
