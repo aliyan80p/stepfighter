@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
-import { ClipboardCheck, Filter, ListChecks, Play, BarChart2, FileText, RotateCcw, Calendar } from "lucide-react";
+import { ClipboardCheck, Filter, ListChecks, Play, BarChart2, FileText, RotateCcw, Calendar, Lock } from "lucide-react";
 import { listAssessmentBlocks, startAssessmentBlock, resetAssessment } from "@/lib/qbank.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
@@ -83,8 +83,28 @@ function AssessmentsPage() {
     });
   }, [blocks, status]);
 
+  const completedBlocks = useMemo(
+    () => new Set(blocks.filter((b) => b.test?.done).map((b) => b.blockIndex)),
+    [blocks],
+  );
+  const maxBlockIndex = useMemo(
+    () => blocks.reduce((m, b) => Math.max(m, b.blockIndex), 0),
+    [blocks],
+  );
+  const isBlockLocked = (blockIndex: number) => {
+    for (let i = 1; i < blockIndex; i++) {
+      if (i > maxBlockIndex) break;
+      if (!completedBlocks.has(i)) return true;
+    }
+    return false;
+  };
+
   const handleStart = async (blockIndex: number) => {
     if (!current) return;
+    if (isBlockLocked(blockIndex)) {
+      toast.error("Complete the previous block before starting this one.");
+      return;
+    }
     try {
       const r = await startFn({ data: { qbankId: current.qbankId, source: current.source, blockIndex } });
       nav({ to: "/test/$id", params: { id: String(r.id) } });
@@ -227,8 +247,11 @@ function AssessmentsPage() {
               <tbody>
                 {filteredBlocks.map((b) => {
                   const t = b.test;
-                  const st = !t ? "Not Started" : t.done ? "Completed" : "Suspended";
-                  const stClass = !t ? "text-slate-500" : t.done ? "text-emerald-600" : "text-amber-600";
+                  const locked = !t && isBlockLocked(b.blockIndex);
+                  const st = locked ? "Locked" : !t ? "Not Started" : t.done ? "Completed" : "Suspended";
+                  const stClass = locked
+                    ? "text-slate-400"
+                    : !t ? "text-slate-500" : t.done ? "text-emerald-600" : "text-amber-600";
                   const dateStr = t ? new Date(t.createdAt).toString().replace(/\s\(.*\)$/, "") : "—";
                   return (
                     <tr key={b.blockIndex} className="border-b border-slate-100 last:border-0 hover:bg-indigo-50/40">
@@ -252,9 +275,12 @@ function AssessmentsPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => handleStart(b.blockIndex)}
-                            className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-indigo-500 to-violet-600 hover:opacity-90 px-3 py-1.5 text-white text-xs font-medium shadow"
+                            disabled={locked}
+                            title={locked ? "Complete the previous block to unlock" : undefined}
+                            className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-indigo-500 to-violet-600 hover:opacity-90 px-3 py-1.5 text-white text-xs font-medium shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500"
                           >
-                            <Play className="h-3 w-3" /> {t ? (t.done ? "Review" : "Resume") : "Start"}
+                            {locked ? <Lock className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                            {locked ? "Locked" : t ? (t.done ? "Review" : "Resume") : "Start"}
                           </button>
                           <button
                             onClick={() => t && handleResults(t.id)}
