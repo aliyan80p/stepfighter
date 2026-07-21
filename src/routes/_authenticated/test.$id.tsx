@@ -338,40 +338,33 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [blockStartedAt, userSettings.stopTimerOnBlur]);
 
-  // Keep the mobile bottom controls above floating browser chrome without
-  // making the blue bar itself taller.
+  // Size the test shell to the *visible* viewport, not CSS 100vh.
+  // Mobile browsers with a floating bottom URL bar often leave 100vh behind
+  // the browser chrome, so the bottom actions get covered. visualViewport
+  // tracks the real visible area and lets the flex layout reserve space
+  // naturally instead of lifting/padding the blue bar with brittle offsets.
   useEffect(() => {
     const root = rootRef.current;
     if (!root || typeof window === "undefined") return;
 
-    const updateBottomRaise = () => {
-      const isPhoneLike = window.matchMedia?.("(max-width: 640px) and (hover: none) and (pointer: coarse)").matches;
-      if (!isPhoneLike) {
-        root.style.setProperty("--qbank-bottom-raise", "0px");
-        return;
-      }
-
-      const visualViewport = window.visualViewport;
-      const obscuredBottom = visualViewport
-        ? Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop)
-        : 0;
-      // Mobile Safari/Chrome often report 0px even while the floating URL bar
-      // visually covers the page. Keep a stable minimum clearance on phones,
-      // then add more only when visualViewport exposes extra obstruction.
-      const raise = Math.min(104, Math.max(76, Math.round(obscuredBottom)));
-      root.style.setProperty("--qbank-bottom-raise", `${raise}px`);
+    const updateViewportHeight = () => {
+      const isTouchMobile = window.matchMedia?.("(max-width: 767px) and (hover: none) and (pointer: coarse)").matches;
+      const viewportHeight = isTouchMobile
+        ? Math.floor(window.visualViewport?.height ?? window.innerHeight)
+        : window.innerHeight;
+      root.style.setProperty("--qbank-app-height", `${Math.max(320, viewportHeight)}px`);
     };
 
-    updateBottomRaise();
-    window.addEventListener("resize", updateBottomRaise);
-    window.addEventListener("orientationchange", updateBottomRaise);
-    window.visualViewport?.addEventListener("resize", updateBottomRaise);
-    window.visualViewport?.addEventListener("scroll", updateBottomRaise);
+    updateViewportHeight();
+    window.addEventListener("resize", updateViewportHeight);
+    window.addEventListener("orientationchange", updateViewportHeight);
+    window.visualViewport?.addEventListener("resize", updateViewportHeight);
+    window.visualViewport?.addEventListener("scroll", updateViewportHeight);
     return () => {
-      window.removeEventListener("resize", updateBottomRaise);
-      window.removeEventListener("orientationchange", updateBottomRaise);
-      window.visualViewport?.removeEventListener("resize", updateBottomRaise);
-      window.visualViewport?.removeEventListener("scroll", updateBottomRaise);
+      window.removeEventListener("resize", updateViewportHeight);
+      window.removeEventListener("orientationchange", updateViewportHeight);
+      window.visualViewport?.removeEventListener("resize", updateViewportHeight);
+      window.visualViewport?.removeEventListener("scroll", updateViewportHeight);
     };
   }, []);
 
@@ -869,7 +862,7 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className="qbank-test-shell flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
+    <div ref={rootRef} className="qbank-test-shell flex flex-col" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
       {hlBar && (
         <div
           data-hl-toolbar
