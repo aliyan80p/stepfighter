@@ -36,8 +36,8 @@ function Home() {
             USMLE score with the <span className="text-[#1a4b7c]">most high-yield</span> QBank.
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            16,000+ board-style questions across Step 1, Step 2 CK and Step 3 — plus 40+ NBME-style self-assessments,
-            22 CMS specialty forms and AI-verified explanations. Subscribe to just the Step you need.
+            Board-style questions across Step 1, Step 2 CK and Step 3 — plus NBME-style self-assessments,
+            CMS specialty forms and AI-verified explanations. Subscribe to just the Step you need.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link to="/auth" search={{ mode: "signup" }}
