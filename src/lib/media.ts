@@ -9,20 +9,28 @@ for (const k of Object.keys({ ...imgManifest, ...vidManifest } as Record<string,
 const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1", 3: "step3" };
 const MEDIA_VERSION = "20260721-highres-repair";
 
-function mediaRoute(prefix: string, name: string): string {
-  return `${prefix}${encodeURIComponent(name)}?v=${MEDIA_VERSION}`;
+function mediaRoute(prefix: string, name: string, token?: string): string {
+  const tokenPart = token ? `&t=${encodeURIComponent(token)}` : "";
+  return `${prefix}${encodeURIComponent(name)}?v=${MEDIA_VERSION}${tokenPart}`;
 }
 
-function resolve(src: string, qbankId = 1): string | null {
+function resolve(src: string, qbankId = 1, token?: string): string | null {
   if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
   const slug = QBANK_SLUG[qbankId] ?? "";
   const prefix = slug ? `/api/media/${slug}/` : `/api/media/`;
   const original = src.split("/").pop() ?? src;
   const base = original.toLowerCase();
-  if (qbankId === 1 && manifestName[base]) return mediaRoute(prefix, manifestName[base]);
+  if (qbankId === 1 && manifestName[base]) return mediaRoute(prefix, manifestName[base], token);
   const strippedLower = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
-  if (qbankId === 1 && strippedLower !== base && manifestName[strippedLower]) return mediaRoute(prefix, manifestName[strippedLower]);
-  return mediaRoute(prefix, original);
+  if (qbankId === 1 && strippedLower !== base && manifestName[strippedLower]) return mediaRoute(prefix, manifestName[strippedLower], token);
+  return mediaRoute(prefix, original, token);
+}
+
+/** Append the media access token to a raw /api/media URL built outside rewriteMedia. */
+export function withMediaToken(url: string, token: string | undefined): string {
+  if (!token) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}t=${encodeURIComponent(token)}`;
 }
 
 function stripTags(html: string): string {
