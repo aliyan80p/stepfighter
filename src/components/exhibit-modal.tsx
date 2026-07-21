@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { X, Maximize2, Minimize2, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Maximize2, Minimize2, ZoomIn, ZoomOut, RotateCcw, Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ExhibitContent =
@@ -24,17 +24,27 @@ export function ExhibitModal({
 }) {
   const [maximized, setMaximized] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (!content) return;
     setMaximized(false);
     setZoom(1);
+    setIsPlaying(false);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [content, onClose]);
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) v.play().catch(() => {});
+    else v.pause();
+  };
 
   if (!content) return null;
 
@@ -73,6 +83,11 @@ export function ExhibitModal({
                 </IconBtn>
               </>
             )}
+            {content.kind === "video" && (
+              <IconBtn title={isPlaying ? "Pause" : "Play"} onClick={togglePlay}>
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </IconBtn>
+            )}
             <IconBtn title={maximized ? "Restore" : "Maximize"} onClick={() => setMaximized((v) => !v)}>
               {maximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </IconBtn>
@@ -101,6 +116,7 @@ export function ExhibitModal({
           {content.kind === "video" && (
             <video
               key={content.src}
+              ref={videoRef}
               src={content.src}
               controls
               controlsList="nodownload"
@@ -109,6 +125,9 @@ export function ExhibitModal({
               height={maximized ? undefined : 150}
               className={maximized ? "max-w-full max-h-full rounded" : "rounded"}
               style={maximized ? { maxHeight: "85vh" } : undefined}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
             />
           )}
 
