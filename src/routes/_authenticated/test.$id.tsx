@@ -534,7 +534,11 @@ function TestRunner() {
       if (el.querySelector("mark.qbank-hl")) snap[el.dataset.hlkey!] = el.innerHTML;
     });
     try { localStorage.setItem(`qbank-hl-${question.id}`, JSON.stringify(snap)); } catch {}
-    setHighlightHtml(snap);
+    // Intentionally do NOT setHighlightHtml here — the DOM is already mutated
+    // in place by the highlighter. Updating state would change the __html seed,
+    // which would cause HighlightableHtml to reseed and remount inline media
+    // (causing an image blink) and would also fight ongoing highlight actions.
+    // State is re-hydrated from localStorage on question change.
   };
 
   const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1 });
