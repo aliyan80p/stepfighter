@@ -136,6 +136,10 @@ function AuthedLayout() {
   };
   const [open, setOpen] = useState<Record<string, boolean>>(initialOpen);
 
+  const checkAdminFn = useServerFn(isCurrentUserAdmin);
+  const adminQ = useQuery({ queryKey: ["is-admin"], queryFn: () => checkAdminFn(), staleTime: 5 * 60 * 1000 });
+  const isAdmin = adminQ.data?.admin === true;
+
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
 
