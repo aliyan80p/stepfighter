@@ -52,11 +52,15 @@ function mediaKind(name: string): MediaKind | null {
   return null;
 }
 
-function mediaUrl(name: string) {
-  return `/api/media/${encodeURIComponent(name.trim())}`;
+const MEDIA_QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1", 3: "step3" };
+
+function mediaUrl(name: string, qbankId = 1) {
+  const slug = MEDIA_QBANK_SLUG[qbankId] ?? "";
+  const prefix = slug ? `/api/media/${slug}/` : "/api/media/";
+  return `${prefix}${encodeURIComponent(name.trim())}`;
 }
 
-function getQuestionMedia(question: { media_name?: string | null; other_medias?: string | null } | null | undefined): MediaItem[] {
+function getQuestionMedia(question: { media_name?: string | null; other_medias?: string | null } | null | undefined, qbankId = 1): MediaItem[] {
   if (!question) return [];
   const seen = new Set<string>();
   return [question.media_name, question.other_medias]
@@ -72,7 +76,7 @@ function getQuestionMedia(question: { media_name?: string | null; other_medias?:
       seen.add(key);
       return true;
     })
-    .map((item) => ({ ...item, url: mediaUrl(item.name) }));
+    .map((item) => ({ ...item, url: mediaUrl(item.name, qbankId) }));
 }
 
 function mediaKeys(name: string): string[] {
@@ -398,7 +402,7 @@ function TestRunner() {
     : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
 
   const question = data?.questions[idx];
-  const allMediaItems = getQuestionMedia(question);
+  const allMediaItems = getQuestionMedia(question, data?.qbankId ?? 1);
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
@@ -1060,7 +1064,7 @@ function TestRunner() {
             {mediaItems.length > 0 && (
               <div className="mt-3 flex flex-wrap items-start justify-center gap-3">
                 {mediaItems.map((item, mediaIndex) => {
-                  const src = `/api/media/${encodeURIComponent(item.name)}`;
+                  const src = item.url;
                   if (item.kind === "image") {
                     return (
                       <img

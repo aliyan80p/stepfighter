@@ -6,7 +6,7 @@ for (const [k, v] of Object.entries({ ...imgManifest, ...vidManifest } as Record
   map[k.toLowerCase()] = v;
 }
 
-const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1" };
+const QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1", 3: "step3" };
 
 function resolve(src: string, qbankId = 1): string | null {
   if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
