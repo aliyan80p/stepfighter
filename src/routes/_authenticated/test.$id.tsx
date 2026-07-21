@@ -1295,7 +1295,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 pb-16 sm:pb-1 text-white text-xs leading-tight" style={{ background: NAV_BG, paddingBottom: `max(4rem, calc(0.25rem + env(safe-area-inset-bottom)))` }}>
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 pb-20 sm:pb-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
             <div className="shrink-0 font-semibold tracking-wide tabular-nums">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
