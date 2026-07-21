@@ -33,9 +33,6 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [country, setCountry] = useState("");
-  const [school, setSchool] = useState("");
-  const [targetExam, setTargetExam] = useState("");
-  const [targetDate, setTargetDate] = useState("");
   const [selectedQbanks, setSelectedQbanks] = useState<string[]>(["step2"]);
   const [loading, setLoading] = useState(false);
   const [forgot, setForgot] = useState(false);
@@ -69,9 +66,6 @@ function AuthPage() {
               full_name: fullName.trim(),
               display_name: fullName.trim().split(" ")[0],
               country: country.trim() || null,
-              medical_school: school.trim() || null,
-              target_exam: targetExam || null,
-              target_date: targetDate || null,
               selected_qbanks: selectedQbanks,
             },
           },
@@ -210,35 +204,9 @@ function AuthPage() {
 
               {mode === "signup" && (
                 <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="country">Country</Label>
-                      <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. Pakistan" />
-                    </div>
-                    <div>
-                      <Label htmlFor="school">Medical school</Label>
-                      <Input id="school" value={school} onChange={(e) => setSchool(e.target.value)} placeholder="Optional" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="exam">Target exam</Label>
-                      <select
-                        id="exam"
-                        value={targetExam}
-                        onChange={(e) => setTargetExam(e.target.value)}
-                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                      >
-                        <option value="">Select…</option>
-                        <option value="step1">Step 1</option>
-                        <option value="step2">Step 2 CK</option>
-                        <option value="step3">Step 3</option>
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor="date">Target date</Label>
-                      <Input id="date" type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
-                    </div>
+                  <div>
+                    <Label htmlFor="country">Country</Label>
+                    <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. Pakistan" />
                   </div>
                   <div>
                     <Label>Choose your QBank(s)</Label>
