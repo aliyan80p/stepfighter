@@ -1,80 +1,60 @@
-# Rebuild Highlight Feature — Cross-Device Engine
+# Apply USMLE Fighter findings to QBank
 
-## Goal
-Replace the current Rangy + custom-touch-drag hybrid with a single, modern highlight engine that behaves identically on desktop, iPad, iPhone, and Android — matching the polish of UWorld / AMBOSS / Kaplan.
+Ship everything captured from the USMLE Fighter audit, minus their logo and the AI Prompt quiz mode.
 
-## Problems with the current implementation
-- Rangy is unmaintained (last release 2018) and does character-offset serialization that drifts when media/DOM reflows.
-- Two parallel selection systems: browser-native (desktop) + a hand-rolled long-press touch simulator. They fight each other, especially on iOS after the native handles appear.
-- Toolbar (highlight / strike / erase) positioning is fragile on mobile — often opens off-screen or under the iOS callout.
-- Erase is class-based unwrap only; overlapping highlights of different colors leave orphan fragments.
-- No visible drag handles on touch — users can't extend after initial pick like they can on UWorld.
-- Highlights inside images / videos / tables aren't fully supported.
+## 1. Exhibit Display modal (media handling)
+- New `ExhibitModal` component: centered dialog, navy header "Exhibit Display", ✕ close + ⛶ maximize controls.
+- New `MediaLinkParser` util: scan stem + explanation HTML for `.mp4`/`.webm`/`.mp3`/`.wav` anchors, decorate with inline ▶ glyph, intercept click to open modal.
+- Modal renders native `<video controls>` / `<audio controls>` (no autoplay). Reusable for image exhibits (click-to-enlarge).
 
-## New architecture
+## 2. Loader upgrade
+- Replace static "Loading…" text with `<Loader/>`: spinning arc SVG (navy stroke, ~48 px, 1.2 s spin) + muted "Loading…" label.
+- Wire into test page, dashboard routes, Notes, Performance, etc.
 
-### 1. Serialization: DOM path + text-offset (drop Rangy)
-Store each highlight as `{ startPath, startOffset, endPath, endOffset, color, strike }` where path is a compact node-index array from the highlight root. Survives innerHTML round-trip, media loading, and re-renders. Written to the same `highlight_html` column so existing saves upgrade lazily.
+## 3. Test-view chrome tokens (Verdana + Fighter sizing)
+- Top bar: 72 px, `#1a4b7c`.
+- Bottom bar: 56 px, `#1a4b7c` — icon 24 px + label 11 px pattern.
+- Sidebar: 96 px, `#f2f4f8` bg, blue active pill.
+- Font stack: `Verdana, Arial, Georgia, serif`. Stem 14 px, options 16 px.
+- Behind a settings toggle so users can revert to your current theme.
 
-### 2. Selection capture: native only, one code path
-- Desktop / Android Chrome / Android Firefox: browser `selectionchange` + `pointerup`.
-- iOS Safari / iPadOS: same events; we no longer fight the native callout — we **hide** it via `-webkit-touch-callout:none` on the question surface and render our own inline toolbar.
-- Remove the entire custom long-press touch-drag simulator (~250 lines).
+## 4. Score Calculator (19 formulas)
+- Consume `src/data/usmlefighter-score-formulas.json`.
+- Dropdown: Step 1 NBME 25–31 + UWSA 1–3; Step 2 CK NBME 9–14 + UWSA 1–3.
+- Inputs: number wrong. Output: predicted 3-digit score + "each question worth X points" card + scatter/regression chart (Recharts) with equation label.
 
-### 3. Wrapping: bespoke range walker
-Small (~150 line) walker that splits text nodes at range boundaries and wraps runs in `<mark data-hl-id data-color>`. Handles:
-- Partial-node start/end
-- Cross-element ranges (spanning `<p>`, list items, table cells)
-- Nested/overlapping highlights via layered `data-color` chips (like AMBOSS)
-- Skip zones: `<img>`, `<video>`, `<audio>`, `.qbank-inline-media-wrap`, code blocks
+## 5. Test Analysis tab
+- New tab on post-test screen beside Results.
+- Cards: "Your Score" donut (Correct/Incorrect/Omitted) + "Answer Changes" donut (C→C, C→I, I→C, I→I) — reuse existing answer-change tracking.
+- Sortable Subjects / Systems / Topics tables with expandable rows.
 
-### 4. Toolbar UX (matches UWorld + fighter)
-- Floating pill above the selection: 4 color swatches, strikethrough, eraser.
-- Positioned via `getBoundingClientRect()` of the selection, clamped to viewport with 8px safe-area padding.
-- Auto-dismiss on outside tap / scroll / new selection.
-- On touch: appears above native handles, not below.
+## 6. Bottom-bar mode toggles (mid-test flippable)
+- Timed / Tutor / Exam as 3 independent switches in the bottom bar, changeable during a block (not just at start).
 
-### 5. Extend after highlight (like UWorld)
-Tap an existing highlight → shows two drag handles at its endpoints on touch, or a resize cursor on desktop. Drag handle → live-updates range → recommits on release.
+## 7. Previous Tests polish
+- KPI header: Saved / Completed / Suspended counts.
+- Row actions: Resume · Results · Test Analysis · duplicate · delete.
+- Filters: status dropdown + search + rows-per-page.
 
-### 6. Erase precision
-Eraser wraps the current selection with a "cut" pass that:
-- Splits any overlapping `mark` at range boundaries
-- Removes only the intersecting portion (not the whole mark)
-- Merges adjacent marks of the same color/strike after removal
+## 8. Lab Values panel refresh
+- Parse `src/data/usmle-lab-values.raw.json` into structured `{tab, analyte, conventional, si}`.
+- Right-side sliding panel, 4 tabs (Blood / Serum / CSF / Urine & BMI), SI toggle adds a third column.
 
-### 7. Storage & migration
-- New format: `{v: 2, ranges: [...]}` in `highlight_html`.
-- On load, if column contains raw HTML with `<mark class="qbank-hl-...">` (old format), a one-time parser extracts and converts to v2, then re-saves on next edit.
-- No DB migration needed — column already exists.
+## 9. Excluded (per your request)
+- USMLE Fighter logo / brand marks — keep your own.
+- AI Prompt quiz mode — not implemented.
 
-### 8. Files touched
-- **Rewrite:** `src/lib/rangy-highlighter.ts` → `src/lib/highlighter.ts` (new engine, no Rangy).
-- **Rewrite:** highlight sections of `src/routes/_authenticated/test.$id.tsx` (~400 lines removed, ~150 added).
-- **New:** `src/components/highlight-toolbar.tsx` (portal-rendered floating toolbar).
-- **New:** `src/lib/highlight-serialize.ts` (path/offset encode + decode + v1→v2 migration).
-- **CSS:** update `src/styles.css` — remove `.qbank-hl-*` runtime injection, add static `mark[data-hl-color]` rules + touch-callout suppression.
-- **Remove:** `rangy` from package.json (~120 KB gzipped saved).
+## Technical notes
+- All new colors added as semantic tokens in `src/styles.css` (`--fighter-navy`, `--fighter-footer`, etc.) — no hardcoded hex in components.
+- Recharts already installed for the score chart.
+- Exhibit modal uses existing shadcn `Dialog`.
+- No schema changes needed; Answer Changes reads from existing `test_attempts` history.
 
-## Research inputs
-Before coding, I'll analyze the highlight DOM/UX of:
-- **UWorld** (via IMD sandbox login you offer) — drag handles, toolbar timing, color palette
-- **AMBOSS free-tier** article view — overlapping highlight rendering, mobile toolbar
-- **USMLE Fighter** (sandbox login you offer) — mobile toolbar placement
-- Public write-ups on Medium/GitHub for `document.caretRangeFromPoint`, `caretPositionFromPoint`, iOS selection quirks
-
-## Verification plan
-Playwright script hits `/test/:id` on 4 emulated viewports (desktop 1440, iPad 1024, iPhone 390, Android 360), performs: select-word, select-cross-paragraph, extend, overlap-with-different-color, erase-partial. Screenshots at each step; fail if toolbar off-screen or mark count wrong.
-
-## Out of scope for this PR
-- Server-side highlight rendering (SSR)
-- Sharing / exporting highlights
-- Color palette customization UI (uses current 4 colors)
-
----
-
-## Open questions before I start
-
-1. **Toolbar style** — pill above selection like UWorld, or bottom-sheet on mobile like AMBOSS?
-2. **Overlapping highlights** — allow (AMBOSS-style layered) or replace-on-overlap (UWorld-style)?
-3. **UWorld/Fighter access** — please confirm you want me to log into the sandbox with your credentials to inspect their DOM, and paste them in the next message (I'll use once, never store).
+## Build order
+1. Loader + chrome tokens (fast, high visual impact)
+2. Exhibit Display modal + media link parser
+3. Score Calculator with 19 formulas + chart
+4. Test Analysis tab
+5. Bottom-bar mode toggles
+6. Previous Tests polish
+7. Lab Values panel refresh

@@ -29,6 +29,10 @@ import { FlashcardsModal } from "@/components/flashcards-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { NotesModal } from "@/components/notes-modal";
 import { highlightRange, unwrapHighlightsInRange } from "@/lib/highlighter";
+import { ExhibitModal as MediaExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
+import { LabValuesPanel } from "@/components/lab-values-panel";
+import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
+import { Loader } from "@/components/loader";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
@@ -202,6 +206,8 @@ function TestRunner() {
   const [mediaModalIndex, setMediaModalIndex] = useState<number | null>(null);
   const [breakModal, setBreakModal] = useState<null | "suspend" | "end">(null);
   const [modeInitFor, setModeInitFor] = useState<number | null>(null);
+  const [showLabValues, setShowLabValues] = useState(false);
+  const [anchorExhibit, setAnchorExhibit] = useState<ExhibitContent | null>(null);
   const { confirm, dialog: confirmDialog } = useConfirm();
 
 
@@ -364,7 +370,9 @@ function TestRunner() {
     setHighlightHtml(saved && typeof saved === "object" ? saved : {});
   }, [question?.id, submitted]);
 
-  // Click-to-open exhibit modal for any image in the question/explanation
+  // Click-to-open exhibit modal for any image in the question/explanation.
+  // Also decorates inline .mp4/.mp3/.wav anchors and opens them in the
+  // Fighter-style Exhibit Display modal.
   useEffect(() => {
     const root = contentRef.current;
     if (!root) return;
@@ -378,7 +386,13 @@ function TestRunner() {
       setExhibitZoom(1);
     };
     root.addEventListener("click", onClick);
-    return () => root.removeEventListener("click", onClick);
+    const detachAnchors = attachMediaAnchorHandlers(root, (hit) => {
+      setAnchorExhibit({ kind: hit.kind, src: hit.src });
+    });
+    return () => {
+      root.removeEventListener("click", onClick);
+      detachAnchors();
+    };
   }, [question?.id, submitted]);
 
 
@@ -497,7 +511,7 @@ function TestRunner() {
     else document.exitFullscreen?.();
   };
 
-  if (isLoading || !data || !question) return <div className="p-8">Loading…</div>;
+  if (isLoading || !data || !question) return <div className="p-8"><Loader label="Loading question…" /></div>;
   if (data.test.done && !isReview) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
@@ -917,7 +931,7 @@ function TestRunner() {
         <div className="flex items-center gap-1 shrink-0">
           {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
           {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
-          <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
+          <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
           <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
           {false && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           
@@ -1435,6 +1449,10 @@ function TestRunner() {
           onClose={() => setMediaModalIndex(null)}
         />
       )}
+      <LabValuesPanel open={showLabValues} onClose={() => setShowLabValues(false)} />
+
+      <MediaExhibitModal content={anchorExhibit} onClose={() => setAnchorExhibit(null)} />
+
       {confirmDialog}
     </div>
   );
