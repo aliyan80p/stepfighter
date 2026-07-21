@@ -49,15 +49,16 @@ export function ExhibitModal({
           "bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col",
           maximized
             ? "w-[98vw] h-[96vh]"
-            : "w-[min(90vw,760px)] max-h-[90vh]"
+            : "w-[min(92vw,620px)] max-h-[88vh]"
         )}
+        style={{ fontFamily: "Verdana, Arial, Georgia, serif" }}
       >
-        {/* Navy header (Fighter pattern) */}
+        {/* Navy header (Fighter pattern) — 40px tall */}
         <div
-          className="flex items-center justify-between px-4 py-2.5 text-white shrink-0"
-          style={{ backgroundColor: "#1a4b7c" }}
+          className="flex items-center justify-between px-4 text-white shrink-0"
+          style={{ backgroundColor: "#1a4b7c", height: 40 }}
         >
-          <div className="text-sm font-semibold tracking-wide">{title}</div>
+          <div className="text-[13px] font-semibold tracking-wide">{title}</div>
           <div className="flex items-center gap-1">
             {content.kind === "image" && (
               <>

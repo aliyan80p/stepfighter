@@ -329,19 +329,23 @@ a.qbank-media-anchor:hover { color: #0ea5e9; }
   height: auto;
 }
 
-/* Uniform sizing: force every question image (annotated + highresdefault) to
-   render at the same width — matching the larger highresdefault display size. */
+/* Fighter-style inline images: render at their natural size, capped at
+   container width. Do NOT stretch small annotated thumbnails to full width. */
 .qbank-html img,
 .qbank-deferred-media img,
 .qbank-inline-media-wrap .qbank-inline-media {
-  width: 100%;
+  display: block;
   max-width: 100%;
+  width: auto;
   height: auto;
   object-fit: contain;
+  margin: 0.5rem auto;
 }
+/* "Maximize images" setting: allow images to fill container up to native res */
 .qbank-large-images .qbank-html img,
 .qbank-large-images .qbank-deferred-media img,
 .qbank-large-images .qbank-inline-media-wrap .qbank-inline-media {
+  width: 100%;
   max-width: 100%;
 }
 
