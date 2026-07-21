@@ -994,8 +994,8 @@ function TestRunner() {
               >
                 {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
                 {status === "wrong" && <span className="text-red-600 font-bold">✕</span>}
-                {status === "attempted" && <span className="inline-block h-2 w-2 rounded-full bg-slate-700" />}
-                {status === "none" && <span className="w-3.5" />}
+                {status === "attempted" && <span className="w-3.5" />}
+                {status === "none" && <span className="inline-block h-2 w-2 rounded-full bg-slate-700" />}
                 <span>{i + 1}</span>
                 {data.bookmarkedIds.has(q.id) && <img src={markFlagIcon.url} alt="Flagged" className="h-3.5 w-3.5 ml-auto object-contain" />}
               </button>
