@@ -6,7 +6,7 @@ import {
   ShieldCheck, GraduationCap, Trophy, Highlighter, StickyNote, FileText, Smartphone,
   Wallet, UserPlus, KeyRound,
 } from "lucide-react";
-import devicesHero from "@/assets/screens/devices-hero.jpg";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -57,18 +57,77 @@ function Home() {
           </div>
         </div>
 
-        {/* Device showcase */}
-        <div className="max-w-6xl mx-auto px-4 pb-16">
-          <img
-            src={devicesHero}
-            alt="StepFighter USMLE QBank shown on laptop, iPad and iPhone"
-            width={1600}
-            height={1008}
-            className="w-full h-auto rounded-xl"
-          />
-          <p className="mt-6 text-center text-xs uppercase tracking-widest font-bold text-slate-500">
+        {/* Device showcase — real screenshots from the live app */}
+        <div className="max-w-7xl mx-auto px-4 pb-16">
+          <div className="relative flex items-end justify-center gap-4 md:gap-6">
+            {/* iPhone */}
+            <div className="hidden sm:block w-[110px] md:w-[150px] lg:w-[180px] shrink-0 rounded-[26px] bg-slate-900 p-1.5 shadow-2xl ring-1 ring-slate-800 mb-8">
+              <div className="rounded-[20px] overflow-hidden bg-white aspect-[9/19]">
+                <img
+                  src="/__l5e/assets-v1/75cf9d04-b3f1-43b4-ae25-30dd16ea0a0a/iphone_dashboard.png"
+                  alt="StepFighter USMLE QBank on iPhone"
+                  className="w-full h-full object-cover object-top"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+
+            {/* Laptop */}
+            <div className="relative flex-1 max-w-[720px]">
+              <div className="rounded-t-xl bg-slate-900 p-2.5 shadow-2xl ring-1 ring-slate-800">
+                <div className="flex items-center gap-1.5 mb-2 px-2">
+                  <span className="h-2 w-2 rounded-full bg-red-400" />
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                </div>
+                <div className="rounded-md overflow-hidden bg-white aspect-[16/10]">
+                  <img
+                    src="/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png"
+                    alt="StepFighter USMLE dashboard on laptop"
+                    className="w-full h-full object-cover object-top"
+                    loading="eager"
+                  />
+                </div>
+              </div>
+              <div className="h-3 bg-slate-800 rounded-b-xl mx-[-8px]" />
+              <div className="h-1 bg-slate-700 rounded-b-full mx-auto w-24" />
+            </div>
+
+            {/* iPad */}
+            <div className="hidden md:block w-[200px] lg:w-[240px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
+              <div className="rounded-xl overflow-hidden bg-white aspect-[3/4]">
+                <img
+                  src="/__l5e/assets-v1/117c4cf2-5a6f-4b73-9923-c50824d14fd1/ipad_dashboard.png"
+                  alt="StepFighter USMLE QBank on iPad"
+                  className="w-full h-full object-cover object-top"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-8 text-center text-xs uppercase tracking-widest font-bold text-slate-500">
             Fully responsive · Desktop · iPad · Android · iPhone · Works offline (PWA)
           </p>
+
+          {/* Feature screenshot strip */}
+          <div className="mt-14 grid md:grid-cols-3 gap-6">
+            {[
+              { u: "/__l5e/assets-v1/9c97374c-9f3d-4423-86ce-1440635ebd32/desktop_new_test.png", t: "Custom Quiz Builder", d: "Tutor or exam mode, timed or untimed, filtered by subject, system, topic." },
+              { u: "/__l5e/assets-v1/b9e527e7-e8a2-4666-a40d-8f4f49ec8004/desktop_performance.png", t: "Performance Analytics", d: "Score, correct, incorrect, answer changes and test count — updated in real time." },
+              { u: "/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png", t: "Study Dashboard", d: "Every metric that matters, in one glance — QBank usage, accuracy, momentum." },
+            ].map((s) => (
+              <div key={s.t} className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+                <div className="aspect-[16/10] overflow-hidden bg-slate-100 border-b border-slate-200">
+                  <img src={s.u} alt={s.t} loading="lazy" className="w-full h-full object-cover object-top" />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-[#0d2b4e] text-sm mb-1">{s.t}</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">{s.d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
