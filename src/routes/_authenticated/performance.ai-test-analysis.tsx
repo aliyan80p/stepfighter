@@ -375,7 +375,7 @@ function CrossTable({
               <tr><td colSpan={5} className="text-center text-muted-foreground py-8">No data</td></tr>
             ) : rows.map((r) => {
               const open = expanded.has(r.id);
-              const childRows = Array.from(r.children.entries()).map(([cid, qs]) => ({ id: cid, name: cid === -1 ? "—" : (childNames[cid] ?? `#${cid}`), ...stats(qs) }))
+              const childRows = Array.from(r.children.entries()).map(([cid, qs]) => ({ id: cid, name: childNameOf(cid, qs[0]), ...stats(qs) }))
                 .sort((a, b) => a.name.localeCompare(b.name));
               return (
                 <FragmentRows
