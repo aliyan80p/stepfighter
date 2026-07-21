@@ -165,20 +165,23 @@ function ScoreCalculator() {
           <div>
             <div className="text-sm font-semibold">Score Conversion Formula</div>
             <div className="text-xs text-muted-foreground">
-              y = {formula.slope.toFixed(3)}x {formula.intercept >= 0 ? "+" : "-"}{" "}
+              y = {formula.slope.toFixed(4)}x {formula.intercept >= 0 ? "+" : "-"}{" "}
               {Math.abs(formula.intercept).toFixed(2)}
+              {isCorrectMode && "   (x = % correct)"}
             </div>
           </div>
-          <div className="text-[11px] text-muted-foreground">wrong → predicted score</div>
+          <div className="text-[11px] text-muted-foreground">
+            {isCorrectMode ? "correct → predicted score" : "wrong → predicted score"}
+          </div>
         </div>
         <div className="w-full h-[320px]">
           <ResponsiveContainer>
             <LineChart data={curve} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
               <XAxis
-                dataKey="wrong"
+                dataKey="x"
                 tick={{ fontSize: 12 }}
-                label={{ value: "Number wrong", position: "insideBottom", offset: -5, style: { fontSize: 11, fill: "#64748b" } }}
+                label={{ value: isCorrectMode ? "Number correct" : "Number wrong", position: "insideBottom", offset: -5, style: { fontSize: 11, fill: "#64748b" } }}
               />
               <YAxis
                 domain={[Math.min(...curve.map((c) => c.score)) - 10, Math.max(...curve.map((c) => c.score)) + 5]}
@@ -187,11 +190,12 @@ function ScoreCalculator() {
               />
               <Tooltip
                 formatter={(v: number) => [`${v}`, "Predicted"]}
-                labelFormatter={(l) => `${l} wrong`}
+                labelFormatter={(l) => (isCorrectMode ? `${l} correct` : `${l} wrong`)}
                 contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
               />
               <Line type="monotone" dataKey="score" stroke="#1a4b7c" strokeWidth={2.5} dot={false} />
-              <ReferenceDot x={wrong} y={predicted} r={6} fill="#0ea5e9" stroke="#fff" strokeWidth={2} />
+              <ReferenceDot x={input} y={predicted} r={6} fill="#0ea5e9" stroke="#fff" strokeWidth={2} />
+
             </LineChart>
           </ResponsiveContainer>
         </div>
