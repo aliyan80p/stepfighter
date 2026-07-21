@@ -1268,7 +1268,7 @@ function TestRunner() {
                 type="button"
                 onClick={() => setBreakModal("suspend")}
                 title="Unauthorized Break"
-                className="flex flex-col items-center leading-none text-gray-800"
+                className="flex flex-col items-center leading-none text-white"
               >
                 <span className="flex items-center justify-center h-6 w-6">
                   <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
