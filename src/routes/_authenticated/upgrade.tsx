@@ -2,39 +2,87 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getMyEntitlement } from "@/lib/entitlements.functions";
-import { Check, Sparkles, Mail } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check, Sparkles, MessageCircle, Mail, ShieldCheck, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/upgrade")({
   head: () => ({
     meta: [
-      { title: "Upgrade — StepFighter" },
-      { name: "description", content: "Choose a plan and keep practicing USMLE questions with full access." },
+      { title: "Pricing — StepFighter" },
+      { name: "description", content: "One subscription. Full access to Step 1, Step 2 CK, and Step 3 QBanks, CMS forms, and NBME-style self-assessments." },
     ],
   }),
   component: UpgradePage,
 });
 
+// Change these to your real contact endpoints.
+const WHATSAPP_NUMBER = "923000000000"; // international format, no +
+const SUPPORT_EMAIL = "support@stepfighter.app";
+
+const waLink = (plan: string) =>
+  `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    `Hello, I want to register for StepFighter. Plan selected: ${plan}. Please guide me for activation.`,
+  )}`;
+
 type Tier = {
   key: string;
-  name: string;
-  months: number;
+  label: string;
+  duration: string;
   price: string;
   perMonth: string;
+  save?: string;
   highlight?: boolean;
+  badge?: string;
+  perks: string[];
 };
 
-const step1: Tier[] = [
-  { key: "s1-1", name: "1 month", months: 1, price: "$49", perMonth: "$49/mo" },
-  { key: "s1-3", name: "3 months", months: 3, price: "$119", perMonth: "$39/mo", highlight: true },
-  { key: "s1-6", name: "6 months", months: 6, price: "$199", perMonth: "$33/mo" },
-  { key: "s1-12", name: "12 months", months: 12, price: "$299", perMonth: "$24/mo" },
-];
-
-const bundle: Tier[] = [
-  { key: "all-3", name: "3 months (all Steps)", months: 3, price: "$199", perMonth: "$66/mo" },
-  { key: "all-6", name: "6 months (all Steps)", months: 6, price: "$329", perMonth: "$54/mo", highlight: true },
-  { key: "all-12", name: "12 months (all Steps)", months: 12, price: "$499", perMonth: "$41/mo" },
+const tiers: Tier[] = [
+  {
+    key: "3-months",
+    label: "3 Months",
+    duration: "3 Months",
+    price: "PKR 4,500 / $18",
+    perMonth: "PKR 1,500 / month",
+    badge: "Flexible Start",
+    perks: [
+      "Full access to all QBanks",
+      "CMS Forms + NBME-style assessments",
+      "AI test analysis + score predictor",
+      "Web, tablet & mobile access",
+      "24/7 WhatsApp support",
+    ],
+  },
+  {
+    key: "6-months",
+    label: "6 Months",
+    duration: "6 Months",
+    price: "PKR 7,000 / $28",
+    perMonth: "PKR 1,167 / month",
+    badge: "Most Popular",
+    highlight: true,
+    perks: [
+      "Everything in 3 Months",
+      "Priority activation",
+      "Save vs. shorter plans",
+      "Full exam-season coverage",
+      "24/7 WhatsApp support",
+    ],
+  },
+  {
+    key: "12-months",
+    label: "12 Months",
+    duration: "12 Months",
+    price: "PKR 12,000 / $48",
+    perMonth: "PKR 1,000 / month",
+    badge: "Best Value",
+    save: "Save PKR 2,000",
+    perks: [
+      "Everything in 6 Months",
+      "Best price per month",
+      "Priority activation",
+      "Long-term prep coverage",
+      "24/7 WhatsApp support",
+    ],
+  },
 ];
 
 function UpgradePage() {
@@ -43,65 +91,59 @@ function UpgradePage() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-8">
-        <header className="text-center space-y-2">
+      <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-10">
+        <header className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-medium">
-            <Sparkles className="h-3.5 w-3.5" /> Upgrade your access
+            <Sparkles className="h-3.5 w-3.5" /> Simple pricing
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold">Choose your plan</h1>
+          <h1 className="text-3xl md:text-4xl font-bold">One plan. Full access.</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             {ent?.plan === "trial" && ent.is_active
-              ? `You have ${ent.days_left} day${ent.days_left === 1 ? "" : "s"} left on your free trial.`
+              ? `You have ${ent.days_left} day${ent.days_left === 1 ? "" : "s"} left on your free trial. Pick a plan below and message us on WhatsApp — we activate manually, usually within a few hours.`
               : ent?.plan === "expired"
-              ? "Your free trial has ended. Pick a plan to continue where you left off."
-              : "Full access to 16,000+ board-style questions, self-assessments, and AI analysis."}
+              ? "Your free trial has ended. Pick a plan and message us on WhatsApp — we'll reactivate your account and you'll pick up right where you left off."
+              : "No hidden fees. Every plan includes the full StepFighter experience — pick the duration that fits your exam timeline."}
           </p>
         </header>
 
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Single QBank</h2>
-          <div className="grid gap-4 md:grid-cols-4">
-            {step1.map((t) => (
-              <TierCard key={t.key} tier={t} />
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Same pricing applies for Step 2 CK or Step 3 individually.
-          </p>
+        <section className="grid gap-5 md:grid-cols-3">
+          {tiers.map((t) => (
+            <TierCard key={t.key} tier={t} />
+          ))}
         </section>
 
-        <section>
-          <h2 className="text-xl font-semibold mb-4">All-Steps Bundle (save 30%+)</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            {bundle.map((t) => (
-              <TierCard key={t.key} tier={t} />
-            ))}
-          </div>
+        <p className="text-center text-xs text-muted-foreground">
+          Prices shown in PKR and USD. Message us for the exact amount and payment options available in your region.
+        </p>
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <InfoCard icon={<Zap className="h-5 w-5" />} title="Fast activation" body="Most accounts are unlocked within a few hours of payment confirmation." />
+          <InfoCard icon={<ShieldCheck className="h-5 w-5" />} title="Guided setup" body="Our team walks you through payment and account activation end-to-end." />
+          <InfoCard icon={<MessageCircle className="h-5 w-5" />} title="24/7 WhatsApp" body="Real humans, real fast — ping us any time on WhatsApp for help." />
         </section>
 
         <section className="rounded-xl border border-border bg-card p-6">
-          <div className="flex items-start gap-4">
+          <div className="flex flex-col md:flex-row items-start gap-4">
             <div className="h-10 w-10 rounded-full bg-primary/10 text-primary grid place-items-center">
               <Mail className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold">Payments launching soon</h3>
+              <h3 className="font-semibold">Prefer email?</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                We're finalizing our checkout. In the meantime, email us and we'll set up your account
-                manually — usually within 24 hours.
+                No WhatsApp? Email us and we'll set up your account manually — usually within 24 hours.
               </p>
               <a
-                href="mailto:support@imdqbank.com?subject=Upgrade%20request"
-                className="inline-block mt-3"
+                href={`mailto:${SUPPORT_EMAIL}?subject=Upgrade%20request`}
+                className="mt-3 inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
               >
-                <Button>Contact us to upgrade</Button>
+                <Mail className="h-4 w-4" /> {SUPPORT_EMAIL}
               </a>
             </div>
           </div>
         </section>
 
         <p className="text-center text-xs text-muted-foreground">
-          Questions? <Link to="/dashboard" className="underline hover:text-foreground">Back to dashboard</Link>
+          <Link to="/dashboard" className="underline hover:text-foreground">Back to dashboard</Link>
         </p>
       </div>
     </div>
@@ -111,24 +153,62 @@ function UpgradePage() {
 function TierCard({ tier }: { tier: Tier }) {
   return (
     <div
-      className={`rounded-xl border p-5 bg-card ${
-        tier.highlight ? "border-primary shadow-sm ring-1 ring-primary/20" : "border-border"
+      className={`rounded-xl border p-6 bg-card flex flex-col ${
+        tier.highlight ? "border-primary shadow-md ring-1 ring-primary/20" : "border-border"
       }`}
     >
-      {tier.highlight && (
-        <div className="text-xs font-medium text-primary mb-2">Most popular</div>
+      {tier.badge && (
+        <div className={`text-xs font-medium mb-2 ${tier.highlight ? "text-primary" : "text-muted-foreground"}`}>
+          {tier.badge}
+        </div>
       )}
-      <div className="font-semibold">{tier.name}</div>
-      <div className="mt-2">
-        <span className="text-3xl font-bold">{tier.price}</span>
+      <div className="font-semibold text-lg">{tier.duration}</div>
+      <div className="mt-3">
+        <span className="text-2xl font-bold">{tier.price}</span>
       </div>
-      <div className="text-xs text-muted-foreground">{tier.perMonth}</div>
-      <ul className="mt-4 space-y-1.5 text-sm">
-        <li className="flex gap-2"><Check className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Unlimited questions</li>
-        <li className="flex gap-2"><Check className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Performance analytics</li>
-        <li className="flex gap-2"><Check className="h-4 w-4 text-primary shrink-0 mt-0.5" /> Flashcards & notes</li>
-        <li className="flex gap-2"><Check className="h-4 w-4 text-primary shrink-0 mt-0.5" /> AI test analysis</li>
+      <div className="text-xs text-muted-foreground mt-1">{tier.perMonth}</div>
+      {tier.save && (
+        <div className="mt-1 inline-block text-xs font-medium text-emerald-600">{tier.save}</div>
+      )}
+
+      <ul className="mt-4 space-y-1.5 text-sm flex-1">
+        {tier.perks.map((p) => (
+          <li key={p} className="flex gap-2">
+            <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" /> {p}
+          </li>
+        ))}
       </ul>
+
+      <a
+        href={waLink(tier.label)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`mt-5 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition-colors ${
+          tier.highlight
+            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-foreground text-background hover:opacity-90"
+        }`}
+      >
+        <MessageCircle className="h-4 w-4" /> Register on WhatsApp
+      </a>
+      <a
+        href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Register — ${tier.label}`)}`}
+        className="mt-2 text-center text-xs text-muted-foreground hover:text-foreground"
+      >
+        or email us
+      </a>
+    </div>
+  );
+}
+
+function InfoCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="h-9 w-9 rounded-full bg-primary/10 text-primary grid place-items-center mb-3">
+        {icon}
+      </div>
+      <div className="font-semibold">{title}</div>
+      <p className="text-sm text-muted-foreground mt-1">{body}</p>
     </div>
   );
 }
