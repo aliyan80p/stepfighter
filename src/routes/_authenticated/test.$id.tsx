@@ -1449,6 +1449,10 @@ function TestRunner() {
           onClose={() => setMediaModalIndex(null)}
         />
       )}
+      <LabValuesPanel open={showLabValues} onClose={() => setShowLabValues(false)} />
+
+      <MediaExhibitModal content={anchorExhibit} onClose={() => setAnchorExhibit(null)} />
+
       {confirmDialog}
     </div>
   );
