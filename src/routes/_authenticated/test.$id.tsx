@@ -314,7 +314,9 @@ function TestRunner() {
     : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
 
   const question = data?.questions[idx];
-  const allMediaItems = getQuestionMedia(question, data?.qbankId ?? 1);
+  const mediaToken = useMediaToken(data?.qbankId);
+  const allMediaItems = getQuestionMedia(question, data?.qbankId ?? 1)
+    .map((item) => ({ ...item, url: withMediaToken(item.url, mediaToken) }));
   const answers = question ? data!.answersByQ[question.id] ?? [] : [];
   const priorAttempt = question ? data!.attemptsByQ[question.id] : undefined;
   const isPractice = data?.test.mode === "practice";
@@ -564,9 +566,9 @@ function TestRunner() {
     // State is re-hydrated from localStorage on question change.
   };
 
-  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1 });
+  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1, mediaToken });
   const answerHtmlFor = (key: string, letter: string, html: string) => (
-    rewriteMedia(highlightHtml[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1 })
+    rewriteMedia(highlightHtml[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1, mediaToken })
   );
 
   const getHighlightRoot = (node: Node) => {
