@@ -1260,7 +1260,7 @@ function TestRunner() {
         const examUI = isRealExam && !isReview;
         if (examUI) {
           return (
-            <div className="sticky bottom-0 z-40 flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-gray-800 text-xs border-t bg-white/95 backdrop-blur" style={{ paddingBottom: "calc(0.375rem + env(safe-area-inset-bottom, 0px))" }}>
+            <div className="sticky z-40 mx-2 mb-[max(12px,env(safe-area-inset-bottom))] rounded-lg flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs shadow-lg" style={{ background: NAV_BG, bottom: "max(12px, env(safe-area-inset-bottom))" }}>
               <div className="font-semibold tracking-wide tabular-nums">
                 {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
               </div>
