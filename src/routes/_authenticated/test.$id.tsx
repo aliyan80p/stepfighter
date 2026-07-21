@@ -34,6 +34,30 @@ export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
 });
 
+/**
+ * Renders arbitrary HTML into a div imperatively, only reseeding innerHTML
+ * when `seedKey` changes. This preserves in-place DOM mutations from the
+ * highlighter across parent re-renders (timer ticks, selection state, etc.)
+ * so that <img>/<video> inside the HTML never remount and never flash.
+ */
+function HighlightableHtml({
+  html,
+  seedKey,
+  ...rest
+}: { html: string; seedKey: string | number } & React.HTMLAttributes<HTMLDivElement>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const lastSeed = useRef<string | number | null>(null);
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    if (lastSeed.current !== seedKey) {
+      ref.current.innerHTML = html;
+      lastSeed.current = seedKey;
+    }
+  });
+  return <div ref={ref} {...rest} />;
+}
+
+
 // USMLE-Fighter palette
 const NAV_BG = "#1e3a8a";       // deep blue top/bottom bars
 const NAV_ACCENT = "#2a4ba0";
