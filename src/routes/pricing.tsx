@@ -67,7 +67,7 @@ function Pricing() {
             return (
               <div key={c.id} className="rounded-xl p-7 border-2 border-slate-200 bg-white hover:border-[#1a4b7c] hover:shadow-lg transition-all flex flex-col">
                 <div className="text-sm font-bold text-[#1a4b7c] uppercase tracking-widest mb-1">{c.short}</div>
-                <div className="text-xs text-slate-500 mb-4">{c.qcount}</div>
+                <div className="text-xs text-slate-500 mb-4">{c.tagline}</div>
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-4xl font-bold text-[#0d2b4e]">${price.usd}</span>
                   <span className="text-slate-500 text-sm">USD</span>
