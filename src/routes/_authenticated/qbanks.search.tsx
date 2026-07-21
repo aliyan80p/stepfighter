@@ -484,7 +484,7 @@ function QuestionModal({
             <div
               data-hlkey="q"
               className="qbank-html qbank-light"
-              dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "", { qbankId: modalQbankId }) }}
+              dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "", { qbankId: modalQbankId, mediaToken }) }}
             />
 
             <div
@@ -512,7 +512,7 @@ function QuestionModal({
                       <span
                         data-hlkey={`a${i}`}
                         className="qbank-html qbank-light inline"
-                        dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "", { qbankId: modalQbankId }) }}
+                        dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "", { qbankId: modalQbankId, mediaToken }) }}
                       />
                       <span className="text-gray-600 ml-1">({pct}%)</span>
                     </span>
@@ -527,7 +527,7 @@ function QuestionModal({
                 <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
                 <div
                   className="font-semibold text-gray-800 mt-1"
-                  dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: modalQbankId })}` }}
+                  dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: modalQbankId, mediaToken })}` }}
                 />
               </div>
               <div className="flex items-center gap-4 shrink-0">
@@ -575,7 +575,7 @@ function QuestionModal({
                   <div
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
-                    dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true, qbankId: modalQbankId }) }}
+                    dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true, qbankId: modalQbankId, mediaToken }) }}
                   />
                 </div>
               </div>
