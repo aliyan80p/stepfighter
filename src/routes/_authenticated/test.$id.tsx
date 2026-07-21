@@ -208,6 +208,11 @@ function TestRunner() {
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Mobile swipe navigation between questions
+  const swipeStartRef = useRef<{ x: number; y: number; locked: boolean } | null>(null);
+  const [swipeDx, setSwipeDx] = useState(0);
+  const [slideFrom, setSlideFrom] = useState<"left" | "right" | null>(null);
+
   // Settings — seeded from user's saved defaults
   const userSettings = useHydratedSettings();
   const [fontSize, setFontSize] = useState(DEFAULT_SETTINGS.fontSize + 1);
