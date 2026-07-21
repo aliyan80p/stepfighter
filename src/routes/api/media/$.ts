@@ -347,6 +347,8 @@ export const Route = createFileRoute("/api/media/$")({
 
         const storagePrefix = qbankSlug ? `${qbankSlug}/` : "";
         const cacheKey = `${qbankId}:${name}`;
+        const mediaType = contentTypeFor(name);
+        const isImage = mediaType.startsWith("image/");
 
         const range = request.headers.get("range");
 
@@ -356,24 +358,31 @@ export const Route = createFileRoute("/api/media/$")({
         const plainObject = await fetchPlainObject(`${storagePrefix}${name}`, cacheKey, supaUrl, srk, range);
         if (plainObject) return plainObject;
 
-        // Backward-compatible fallback: DB-cached signed URL (survives worker restarts)
-        const dbUrl = await fetchPlainUrlFromDb(qbankId, name, supaUrl, srk);
-        if (dbUrl) {
-          plainUrlCache.set(cacheKey, { url: dbUrl, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 });
-          return new Response(null, {
-            status: 302,
-            headers: { Location: dbUrl, "Cache-Control": "public, max-age=86400" },
-          });
+        // Images must never bypass this route via old signed URLs: affected
+        // highresdefault_* records can have stale cached links, which causes
+        // persistent broken icons on iOS/Android/Chrome even after storage repair.
+        if (!isImage) {
+          // Backward-compatible fallback: DB-cached signed URL (survives worker restarts)
+          const dbUrl = await fetchPlainUrlFromDb(qbankId, name, supaUrl, srk);
+          if (dbUrl) {
+            plainUrlCache.set(cacheKey, { url: dbUrl, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 });
+            return new Response(null, {
+              status: 302,
+              headers: { Location: dbUrl, "Cache-Control": "public, max-age=86400" },
+            });
+          }
         }
 
-        // Fast path: sign the plain bucket + persist for other workers
-        const signed = await getPlainSignedUrl(`${storagePrefix}${name}`, cacheKey, supaUrl, srk);
-        if (signed) {
-          void persistPlainUrl(qbankId, name, signed.url, signed.expiresAt, supaUrl, srk);
-          return new Response(null, {
-            status: 302,
-            headers: { Location: signed.url, "Cache-Control": "public, max-age=86400" },
-          });
+        if (!isImage) {
+          // Fast path: sign the plain bucket + persist for other workers
+          const signed = await getPlainSignedUrl(`${storagePrefix}${name}`, cacheKey, supaUrl, srk);
+          if (signed) {
+            void persistPlainUrl(qbankId, name, signed.url, signed.expiresAt, supaUrl, srk);
+            return new Response(null, {
+              status: 302,
+              headers: { Location: signed.url, "Cache-Control": "public, max-age=86400" },
+            });
+          }
         }
 
         // Slow path: get encrypted source
