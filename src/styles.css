@@ -129,8 +129,9 @@
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern", "liga";
 }
-.qbank-explanation { font-size: 15px; line-height: 1.75; color: #1f2937; }
-.qbank-explanation p { margin: 0.75rem 0; line-height: 1.75; }
+.qbank-explanation { font-size: inherit; line-height: 1.75; color: #1f2937; }
+.qbank-explanation p { margin: 0.75rem 0; line-height: 1.75; font-size: inherit; }
+.qbank-explanation li, .qbank-explanation span, .qbank-explanation div, .qbank-explanation td, .qbank-explanation th { font-size: inherit; }
 .qbank-explanation strong, .qbank-explanation b { color: #111827; font-weight: 700; }
 .qbank-explanation ul, .qbank-explanation ol { padding-left: 1.75rem; margin: 0.75rem 0; }
 .qbank-explanation li { margin: 0.35rem 0; line-height: 1.7; }
