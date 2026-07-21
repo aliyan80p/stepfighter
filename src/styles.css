@@ -167,15 +167,37 @@
 .qbank-theme-sepia .qbank-html [style*="background"], .qbank-theme-sepia .qbank-html [style*="BACKGROUND"] { background-color: transparent !important; }
 
 
-/* Highlighted text always uses dark ink so it stays readable on light highlight colors in any theme */
-mark.qbank-hl, .qbank-theme-dark mark.qbank-hl, .qbank-theme-sepia mark.qbank-hl,
-mark.qbank-hl *, .qbank-theme-dark mark.qbank-hl *, .qbank-theme-sepia mark.qbank-hl * {
+/* ---------- Highlight marks (data-color driven, cross-device) ---------- */
+mark.qbank-hl {
   color: #111827 !important;
+  background-color: transparent;
+  border-radius: 2px;
+  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
+mark.qbank-hl * { color: inherit !important; }
+mark.qbank-hl[data-color] { background-color: attr(data-color color, #ffeb3b); }
+/* attr() color fallback for older browsers */
+mark.qbank-hl[data-color="#ffeb3b"] { background-color: #ffeb3b; }
+mark.qbank-hl[data-color="#4ade80"] { background-color: #4ade80; }
+mark.qbank-hl[data-color="#38bdf8"] { background-color: #38bdf8; }
+mark.qbank-hl[data-color="#f472b6"] { background-color: #f472b6; }
+mark.qbank-hl[data-color="#fb923c"] { background-color: #fb923c; }
+mark.qbank-hl[data-color="#c084fc"] { background-color: #c084fc; }
+mark.qbank-hl[data-strike] {
+  background-color: transparent !important;
+  color: inherit !important;
+  text-decoration: line-through !important;
+  text-decoration-color: #ef4444 !important;
+  text-decoration-thickness: 2px;
+}
+.qbank-theme-dark mark.qbank-hl[data-strike],
+.qbank-theme-sepia mark.qbank-hl[data-strike] { color: inherit !important; }
 
-/* Ensure users can select and copy question/explanation text on touch devices
-   (iOS/iPadOS Safari and Android Chrome disable long-press selection unless
-   these are set explicitly on the content roots). */
+/* Selection surface: enable text selection, hide native iOS callout so our
+   floating toolbar is the only UI. Works on iOS/iPadOS Safari, Android Chrome,
+   desktop Chrome/Firefox/Safari. */
 .qbank-html,
 .qbank-explanation,
 [data-hlkey],
@@ -184,19 +206,65 @@ mark.qbank-hl *, .qbank-theme-dark mark.qbank-hl *, .qbank-theme-sepia mark.qban
 .qbank-answer-choice * {
   -webkit-user-select: text !important;
   user-select: text !important;
-  -webkit-touch-callout: default !important;
+  -webkit-touch-callout: none !important; /* hide native iOS Copy/Look Up */
   touch-action: auto;
 }
+/* Emphasise selection so users see what they're picking on touch */
+[data-hlkey] ::selection { background-color: rgba(59,130,246,0.35); color: inherit; }
+[data-hlkey] ::-moz-selection { background-color: rgba(59,130,246,0.35); color: inherit; }
 
-.qbank-answer-choice {
-  cursor: text;
-}
-
+.qbank-answer-choice { cursor: text; }
 .qbank-answer-choice > span:first-child,
 .qbank-answer-choice > span:nth-child(2) {
   -webkit-user-select: none !important;
   user-select: none !important;
+  -webkit-touch-callout: none !important;
   cursor: pointer;
+}
+
+/* Floating highlight toolbar */
+.qbank-hl-toolbar {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: #111827;
+  color: #fff;
+  border-radius: 9999px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08);
+  transform: translate(-50%, -100%);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  /* respect iOS safe area when the pill lands near the top */
+  margin-top: calc(-6px - env(safe-area-inset-top, 0px));
+}
+.qbank-hl-toolbar[data-placement="below"] { transform: translate(-50%, 12px); margin-top: calc(6px + env(safe-area-inset-top, 0px)); }
+.qbank-hl-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 9999px;
+  background: transparent;
+  color: inherit;
+  border: 0;
+}
+.qbank-hl-toolbar button:hover,
+.qbank-hl-toolbar button:focus-visible { background: rgba(255,255,255,0.12); outline: none; }
+.qbank-hl-toolbar .swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 2px solid rgba(255,255,255,0.25);
+}
+@media (max-width: 480px) {
+  .qbank-hl-toolbar { padding: 8px 10px; gap: 6px; }
+  .qbank-hl-toolbar button { min-width: 36px; min-height: 36px; }
+  .qbank-hl-toolbar .swatch { width: 26px; height: 26px; }
 }
 
 
