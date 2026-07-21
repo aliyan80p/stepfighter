@@ -223,6 +223,24 @@ function AuthedLayout() {
             Welcome
           </Link>
 
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={closeOnMobile}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isActive("/admin")
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-sidebar-primary"
+                  : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+              )}
+            >
+              <Shield className="h-4 w-4" />
+              Admin
+            </Link>
+          )}
+
+
+
           {groups.map((g) => {
             const isOpen = open[g.key];
             const groupActive = g.items.some((i) => isActive(i.to));
