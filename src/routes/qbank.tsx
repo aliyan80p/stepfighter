@@ -42,7 +42,7 @@ function QBankPage() {
                 <BookOpen className="h-8 w-8 text-[#1a4b7c]" />
                 <h2 className="text-2xl font-bold text-[#0d2b4e]">{c.name}</h2>
               </div>
-              <div className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-black rounded-full mb-3">{c.qcount}</div>
+              <div className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-black rounded-full mb-3">{c.tagline}</div>
               <div className="text-xs text-slate-500">
                 From <span className="font-bold text-[#0d2b4e]">${c.price["6mo"].usd}</span> / 6 mo · <span className="font-bold text-[#0d2b4e]">${c.price["12mo"].usd}</span> / 12 mo
               </div>
