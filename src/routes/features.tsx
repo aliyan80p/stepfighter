@@ -15,7 +15,7 @@ export const Route = createFileRoute("/features")({
 });
 
 const features = [
-  { i: BookOpen, t: "16,000+ Board-Style Questions", d: "Comprehensive coverage of Step 1, Step 2 CK and Step 3 with clinical vignettes, media, and detailed answer choices." },
+  { i: BookOpen, t: "Board-Style Questions", d: "Comprehensive coverage of Step 1, Step 2 CK and Step 3 with clinical vignettes, media, and detailed answer choices." },
   { i: FileText, t: "85+ NBME & CMS Forms", d: "Every official-style self-assessment and CMS specialty form for realistic score prediction." },
   { i: Timer, t: "Real Exam Simulator", d: "Prometric-accurate interface with authentic timers, block navigation, flagging, strikeout and lab values panel." },
   { i: Brain, t: "AI Performance Analytics", d: "Drill-down performance by system, subject and topic. See patterns behind wrong answers, not just tallies." },
