@@ -238,12 +238,12 @@ mark.qbank-hl *, .qbank-theme-dark mark.qbank-hl *, .qbank-theme-sepia mark.qban
 }
 
 /* Uniform sizing: force every question image (annotated + highresdefault) to
-   render at the same width regardless of the source file's native pixel size. */
+   render at the same width — matching the larger highresdefault display size. */
 .qbank-html img,
 .qbank-deferred-media img,
 .qbank-inline-media-wrap .qbank-inline-media {
   width: 100%;
-  max-width: 560px;
+  max-width: 100%;
   height: auto;
   object-fit: contain;
 }
