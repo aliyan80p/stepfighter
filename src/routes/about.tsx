@@ -30,7 +30,7 @@ export const Route = createFileRoute("/about")({
       {
         property: "og:description",
         content:
-          "Our mission: make high-yield USMLE preparation accessible with 16,000+ questions, real NBME-style forms, and AI-powered study tools.",
+          "Our mission: make high-yield USMLE preparation accessible with board-style questions, real NBME-style forms, and AI-powered study tools.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -39,8 +39,8 @@ export const Route = createFileRoute("/about")({
   component: About,
 });
 
-const allQuestions = "16,000+";
 const allForms = COURSES.reduce((n, c) => n + c.extras.length, 0).toString();
+void allForms;
 
 function About() {
   return (
@@ -68,9 +68,9 @@ function About() {
       <section className="bg-slate-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { n: allQuestions, l: "Board-style questions" },
-            { n: "40+", l: "Self-assessment forms" },
-            { n: "22", l: "CMS specialty forms" },
+            { n: "Step 1", l: "Foundational science" },
+            { n: "Step 2 CK", l: "Clinical mastery" },
+            { n: "Step 3", l: "Final licensing" },
             { n: "40+", l: "Countries served" },
           ].map((s) => (
             <div key={s.l} className="text-center">
