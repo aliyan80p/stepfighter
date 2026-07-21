@@ -1,0 +1,2 @@
+UPDATE public.questions SET question = regexp_replace(question, '<p>\s*<img[^>]*L36315\.png[^>]*/?>\s*</p>', '', 'gi') WHERE id IN (712040, 712041, 712042);
+UPDATE public.questions SET question = regexp_replace(question, '<img[^>]*L36315\.png[^>]*/?>', '', 'gi') WHERE id IN (712040, 712041, 712042);
