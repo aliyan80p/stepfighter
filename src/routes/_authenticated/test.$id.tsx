@@ -370,7 +370,9 @@ function TestRunner() {
     setHighlightHtml(saved && typeof saved === "object" ? saved : {});
   }, [question?.id, submitted]);
 
-  // Click-to-open exhibit modal for any image in the question/explanation
+  // Click-to-open exhibit modal for any image in the question/explanation.
+  // Also decorates inline .mp4/.mp3/.wav anchors and opens them in the
+  // Fighter-style Exhibit Display modal.
   useEffect(() => {
     const root = contentRef.current;
     if (!root) return;
@@ -384,7 +386,13 @@ function TestRunner() {
       setExhibitZoom(1);
     };
     root.addEventListener("click", onClick);
-    return () => root.removeEventListener("click", onClick);
+    const detachAnchors = attachMediaAnchorHandlers(root, (hit) => {
+      setAnchorExhibit({ kind: hit.kind, src: hit.src });
+    });
+    return () => {
+      root.removeEventListener("click", onClick);
+      detachAnchors();
+    };
   }, [question?.id, submitted]);
 
 
