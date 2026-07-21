@@ -29,12 +29,12 @@ function Home() {
               <Trophy className="h-3 w-3" /> Updated for 2026 Exams
             </div>
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Your Gateway to <span className="text-amber-400">USMLE Success</span>
+              Sharper prep. <span className="text-amber-400">Sharper score.</span>
             </h1>
             <p className="text-lg text-slate-200 mb-8 leading-relaxed">
-              Prepare smarter with 16,000+ board-style questions across Step 1, Step 2 CK, and Step 3.
-              High-yield explanations, NBME-style self-assessments, and AI-powered performance analytics —
-              trusted by IMGs and US medical students worldwide.
+              16,000+ board-style USMLE questions across Step 1, Step 2 CK and Step 3 — with
+              NBME-style self-assessments, CMS forms, AI analytics and a Prometric-accurate simulator.
+              Subscribe to just the Step you're preparing for, or bundle all three.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/auth" search={{ mode: "signup" }}
@@ -135,23 +135,24 @@ function Home() {
       <section className="bg-slate-50 py-20 border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Curriculum</div>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e] mb-4">Complete USMLE coverage</h2>
-            <p className="text-slate-600">One subscription unlocks every Step, every self-assessment, every CMS form.</p>
+            <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Courses</div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e] mb-4">Pick the Step you need</h2>
+            <p className="text-slate-600">Each course is a standalone subscription. Preparing for two or three? The All-Steps Combo is the fastest path.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { t: "Step 1", d: "Foundational science, pathophysiology and pharmacology integrated with clinical vignettes.", q: "5,200+ Q" },
-              { t: "Step 2 CK", d: "Diagnostic reasoning, management, wards-level judgment. Includes 22 CMS specialty forms.", q: "6,800+ Q" },
-              { t: "Step 3", d: "Comprehensive practice for the final licensing exam and residency preparation.", q: "4,000+ Q" },
-              { t: "Self-Assessments", d: "Full-length NBME-style exams. Predict your real score before test day.", q: "40+ Forms" },
+              { t: "Step 1", d: "Foundational science woven into clinical vignettes — path, pharm, micro, physio, biochem.", q: "5,200+ Q · 4 SA forms", p: "from $29 / 6 mo" },
+              { t: "Step 2 CK", d: "Clinical reasoning and wards-level management across every core rotation.", q: "6,800+ Q · 9 SA · 22 CMS", p: "from $35 / 6 mo" },
+              { t: "Step 3", d: "FIP + ACM practice for the final licensing exam and residency-year readiness.", q: "4,000+ Q · SA1 + SA2", p: "from $29 / 6 mo" },
+              { t: "All-Steps Combo", d: "Every question, every form, every Step — priced up to 40% below buying separately.", q: "16,000+ Q · 40+ forms", p: "from $69 / 6 mo" },
             ].map((c, i) => (
               <div key={c.t} className="bg-white rounded-lg border border-slate-200 p-6 hover:border-[#1a4b7c] hover:-translate-y-1 transition-all">
                 <div className="text-xs font-mono text-slate-400 mb-3">0{i + 1}</div>
                 <GraduationCap className="h-8 w-8 text-[#1a4b7c] mb-3" />
                 <h4 className="text-xl font-bold text-[#0d2b4e] mb-2">{c.t}</h4>
-                <p className="text-sm text-slate-600 mb-4 leading-relaxed">{c.d}</p>
-                <div className="text-xs font-bold text-amber-600 uppercase tracking-widest">{c.q}</div>
+                <p className="text-sm text-slate-600 mb-3 leading-relaxed">{c.d}</p>
+                <div className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-2">{c.q}</div>
+                <div className="text-xs font-semibold text-[#1a4b7c]">{c.p}</div>
               </div>
             ))}
           </div>
