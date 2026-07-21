@@ -29,11 +29,14 @@ import {
   Flag,
   Menu,
   PanelLeftClose,
-
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TrialBanner } from "@/components/trial-banner";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { isCurrentUserAdmin } from "@/lib/admin.functions";
 
 
 
@@ -133,6 +136,10 @@ function AuthedLayout() {
   };
   const [open, setOpen] = useState<Record<string, boolean>>(initialOpen);
 
+  const checkAdminFn = useServerFn(isCurrentUserAdmin);
+  const adminQ = useQuery({ queryKey: ["is-admin"], queryFn: () => checkAdminFn(), staleTime: 5 * 60 * 1000 });
+  const isAdmin = adminQ.data?.admin === true;
+
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
 
@@ -215,6 +222,24 @@ function AuthedLayout() {
             <Gauge className="h-4 w-4" />
             Welcome
           </Link>
+
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={closeOnMobile}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isActive("/admin")
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-sidebar-primary"
+                  : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+              )}
+            >
+              <Shield className="h-4 w-4" />
+              Admin
+            </Link>
+          )}
+
+
 
           {groups.map((g) => {
             const isOpen = open[g.key];
