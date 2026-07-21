@@ -33,9 +33,6 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [country, setCountry] = useState("");
-  const [school, setSchool] = useState("");
-  const [targetExam, setTargetExam] = useState("");
-  const [targetDate, setTargetDate] = useState("");
   const [selectedQbanks, setSelectedQbanks] = useState<string[]>(["step2"]);
   const [loading, setLoading] = useState(false);
   const [forgot, setForgot] = useState(false);
