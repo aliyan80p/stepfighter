@@ -296,6 +296,7 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
       </div>
     </div>
   );
+  return typeof document !== "undefined" ? createPortal(content, document.body) : content;
 }
 
 function CardTile({ card, onClick, onDelete }: { card: any; onClick: () => void; onDelete: () => void }) {
