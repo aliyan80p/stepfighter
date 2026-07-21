@@ -25,7 +25,7 @@ function LandingPage() {
       <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between relative z-20">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-400 text-black font-bold text-sm">
-            IMD
+            SF
           </div>
           <span className="text-white font-semibold tracking-tight">QBank</span>
         </Link>
@@ -241,7 +241,7 @@ function LandingPage() {
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-6">
               <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-400 text-black font-bold text-sm">
-                IMD
+                SF
               </div>
               <span className="text-white font-semibold tracking-tight">QBank</span>
             </div>

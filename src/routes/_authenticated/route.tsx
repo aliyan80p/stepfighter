@@ -193,7 +193,7 @@ function AuthedLayout() {
         <div className="flex items-center justify-between px-4 h-14 border-b border-sidebar-border">
           <Link to="/dashboard" className="flex items-center gap-2" onClick={closeOnMobile}>
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
-              IMD
+              SF
             </div>
             <span className="font-semibold">QBank</span>
           </Link>
@@ -319,7 +319,7 @@ function AuthedLayout() {
             </button>
             <Link to="/dashboard" className="flex items-center gap-2 min-w-0">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs">
-                IMD
+                SF
               </div>
               <span className="font-semibold truncate">QBank</span>
             </Link>
