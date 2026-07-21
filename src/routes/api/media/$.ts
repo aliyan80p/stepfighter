@@ -29,9 +29,17 @@ function contentTypeFor(name: string): string {
 
 const HIGHRES_PREFIXES = ["highresdefault_", "hqdefault_", "sddefault_", "mqdefault_", "default_"];
 
+function normalizeMediaLeafCase(name: string): string {
+  return name.replace(
+    /^((?:highresdefault_|hqdefault_|sddefault_|mqdefault_|default_)?)([ul])(\d)/i,
+    (_match, prefix: string, letter: string, digit: string) => `${prefix}${letter.toUpperCase()}${digit}`,
+  );
+}
+
 function candidateNames(name: string): string[] {
   const set = new Set<string>();
-  const bases = [name, stripPrefix(name)];
+  const normalized = normalizeMediaLeafCase(name);
+  const bases = [normalized, name, stripPrefix(normalized), stripPrefix(name)];
   for (const b of bases) {
     set.add(b);
     if (/^[a-z]/.test(b)) set.add(b[0].toUpperCase() + b.slice(1));
