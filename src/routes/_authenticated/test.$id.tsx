@@ -28,7 +28,7 @@ import { DEFAULT_SETTINGS, useHydratedSettings, setUserSettings, TOOLBAR_ITEMS }
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { NotesModal } from "@/components/notes-modal";
-import { applyHighlight, unwrapHighlightsInRange } from "@/lib/rangy-highlighter";
+import { highlightRange, unwrapHighlightsInRange } from "@/lib/highlighter";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
