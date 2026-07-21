@@ -87,7 +87,7 @@ function AiTestAnalysisPage() {
   );
 }
 
-function TestAnalysisPane({ testId }: { testId: number }) {
+export function TestAnalysisPane({ testId }: { testId: number }) {
   const [tab, setTab] = useState<"results" | "analysis">("analysis");
   const getFn = useServerFn(getTest);
   const { data, isLoading } = useQuery({
