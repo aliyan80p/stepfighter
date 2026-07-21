@@ -29,6 +29,10 @@ import { FlashcardsModal } from "@/components/flashcards-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { NotesModal } from "@/components/notes-modal";
 import { highlightRange, unwrapHighlightsInRange } from "@/lib/highlighter";
+import { ExhibitModal as MediaExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
+import { LabValuesPanel } from "@/components/lab-values-panel";
+import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
+import { Loader } from "@/components/loader";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
   component: TestRunner,
