@@ -186,43 +186,37 @@ function Home() {
         </div>
       </section>
 
-      {/* Pricing preview */}
+      {/* Pricing preview — per-Step model */}
       <section className="bg-gradient-to-br from-[#0d2b4e] to-[#1a4b7c] text-white py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-3">Simple Pricing</div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Affordable plans for every budget</h2>
-            <p className="text-slate-300">Register instantly on WhatsApp. Full access to all Steps, all self-assessments, all CMS forms.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Pay only for the Step you're taking</h2>
+            <p className="text-slate-300">Each Step is priced separately. Preparing for two or three? The All-Steps Combo saves you up to 40%.</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+
+          <div className="grid md:grid-cols-4 gap-4 max-w-5xl mx-auto">
             {[
-              { d: "6 Months", p: "$39", pkr: "PKR 9,750", pop: false },
-              { d: "12 Months", p: "$59", pkr: "PKR 14,750", pop: true, save: "Save 25%" },
+              { t: "Step 1", p: "$45", pop: false },
+              { t: "Step 2 CK", p: "$49", pop: false },
+              { t: "Step 3", p: "$45", pop: false },
+              { t: "All-Steps Combo", p: "$99", pop: true, sub: "Save $40" },
             ].map((t) => (
-              <div key={t.d} className={`relative rounded-lg p-8 ${t.pop ? "bg-white text-slate-800 shadow-2xl scale-105" : "bg-white/10 border border-white/20"}`}>
-                {t.pop && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-[#0d2b4e] text-xs font-black px-3 py-1 rounded-full">MOST POPULAR</div>}
-                <div className={`text-sm font-bold uppercase tracking-widest mb-2 ${t.pop ? "text-[#1a4b7c]" : "text-amber-400"}`}>{t.d}</div>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-5xl font-bold">{t.p}</span>
+              <div key={t.t} className={`relative rounded-lg p-6 ${t.pop ? "bg-amber-400 text-[#0d2b4e] shadow-2xl scale-[1.03]" : "bg-white/10 border border-white/20"}`}>
+                {t.pop && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0d2b4e] text-amber-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Best Value</div>}
+                <div className={`text-xs font-bold uppercase tracking-widest mb-2 ${t.pop ? "text-[#0d2b4e]" : "text-amber-400"}`}>{t.t}</div>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-3xl font-bold">{t.p}</span>
+                  <span className={`text-xs ${t.pop ? "text-[#0d2b4e]/70" : "text-slate-300"}`}>/ 12 mo</span>
                 </div>
-                <div className={`text-sm mb-4 ${t.pop ? "text-slate-500" : "text-slate-300"}`}>{t.pkr}</div>
-                {t.save && <div className="inline-block px-2 py-1 bg-amber-400 text-[#0d2b4e] text-xs font-bold rounded mb-4">{t.save}</div>}
-                <ul className={`space-y-2 text-sm mb-6 ${t.pop ? "text-slate-700" : "text-slate-200"}`}>
-                  <li className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" /> Full access to all QBanks</li>
-                  <li className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" /> All CMS forms + NBME assessments</li>
-                  <li className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" /> AI analytics + score predictor</li>
-                  <li className="flex gap-2"><CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" /> WhatsApp support</li>
-                </ul>
-                <a href={waLink(`Hello, I want to subscribe to StepFighter ${t.d} plan.`)} target="_blank" rel="noreferrer"
-                   className={`block text-center py-3 rounded-md font-bold ${t.pop ? "bg-[#1a4b7c] text-white hover:bg-[#0d2b4e]" : "bg-amber-400 text-[#0d2b4e] hover:bg-white"}`}>
-                  Register on WhatsApp
-                </a>
+                <div className={`text-[11px] font-semibold ${t.pop ? "text-[#0d2b4e]/80" : "text-amber-400"}`}>{t.sub ?? "6-mo plan also available"}</div>
               </div>
             ))}
           </div>
-          <div className="text-center mt-8">
-            <Link to="/pricing" className="text-amber-400 hover:text-white text-sm font-semibold inline-flex items-center gap-1">
-              See full pricing details <ArrowRight className="h-4 w-4" />
+
+          <div className="text-center mt-10">
+            <Link to="/pricing" className="inline-flex items-center gap-2 px-6 py-3 bg-amber-400 text-[#0d2b4e] font-bold rounded-md hover:bg-white transition-colors">
+              See all plans <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
