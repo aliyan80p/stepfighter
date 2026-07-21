@@ -141,25 +141,6 @@ function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { ico
   );
 }
 
-function MobileToolBtn({ icon: Icon, imgSrc, imgClass, label, onClick }: { icon?: any; imgSrc?: string; imgClass?: string; label: string; onClick?: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className="flex min-w-[52px] flex-col items-center justify-center gap-0.5 rounded px-1 py-1 text-white/95 hover:bg-white/10 active:bg-white/15"
-    >
-      {imgSrc ? (
-        <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} />
-      ) : Icon ? (
-        <Icon className="h-5 w-5" />
-      ) : null}
-      <span className="text-[10px] font-semibold leading-none">{label}</span>
-    </button>
-  );
-}
-
 function ToggleSwitch({
   label, rightLabel, checked, onChange,
 }: { label: string; rightLabel?: string; checked: boolean; onChange: (v: boolean) => void }) {
@@ -356,36 +337,6 @@ function TestRunner() {
     }, 1000);
     return () => clearInterval(t);
   }, [blockStartedAt, userSettings.stopTimerOnBlur]);
-
-  // Size the test shell to the *visible* viewport, not CSS 100vh.
-  // Mobile browsers with a floating bottom URL bar often leave 100vh behind
-  // the browser chrome, so the bottom actions get covered. visualViewport
-  // tracks the real visible area and lets the flex layout reserve space
-  // naturally instead of lifting/padding the blue bar with brittle offsets.
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root || typeof window === "undefined") return;
-
-    const updateViewportHeight = () => {
-      const isTouchMobile = window.matchMedia?.("(max-width: 767px) and (hover: none) and (pointer: coarse)").matches;
-      const viewportHeight = isTouchMobile
-        ? Math.floor(window.visualViewport?.height ?? window.innerHeight)
-        : window.innerHeight;
-      root.style.setProperty("--qbank-app-height", `${Math.max(320, viewportHeight)}px`);
-    };
-
-    updateViewportHeight();
-    window.addEventListener("resize", updateViewportHeight);
-    window.addEventListener("orientationchange", updateViewportHeight);
-    window.visualViewport?.addEventListener("resize", updateViewportHeight);
-    window.visualViewport?.addEventListener("scroll", updateViewportHeight);
-    return () => {
-      window.removeEventListener("resize", updateViewportHeight);
-      window.removeEventListener("orientationchange", updateViewportHeight);
-      window.visualViewport?.removeEventListener("resize", updateViewportHeight);
-      window.visualViewport?.removeEventListener("scroll", updateViewportHeight);
-    };
-  }, []);
 
   // Auto night mode — switch to dark theme within the user's scheduled window
   useEffect(() => {
@@ -881,7 +832,7 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className="qbank-test-shell flex flex-col" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
+    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
       {hlBar && (
         <div
           data-hl-toolbar
@@ -989,75 +940,6 @@ function TestRunner() {
           {(!isRealExam || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
         </div>
       </div>
-
-      {/* Mobile action strip: never place critical controls at the bottom where
-          iOS/Android floating browser URL bars can cover them. */}
-      {(() => {
-        const allowed = total * 90;
-        const blockSec = timedMode ? Math.max(0, allowed - blockElapsed) : blockElapsed;
-        const bh = String(Math.floor(blockSec / 3600)).padStart(2, "0");
-        const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
-        const bs = String(blockSec % 60).padStart(2, "0");
-        const examUI = isRealExam && !isReview;
-
-        return (
-          <div className="md:hidden flex flex-col gap-1 border-t border-white/10 px-2 py-1 text-white text-xs" style={{ background: NAV_BG }}>
-            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-              <div className="font-semibold tracking-wide tabular-nums">
-                {examUI ? `Block Time Remaining: ${bh}:${bm}:${bs}` : (isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`)}
-              </div>
-              {!isReview && !examUI && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
-                  <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
-                </div>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-x-1 gap-y-1">
-              {!examUI && <MobileToolBtn imgSrc={medicalLibraryIcon.url} label="Library" onClick={notImpl("Medical Library")} />}
-              {!examUI && <MobileToolBtn imgSrc={flashcardIcon.url} label="Cards" onClick={() => setShowFlashcards(true)} />}
-              {!examUI && <MobileToolBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />}
-              {examUI ? (
-                <>
-                  <MobileToolBtn imgSrc={lockIconImg.url} label="Lock" onClick={() => setBreakModal("suspend")} />
-                  <MobileToolBtn imgSrc={endBlockIcon.url} label="End" onClick={async () => {
-                    const ok = await confirm({
-                      title: "End this block?",
-                      description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
-                      confirmLabel: "End Block",
-                      tone: "danger",
-                    });
-                    if (ok) finish();
-                  }} />
-                </>
-              ) : isReview ? (
-                <MobileToolBtn imgSrc={goBackIcon.url} imgClass="h-7 w-7 object-contain" label="Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
-              ) : (
-                <>
-                  <MobileToolBtn imgSrc={suspendIcon.url} label="Suspend" onClick={async () => {
-                    const ok = await confirm({
-                      title: "Suspend this test?",
-                      description: "Your progress is saved and you can resume the test later from the Tests page.",
-                      confirmLabel: "Suspend",
-                      tone: "warning",
-                    });
-                    if (ok) nav({ to: "/tests" });
-                  }} />
-                  <MobileToolBtn imgSrc={endBlockIcon.url} label="End" onClick={async () => {
-                    const ok = await confirm({
-                      title: "End this block?",
-                      description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
-                      confirmLabel: "End Block",
-                      tone: "danger",
-                    });
-                    if (ok) finish();
-                  }} />
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Main */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -1400,7 +1282,7 @@ function TestRunner() {
         const examUI = isRealExam && !isReview;
         if (examUI) {
           return (
-            <div className="qbank-bottom-bar hidden md:flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+            <div className="qbank-bottom-bar flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
               <div className="font-semibold tracking-wide tabular-nums">
                 {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
               </div>
@@ -1435,7 +1317,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="qbank-bottom-bar hidden md:flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
+          <div className="qbank-bottom-bar flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
             <div className="shrink-0 font-semibold tracking-wide tabular-nums">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>

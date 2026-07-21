@@ -382,39 +382,8 @@ body { overscroll-behavior-y: none; }
 .qbank-slide-in-right { animation: qbank-slide-in-right 180ms cubic-bezier(0.32, 0.72, 0, 1); }
 .qbank-slide-in-left  { animation: qbank-slide-in-left  180ms cubic-bezier(0.32, 0.72, 0, 1); }
 
-/* Bottom test nav — sits inside the visible mobile viewport, above floating URL bars */
-.qbank-test-shell {
-  --qbank-app-height: 100vh;
-  min-height: 100vh;
-  height: var(--qbank-app-height);
-  max-height: var(--qbank-app-height);
-  overflow: hidden;
-}
-.qbank-bottom-bar {
-  position: relative;
-  z-index: 20;
-  padding-bottom: calc(0.375rem + env(safe-area-inset-bottom));
-  flex-shrink: 0;
-}
-@media (max-width: 640px) and (hover: none) and (pointer: coarse) {
-  .qbank-test-shell {
-    height: var(--qbank-app-height);
-    min-height: var(--qbank-app-height);
-    max-height: var(--qbank-app-height);
-  }
-  .qbank-bottom-bar {
-    flex-wrap: wrap;
-    align-items: center;
-    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
-  }
-  .qbank-bottom-bar .qbank-nav-scroll,
-  .qbank-bottom-bar > div:last-child {
-    flex-wrap: wrap;
-  }
-}
-
-@supports (height: 100dvh) {
-  .qbank-test-shell {
-    --qbank-app-height: 100dvh;
-  }
+/* Bottom test nav — clear mobile browser floating URL bar */
+.qbank-bottom-bar { padding-bottom: calc(0.375rem + env(safe-area-inset-bottom)); }
+@media (max-width: 640px) {
+  .qbank-bottom-bar { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
 }
