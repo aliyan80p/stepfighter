@@ -24,23 +24,30 @@ export const Route = createFileRoute("/_authenticated/performance/score-calculat
 
 function ScoreCalculator() {
   const [formulaId, setFormulaId] = useState<string>(SCORE_FORMULAS[0].id);
-  const [wrong, setWrong] = useState<number>(20);
+  const [input, setInput] = useState<number>(20);
 
   const formula = SCORE_FORMULAS.find((f) => f.id === formulaId) ?? SCORE_FORMULAS[0];
-  const predicted = predictScore(formula, wrong);
-  const pointsPerQ = Math.abs(formula.slope).toFixed(3);
+  const isCorrectMode = formula.inputMode === "correctPercent";
+  const predicted = predictScore(formula, input);
+  const pointsPerQ = Math.abs(formula.slope).toFixed(4);
 
   const curve = useMemo(() => {
-    const rows = [];
-    for (let x = 0; x <= formula.totalQuestions; x += Math.max(1, Math.round(formula.totalQuestions / 40))) {
-      rows.push({ wrong: x, score: predictScore(formula, x) });
+    const rows: { x: number; score: number }[] = [];
+    const step = Math.max(1, Math.round(formula.totalQuestions / 40));
+    for (let x = 0; x <= formula.totalQuestions; x += step) {
+      rows.push({ x, score: predictScore(formula, x) });
     }
-    // Ensure last point present
-    if (rows[rows.length - 1].wrong !== formula.totalQuestions) {
-      rows.push({ wrong: formula.totalQuestions, score: predictScore(formula, formula.totalQuestions) });
+    if (rows[rows.length - 1].x !== formula.totalQuestions) {
+      rows.push({ x: formula.totalQuestions, score: predictScore(formula, formula.totalQuestions) });
     }
     return rows;
   }, [formula]);
+
+  const setFormula = (id: string) => {
+    const next = SCORE_FORMULAS.find((f) => f.id === id) ?? SCORE_FORMULAS[0];
+    setFormulaId(id);
+    setInput((prev) => Math.min(prev, next.totalQuestions));
+  };
 
   const step1 = SCORE_FORMULAS.filter((f) => f.step === "step1");
   const step2 = SCORE_FORMULAS.filter((f) => f.step === "step2ck");
@@ -70,7 +77,7 @@ function ScoreCalculator() {
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Assessment
             </label>
-            <Select value={formulaId} onValueChange={setFormulaId}>
+            <Select value={formulaId} onValueChange={setFormula}>
               <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-[60vh]">
                 <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">Step 1</div>
@@ -87,17 +94,19 @@ function ScoreCalculator() {
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Number wrong (out of {formula.totalQuestions})
+              {isCorrectMode
+                ? `Number correct (out of ${formula.totalQuestions})`
+                : `Number wrong (out of ${formula.totalQuestions})`}
             </label>
             <div className="mt-1.5 flex items-center gap-3">
               <Input
                 type="number"
                 min={0}
                 max={formula.totalQuestions}
-                value={wrong}
+                value={input}
                 onChange={(e) => {
                   const n = Math.max(0, Math.min(formula.totalQuestions, Number(e.target.value) || 0));
-                  setWrong(n);
+                  setInput(n);
                 }}
                 className="w-32"
               />
@@ -105,12 +114,14 @@ function ScoreCalculator() {
                 type="range"
                 min={0}
                 max={formula.totalQuestions}
-                value={wrong}
-                onChange={(e) => setWrong(Number(e.target.value))}
+                value={input}
+                onChange={(e) => setInput(Number(e.target.value))}
                 className="flex-1 accent-primary"
               />
               <div className="text-xs text-muted-foreground w-24 text-right">
-                {formula.totalQuestions - wrong} correct
+                {isCorrectMode
+                  ? `${formula.totalQuestions - input} wrong`
+                  : `${formula.totalQuestions - input} correct`}
               </div>
             </div>
           </div>
@@ -118,12 +129,13 @@ function ScoreCalculator() {
           <div className="text-[11px] text-muted-foreground flex items-start gap-2 pt-2 border-t">
             <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
             <span>
-              Each question on {formula.label.split(" · ")[1]} is worth approximately{" "}
+              Each question on {formula.label.split(" · ")[1]} is worth{" "}
               <strong className="text-foreground">{pointsPerQ} points</strong>.
-              {!formula.verified && " Coefficients are close approximations of the published curve."}
+              {isCorrectMode && " Input is number correct (converted to % correct)."}
             </span>
           </div>
         </div>
+
 
         {/* Predicted score card */}
         <div className="relative overflow-hidden rounded-2xl p-6 text-white shadow-xl">
@@ -153,20 +165,23 @@ function ScoreCalculator() {
           <div>
             <div className="text-sm font-semibold">Score Conversion Formula</div>
             <div className="text-xs text-muted-foreground">
-              y = {formula.slope.toFixed(3)}x {formula.intercept >= 0 ? "+" : "-"}{" "}
+              y = {formula.slope.toFixed(4)}x {formula.intercept >= 0 ? "+" : "-"}{" "}
               {Math.abs(formula.intercept).toFixed(2)}
+              {isCorrectMode && "   (x = % correct)"}
             </div>
           </div>
-          <div className="text-[11px] text-muted-foreground">wrong → predicted score</div>
+          <div className="text-[11px] text-muted-foreground">
+            {isCorrectMode ? "correct → predicted score" : "wrong → predicted score"}
+          </div>
         </div>
         <div className="w-full h-[320px]">
           <ResponsiveContainer>
             <LineChart data={curve} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
               <XAxis
-                dataKey="wrong"
+                dataKey="x"
                 tick={{ fontSize: 12 }}
-                label={{ value: "Number wrong", position: "insideBottom", offset: -5, style: { fontSize: 11, fill: "#64748b" } }}
+                label={{ value: isCorrectMode ? "Number correct" : "Number wrong", position: "insideBottom", offset: -5, style: { fontSize: 11, fill: "#64748b" } }}
               />
               <YAxis
                 domain={[Math.min(...curve.map((c) => c.score)) - 10, Math.max(...curve.map((c) => c.score)) + 5]}
@@ -175,11 +190,12 @@ function ScoreCalculator() {
               />
               <Tooltip
                 formatter={(v: number) => [`${v}`, "Predicted"]}
-                labelFormatter={(l) => `${l} wrong`}
+                labelFormatter={(l) => (isCorrectMode ? `${l} correct` : `${l} wrong`)}
                 contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
               />
               <Line type="monotone" dataKey="score" stroke="#1a4b7c" strokeWidth={2.5} dot={false} />
-              <ReferenceDot x={wrong} y={predicted} r={6} fill="#0ea5e9" stroke="#fff" strokeWidth={2} />
+              <ReferenceDot x={input} y={predicted} r={6} fill="#0ea5e9" stroke="#fff" strokeWidth={2} />
+
             </LineChart>
           </ResponsiveContainer>
         </div>
