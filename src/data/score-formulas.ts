@@ -4,14 +4,14 @@
  *
  * Default model:  score = slope * wrong + intercept
  *
- * Special case — Step 1 UWSA 1/2/3: the calculator asks for CORRECT answers,
- * converts to percentage, then applies:
- *   score = slope * (correct / totalQuestions * 100) + intercept
- * Marked with `inputMode: "correctPercent"`.
+ * Special case — Step 1 UWSA 1/2/3: Fighter still asks for "number wrong",
+ * but internally converts it to a percentage before applying the line:
+ *   score = slope * (wrong / totalQuestions * 100) + intercept
+ * Marked with `inputMode: "wrongPercent"` — the UI label stays "wrong".
  */
 
 export type StepKey = "step1" | "step2ck";
-export type InputMode = "wrong" | "correctPercent";
+export type InputMode = "wrong" | "wrongPercent";
 
 export interface ScoreFormula {
   id: string;
