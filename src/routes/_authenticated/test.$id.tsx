@@ -208,11 +208,6 @@ function TestRunner() {
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Mobile swipe navigation between questions
-  const swipeStartRef = useRef<{ x: number; y: number; locked: boolean } | null>(null);
-  const [swipeDx, setSwipeDx] = useState(0);
-  const [slideFrom, setSlideFrom] = useState<"left" | "right" | null>(null);
-
   // Settings — seeded from user's saved defaults
   const userSettings = useHydratedSettings();
   const [fontSize, setFontSize] = useState(DEFAULT_SETTINGS.fontSize + 1);
@@ -485,10 +480,8 @@ function TestRunner() {
     }
   }, [blockElapsed, timedMode, isRealExam, isReview, total]);
 
-  const goToQuestion = (nextIndex: number, dir?: "left" | "right") => {
+  const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
-    if (bounded === idx) return;
-    if (dir) setSlideFrom(dir);
     setIdx(bounded);
     setHlBar(null);
     savedRangeRef.current = null;
@@ -497,10 +490,6 @@ function TestRunner() {
     requestAnimationFrame(() => {
       contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
     });
-    if (dir) {
-      // clear the animation flag after it plays so subsequent renders don't re-animate
-      window.setTimeout(() => setSlideFrom(null), 320);
-    }
   };
 
   const goFullscreen = () => {
@@ -992,19 +981,8 @@ function TestRunner() {
 
 
         {/* Content */}
-        <div
-          className="flex-1 overflow-auto"
-          ref={contentRef}
-        >
-          <div
-            key={`q-slide-${question.id}`}
-            className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${slideFrom === "right" ? "qbank-slide-in-right" : slideFrom === "left" ? "qbank-slide-in-left" : ""}`}
-            style={{
-              fontSize,
-              fontWeight,
-              color: themeStyles.text,
-            }}
-          >
+        <div className="flex-1 overflow-auto" ref={contentRef}>
+          <div className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
             {(() => null)()}
             {(() => null)()}
 
@@ -1282,7 +1260,7 @@ function TestRunner() {
         const examUI = isRealExam && !isReview;
         if (examUI) {
           return (
-            <div className="qbank-bottom-bar flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
               <div className="font-semibold tracking-wide tabular-nums">
                 {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
               </div>
@@ -1317,7 +1295,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="qbank-bottom-bar flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
             <div className="shrink-0 font-semibold tracking-wide tabular-nums">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
