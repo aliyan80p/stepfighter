@@ -943,7 +943,7 @@ function TestRunner() {
             onClick={() => setSidebarOpen(false)}
           />
         <aside
-          className="w-14 overflow-auto border-r z-40 md:static absolute inset-y-0 left-0"
+          className="md:w-14 w-40 overflow-auto border-r z-40 md:static absolute inset-y-0 left-0 shadow-xl md:shadow-none"
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
           {data.questions.map((q, i) => {
