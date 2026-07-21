@@ -17,8 +17,7 @@ function resolve(src: string, qbankId = 1): string | null {
   if (qbankId === 1 && manifestName[base]) return `${prefix}${encodeURIComponent(manifestName[base])}`;
   const strippedLower = base.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/, "");
   if (qbankId === 1 && strippedLower !== base && manifestName[strippedLower]) return `${prefix}${encodeURIComponent(manifestName[strippedLower])}`;
-  const strippedOriginal = original.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
-  return `${prefix}${encodeURIComponent(strippedOriginal)}`;
+  return `${prefix}${encodeURIComponent(original)}`;
 }
 
 function stripTags(html: string): string {
