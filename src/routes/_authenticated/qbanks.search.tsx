@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
 import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
+import { useMediaToken } from "@/lib/use-media-token";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 import { NotesModal } from "@/components/notes-modal";
 import { FlashcardsModal } from "@/components/flashcards-modal";
@@ -384,6 +385,7 @@ function QuestionModal({
 
   const bookmarkFn = useServerFn(toggleBookmark);
   const modalQbankId = useActiveQbankId();
+  const mediaToken = useMediaToken(modalQbankId);
   const toggleMark = async () => {
     const prev = !!marked[r.id];
     setMarked((m) => ({ ...m, [r.id]: !prev }));
