@@ -1132,7 +1132,7 @@ function TestRunner() {
             {/* Answered banner — placed just above the explanation */}
             {submitted && showAnswers && (
               <div
-                className={`mt-4 rounded-md border-l-4 p-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6 ${isCorrect ? "border-green-500" : "border-red-500"}`}
+                className={`mt-4 rounded-md border-l-4 p-3 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500" : "border-red-500"}`}
                 style={{
                   background: theme === "dark"
                     ? (isCorrect ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)")
@@ -1140,15 +1140,14 @@ function TestRunner() {
                   color: themeStyles.text,
                 }}
               >
-                <div className="min-w-0 flex-1">
+                <div>
                   <div className={`font-semibold ${isCorrect ? "text-green-500" : "text-red-500"}`}>
                     {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
                   </div>
                   <div className="text-xs mt-1 opacity-70">The correct answer is:</div>
-                  <div className="font-semibold mt-1 break-words" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1 })}` }} />
+                  <div className="font-semibold mt-1" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1 })}` }} />
                 </div>
-                <div className="flex items-center gap-4 sm:shrink-0 flex-wrap">
-
+                <div className="flex items-center gap-4 shrink-0">
                   <div className="flex items-center gap-2">
                     <div className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: theme === "dark" ? "rgba(59,130,246,0.2)" : "#dbeafe" }}>
                       <Clock className="h-4 w-4" style={{ color: theme === "dark" ? "#60a5fa" : "#1d4ed8" }} />
