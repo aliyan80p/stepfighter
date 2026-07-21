@@ -4,8 +4,8 @@
  *
  * When explanation prose contains a link like
  *     <a href="https://.../42654-7.mp4">decrease LVOT obstruction</a>
- * this decorates the anchor with a ▶ glyph, marks it as a media trigger, and
- * intercepts clicks so the parent can open a centered <video>/<audio> exhibit.
+ * this marks the plain blue underlined anchor as a media trigger and intercepts
+ * clicks so the parent can open a centered <video>/<audio> exhibit.
  */
 
 const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|aac)(\?|$)/i;
