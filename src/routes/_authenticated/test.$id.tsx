@@ -136,7 +136,7 @@ function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { ico
       ) : Icon ? (
         <Icon className="h-5 w-5" />
       ) : null}
-      <span className="hidden sm:block text-[11px] mt-0.5">{label}</span>
+      <span className="text-[11px] mt-0.5 whitespace-nowrap">{label}</span>
     </button>
   );
 }
