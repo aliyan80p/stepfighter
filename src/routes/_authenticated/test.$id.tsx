@@ -355,7 +355,10 @@ function TestRunner() {
       const obscuredBottom = visualViewport
         ? Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop)
         : 0;
-      const raise = Math.min(96, Math.round(obscuredBottom));
+      // Mobile Safari/Chrome often report 0px even while the floating URL bar
+      // visually covers the page. Keep a stable minimum clearance on phones,
+      // then add more only when visualViewport exposes extra obstruction.
+      const raise = Math.min(104, Math.max(76, Math.round(obscuredBottom)));
       root.style.setProperty("--qbank-bottom-raise", `${raise}px`);
     };
 
