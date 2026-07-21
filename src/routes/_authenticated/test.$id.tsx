@@ -821,7 +821,7 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className="flex flex-col" style={{ height: "100dvh", background: themeStyles.pageBg, color: themeStyles.text, paddingBottom: "env(safe-area-inset-bottom)" }}>
+    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
       {hlBar && (
         <div
           data-hl-toolbar
@@ -934,8 +934,16 @@ function TestRunner() {
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left navigator */}
         {sidebarOpen && (
+        <>
+          {/* Mobile overlay backdrop */}
+          <button
+            type="button"
+            aria-label="Close question list"
+            className="md:hidden fixed inset-0 z-30 bg-black/40"
+            onClick={() => setSidebarOpen(false)}
+          />
         <aside
-          className="md:w-14 w-32 shrink-0 overflow-auto border-r"
+          className="w-14 overflow-auto border-r z-40 md:static absolute inset-y-0 left-0"
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
           {data.questions.map((q, i) => {
@@ -976,8 +984,8 @@ function TestRunner() {
             );
           })}
         </aside>
+        </>
         )}
-
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, X, Trash2, Maximize2 } from "lucide-react";
@@ -112,8 +111,8 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
     } catch (e: any) { toast.error(e?.message ?? "Failed to delete"); }
   };
 
-  const content = (
-    <div className="fixed inset-0 z-[2147483000] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
         className={`bg-white rounded-lg shadow-xl flex flex-col overflow-hidden ${maximized ? "w-full h-full" : "w-full max-w-5xl max-h-[85vh]"}`}
         onClick={(e) => e.stopPropagation()}
@@ -296,7 +295,6 @@ export function FlashcardsModal({ open, onClose, qbankId, questionId }: Props) {
       </div>
     </div>
   );
-  return typeof document !== "undefined" ? createPortal(content, document.body) : content;
 }
 
 function CardTile({ card, onClick, onDelete }: { card: any; onClick: () => void; onDelete: () => void }) {
