@@ -1009,26 +1009,21 @@ function TestRunner() {
             const dx = t.clientX - s.x;
             const dy = t.clientY - s.y;
             if (!s.locked) {
-              if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+              if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
               if (Math.abs(dy) > Math.abs(dx)) {
                 swipeStartRef.current = null;
                 return;
               }
               s.locked = true;
             }
-            // At edges, apply resistance
-            const atStart = idx === 0 && dx > 0;
-            const atEnd = idx === total - 1 && dx < 0;
-            const clamped = atStart || atEnd ? dx * 0.25 : dx;
-            setSwipeDx(clamped);
           }}
-          onTouchEnd={() => {
+          onTouchEnd={(e) => {
             const s = swipeStartRef.current;
             swipeStartRef.current = null;
-            const dx = swipeDx;
-            setSwipeDx(0);
             if (!s || !s.locked) return;
-            const threshold = 60;
+            const t = e.changedTouches[0];
+            const dx = t.clientX - s.x;
+            const threshold = 50;
             if (dx <= -threshold && idx < total - 1) goToQuestion(idx + 1, "right");
             else if (dx >= threshold && idx > 0) goToQuestion(idx - 1, "left");
           }}
@@ -1040,9 +1035,6 @@ function TestRunner() {
               fontSize,
               fontWeight,
               color: themeStyles.text,
-              transform: swipeDx ? `translate3d(${swipeDx}px,0,0)` : undefined,
-              transition: swipeDx ? "none" : "transform 220ms cubic-bezier(0.2,0.7,0.2,1)",
-              willChange: swipeDx ? "transform" : undefined,
             }}
           >
             {(() => null)()}
