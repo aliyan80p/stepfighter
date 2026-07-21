@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
-import { ClipboardCheck, Filter, ListChecks, Play, BarChart2, FileText, RotateCcw, Calendar } from "lucide-react";
+import { ClipboardCheck, Filter, ListChecks, Play, BarChart2, FileText, RotateCcw, Calendar, Lock } from "lucide-react";
 import { listAssessmentBlocks, startAssessmentBlock, resetAssessment } from "@/lib/qbank.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
