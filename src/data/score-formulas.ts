@@ -59,8 +59,8 @@ export const SCORE_FORMULAS: ScoreFormula[] = [
 
 /**
  * Predict the 3-digit score.
- * @param input For `inputMode: "wrong"` this is the number of wrong answers;
- *              for `inputMode: "wrongPercent"` this is the number of CORRECT answers.
+ * @param input Always the number of WRONG answers. For `wrongPercent` formulas
+ *              (Step 1 UWSAs) Fighter first converts this to a percentage.
  */
 export function predictScore(formula: ScoreFormula, input: number): number {
   const x = formula.inputMode === "wrongPercent"
