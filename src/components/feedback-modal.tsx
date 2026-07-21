@@ -42,7 +42,6 @@ export function FeedbackModal({ open, onClose, qbankId, questionId }: Props) {
     onClose();
   };
 
-  return (
   const content = (
     <div className="fixed inset-0 z-[2147483000] flex items-center justify-center bg-black/50 p-4" onClick={close}>
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
