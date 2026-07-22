@@ -10,7 +10,6 @@ import {
   Zap,
   Crown,
   Layers,
-  Brain,
   RotateCcw,
   Library,
   BookOpen,
