@@ -438,10 +438,17 @@ body { overscroll-behavior-y: none; }
   0%, 100% { opacity: 0.35; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(1.05); }
 }
+@keyframes sf-phone-rotate {
+  0%   { transform: rotateY(0deg) translateY(0); }
+  50%  { transform: rotateY(180deg) translateY(-10px); }
+  100% { transform: rotateY(360deg) translateY(0); }
+}
 .sf-float-slow { animation: sf-float-slow 6s ease-in-out infinite; }
 .sf-float-slower { animation: sf-float-slower 7.5s ease-in-out infinite; }
 .sf-fade-up { animation: sf-fade-up 0.9s ease-out both; }
 .sf-glow-pulse { animation: sf-glow-pulse 5s ease-in-out infinite; }
+.sf-phone-rotate { animation: sf-phone-rotate 8s ease-in-out infinite; transform-style: preserve-3d; backface-visibility: visible; }
 @media (prefers-reduced-motion: reduce) {
-  .sf-float-slow, .sf-float-slower, .sf-glow-pulse { animation: none; }
+  .sf-float-slow, .sf-float-slower, .sf-glow-pulse, .sf-phone-rotate { animation: none; }
 }
+
