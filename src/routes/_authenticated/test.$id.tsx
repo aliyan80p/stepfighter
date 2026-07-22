@@ -1194,7 +1194,7 @@ function TestRunner() {
                     </div>
                     <div>
                       <div className="text-sm font-semibold">{(() => {
-                        const t = priorAttempt?.time_seconds;
+                        const t = (priorAttempt as any)?.time_seconds;
                         const s = typeof t === "number" ? t : elapsed;
                         return `${Math.floor(s / 60)}min: ${s % 60}sec`;
                       })()}</div>
