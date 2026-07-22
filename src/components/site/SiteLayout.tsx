@@ -7,20 +7,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="min-h-screen bg-white text-slate-800" style={{ fontFamily: "Verdana, Geneva, sans-serif" }}>
-      {/* Top strip */}
-      <div className="bg-[#0d2b4e] text-white text-xs">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2">
-          <span className="opacity-90">Trusted USMLE prep for IMGs worldwide · Step 1 · Step 2 CK · Step 3</span>
-          <div className="flex items-center gap-4">
-            <a href={`mailto:${SITE.email}`} className="hover:text-amber-300 flex items-center gap-1">
-              <Mail className="h-3 w-3" /> {SITE.email}
-            </a>
-            <a href={waLink("Hello StepFighter team,")} target="_blank" rel="noreferrer" className="hover:text-amber-300 flex items-center gap-1">
-              <MessageCircle className="h-3 w-3" /> WhatsApp
-            </a>
-          </div>
-        </div>
-      </div>
+      <div className="min-h-screen bg-white text-slate-800" style={{ fontFamily: "Verdana, Geneva, sans-serif" }}>
+
 
       {/* Nav */}
       <header className="border-b border-slate-200 bg-white sticky top-0 z-40">
