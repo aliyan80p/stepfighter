@@ -32,7 +32,7 @@ function Privacy() {
         <h2>How We Use Information</h2>
         <ul>
           <li>Provide and improve the Service</li>
-          <li>Generate personal performance analytics and score predictions</li>
+          <li>Generate personal performance analytics and score calculations</li>
           <li>Communicate about your subscription and support</li>
           <li>Detect and prevent fraud or credential sharing</li>
         </ul>
