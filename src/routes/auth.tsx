@@ -90,13 +90,6 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) { toast.error(String(result.error.message ?? result.error)); setLoading(false); return; }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
-  };
 
   const sendResetEmail = async (e: React.FormEvent) => {
     e.preventDefault();
