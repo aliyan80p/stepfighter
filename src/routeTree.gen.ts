@@ -26,6 +26,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
 import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/tests'
+import { Route as AuthenticatedSubscribeRenewRouteImport } from './routes/_authenticated/subscribe-renew'
 import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticated/new-test'
 import { Route as AuthenticatedMedicalLibraryRouteImport } from './routes/_authenticated/medical-library'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -141,6 +142,12 @@ const AuthenticatedTestsRoute = AuthenticatedTestsRouteImport.update({
   path: '/tests',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSubscribeRenewRoute =
+  AuthenticatedSubscribeRenewRouteImport.update({
+    id: '/subscribe-renew',
+    path: '/subscribe-renew',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedNewTestRoute = AuthenticatedNewTestRouteImport.update({
   id: '/new-test',
   path: '/new-test',
@@ -331,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/new-test': typeof AuthenticatedNewTestRoute
+  '/subscribe-renew': typeof AuthenticatedSubscribeRenewRoute
   '/tests': typeof AuthenticatedTestsRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/account/reset': typeof AuthenticatedAccountResetRoute
@@ -379,6 +387,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/new-test': typeof AuthenticatedNewTestRoute
+  '/subscribe-renew': typeof AuthenticatedSubscribeRenewRoute
   '/tests': typeof AuthenticatedTestsRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/account/reset': typeof AuthenticatedAccountResetRoute
@@ -429,6 +438,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/medical-library': typeof AuthenticatedMedicalLibraryRoute
   '/_authenticated/new-test': typeof AuthenticatedNewTestRoute
+  '/_authenticated/subscribe-renew': typeof AuthenticatedSubscribeRenewRoute
   '/_authenticated/tests': typeof AuthenticatedTestsRoute
   '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/_authenticated/account/reset': typeof AuthenticatedAccountResetRoute
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/medical-library'
     | '/new-test'
+    | '/subscribe-renew'
     | '/tests'
     | '/upgrade'
     | '/account/reset'
@@ -527,6 +538,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/medical-library'
     | '/new-test'
+    | '/subscribe-renew'
     | '/tests'
     | '/upgrade'
     | '/account/reset'
@@ -576,6 +588,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/medical-library'
     | '/_authenticated/new-test'
+    | '/_authenticated/subscribe-renew'
     | '/_authenticated/tests'
     | '/_authenticated/upgrade'
     | '/_authenticated/account/reset'
@@ -748,6 +761,13 @@ declare module '@tanstack/react-router' {
       path: '/tests'
       fullPath: '/tests'
       preLoaderRoute: typeof AuthenticatedTestsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/subscribe-renew': {
+      id: '/_authenticated/subscribe-renew'
+      path: '/subscribe-renew'
+      fullPath: '/subscribe-renew'
+      preLoaderRoute: typeof AuthenticatedSubscribeRenewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/new-test': {
@@ -980,6 +1000,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMedicalLibraryRoute: typeof AuthenticatedMedicalLibraryRoute
   AuthenticatedNewTestRoute: typeof AuthenticatedNewTestRoute
+  AuthenticatedSubscribeRenewRoute: typeof AuthenticatedSubscribeRenewRoute
   AuthenticatedTestsRoute: typeof AuthenticatedTestsRoute
   AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
   AuthenticatedAccountResetRoute: typeof AuthenticatedAccountResetRoute
@@ -1008,6 +1029,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMedicalLibraryRoute: AuthenticatedMedicalLibraryRoute,
   AuthenticatedNewTestRoute: AuthenticatedNewTestRoute,
+  AuthenticatedSubscribeRenewRoute: AuthenticatedSubscribeRenewRoute,
   AuthenticatedTestsRoute: AuthenticatedTestsRoute,
   AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
   AuthenticatedAccountResetRoute: AuthenticatedAccountResetRoute,
