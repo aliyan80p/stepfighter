@@ -60,7 +60,7 @@ function Home() {
 
         {/* Device showcase — real screenshots from the live app */}
         <div className="max-w-7xl mx-auto px-4 pb-16">
-          <div className="relative flex items-end justify-center gap-4 md:gap-6">
+          <div className="relative flex items-end justify-center gap-3 md:gap-5 lg:gap-6">
             {/* Ambient glow */}
             <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
               <div className="h-[420px] w-[420px] rounded-full bg-amber-300/25 blur-3xl sf-glow-pulse" />
@@ -68,12 +68,12 @@ function Home() {
 
             {/* iPhone — exam mode */}
             <div className="hidden sm:block sf-fade-up" style={{ animationDelay: "0.25s" }}>
-              <div className="sf-float-slower will-change-transform w-[110px] md:w-[150px] lg:w-[180px] shrink-0 rounded-[26px] bg-slate-900 p-1.5 shadow-2xl ring-1 ring-slate-800 mb-8">
+              <div className="sf-float-slower will-change-transform w-[110px] md:w-[140px] lg:w-[160px] shrink-0 rounded-[26px] bg-slate-900 p-1.5 shadow-2xl ring-1 ring-slate-800 mb-8">
                 <div className="rounded-[20px] overflow-hidden bg-white aspect-[9/19]">
                   <img
                     src="/__l5e/assets-v1/3101a121-ca59-4b1c-920d-a4c823eb2f72/iphone-exam-question.jpg"
                     alt="StepFighter exam mode question on iPhone"
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover object-center"
                     loading="lazy"
                   />
                 </div>
@@ -81,7 +81,7 @@ function Home() {
             </div>
 
             {/* Laptop — dashboard */}
-            <div className="relative flex-1 max-w-[720px] sf-fade-up" style={{ animationDelay: "0.05s" }}>
+            <div className="relative flex-1 max-w-[620px] lg:max-w-[720px] sf-fade-up" style={{ animationDelay: "0.05s" }}>
               <div className="sf-float-slow will-change-transform">
                 <div className="rounded-t-xl bg-slate-900 p-2.5 shadow-2xl ring-1 ring-slate-800">
                   <div className="flex items-center gap-1.5 mb-2 px-2">
@@ -105,12 +105,12 @@ function Home() {
 
             {/* iPad — tutor mode */}
             <div className="hidden md:block sf-fade-up" style={{ animationDelay: "0.15s" }}>
-              <div className="sf-float-slow will-change-transform w-[200px] lg:w-[240px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
-                <div className="rounded-xl overflow-hidden bg-white aspect-[3/4]">
+              <div className="sf-float-slow will-change-transform w-[220px] lg:w-[300px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
+                <div className="rounded-xl overflow-hidden bg-white aspect-[4/3]">
                   <img
                     src="/__l5e/assets-v1/e817b329-f357-4140-9dea-6fe059e24980/ipad-tutor-question.jpg"
                     alt="StepFighter tutor mode question with diagram on iPad"
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover object-center"
                     loading="lazy"
                   />
                 </div>
