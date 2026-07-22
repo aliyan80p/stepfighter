@@ -229,8 +229,8 @@ function About() {
           Ready to study like it matters?
         </h2>
         <p className="text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-          Start a free 14-day trial, explore the full QBank, and see why students in over 40 countries
-          are preparing with StepFighter.
+          Start a free 14-day trial, explore the full QBank, and see how StepFighter helps you
+          build real exam-day confidence.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link
@@ -250,15 +250,9 @@ function About() {
           </a>
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600" /> No credit card required
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600" /> Cancel anytime
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600" /> Instant WhatsApp activation
-          </div>
+          <span>Cancel anytime</span>
+          <span>WhatsApp activation</span>
+          <span>WhatsApp & email support</span>
         </div>
       </section>
     </SiteLayout>
