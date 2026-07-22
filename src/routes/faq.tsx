@@ -7,8 +7,8 @@ import { ChevronDown, MessageCircle } from "lucide-react";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "FAQ — StepFighter Step 1, 2 CK & 3 QBank" },
-      { name: "description", content: "Answers to common questions about StepFighter's Step 1, 2 CK & 3 QBanks, subscription plans, payment, activation and refunds." },
+      { title: "FAQ — StepFighter QBank" },
+      { name: "description", content: "Answers to common questions about StepFighter's QBank, subscription plans, payment, activation and refunds." },
       { property: "og:title", content: "StepFighter FAQ" },
       { property: "og:description", content: "Common questions about StepFighter board prep, pricing, activation and refunds." },
     ],
@@ -18,16 +18,16 @@ export const Route = createFileRoute("/faq")({
 
 const faqs = [
   {
-    q: "What Steps does StepFighter cover?",
+    q: "What does StepFighter cover?",
     a: "We cover Step 1, Step 2 CK and Step 3 with board-style questions plus NBME-style self-assessments and CMS specialty forms.",
   },
   {
     q: "Is there a free trial?",
-    a: "Yes. Every new account gets a 14-day free trial with access to a sample of each QBank. No credit card required.",
+    a: "Yes. Every new account gets a 14-day free trial with access to a sample of each QBank.",
   },
   {
     q: "How much does StepFighter cost?",
-    a: "$39 for 6 months or $59 for 12 months (25% savings). One flat price unlocks every Step, every self-assessment and every CMS form.",
+    a: "$30 for 6 months, $50 for 12 months, or $60 for the 6-month Combo. One flat price unlocks the QBank, self-assessments and CMS forms for your chosen plan.",
   },
   {
     q: "How do I pay?",
@@ -39,7 +39,15 @@ const faqs = [
   },
   {
     q: "Can I get a refund?",
-    a: "Yes — full refund within 3 days of activation if the platform isn't the right fit for you. No questions asked.",
+    a: (
+      <>
+        Yes — full refund within 3 days of activation if the platform isn't the right fit for you. No questions asked. For full details, see our{" "}
+        <Link to="/refund" className="text-[#1a4b7c] underline hover:text-[#0d2b4e]">
+          refund policy
+        </Link>
+        .
+      </>
+    ),
   },
   {
     q: "Is the content up to date?",
