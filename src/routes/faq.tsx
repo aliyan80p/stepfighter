@@ -7,10 +7,10 @@ import { ChevronDown, MessageCircle } from "lucide-react";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "FAQ — StepFighter USMLE QBank" },
-      { name: "description", content: "Answers to common questions about StepFighter's USMLE QBanks, subscription plans, payment, activation and refunds." },
+      { title: "FAQ — StepFighter Step 1, 2 CK & 3 QBank" },
+      { name: "description", content: "Answers to common questions about StepFighter's Step 1, 2 CK & 3 QBanks, subscription plans, payment, activation and refunds." },
       { property: "og:title", content: "StepFighter FAQ" },
-      { property: "og:description", content: "Common questions about StepFighter USMLE prep, pricing, activation and refunds." },
+      { property: "og:description", content: "Common questions about StepFighter board prep, pricing, activation and refunds." },
     ],
   }),
   component: FAQ,

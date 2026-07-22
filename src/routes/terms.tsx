@@ -6,9 +6,9 @@ export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
       { title: "Terms of Service — StepFighter" },
-      { name: "description", content: "StepFighter terms of service governing use of our USMLE QBank platform." },
+      { name: "description", content: "StepFighter terms of service governing use of our Step 1, 2 CK & 3 QBank platform." },
       { property: "og:title", content: "Terms of Service — StepFighter" },
-      { property: "og:description", content: "Terms of service for StepFighter USMLE prep." },
+      { property: "og:description", content: "Terms of service for StepFighter board prep." },
     ],
   }),
   component: Terms,
@@ -26,7 +26,7 @@ function Terms() {
         <p>By creating an account or using the Service, you agree to these Terms. If you do not agree, do not use the Service.</p>
 
         <h2>2. The Service</h2>
-        <p>StepFighter provides a subscription-based online USMLE preparation platform including question banks, self-assessments, explanations and analytics. Content is provided for educational purposes only and is not medical advice.</p>
+        <p>StepFighter provides a subscription-based online medical board prep platform including question banks, self-assessments, explanations and analytics. Content is provided for educational purposes only and is not medical advice.</p>
 
         <h2>3. Accounts</h2>
         <p>You must provide accurate information when creating an account. You are responsible for keeping your credentials confidential and for all activity under your account. Accounts are for individual use — sharing credentials or reselling access is prohibited and results in immediate termination without refund.</p>

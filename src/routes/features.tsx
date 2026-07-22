@@ -6,9 +6,9 @@ export const Route = createFileRoute("/features")({
   head: () => ({
     meta: [
       { title: "Features — StepFighter USMLE QBank" },
-      { name: "description", content: "Real exam simulator, AI analytics, custom test builder, spaced-repetition flashcards, native highlighting, score predictor — every tool you need for USMLE prep." },
+      { name: "description", content: "Real exam simulator, AI analytics, custom test builder, spaced-repetition flashcards, native highlighting, score predictor — every tool you need for Step 1, 2 CK & 3 prep." },
       { property: "og:title", content: "StepFighter Features" },
-      { property: "og:description", content: "Every USMLE prep tool: exam simulator, AI analytics, flashcards, highlighter, score calculator, and more." },
+      { property: "og:description", content: "Every board prep tool: exam simulator, AI analytics, flashcards, highlighter, score calculator, and more." },
     ],
   }),
   component: Features,
