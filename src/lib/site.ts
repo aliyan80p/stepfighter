@@ -13,7 +13,6 @@ export const waLink = (message: string) =>
 
 export const NAV_LINKS = [
   { to: "/", label: "Home" },
-  { to: "/qbank", label: "QBank" },
   { to: "/features", label: "Features" },
   { to: "/pricing", label: "Pricing" },
   { to: "/about", label: "About" },
