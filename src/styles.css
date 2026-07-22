@@ -420,3 +420,28 @@ body { overscroll-behavior-y: none; }
   }
 }
 
+
+/* Multi-device showcase animations */
+@keyframes sf-float-slow {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-14px) rotate(-2deg); }
+}
+@keyframes sf-float-slower {
+  0%, 100% { transform: translateY(0) rotate(3deg); }
+  50% { transform: translateY(-18px) rotate(3deg); }
+}
+@keyframes sf-fade-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes sf-glow-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+.sf-float-slow { animation: sf-float-slow 6s ease-in-out infinite; }
+.sf-float-slower { animation: sf-float-slower 7.5s ease-in-out infinite; }
+.sf-fade-up { animation: sf-fade-up 0.9s ease-out both; }
+.sf-glow-pulse { animation: sf-glow-pulse 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .sf-float-slow, .sf-float-slower, .sf-glow-pulse { animation: none; }
+}
