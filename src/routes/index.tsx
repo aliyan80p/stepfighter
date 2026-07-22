@@ -59,8 +59,8 @@ function Home() {
                 </div>
                 <div className="rounded-md overflow-hidden bg-white aspect-[16/10]">
                   <img
-                    src="/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png"
-                    alt="StepFighter USMLE dashboard on laptop"
+                    src="/__l5e/assets-v1/94199958-0d3d-4753-8865-c4c1fed6dee4/tutor-mode-full.jpg"
+                    alt="StepFighter Tutor mode with diagram and explanation"
                     className="w-full h-full object-contain object-top bg-white"
                     loading="eager"
                     decoding="async"
