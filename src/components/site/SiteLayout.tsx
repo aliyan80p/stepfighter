@@ -64,7 +64,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               <span className="text-white font-bold text-lg">StepFighter</span>
             </div>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
-              A high-yield medical board prep platform built by physicians for IMGs and medical students worldwide.
+              A high-yield medical board prep platform for IMGs and medical students worldwide.
               Board-style questions across Step 1, Step 2 CK, and Step 3 with NBME-style self-assessments.
             </p>
             <div className="mt-6 flex gap-3">
