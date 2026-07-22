@@ -36,7 +36,7 @@ function Features() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-3">Platform Features</div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Every tool you need to conquer the USMLE</h1>
-          <p className="text-lg text-slate-200">From question stems to score prediction — one platform, everything included.</p>
+          <p className="text-lg text-slate-200">From question stems to score calculation — one platform, everything included.</p>
         </div>
       </section>
 
