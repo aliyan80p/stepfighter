@@ -1193,7 +1193,11 @@ function TestRunner() {
                       <Clock className="h-4 w-4" style={{ color: theme === "dark" ? "#60a5fa" : "#1d4ed8" }} />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold">{timeLabel}</div>
+                      <div className="text-sm font-semibold">{(() => {
+                        const t = (priorAttempt as any)?.time_seconds;
+                        const s = typeof t === "number" ? t : elapsed;
+                        return `${Math.floor(s / 60)}min: ${s % 60}sec`;
+                      })()}</div>
                       <div className="text-[11px] opacity-60">Time Taken</div>
                     </div>
                   </div>
