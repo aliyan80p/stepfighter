@@ -38,7 +38,7 @@ function Terms() {
         <p>New accounts receive an 8-day free trial with limited access. Trials do not require payment and end automatically.</p>
 
         <h2>6. Refunds</h2>
-        <p>See our <a href="/refund">Refund Policy</a>. Full refunds are available within 3 days of activation.</p>
+        <p>All sales are final. Due to the digital nature of our content, we do not offer refunds once a subscription has been purchased and delivered. We encourage every user to make full use of the free trial before subscribing. See our <a href="/refund">Refund Policy</a> for complete details.</p>
 
         <h2>7. Intellectual Property</h2>
         <p>StepFighter owns the platform, software, algorithms, analytics, user interface, and the curated compilation of study materials. The question banks and media were sourced from licensed material supplied by the account owner, decrypted and imported at the owner's direction, then corrected, categorized, and reorganized by StepFighter's AI-assisted tooling. This curated content and platform output are protected. You may not copy, reproduce, distribute, publish, upload, post, transmit, reverse engineer, scrape, or resell any content or platform code without prior written permission.</p>
