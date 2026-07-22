@@ -43,7 +43,7 @@ export const COURSES: Course[] = [
     blurb: "Foundational science woven into clinical vignettes — pathology, pharm, micro, physio, biochem.",
     tagline: "Foundational science",
     extras: ["Step 1 self-assessments (SA1–SA4)", "Full NBME 9–31 score calibration", "AI performance dashboard"],
-    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 45, pkr: 12500 } },
+    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
   },
   {
     id: "step2ck",
@@ -52,7 +52,7 @@ export const COURSES: Course[] = [
     blurb: "Clinical reasoning, management and wards-level judgment across every core rotation.",
     tagline: "Clinical mastery",
     extras: ["Step 2 CK self-assessments (SA1–SA9)", "CMS specialty forms", "Ambulatory + inpatient coverage"],
-    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 49, pkr: 13500 } },
+    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
   },
   {
     id: "step3",
@@ -61,7 +61,7 @@ export const COURSES: Course[] = [
     blurb: "FIP + ACM practice for the final licensing exam — clinic, ER and inpatient scenarios.",
     tagline: "Final licensing",
     extras: ["Step 3 SA1 + SA2 assessments", "CCS-style case reasoning", "Biostatistics + ethics drills"],
-    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 45, pkr: 12500 } },
+    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
   },
   {
     id: "combo",
