@@ -4,7 +4,7 @@ import { waLink, COURSES } from "@/lib/site";
 import heroBg from "@/assets/hero-bg-navy.jpg";
 import {
   CheckCircle2, BookOpen, Layers, BarChart3, Timer, Brain, ArrowRight, MessageCircle,
-  ShieldCheck, GraduationCap, Highlighter, StickyNote, FileText, Smartphone,
+  GraduationCap, Highlighter, StickyNote, FileText, Smartphone,
   Wallet, UserPlus, KeyRound,
 } from "lucide-react";
 
