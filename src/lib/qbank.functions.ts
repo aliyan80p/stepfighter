@@ -258,26 +258,17 @@ export const getPoolCount = createServerFn({ method: "POST" })
   }).parse(d))
 
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const rows = await fetchAllQuestionRows(supabase, "id", data);
-    let ids = rows.map((r) => r.id as number);
-    if (data.scope !== "all") {
-      const { data: att } = await supabase.from("attempts").select("question_id,selected_answer,is_correct").eq("user_id", userId).eq("qbank_id", data.qbankId);
-      const attempted = new Set((att ?? []).map((a) => a.question_id));
-      const correctIds = new Set((att ?? []).filter((a) => a.is_correct).map((a) => a.question_id));
-      const incorrectIds = new Set((att ?? []).filter((a) => a.selected_answer != null && !a.is_correct).map((a) => a.question_id));
-      const omittedIds = new Set((att ?? []).filter((a) => a.selected_answer == null).map((a) => a.question_id));
-      if (data.scope === "unused") ids = ids.filter((id) => !attempted.has(id));
-      else if (data.scope === "correct") ids = ids.filter((id) => correctIds.has(id));
-      else if (data.scope === "incorrect") ids = ids.filter((id) => incorrectIds.has(id));
-      else if (data.scope === "omitted") ids = ids.filter((id) => omittedIds.has(id));
-      else if (data.scope === "marked") {
-        const { data: bm } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("qbank_id", data.qbankId);
-        const bmIds = new Set((bm ?? []).map((b) => b.question_id));
-        ids = ids.filter((id) => bmIds.has(id));
-      }
-    }
-    return { count: ids.length };
+    const { supabase } = context;
+    const { data: count, error } = await supabase.rpc("pool_count", {
+      p_qbank_id: data.qbankId,
+      p_sources: data.sources.length ? data.sources : undefined,
+      p_subject_ids: data.subjectIds.length ? data.subjectIds : undefined,
+      p_system_ids: data.systemIds.length ? data.systemIds : undefined,
+      p_topic_names: data.topicNames.length ? data.topicNames : undefined,
+      p_scope: data.scope,
+    });
+    if (error) throw error;
+    return { count: (count as number | null) ?? 0 };
   });
 
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
