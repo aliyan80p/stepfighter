@@ -17,7 +17,7 @@ function MyCourses() {
   const active = useActiveQbankId();
   const navigate = useNavigate();
   const entFn = useServerFn(getMyEntitlement);
-  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60 * 1000 });
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 0, refetchOnMount: "always", refetchOnWindowFocus: true });
   const allowed = new Set(entQ.data?.effective_access ?? []);
   const isAllowed = (id: number) => allowed.has(QBANK_ID_TO_SLUG[id]);
 
