@@ -176,6 +176,43 @@ function Pricing() {
         })()}
       </section>
 
+      {/* Included features */}
+      <section className="max-w-6xl mx-auto px-4 pb-16">
+        <div className="text-center mb-10">
+          <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-2">Included in every plan</div>
+          <h2 className="text-2xl md:text-3xl font-bold text-[#0d2b4e]">Everything your prep needs</h2>
+          <p className="text-slate-600 mt-2 text-sm max-w-2xl mx-auto">
+            No tiers, no hidden add-ons. Every subscription unlocks the full feature set below.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            {
+              i: Brain,
+              t: "AI‑Powered Study Plans & Performance Analysis",
+              d: "Smart weak-area breakdowns and AI-generated study plans based on your actual mistakes.",
+            },
+            { i: RotateCcw, t: "Unlimited Quiz Resets & Custom Quizzes", d: "Retake any block as many times as you want and build custom quizzes by subject or system." },
+            { i: Library, t: "Flashcards (Manual + AI‑Generated)", d: "Create your own decks or let AI generate flashcards from your flagged questions." },
+            { i: BookOpen, t: "Exclusive Medical Library", d: "Quick-reference medical notes, lab values, and high-yield facts integrated into your study flow." },
+            { i: Users, t: "Peer Ranking & Progress Tracking", d: "Compare your percentile against other students and track your progress across subjects." },
+            { i: Sparkles, t: "Free Updates During Subscription", d: "Every new question, form, and correction lands in your account automatically." },
+            { i: Headphones, t: "24/7 Support", d: "Reach us anytime on WhatsApp or email for account, content, or technical help." },
+          ].map((f) => (
+            <div key={f.t} className="flex items-start gap-3 p-4 rounded-lg border border-slate-200 bg-white">
+              <div className="h-10 w-10 rounded-lg bg-[#1a4b7c]/10 flex items-center justify-center flex-shrink-0">
+                <f.i className="h-5 w-5 text-[#1a4b7c]" />
+              </div>
+              <div>
+                <div className="font-bold text-[#0d2b4e] text-sm leading-tight">{f.t}</div>
+                <div className="text-xs text-slate-600 mt-1 leading-relaxed">{f.d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* How it works */}
       <section className="bg-slate-50 border-y border-slate-200 py-16">
         <div className="max-w-5xl mx-auto px-4">
