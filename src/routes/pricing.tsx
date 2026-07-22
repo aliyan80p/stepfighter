@@ -2,7 +2,22 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { waLink, SITE, COURSES, durationLabel, type Duration } from "@/lib/site";
-import { CheckCircle2, MessageCircle, Mail, ShieldCheck, Zap, Crown, Layers } from "lucide-react";
+import {
+  CheckCircle2,
+  MessageCircle,
+  Mail,
+  ShieldCheck,
+  Zap,
+  Crown,
+  Layers,
+  Brain,
+  RotateCcw,
+  Library,
+  BookOpen,
+  Users,
+  Sparkles,
+  Headphones,
+} from "lucide-react";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -10,7 +25,7 @@ export const Route = createFileRoute("/pricing")({
       { title: "Pricing — Pick Your USMLE Step | StepFighter" },
       { name: "description", content: "Subscribe to just the Step you're preparing for — Step 1, Step 2 CK or Step 3 — or grab the All-Steps Combo. Simple 6-month and 12-month plans, activated on WhatsApp." },
       { property: "og:title", content: "StepFighter Pricing — per-Step plans" },
-      { property: "og:description", content: "Choose one Step or bundle all three. Transparent USD / PKR pricing, instant WhatsApp activation." },
+      { property: "og:description", content: "Choose one Step or bundle all three. Transparent USD pricing, instant WhatsApp activation." },
     ],
   }),
   component: Pricing,
@@ -72,7 +87,6 @@ function Pricing() {
                   <span className="text-4xl font-bold text-[#0d2b4e]">${price.usd}</span>
                   <span className="text-slate-500 text-sm">USD</span>
                 </div>
-                <div className="text-xs text-slate-500 mb-1">PKR {price.pkr.toLocaleString()}</div>
                 <div className="text-xs text-slate-400 mb-5">≈ ${perMonth} / month · {durationLabel[dur]}</div>
 
                 <ul className="space-y-2 text-sm text-slate-700 mb-6 flex-1">
@@ -130,7 +144,7 @@ function Pricing() {
                     <span className="text-slate-300 text-sm">USD · {durationLabel[dur]}</span>
                   </div>
                   <div className="text-xs text-slate-300 mt-1">
-                    PKR {price.pkr.toLocaleString()} · ≈ ${perMonth}/month · buying separately: ${singleTotal}
+                    ≈ ${perMonth}/month · buying separately: ${singleTotal}
                   </div>
                 </div>
 
@@ -160,6 +174,43 @@ function Pricing() {
             </div>
           );
         })()}
+      </section>
+
+      {/* Included features */}
+      <section className="max-w-6xl mx-auto px-4 pb-16">
+        <div className="text-center mb-10">
+          <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-2">Included in every plan</div>
+          <h2 className="text-2xl md:text-3xl font-bold text-[#0d2b4e]">Everything your prep needs</h2>
+          <p className="text-slate-600 mt-2 text-sm max-w-2xl mx-auto">
+            No tiers, no hidden add-ons. Every subscription unlocks the full feature set below.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            {
+              i: Brain,
+              t: "AI‑Powered Study Plans & Performance Analysis",
+              d: "Smart weak-area breakdowns and AI-generated study plans based on your actual mistakes.",
+            },
+            { i: RotateCcw, t: "Unlimited Quiz Resets & Custom Quizzes", d: "Retake any block as many times as you want and build custom quizzes by subject or system." },
+            { i: Library, t: "Flashcards (Manual + AI‑Generated)", d: "Create your own decks or let AI generate flashcards from your flagged questions." },
+            { i: BookOpen, t: "Exclusive Medical Library", d: "Quick-reference medical notes, lab values, and high-yield facts integrated into your study flow." },
+            { i: Users, t: "Peer Ranking & Progress Tracking", d: "Compare your percentile against other students and track your progress across subjects." },
+            { i: Sparkles, t: "Free Updates During Subscription", d: "Every new question, form, and correction lands in your account automatically." },
+            { i: Headphones, t: "24/7 Support", d: "Reach us anytime on WhatsApp or email for account, content, or technical help." },
+          ].map((f) => (
+            <div key={f.t} className="flex items-start gap-3 p-4 rounded-lg border border-slate-200 bg-white">
+              <div className="h-10 w-10 rounded-lg bg-[#1a4b7c]/10 flex items-center justify-center flex-shrink-0">
+                <f.i className="h-5 w-5 text-[#1a4b7c]" />
+              </div>
+              <div>
+                <div className="font-bold text-[#0d2b4e] text-sm leading-tight">{f.t}</div>
+                <div className="text-xs text-slate-600 mt-1 leading-relaxed">{f.d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* How it works */}

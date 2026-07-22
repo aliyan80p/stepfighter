@@ -5,7 +5,7 @@ export const SITE = {
   whatsapp: "923000000000", // intl format, no +
   email: "support@stepfighter.app",
   telegram: "stepfighter", // t.me/<handle>
-  currencyNote: "USD / PKR — regional payment methods confirmed on WhatsApp",
+  currencyNote: "USD — regional payment methods confirmed on WhatsApp",
 };
 
 export const waLink = (message: string) =>
