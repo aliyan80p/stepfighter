@@ -499,6 +499,7 @@ function TestRunner() {
       }
     }
     await finFn({ data: { testId } });
+    try { window.localStorage.removeItem(`test:${id}:idx`); } catch {}
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
   };
