@@ -22,7 +22,7 @@ const features = [
   { i: Calculator, t: "Score Predictor", d: "Calibrated to NBME 9–31 slopes and intercepts — know where you stand before test day." },
   { i: Layers, t: "Custom Test Builder", d: "Filter by system, subject, difficulty, unused, incorrect, or flagged. Build the exact block you need." },
   { i: Highlighter, t: "Native Highlighting", d: "UWorld-style multi-color highlighting that works on desktop, iPad and phone with a floating toolbar." },
-  { i: StickyNote, t: "Notes & Flashcards", d: "Attach notes per question. Convert any card into an SM-2 spaced-repetition flashcard automatically." },
+  { i: StickyNote, t: "Notes & Flashcards", d: "Attach notes per question and create SM-2 spaced-repetition flashcards from them." },
   { i: BarChart3, t: "Overall Performance Dashboard", d: "Track answer changes, test count, streaks and accuracy trends over time." },
   { i: Zap, t: "Media-Rich Explanations", d: "Every question ships with high-yield imagery, tables, videos and audio where relevant." },
   { i: Smartphone, t: "Works on Every Device", d: "Fully responsive on mobile, tablet, desktop and installable as a Progressive Web App." },
