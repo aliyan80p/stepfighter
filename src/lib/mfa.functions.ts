@@ -3,7 +3,8 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { createHash, randomInt } from 'crypto'
 import { z } from 'zod'
 
-const VERIFY_WINDOW_HOURS = 12
+// Persistent until sign-out: ~100 years. clearMfaVerification() resets on logout.
+const VERIFY_WINDOW_HOURS = 24 * 365 * 100
 const CODE_TTL_MIN = 10
 const MAX_ATTEMPTS = 5
 const MAX_CODES_PER_HOUR = 5
