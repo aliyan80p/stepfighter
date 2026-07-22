@@ -2,10 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { waLink, SITE } from "@/lib/site";
 import {
-  Target,
-  Heart,
-  Users,
-  Award,
   MessageCircle,
   ShieldCheck,
   Globe,
