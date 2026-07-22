@@ -257,8 +257,6 @@ function TestRunner() {
 
   // Highlight toolbar state (hooks must live above early returns)
   const [hlBar, setHlBar] = useState<{ x: number; y: number; placement: "above" | "below" } | null>(null);
-  const [highlightHtml, setHighlightHtml] = useState<Record<string, string>>({});
-  const [highlightBump, setHighlightBump] = useState(0);
   const savedRangeRef = useRef<Range | null>(null);
   const savedSelectionRef = useRef<{ key: string; start: number; end: number } | null>(null);
   const savedTextRef = useRef("");
