@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { BookOpen, Brain, Timer, Layers, BarChart3, ShieldCheck, Highlighter, StickyNote, Zap, Smartphone, Calculator, FileText } from "lucide-react";
+import { BookOpen, Brain, Timer, Layers, BarChart3, Highlighter, StickyNote, Zap, Smartphone, Calculator } from "lucide-react";
 
 export const Route = createFileRoute("/features")({
   head: () => ({
