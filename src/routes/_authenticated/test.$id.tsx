@@ -387,7 +387,7 @@ function TestRunner() {
   // previous question's highlighted snapshot leaks into the next question
   // because HighlightableHtml's layout effect reseeds innerHTML BEFORE any
   // parent effect can reset state.
-  const savedHighlights = React.useMemo<Record<string, string>>(() => {
+  const savedHighlights = useMemo<Record<string, string>>(() => {
     if (!question) return {};
     try {
       const raw = localStorage.getItem(`qbank-hl-${question.id}`);
