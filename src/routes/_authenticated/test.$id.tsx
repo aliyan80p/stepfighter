@@ -247,6 +247,15 @@ function TestRunner() {
     return window.matchMedia("(min-width: 768px)").matches;
   });
   const [timedMode, setTimedMode] = useState(true);
+  // Persisted timed-mode base: allows toggling Timed on mid-block to countdown
+  // from (unsolved * 90s) instead of restarting the full block allotment.
+  const [timedBase, setTimedBase] = useState<{ startedAt: number; allowed: number } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(`timedBase:${id}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
   const [tutorMode, setTutorMode] = useState(true);
   const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
   const [exhibitZoom, setExhibitZoom] = useState(1);
@@ -403,6 +412,32 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [blockStartedAt, userSettings.stopTimerOnBlur]);
 
+  // Initialize / persist timedBase whenever timedMode turns on without one.
+  // Base is anchored to blockStartedAt with the full allotment on first setup,
+  // so a fresh test behaves identically to before.
+  useEffect(() => {
+    if (!timedMode || total <= 0) return;
+    if (timedBase) return;
+    const base = { startedAt: blockStartedAt, allowed: total * 90 };
+    setTimedBase(base);
+    try { window.localStorage.setItem(`timedBase:${id}`, JSON.stringify(base)); } catch {}
+  }, [timedMode, total, timedBase, blockStartedAt, id]);
+
+  const handleToggleTimed = (next: boolean) => {
+    setTimedMode(next);
+    if (!next) return;
+    // Turning Timed ON mid-block: recompute remaining as (unsolved * 90s)
+    // starting from now, so the countdown reflects work left — not the
+    // original full-block allotment.
+    const answeredCount = data
+      ? data.questions.reduce((n, q) => n + (data.attemptsByQ[q.id] ? 1 : 0), 0)
+      : 0;
+    const unsolved = Math.max(0, total - answeredCount);
+    const base = { startedAt: Date.now(), allowed: unsolved * 90 };
+    setTimedBase(base);
+    try { window.localStorage.setItem(`timedBase:${id}`, JSON.stringify(base)); } catch {}
+  };
+
   // Auto night mode — switch to dark theme within the user's scheduled window
   useEffect(() => {
     if (!userSettings.autoNightMode) return;
@@ -549,22 +584,30 @@ function TestRunner() {
       }
     }
     await finFn({ data: { testId } });
-    try { window.localStorage.removeItem(`test:${id}:idx`); window.localStorage.removeItem(`blockStartedAt:${id}`); } catch {}
+    try {
+      window.localStorage.removeItem(`test:${id}:idx`);
+      window.localStorage.removeItem(`blockStartedAt:${id}`);
+      window.localStorage.removeItem(`timedBase:${id}`);
+    } catch {}
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
   };
+
+  // Timed-mode remaining seconds, based on the persisted timedBase.
+  const timedRemaining = timedBase
+    ? Math.max(0, timedBase.allowed - Math.round((Date.now() - timedBase.startedAt) / 1000))
+    : total * 90;
 
   // Auto-end exam mode when block time runs out
   const autoEndedRef = useRef(false);
   useEffect(() => {
     if (isReview || !isRealExam || !timedMode) return;
-    const allowed = total * 90;
-    if (blockElapsed >= allowed && !autoEndedRef.current) {
+    if (timedRemaining <= 0 && !autoEndedRef.current) {
       autoEndedRef.current = true;
       toast.message("Time's up — submitting your block.");
       finish();
     }
-  }, [blockElapsed, timedMode, isRealExam, isReview, total]);
+  }, [blockElapsed, timedRemaining, timedMode, isRealExam, isReview]);
 
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
@@ -1342,8 +1385,7 @@ function TestRunner() {
 
       {/* Bottom nav */}
       {(() => {
-        const allowed = total * 90;
-        const blockSec = timedMode ? Math.max(0, allowed - blockElapsed) : blockElapsed;
+        const blockSec = timedMode ? timedRemaining : blockElapsed;
         const bh = String(Math.floor(blockSec / 3600)).padStart(2, "0");
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
@@ -1396,7 +1438,7 @@ function TestRunner() {
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {!isReview && (
                 <>
-                  <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
+                  <ToggleSwitch label="Timed" checked={timedMode} onChange={handleToggleTimed} />
                   <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
                   <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
                 </>
