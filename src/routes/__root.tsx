@@ -133,6 +133,11 @@ function RootComponent() {
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });
+    // Register the media cache SW so refreshing a question doesn't refetch
+    // images/videos/audio that were already downloaded on a prior view.
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/media-sw.js", { scope: "/" }).catch(() => {});
+    }
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
 
