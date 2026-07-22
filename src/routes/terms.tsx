@@ -32,9 +32,7 @@ function Terms() {
         <p>You must provide accurate information when creating an account. You are responsible for keeping your credentials confidential and for all activity under your account. Accounts are for individual use — sharing credentials or reselling access is prohibited and results in immediate termination without refund.</p>
 
         <h2>4. Subscription Services</h2>
-        <p>Subscriptions are activated after payment confirmation via WhatsApp, email or supported channels. Current plans are listed on the Pricing page. All subscriptions are prepaid for the stated duration.</p>
-        <p><strong>Auto-renewal:</strong> Subscriptions are not set to auto-renew. Users must manually purchase a new plan to continue access after expiry.</p>
-        <p><strong>Promotional codes:</strong> Codes must be applied before completing a transaction to receive a discount. Codes applied after purchase cannot be retroactively credited.</p>
+        <p>Subscriptions are activated after payment confirmation via WhatsApp, email or supported channels. Current plans are listed on the Pricing page. All subscriptions are prepaid for the stated duration and do not auto-renew. Users must manually purchase a new plan to continue access after expiry.</p>
 
         <h2>5. Free Trial</h2>
         <p>New accounts receive an 8-day free trial for evaluation. Trials do not require payment and end automatically. We encourage every user to make full use of the trial before subscribing.</p>
