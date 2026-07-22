@@ -111,6 +111,60 @@ function Home() {
             Multi-device support
           </p>
 
+          {/* Animated real question preview — iPad tutor + iPhone exam */}
+          <div className="relative mt-16 mb-4 grid md:grid-cols-2 gap-10 md:gap-6 items-center">
+            {/* Ambient glow */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
+              <div className="h-[420px] w-[420px] rounded-full bg-amber-300/30 blur-3xl sf-glow-pulse" />
+            </div>
+
+            {/* iPad tutor */}
+            <div className="flex justify-center md:justify-end sf-fade-up" style={{ animationDelay: "0.05s" }}>
+              <div className="sf-float-slow will-change-transform">
+                <div className="relative w-[300px] sm:w-[380px] md:w-[440px] rounded-[28px] bg-slate-900 p-3 shadow-2xl ring-1 ring-slate-800">
+                  <div className="rounded-[20px] overflow-hidden bg-white aspect-[4/3]">
+                    <img
+                      src="/__l5e/assets-v1/e817b329-f357-4140-9dea-6fe059e24980/ipad-tutor-question.jpg"
+                      alt="StepFighter tutor mode question with diagram on iPad"
+                      loading="lazy"
+                      className="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-1 h-1.5 w-14 rounded-full bg-slate-700" />
+                </div>
+                <div className="mt-4 text-center">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-[11px] font-bold uppercase tracking-widest text-[#1a4b7c] shadow-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Tutor mode · iPad
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* iPhone exam */}
+            <div className="flex justify-center md:justify-start sf-fade-up" style={{ animationDelay: "0.25s" }}>
+              <div className="sf-float-slower will-change-transform">
+                <div className="relative w-[210px] sm:w-[240px] rounded-[38px] bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800">
+                  <div className="absolute left-1/2 -translate-x-1/2 top-2 h-5 w-24 rounded-full bg-slate-900 z-10" />
+                  <div className="rounded-[30px] overflow-hidden bg-white aspect-[9/19]">
+                    <img
+                      src="/__l5e/assets-v1/3101a121-ca59-4b1c-920d-a4c823eb2f72/iphone-exam-question.jpg"
+                      alt="StepFighter exam mode question on iPhone"
+                      loading="lazy"
+                      className="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 text-center">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-[11px] font-bold uppercase tracking-widest text-[#1a4b7c] shadow-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> Exam mode · iPhone
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
           {/* Feature screenshot strip */}
           <div className="mt-14 grid md:grid-cols-3 gap-6">
             {[
