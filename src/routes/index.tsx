@@ -132,69 +132,10 @@ function Home() {
         </div>
       </section>
 
-      {/* Device showcase — real screenshots from the live app */}
-      <section className="relative bg-white">
-        <div className="max-w-7xl mx-auto px-4 pt-16 pb-16">
-          <div className="relative flex items-end justify-center gap-3 md:gap-5 lg:gap-6">
-            {/* Ambient glow */}
-            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
-              <div className="h-[420px] w-[420px] rounded-full bg-amber-300/25 blur-3xl sf-glow-pulse" />
-            </div>
-
-            {/* iPhone — exam mode */}
-            <div className="hidden sm:block sf-fade-up" style={{ animationDelay: "0.25s" }}>
-              <div className="sf-float-slower will-change-transform w-[110px] md:w-[140px] lg:w-[160px] shrink-0 rounded-[26px] bg-slate-900 p-1.5 shadow-2xl ring-1 ring-slate-800 mb-8">
-                <div className="rounded-[20px] overflow-hidden bg-white aspect-[9/19]">
-                  <img
-                    src="/__l5e/assets-v1/3101a121-ca59-4b1c-920d-a4c823eb2f72/iphone-exam-question.jpg"
-                    alt="StepFighter exam mode question on iPhone"
-                    className="w-full h-full object-cover object-center"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Laptop — dashboard */}
-            <div className="relative flex-1 max-w-[620px] lg:max-w-[720px] sf-fade-up" style={{ animationDelay: "0.05s" }}>
-              <div className="sf-float-slow will-change-transform">
-                <div className="rounded-t-xl bg-slate-900 p-2.5 shadow-2xl ring-1 ring-slate-800">
-                  <div className="flex items-center gap-1.5 mb-2 px-2">
-                    <span className="h-2 w-2 rounded-full bg-red-400" />
-                    <span className="h-2 w-2 rounded-full bg-amber-400" />
-                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  </div>
-                  <div className="rounded-md overflow-hidden bg-white aspect-[16/10]">
-                    <img
-                      src="/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png"
-                      alt="StepFighter USMLE dashboard on laptop"
-                      className="w-full h-full object-cover object-top"
-                      loading="eager"
-                    />
-                  </div>
-                </div>
-                <div className="h-3 bg-slate-800 rounded-b-xl mx-[-8px]" />
-                <div className="h-1 bg-slate-700 rounded-b-full mx-auto w-24" />
-              </div>
-            </div>
-
-            {/* iPad — tutor mode */}
-            <div className="hidden md:block sf-fade-up" style={{ animationDelay: "0.15s" }}>
-              <div className="sf-float-slow will-change-transform w-[220px] lg:w-[300px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
-                <div className="rounded-xl overflow-hidden bg-white aspect-[4/3]">
-                  <img
-                    src="/__l5e/assets-v1/e817b329-f357-4140-9dea-6fe059e24980/ipad-tutor-question.jpg"
-                    alt="StepFighter tutor mode question with diagram on iPad"
-                    className="w-full h-full object-cover object-center"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature screenshot strip */}
-          <div className="mt-14 grid md:grid-cols-3 gap-6">
+      {/* Feature screenshot strip */}
+      <section className="relative bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
               { u: "/__l5e/assets-v1/9c97374c-9f3d-4423-86ce-1440635ebd32/desktop_new_test.png", t: "Custom Quiz Builder", d: "Tutor or exam mode, timed or untimed, filtered by subject, system, topic." },
               { u: "/__l5e/assets-v1/b9e527e7-e8a2-4666-a40d-8f4f49ec8004/desktop_performance.png", t: "Performance Analytics", d: "Score, correct, incorrect, answer changes and test count — updated in real time." },
