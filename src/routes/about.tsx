@@ -38,9 +38,6 @@ export const Route = createFileRoute("/about")({
   component: About,
 });
 
-const allForms = COURSES.reduce((n, c) => n + c.extras.length, 0).toString();
-void allForms;
-
 function About() {
   return (
     <SiteLayout>
