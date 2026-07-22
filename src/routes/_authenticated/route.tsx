@@ -29,6 +29,7 @@ import {
   PanelLeftClose,
   Shield,
   PlusCircle,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -316,6 +317,20 @@ function AuthedLayout() {
               </div>
             );
           })}
+
+          <Link
+            to="/subscribe-renew"
+            onClick={closeOnMobile}
+            className={cn(
+              "mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              isActive("/subscribe-renew")
+                ? "bg-primary text-primary-foreground"
+                : "bg-primary/10 text-primary hover:bg-primary/20",
+            )}
+          >
+            <CreditCard className="h-4 w-4" />
+            Subscribe or Renew
+          </Link>
 
           {trialEnded && (
             <Link
