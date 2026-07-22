@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { SITE, waLink } from "@/lib/site";
-import { MessageCircle, Mail, Clock, MapPin } from "lucide-react";
+import { MessageCircle, Mail, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
