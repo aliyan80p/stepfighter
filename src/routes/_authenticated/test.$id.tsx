@@ -341,6 +341,7 @@ function TestRunner() {
     setSubmitted(!!priorAttempt);
     setStartedAt(Date.now());
     setElapsed(0);
+    setSubmittedSecs(typeof (priorAttempt as any)?.time_seconds === "number" ? (priorAttempt as any).time_seconds : null);
     setMediaModalIndex(null);
     setStruck(new Set());
   }, [idx, question?.id, priorAttempt?.selected_answer]);
