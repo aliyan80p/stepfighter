@@ -213,7 +213,7 @@ function Home() {
               <span className="inline-flex items-center gap-1"><StickyNote className="h-3 w-3 text-amber-400" /> Personal notes</span>
               <span className="inline-flex items-center gap-1"><FileText className="h-3 w-3 text-amber-400" /> Lab values</span>
               <span className="inline-flex items-center gap-1"><Timer className="h-3 w-3 text-amber-400" /> Real timers</span>
-              <span className="inline-flex items-center gap-1"><Smartphone className="h-3 w-3 text-amber-400" /> PWA install</span>
+              <span className="inline-flex items-center gap-1"><Smartphone className="h-3 w-3 text-amber-400" /> Install on any device</span>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@ function Home() {
               { i: Timer, t: "Real Exam Simulation", d: "Prometric-style interface with authentic timers, block navigation and question flagging." },
               { i: Layers, t: "Custom Test Builder", d: "Build blocks by system, subject, difficulty — unused, incorrect or flagged." },
               { i: ShieldCheck, t: "Regularly Updated", d: "Content reviewed and updated by USMLE-scoring physicians to match the latest outline." },
-              { i: Smartphone, t: "Works On Any Device", d: "Responsive PWA on desktop, iPad, Android and iPhone. Install and study offline." },
+              { i: Smartphone, t: "Works On Any Device", d: "Responsive on desktop, iPad, Android and iPhone — study anywhere, any time." },
             ].map((f) => (
               <div key={f.t} className="bg-white border border-slate-200 rounded-lg p-6 hover:border-[#1a4b7c] hover:shadow-md transition-all">
                 <div className="h-11 w-11 rounded-md bg-[#1a4b7c]/10 text-[#1a4b7c] grid place-items-center mb-3">
@@ -293,7 +293,7 @@ function Home() {
               { i: MessageCircle, t: "Message us", d: "Tap the WhatsApp button and send us your chosen Step and plan.", n: "1" },
               { i: Wallet, t: "Pay your way", d: "Local bank, Wise, JazzCash, Easypaisa, USDT or card — we accept most regional methods.", n: "2" },
               { i: KeyRound, t: "Get credentials", d: "We create your account within minutes during working hours and send login details.", n: "3" },
-              { i: UserPlus, t: "Start studying", d: "Log in on any device or install the PWA and begin your first block right away.", n: "4" },
+              { i: UserPlus, t: "Start studying", d: "Log in on any device and begin your first block right away.", n: "4" },
             ].map((s) => (
               <div key={s.n} className="bg-white rounded-lg border border-slate-200 p-6 relative">
                 <div className="absolute -top-3 -left-3 h-8 w-8 rounded-full bg-amber-400 text-[#0d2b4e] font-black grid place-items-center text-sm">{s.n}</div>

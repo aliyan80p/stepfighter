@@ -51,7 +51,7 @@ const faqs = [
   },
   {
     q: "Does it work on mobile and iPad?",
-    a: "Yes. Fully responsive on all devices with native touch highlighting, offline PWA support and Prometric-accurate simulation on tablet and desktop.",
+    a: "Yes. Fully responsive on all devices with native touch highlighting and Prometric-accurate simulation on tablet and desktop.",
   },
   {
     q: "Can I use it on multiple devices?",
