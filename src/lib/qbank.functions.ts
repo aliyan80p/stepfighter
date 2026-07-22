@@ -30,7 +30,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
 
     const questionsCountQ = sources
       ? supabase.from("questions").select("id", { count: "exact", head: true }).eq("qbank_id", qbankId).in("source", sources)
-      : null;
+      : supabase.from("questions").select("id", { count: "exact", head: true }).eq("qbank_id", qbankId);
 
 
     let attemptsQ = supabase.from("attempts").select("is_correct,question_id,selected_answer,created_at").eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true });
@@ -114,7 +114,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       totalQuestions: totalQ ?? 0,
       subjects: subjects ?? [],
       answered: uniqueDone,
-      unused: (totalQ ?? 0) - uniqueDone,
+      unused: Math.max(0, (totalQ ?? 0) - uniqueDone),
       totalAttempts: total,
       correctAttempts: correct,
       incorrectAttempts: incorrect,
