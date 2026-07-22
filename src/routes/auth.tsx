@@ -13,7 +13,7 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — StepFighter" },
-      { name: "description", content: "Sign in to StepFighter or start your 14-day free trial." },
+      { name: "description", content: "Sign in to StepFighter or start your 8-day free trial." },
     ],
   }),
   validateSearch: z.object({ mode: z.enum(["signin", "signup"]).optional() }),
@@ -126,7 +126,7 @@ function AuthPage() {
           <h1 className="text-2xl font-semibold">Check your inbox</h1>
           <p className="mt-2 text-muted-foreground">
             We sent a verification link to <span className="font-medium text-foreground">{verifySent}</span>.
-            Click it to activate your account and start your 14-day free trial.
+            Click it to activate your account and start your 8-day free trial.
           </p>
           <p className="mt-4 text-xs text-muted-foreground">
             Didn't arrive? Check spam, or{" "}
@@ -156,7 +156,7 @@ function AuthPage() {
             {forgot
               ? "We'll email you a link to set a new password."
               : mode === "signup"
-              ? "14 days free. No card required."
+              ? "8 days free. No card required."
               : "Sign in to continue."}
           </p>
 

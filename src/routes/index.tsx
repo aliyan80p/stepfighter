@@ -108,7 +108,7 @@ function Home() {
               </a>
             </div>
             <div className="mt-6 flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs text-white/70 font-semibold">
-              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> 14-day free trial</span>
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> 8-day free trial</span>
               <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Instant activation</span>
             </div>
           </div>
@@ -325,7 +325,7 @@ function Home() {
       <section className="bg-[#0d2b4e] text-white">
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to activate your StepFighter access?</h2>
-          <p className="text-slate-300 mb-8">Start with a 14-day free trial or message us on WhatsApp to activate a paid plan instantly.</p>
+          <p className="text-slate-300 mb-8">Start with an 8-day free trial or message us on WhatsApp to activate a paid plan instantly.</p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/auth" search={{ mode: "signup" }} className="px-8 py-4 bg-amber-400 text-[#0d2b4e] font-bold rounded-md hover:bg-white">
               Start Free Trial

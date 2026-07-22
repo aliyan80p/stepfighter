@@ -140,7 +140,7 @@ function About() {
           Ready to study like it matters?
         </h2>
         <p className="text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-          Start a free 14-day trial, explore the full QBank, and see how StepFighter helps you
+          Start an 8-day free trial, explore the full QBank, and see how StepFighter helps you
           build real exam-day confidence.
         </p>
         <div className="flex flex-wrap justify-center gap-3">

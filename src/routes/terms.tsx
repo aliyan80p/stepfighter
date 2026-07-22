@@ -35,7 +35,7 @@ function Terms() {
         <p>Subscriptions are activated after payment confirmation via WhatsApp, email or supported channels. Prices are listed on the Pricing page. All subscriptions are prepaid for the stated duration and do not auto-renew.</p>
 
         <h2>5. Free Trial</h2>
-        <p>New accounts receive a 14-day free trial with limited access. Trials do not require payment and end automatically.</p>
+        <p>New accounts receive an 8-day free trial with limited access. Trials do not require payment and end automatically.</p>
 
         <h2>6. Refunds</h2>
         <p>See our <a href="/refund">Refund Policy</a>. Full refunds are available within 3 days of activation.</p>

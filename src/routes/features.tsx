@@ -53,7 +53,7 @@ function Features() {
 
         <div className="text-center mt-16">
           <h2 className="text-2xl font-bold text-[#0d2b4e] mb-4">Ready to try it yourself?</h2>
-          <p className="text-slate-600 mb-6">Start your 14-day free trial — no credit card required.</p>
+          <p className="text-slate-600 mb-6">Start your 8-day free trial — no credit card required.</p>
           <Link to="/auth" search={{ mode: "signup" }} className="px-8 py-4 bg-[#1a4b7c] text-white font-bold rounded-md hover:bg-[#0d2b4e]">
             Start Free Trial
           </Link>
