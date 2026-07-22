@@ -829,6 +829,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      pick_question_ids: {
+        Args: {
+          p_count?: number
+          p_qbank_id: number
+          p_scope?: string
+          p_sources?: string[]
+          p_subject_ids?: number[]
+          p_system_ids?: number[]
+          p_topic_names?: string[]
+        }
+        Returns: number[]
+      }
+      pool_count: {
+        Args: {
+          p_qbank_id: number
+          p_scope?: string
+          p_sources?: string[]
+          p_subject_ids?: number[]
+          p_system_ids?: number[]
+          p_topic_names?: string[]
+        }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "user"

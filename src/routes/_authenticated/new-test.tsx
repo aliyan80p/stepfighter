@@ -139,6 +139,8 @@ function NewTest() {
   const { data } = useQuery({
     queryKey: ["filters", qbankId, selectedSources],
     queryFn: () => getFn({ data: { qbankId, sources: selectedSources } }),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
 
@@ -250,6 +252,9 @@ function NewTest() {
     queryKey: ["pool", qbankId, selectedSources, subjectIds, systemIds, topicNames, scope],
     queryFn: () => poolFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope } }),
     enabled: !!data,
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
 
 
