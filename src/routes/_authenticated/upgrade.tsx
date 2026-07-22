@@ -98,7 +98,7 @@ function UpgradePage() {
         </section>
 
         <p className="text-center text-xs text-muted-foreground">
-          Prices shown in PKR and USD. Message us for the exact amount and payment options available in your region.
+          Prices shown in USD. Message us for payment options available in your region.
         </p>
 
         <section className="grid gap-4 md:grid-cols-3">
