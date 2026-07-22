@@ -445,8 +445,9 @@ function TestRunner() {
 
   const submit = async () => {
     if (!question) return;
-    const secs = Math.round((Date.now() - startedAt) / 1000);
+    const secs = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
     setSubmitted(true);
+    setSubmittedSecs(secs);
     if (selected == null) return;
     const isCorrect = question.correct_answer === selected;
     // Optimistic: mark submitted immediately, update cache, fire-and-forget the server call
