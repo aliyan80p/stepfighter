@@ -513,6 +513,7 @@ function TestRunner() {
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
     setIdx(bounded);
+    try { window.localStorage.setItem(`test:${id}:idx`, String(bounded)); } catch {}
     setHlBar(null);
     savedRangeRef.current = null;
     savedSelectionRef.current = null;
