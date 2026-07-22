@@ -34,7 +34,7 @@ function Home() {
           <h1 className="text-4xl md:text-6xl font-bold text-[#0d2b4e] leading-tight max-w-4xl mx-auto">
             Train like a fighter. <span className="underline decoration-amber-400 decoration-[6px] underline-offset-4">Score like a surgeon.</span>
             <br className="hidden md:block" />
-            Step-by-step USMLE prep on <span className="text-[#1a4b7c]">your terms</span>.
+            Step-by-step board prep on <span className="text-[#1a4b7c]">your terms</span>.
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Board-style questions across Step 1, Step 2 CK and Step 3 — plus NBME-style self-assessments,

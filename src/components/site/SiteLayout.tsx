@@ -17,7 +17,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <div className="h-9 w-9 rounded-md bg-[#1a4b7c] text-white grid place-items-center font-bold">SF</div>
             <div>
               <div className="text-[#1a4b7c] font-bold text-lg leading-none">StepFighter</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest">USMLE Prep</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-widest">Step 1 · 2 CK · 3</div>
             </div>
           </Link>
           <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-700">
@@ -65,7 +65,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               <span className="text-white font-bold text-lg">StepFighter</span>
             </div>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
-              A high-yield USMLE preparation platform built by physicians for IMGs and US medical students.
+              A high-yield medical board prep platform built by physicians for IMGs and medical students worldwide.
               Board-style questions across Step 1, Step 2 CK, and Step 3 with NBME-style self-assessments.
             </p>
             <div className="mt-6 flex gap-3">
