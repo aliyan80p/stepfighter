@@ -236,7 +236,7 @@ function Pricing() {
         <div className="grid md:grid-cols-3 gap-6">
           {[
             { i: Zap, t: "Same-day activation", d: "Most accounts are live within hours of payment confirmation." },
-            { i: ShieldCheck, t: "3-day satisfaction window", d: "If the platform isn't right for you, message us within 72 hours." },
+            { i: ShieldCheck, t: "8-day free trial", d: "Try every feature before you pay. No card required, no auto-renewal." },
             { i: Layers, t: "Free content updates", d: "Every new form, question and correction lands in your account automatically." },
           ].map((b) => (
             <div key={b.t} className="text-center p-6">
