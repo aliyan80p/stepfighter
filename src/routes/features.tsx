@@ -26,7 +26,7 @@ const features = [
   { i: BarChart3, t: "Overall Performance Dashboard", d: "Track answer changes, test count, streaks and accuracy trends over time." },
   { i: Zap, t: "Media-Rich Explanations", d: "Every question ships with high-yield imagery, tables, videos and audio where relevant." },
   { i: Smartphone, t: "Works on Every Device", d: "Fully responsive on mobile, tablet and desktop." },
-  { i: ShieldCheck, t: "Regularly Updated", d: "Content reviewed against the latest USMLE content outline. New forms added every quarter." },
+  { i: ShieldCheck, t: "Continuously refined", d: "AI verifies metadata, tags, and explanations against the latest NBME and CMS patterns." },
 ];
 
 function Features() {
