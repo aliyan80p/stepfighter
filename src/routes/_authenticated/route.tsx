@@ -149,6 +149,18 @@ function AuthedLayout() {
   const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60 * 1000 });
   const trialEnded = entQ.data?.plan === "expired" || (entQ.data?.plan === "trial" && !entQ.data?.is_active);
 
+  // Enforce single/limited course access: auto-switch active qbank if user has no access to it.
+  const activeQbankId = useActiveQbankId();
+  useEffect(() => {
+    const access = entQ.data?.effective_access;
+    if (!access || access.length === 0) return;
+    const currentSlug = QBANK_ID_TO_SLUG[activeQbankId];
+    if (!currentSlug || !access.includes(currentSlug)) {
+      const first = QBANKS.find((q) => access.includes(QBANK_ID_TO_SLUG[q.id]));
+      if (first && first.id !== activeQbankId) setActiveQbankId(first.id);
+    }
+  }, [entQ.data, activeQbankId]);
+
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
 
