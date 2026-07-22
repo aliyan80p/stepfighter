@@ -297,6 +297,22 @@ function AuthedLayout() {
               </div>
             );
           })}
+
+          {trialEnded && (
+            <Link
+              to="/upgrade"
+              onClick={closeOnMobile}
+              className={cn(
+                "mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isActive("/upgrade")
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-primary/10 text-primary hover:bg-primary/20",
+              )}
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add Course
+            </Link>
+          )}
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">
