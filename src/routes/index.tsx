@@ -4,7 +4,7 @@ import { waLink, COURSES } from "@/lib/site";
 import heroBg from "@/assets/hero-bg-navy.jpg";
 import {
   CheckCircle2, BookOpen, Layers, BarChart3, Timer, Brain, ArrowRight, MessageCircle,
-  ShieldCheck, GraduationCap, Trophy, Highlighter, StickyNote, FileText, Smartphone,
+  ShieldCheck, GraduationCap, Highlighter, StickyNote, FileText, Smartphone,
   Wallet, UserPlus, KeyRound,
 } from "lucide-react";
 
@@ -88,7 +88,7 @@ function Home() {
 
             {/* iPad — tutor mode */}
             <div className="hidden md:block sf-fade-up" style={{ animationDelay: "0.15s" }}>
-              <div className="sf-float-slow will-change-transform w-[180px] lg:w-[300px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
+            <div className="sf-float-slow will-change-transform w-[220px] lg:w-[420px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
                 <div className="rounded-xl overflow-hidden bg-white aspect-[4/3]">
                   <img
                     src="/__l5e/assets-v1/e817b329-f357-4140-9dea-6fe059e24980/ipad-tutor-question.jpg"
@@ -103,9 +103,6 @@ function Home() {
 
           {/* Hero text */}
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-amber-400 bg-white/10 backdrop-blur-sm border border-white/10 mb-5">
-              <Trophy className="h-3 w-3 text-amber-400" /> Built for the 2026 USMLE
-            </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
               StepFighter — where every rep builds your score.
             </h1>
