@@ -118,9 +118,6 @@ function Home() {
             </div>
           </div>
 
-          <p className="mt-8 text-center text-xs uppercase tracking-widest font-bold text-slate-500">
-            Multi-device support
-          </p>
 
 
 
