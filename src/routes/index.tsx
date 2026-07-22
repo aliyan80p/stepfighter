@@ -145,7 +145,7 @@ function Home() {
           {[
             { i: GraduationCap, t: "Tutor & Exam Modes", d: "Guided learning or full Prometric-style simulation — switch any time." },
             { i: Brain, t: "AI Performance Analytics", d: "Drill down by system, subject and topic to find your weak points." },
-            { i: Layers, t: "Smart Flashcards", d: "SM-2 spaced repetition. Build decks from mistakes and notes automatically." },
+            { i: Layers, t: "Smart Flashcards", d: "SM-2 spaced repetition. Create cards from notes and questions while you study." },
             { i: Wallet, t: "Affordable Pricing", d: "Per-Step subscriptions from $29 — a fraction of the big brands." },
           ].map((f) => (
             <div key={f.t}>
