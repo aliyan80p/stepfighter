@@ -26,8 +26,8 @@ export const Route = createFileRoute("/")({
 function Home() {
   return (
     <SiteLayout>
-      {/* HERO — full-bleed background image with white text overlay */}
-      <section className="relative min-h-[520px] md:min-h-[620px] flex items-center justify-center overflow-hidden">
+      {/* HERO — full-bleed background image with floating devices and white text overlay */}
+      <section className="relative min-h-[680px] md:min-h-[780px] overflow-hidden">
         {/* Background image */}
         <img
           src={heroBg}
@@ -39,47 +39,14 @@ function Home() {
         />
         {/* Dark gradient overlay for text readability */}
         <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#0a1628]/95 via-[#0a1628]/80 to-[#0a1628]/40" />
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/90 via-transparent to-[#0a1628]/40" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/95 via-[#0a1628]/50 to-[#0a1628]/50" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 py-20 md:py-28 text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-amber-400 bg-white/10 backdrop-blur-sm border border-white/10 mb-6">
-            <Trophy className="h-3 w-3 text-amber-400" /> Built for the 2026 USMLE
-          </div>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight max-w-3xl">
-            StepFighter — where every rep builds your score.
-          </h1>
-          <p className="mt-6 text-lg md:text-xl text-white/80 max-w-2xl leading-relaxed">
-            Board-style questions for Step 1, Step 2 CK and Step 3.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center md:justify-start gap-3">
-            <Link to="/auth" search={{ mode: "signup" }}
-              className="px-6 py-3 bg-amber-500 text-[#0a1628] font-bold rounded-md hover:bg-amber-400 transition-colors inline-flex items-center gap-2">
-              Start Free Trial <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a href={waLink("Hi, I want to register for StepFighter. Please guide me for activation.")}
-              target="_blank" rel="noreferrer"
-              className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-bold rounded-md hover:bg-white/20 transition-colors inline-flex items-center gap-2 border border-white/20">
-              <MessageCircle className="h-4 w-4" /> Register on WhatsApp
-            </a>
-          </div>
-          <div className="mt-6 flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-xs text-white/70 font-semibold">
-            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> 14-day free trial</span>
-            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> No credit card needed</span>
-            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Instant activation</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Device showcase — real screenshots from the live app */}
-      <section className="relative bg-white">
-        <div className="max-w-7xl mx-auto px-4 pt-16 pb-16">
-
-        {/* Device showcase — real screenshots from the live app */}
-        <div className="max-w-7xl mx-auto px-4 pb-16">
-          <div className="relative flex items-end justify-center gap-3 md:gap-5 lg:gap-6">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 pt-20 md:pt-24 pb-16">
+          {/* Floating device mockups */}
+          <div className="relative flex items-end justify-center gap-3 md:gap-5 lg:gap-6 mb-10 md:mb-12">
             {/* Ambient glow */}
             <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
-              <div className="h-[420px] w-[420px] rounded-full bg-amber-300/25 blur-3xl sf-glow-pulse" />
+              <div className="h-[320px] w-[320px] md:h-[420px] md:w-[420px] rounded-full bg-amber-300/20 blur-3xl sf-glow-pulse" />
             </div>
 
             {/* iPhone — exam mode */}
@@ -97,10 +64,10 @@ function Home() {
             </div>
 
             {/* Laptop — dashboard */}
-            <div className="relative flex-1 max-w-[620px] lg:max-w-[720px] sf-fade-up" style={{ animationDelay: "0.05s" }}>
+            <div className="relative flex-1 max-w-[520px] md:max-w-[620px] lg:max-w-[720px] sf-fade-up" style={{ animationDelay: "0.05s" }}>
               <div className="sf-float-slow will-change-transform">
-                <div className="rounded-t-xl bg-slate-900 p-2.5 shadow-2xl ring-1 ring-slate-800">
-                  <div className="flex items-center gap-1.5 mb-2 px-2">
+                <div className="rounded-t-xl bg-slate-900 p-2 md:p-2.5 shadow-2xl ring-1 ring-slate-800">
+                  <div className="flex items-center gap-1.5 mb-1.5 md:mb-2 px-2">
                     <span className="h-2 w-2 rounded-full bg-red-400" />
                     <span className="h-2 w-2 rounded-full bg-amber-400" />
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -114,14 +81,14 @@ function Home() {
                     />
                   </div>
                 </div>
-                <div className="h-3 bg-slate-800 rounded-b-xl mx-[-8px]" />
-                <div className="h-1 bg-slate-700 rounded-b-full mx-auto w-24" />
+                <div className="h-2 md:h-3 bg-slate-800 rounded-b-xl mx-[-6px] md:mx-[-8px]" />
+                <div className="h-1 bg-slate-700 rounded-b-full mx-auto w-20 md:w-24" />
               </div>
             </div>
 
             {/* iPad — tutor mode */}
             <div className="hidden md:block sf-fade-up" style={{ animationDelay: "0.15s" }}>
-              <div className="sf-float-slow will-change-transform w-[220px] lg:w-[300px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
+              <div className="sf-float-slow will-change-transform w-[180px] lg:w-[300px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
                 <div className="rounded-xl overflow-hidden bg-white aspect-[4/3]">
                   <img
                     src="/__l5e/assets-v1/e817b329-f357-4140-9dea-6fe059e24980/ipad-tutor-question.jpg"
@@ -131,11 +98,44 @@ function Home() {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Hero text */}
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-amber-400 bg-white/10 backdrop-blur-sm border border-white/10 mb-5">
+              <Trophy className="h-3 w-3 text-amber-400" /> Built for the 2026 USMLE
+            </div>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+              StepFighter — where every rep builds your score.
+            </h1>
+            <p className="mt-5 text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
+              Board-style questions for Step 1, Step 2 CK and Step 3.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link to="/auth" search={{ mode: "signup" }}
+                className="px-6 py-3 bg-amber-500 text-[#0a1628] font-bold rounded-md hover:bg-amber-400 transition-colors inline-flex items-center gap-2">
+                Start Free Trial <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a href={waLink("Hi, I want to register for StepFighter. Please guide me for activation.")}
+                target="_blank" rel="noreferrer"
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-bold rounded-md hover:bg-white/20 transition-colors inline-flex items-center gap-2 border border-white/20">
+                <MessageCircle className="h-4 w-4" /> Register on WhatsApp
+              </a>
+            </div>
+            <div className="mt-6 flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs text-white/70 font-semibold">
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> 14-day free trial</span>
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> No credit card needed</span>
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Instant activation</span>
+            </div>
           </div>
         </div>
+      </section>
 
-          {/* Feature screenshot strip */}
-          <div className="mt-14 grid md:grid-cols-3 gap-6">
+      {/* Feature screenshot strip */}
+      <section className="relative bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
               { u: "/__l5e/assets-v1/9c97374c-9f3d-4423-86ce-1440635ebd32/desktop_new_test.png", t: "Custom Quiz Builder", d: "Tutor or exam mode, timed or untimed, filtered by subject, system, topic." },
               { u: "/__l5e/assets-v1/b9e527e7-e8a2-4666-a40d-8f4f49ec8004/desktop_performance.png", t: "Performance Analytics", d: "Score, correct, incorrect, answer changes and test count — updated in real time." },
