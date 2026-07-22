@@ -87,7 +87,6 @@ function Pricing() {
                   <span className="text-4xl font-bold text-[#0d2b4e]">${price.usd}</span>
                   <span className="text-slate-500 text-sm">USD</span>
                 </div>
-                <div className="text-xs text-slate-500 mb-1">PKR {price.pkr.toLocaleString()}</div>
                 <div className="text-xs text-slate-400 mb-5">≈ ${perMonth} / month · {durationLabel[dur]}</div>
 
                 <ul className="space-y-2 text-sm text-slate-700 mb-6 flex-1">
