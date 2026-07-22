@@ -398,3 +398,51 @@ function AuthedLayout() {
   );
 }
 
+const LOCKED_ALLOWLIST = [
+  "/subscribe-renew",
+  "/upgrade",
+  "/account/settings",
+  "/account/reset",
+];
+
+function isAllowedWhenLocked(pathname: string) {
+  return LOCKED_ALLOWLIST.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
+function PaywallGate() {
+  return (
+    <div className="min-h-full grid place-items-center p-6">
+      <div className="max-w-lg w-full rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+        <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-primary/10 text-primary grid place-items-center">
+          <Lock className="h-7 w-7" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Your subscription has ended</h1>
+        <p className="text-muted-foreground mb-6">
+          Your free trial has expired. Subscribe or renew to unlock the QBank,
+          self-assessments, flashcards, notes, performance analytics and every
+          other feature.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            to="/subscribe-renew"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-5 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors"
+          >
+            <CreditCard className="h-4 w-4" />
+            Subscribe or Renew
+          </Link>
+          <Link
+            to="/upgrade"
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background px-5 py-2.5 text-sm font-semibold hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            <PlusCircle className="h-4 w-4" />
+            View Plans
+          </Link>
+        </div>
+        <p className="mt-6 text-xs text-muted-foreground">
+          Need help? Email support@stepfighter.com
+        </p>
+      </div>
+    </div>
+  );
+}
+
