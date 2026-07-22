@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
 import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.functions";
 import { rewriteMedia, withMediaToken } from "@/lib/media";
 import { useMediaToken } from "@/lib/use-media-token";
@@ -257,7 +257,6 @@ function TestRunner() {
 
   // Highlight toolbar state (hooks must live above early returns)
   const [hlBar, setHlBar] = useState<{ x: number; y: number; placement: "above" | "below" } | null>(null);
-  const [highlightHtml, setHighlightHtml] = useState<Record<string, string>>({});
   const savedRangeRef = useRef<Range | null>(null);
   const savedSelectionRef = useRef<{ key: string; start: number; end: number } | null>(null);
   const savedTextRef = useRef("");
@@ -381,14 +380,18 @@ function TestRunner() {
 
 
 
-  // Restore saved highlights per question (must run before early returns to keep hook order stable)
-  useEffect(() => {
-    if (!question) return;
-    const saved = (() => {
-      try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); }
-      catch { return {}; }
-    })();
-    setHighlightHtml(saved && typeof saved === "object" ? saved : {});
+  // Compute saved highlights synchronously per question so the very first
+  // render after navigation already has the correct HTML — otherwise the
+  // previous question's highlighted snapshot leaks into the next question
+  // because HighlightableHtml's layout effect reseeds innerHTML BEFORE any
+  // parent effect can reset state.
+  const savedHighlights = useMemo<Record<string, string>>(() => {
+    if (!question) return {};
+    try {
+      const raw = localStorage.getItem(`qbank-hl-${question.id}`);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch { return {}; }
   }, [question?.id, submitted]);
 
   // Click-to-open exhibit modal for any image in the question/explanation.
@@ -578,9 +581,9 @@ function TestRunner() {
     // State is re-hydrated from localStorage on question change.
   };
 
-  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1, mediaToken });
+  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(savedHighlights[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1, mediaToken });
   const answerHtmlFor = (key: string, letter: string, html: string) => (
-    rewriteMedia(highlightHtml[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1, mediaToken })
+    rewriteMedia(savedHighlights[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1, mediaToken })
   );
 
   const getHighlightRoot = (node: Node) => {
