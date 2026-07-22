@@ -19,7 +19,7 @@ const features = [
   { i: FileText, t: "85+ NBME & CMS Forms", d: "Every official-style self-assessment and CMS specialty form for realistic score prediction." },
   { i: Timer, t: "Real Exam Simulator", d: "Prometric-accurate interface with authentic timers, block navigation, flagging, strikeout and lab values panel." },
   { i: Brain, t: "AI Performance Analytics", d: "Drill-down performance by system, subject and topic. See patterns behind wrong answers, not just tallies." },
-  { i: Calculator, t: "Score Predictor", d: "Calibrated to NBME 9–31 slopes and intercepts — know where you stand before test day." },
+  { i: Calculator, t: "NBME/UWSA Score Calculator", d: "Calibrated to NBME 9–31 slopes and intercepts — convert your percent correct to a 3-digit score." },
   { i: Layers, t: "Custom Test Builder", d: "Filter by system, subject, difficulty, unused, incorrect, or flagged. Build the exact block you need." },
   { i: Highlighter, t: "Native Highlighting", d: "UWorld-style multi-color highlighting that works on desktop, iPad and phone with a floating toolbar." },
   { i: StickyNote, t: "Notes & Flashcards", d: "Attach notes per question and create SM-2 spaced-repetition flashcards from them." },
