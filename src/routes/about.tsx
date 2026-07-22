@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { waLink, SITE, COURSES } from "@/lib/site";
+import { waLink, SITE } from "@/lib/site";
 import {
   Target,
   Heart,
