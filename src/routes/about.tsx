@@ -63,25 +63,6 @@ function About() {
         </div>
       </section>
 
-      {/* Stats strip */}
-      <section className="bg-slate-50 border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            { n: "Step 1", l: "QBank" },
-            { n: "Step 2 CK", l: "QBank" },
-            { n: "Step 3", l: "QBank" },
-            { n: "40+", l: "Countries served" },
-          ].map((s) => (
-            <div key={s.l} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-[#1a4b7c]">{s.n}</div>
-              <div className="text-xs uppercase tracking-widest text-slate-500 mt-1 font-semibold">
-                {s.l}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Mission */}
       <section className="max-w-5xl mx-auto px-4 py-20 text-center">
         <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">
