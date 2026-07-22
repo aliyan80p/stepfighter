@@ -47,7 +47,7 @@ const tiers: Tier[] = [
     perks: [
       "Full access to all QBanks",
       "CMS Forms + NBME-style assessments",
-      "AI test analysis + score predictor",
+      "AI test analysis + score calculator",
       "Priority activation",
       "24/7 WhatsApp support",
     ],
