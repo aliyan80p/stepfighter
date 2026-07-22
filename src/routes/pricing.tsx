@@ -25,7 +25,7 @@ export const Route = createFileRoute("/pricing")({
       { title: "Pricing — Pick Your USMLE Step | StepFighter" },
       { name: "description", content: "Subscribe to just the Step you're preparing for — Step 1, Step 2 CK or Step 3 — or grab the All-Steps Combo. Simple 6-month and 12-month plans, activated on WhatsApp." },
       { property: "og:title", content: "StepFighter Pricing — per-Step plans" },
-      { property: "og:description", content: "Choose one Step or bundle all three. Transparent USD / PKR pricing, instant WhatsApp activation." },
+      { property: "og:description", content: "Choose one Step or bundle all three. Transparent USD pricing, instant WhatsApp activation." },
     ],
   }),
   component: Pricing,
