@@ -369,12 +369,22 @@ function TestRunner() {
   useEffect(() => {
     setSelected(priorAttempt?.selected_answer ?? null);
     setSubmitted(!!priorAttempt);
-    setStartedAt(Date.now());
-    setElapsed(0);
+    // Persist per-question start time so refresh doesn't reset the timer
+    let start = Date.now();
+    const qid = question?.id;
+    if (typeof window !== "undefined" && qid != null && !priorAttempt) {
+      const key = `qStartedAt:${id}:${qid}`;
+      const raw = window.localStorage.getItem(key);
+      const n = raw ? Number(raw) : NaN;
+      if (Number.isFinite(n) && n > 0) start = n;
+      else window.localStorage.setItem(key, String(start));
+    }
+    setStartedAt(start);
+    setElapsed(Math.max(0, Math.round((Date.now() - start) / 1000)));
     setSubmittedSecs(typeof (priorAttempt as any)?.time_seconds === "number" ? (priorAttempt as any).time_seconds : null);
     setMediaModalIndex(null);
     setStruck(new Set());
-  }, [idx, question?.id, priorAttempt?.selected_answer]);
+  }, [idx, question?.id, priorAttempt?.selected_answer, id]);
 
   useEffect(() => {
     if (submitted) return;
@@ -478,6 +488,7 @@ function TestRunner() {
     const secs = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
     setSubmitted(true);
     setSubmittedSecs(secs);
+    try { window.localStorage.removeItem(`qStartedAt:${id}:${question.id}`); } catch {}
     if (selected == null) return;
     const isCorrect = question.correct_answer === selected;
     // Optimistic: mark submitted immediately, update cache, fire-and-forget the server call
@@ -492,6 +503,7 @@ function TestRunner() {
       const secs = Math.round((Date.now() - startedAt) / 1000);
       const isCorrect = question.correct_answer === selected;
       optimisticAttempt(question.id, selected, secs, isCorrect);
+      try { window.localStorage.removeItem(`qStartedAt:${id}:${question.id}`); } catch {}
       // Fire-and-forget so navigation is instant
       subFn({ data: { testId, questionId: question.id, selectedIndex: selected, timeSeconds: secs } })
         .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to submit"));
