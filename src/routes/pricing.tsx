@@ -190,11 +190,11 @@ function Pricing() {
           {[
             {
               i: Brain,
-              t: "Performance Analysis & Smart Study Plans",
-              d: "Track your weak areas, compare your percentile, and get AI-generated insights plus personalized study plans.",
+              t: "AI‑Powered Study Plans & Performance Analysis",
+              d: "Track your weak areas, compare your percentile, and get AI‑generated insights plus personalized study plans.",
             },
             { i: RotateCcw, t: "Unlimited Quiz Resets & Custom Quizzes", d: "Retake any block as many times as you want and build custom quizzes by subject or system." },
-            { i: Library, t: "Manual Flashcards from Flagged Questions", d: "Create your own decks and cards from questions you flag or answer incorrectly." },
+            { i: Library, t: "Flashcards (Manual)", d: "Create your own decks and cards from questions you flag or answer incorrectly." },
             { i: BookOpen, t: "Integrated Medical Library", d: "Quick-reference medical notes, lab values, and high-yield facts integrated into your study flow." },
             { i: Users, t: "Peer Ranking & Progress Tracking", d: "Compare your percentile against other students and track your progress across subjects." },
             { i: Sparkles, t: "Free Updates During Subscription", d: "Every new question, form, and correction lands in your account automatically." },
