@@ -31,35 +31,41 @@ function MyCourses() {
     }
   }, [entQ.data, active]);
 
+  const visibleQbanks = QBANKS.filter((q) => isAllowed(q.id));
+  const hasMore = entQ.data ? visibleQbanks.length < QBANKS.length : false;
+
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold">My Courses</h1>
-        <p className="text-muted-foreground mt-1">Your active course is used for all quizzes, stats and searches. Locked courses require an upgrade.</p>
+        <p className="text-muted-foreground mt-1">Your active course is used for all quizzes, stats and searches.</p>
       </div>
+
+      {entQ.data && visibleQbanks.length === 0 && (
+        <div className="rounded-xl border border-border bg-card p-6 text-center">
+          <p className="text-muted-foreground">You don't have access to any courses yet.</p>
+          <Button asChild className="mt-4"><Link to="/upgrade">View Plans</Link></Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {QBANKS.map((q) => {
-          const unlocked = isAllowed(q.id);
-          return (
-            <CourseCard
-              key={q.id}
-              id={q.id}
-              name={q.name}
-              active={active === q.id}
-              locked={!unlocked}
-              onSelect={() => unlocked && setActiveQbankId(q.id)}
-              onOpen={() => {
-                if (!unlocked) { navigate({ to: "/upgrade" }); return; }
-                setActiveQbankId(q.id);
-                navigate({ to: "/dashboard" });
-              }}
-            />
-          );
-        })}
+        {visibleQbanks.map((q) => (
+          <CourseCard
+            key={q.id}
+            id={q.id}
+            name={q.name}
+            active={active === q.id}
+            locked={false}
+            onSelect={() => setActiveQbankId(q.id)}
+            onOpen={() => {
+              setActiveQbankId(q.id);
+              navigate({ to: "/dashboard" });
+            }}
+          />
+        ))}
       </div>
 
-      {entQ.data && allowed.size < QBANKS.length && (
+      {hasMore && (
         <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-semibold">Want access to more Steps?</div>
