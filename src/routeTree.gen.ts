@@ -50,6 +50,8 @@ import { Route as AuthenticatedFlashcardsMyDecksRouteImport } from './routes/_au
 import { Route as AuthenticatedCoursesMyCoursesRouteImport } from './routes/_authenticated/courses.my-courses'
 import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account.settings'
 import { Route as AuthenticatedAccountResetRouteImport } from './routes/_authenticated/account.reset'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as AuthenticatedTestIdResultsRouteImport } from './routes/_authenticated/test.$id.results'
 
 const TermsRoute = TermsRouteImport.update({
@@ -273,6 +275,16 @@ const AuthenticatedAccountResetRoute =
     path: '/account/reset',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedTestIdResultsRoute =
   AuthenticatedTestIdResultsRouteImport.update({
     id: '/results',
@@ -322,6 +334,8 @@ export interface FileRoutesByFullPath {
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/notes/': typeof AuthenticatedNotesIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -365,6 +379,8 @@ export interface FileRoutesByTo {
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/notes': typeof AuthenticatedNotesIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -410,6 +426,8 @@ export interface FileRoutesById {
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/_authenticated/notes/': typeof AuthenticatedNotesIndexRoute
   '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -455,6 +473,8 @@ export interface FileRouteTypes {
     | '/api/public/warm-media'
     | '/notes/'
     | '/test/$id/results'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -498,6 +518,8 @@ export interface FileRouteTypes {
     | '/api/public/warm-media'
     | '/notes'
     | '/test/$id/results'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   id:
     | '__root__'
     | '/'
@@ -542,6 +564,8 @@ export interface FileRouteTypes {
     | '/api/public/warm-media'
     | '/_authenticated/notes/'
     | '/_authenticated/test/$id/results'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -561,6 +585,8 @@ export interface RootRouteChildren {
   ApiMediaSplatRoute: typeof ApiMediaSplatRoute
   ApiPublicNbmeExportRoute: typeof ApiPublicNbmeExportRoute
   ApiPublicWarmMediaRoute: typeof ApiPublicWarmMediaRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -852,6 +878,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountResetRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/test/$id/results': {
       id: '/_authenticated/test/$id/results'
       path: '/results'
@@ -957,17 +997,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMediaSplatRoute: ApiMediaSplatRoute,
   ApiPublicNbmeExportRoute: ApiPublicNbmeExportRoute,
   ApiPublicWarmMediaRoute: ApiPublicWarmMediaRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
