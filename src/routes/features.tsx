@@ -25,7 +25,7 @@ const features = [
   { i: StickyNote, t: "Notes & Flashcards", d: "Attach notes per question and create SM-2 spaced-repetition flashcards from them." },
   { i: BarChart3, t: "Overall Performance Dashboard", d: "Track answer changes, test count, streaks and accuracy trends over time." },
   { i: Zap, t: "Media-Rich Explanations", d: "Every question ships with high-yield imagery, tables, videos and audio where relevant." },
-  { i: Smartphone, t: "Works on Every Device", d: "Fully responsive on mobile, tablet, desktop and installable as a Progressive Web App." },
+  { i: Smartphone, t: "Works on Every Device", d: "Fully responsive on mobile, tablet and desktop." },
   { i: ShieldCheck, t: "Regularly Updated", d: "Content reviewed against the latest USMLE content outline. New forms added every quarter." },
 ];
 
