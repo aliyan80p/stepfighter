@@ -1385,8 +1385,7 @@ function TestRunner() {
 
       {/* Bottom nav */}
       {(() => {
-        const allowed = total * 90;
-        const blockSec = timedMode ? Math.max(0, allowed - blockElapsed) : blockElapsed;
+        const blockSec = timedMode ? timedRemaining : blockElapsed;
         const bh = String(Math.floor(blockSec / 3600)).padStart(2, "0");
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
