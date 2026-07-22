@@ -584,9 +584,9 @@ function TestRunner() {
     // State is re-hydrated from localStorage on question change.
   };
 
-  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(highlightHtml[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1, mediaToken });
+  const htmlFor = (key: string, html: string, deferMedia = false) => rewriteMedia(savedHighlights[key] ?? html, { deferMedia, qbankId: data?.qbankId ?? 1, mediaToken });
   const answerHtmlFor = (key: string, letter: string, html: string) => (
-    rewriteMedia(highlightHtml[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1, mediaToken })
+    rewriteMedia(savedHighlights[key] ?? `<span class="font-normal">${letter}. </span>${html}`, { qbankId: data?.qbankId ?? 1, mediaToken })
   );
 
   const getHighlightRoot = (node: Node) => {
