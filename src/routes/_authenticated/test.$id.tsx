@@ -191,7 +191,12 @@ function TestRunner() {
   }, [error, nav]);
 
 
-  const [idx, setIdx] = useState(0);
+  const [idx, setIdx] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const saved = window.localStorage.getItem(`test:${id}:idx`);
+    const n = saved ? parseInt(saved, 10) : 0;
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  });
   const [selected, setSelected] = useState<number | null>(null);
   const [struck, setStruck] = useState<Set<number>>(new Set());
   const [submitted, setSubmitted] = useState(false);
