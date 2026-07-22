@@ -202,6 +202,9 @@ function TestRunner() {
   const [submitted, setSubmitted] = useState(false);
   const [startedAt, setStartedAt] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
+  // Frozen seconds captured at submit — used for the "Time Taken" display so it
+  // never falls back to 0 if the query cache is briefly missing time_seconds.
+  const [submittedSecs, setSubmittedSecs] = useState<number | null>(null);
   const [blockStartedAt] = useState(Date.now());
   const [blockElapsed, setBlockElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
@@ -338,6 +341,7 @@ function TestRunner() {
     setSubmitted(!!priorAttempt);
     setStartedAt(Date.now());
     setElapsed(0);
+    setSubmittedSecs(typeof (priorAttempt as any)?.time_seconds === "number" ? (priorAttempt as any).time_seconds : null);
     setMediaModalIndex(null);
     setStruck(new Set());
   }, [idx, question?.id, priorAttempt?.selected_answer]);
@@ -441,8 +445,9 @@ function TestRunner() {
 
   const submit = async () => {
     if (!question) return;
-    const secs = Math.round((Date.now() - startedAt) / 1000);
+    const secs = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
     setSubmitted(true);
+    setSubmittedSecs(secs);
     if (selected == null) return;
     const isCorrect = question.correct_answer === selected;
     // Optimistic: mark submitted immediately, update cache, fire-and-forget the server call
@@ -1195,7 +1200,7 @@ function TestRunner() {
                     <div>
                       <div className="text-sm font-semibold">{(() => {
                         const t = (priorAttempt as any)?.time_seconds;
-                        const s = typeof t === "number" ? t : elapsed;
+                        const s = typeof t === "number" ? t : (submittedSecs ?? elapsed);
                         return `${Math.floor(s / 60)}min: ${s % 60}sec`;
                       })()}</div>
                       <div className="text-[11px] opacity-60">Time Taken</div>
