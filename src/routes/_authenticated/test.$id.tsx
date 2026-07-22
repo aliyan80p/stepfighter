@@ -412,6 +412,32 @@ function TestRunner() {
     return () => clearInterval(t);
   }, [blockStartedAt, userSettings.stopTimerOnBlur]);
 
+  // Initialize / persist timedBase whenever timedMode turns on without one.
+  // Base is anchored to blockStartedAt with the full allotment on first setup,
+  // so a fresh test behaves identically to before.
+  useEffect(() => {
+    if (!timedMode || total <= 0) return;
+    if (timedBase) return;
+    const base = { startedAt: blockStartedAt, allowed: total * 90 };
+    setTimedBase(base);
+    try { window.localStorage.setItem(`timedBase:${id}`, JSON.stringify(base)); } catch {}
+  }, [timedMode, total, timedBase, blockStartedAt, id]);
+
+  const handleToggleTimed = (next: boolean) => {
+    setTimedMode(next);
+    if (!next) return;
+    // Turning Timed ON mid-block: recompute remaining as (unsolved * 90s)
+    // starting from now, so the countdown reflects work left — not the
+    // original full-block allotment.
+    const answeredCount = data
+      ? data.questions.reduce((n, q) => n + (data.attemptsByQ[q.id] ? 1 : 0), 0)
+      : 0;
+    const unsolved = Math.max(0, total - answeredCount);
+    const base = { startedAt: Date.now(), allowed: unsolved * 90 };
+    setTimedBase(base);
+    try { window.localStorage.setItem(`timedBase:${id}`, JSON.stringify(base)); } catch {}
+  };
+
   // Auto night mode — switch to dark theme within the user's scheduled window
   useEffect(() => {
     if (!userSettings.autoNightMode) return;
