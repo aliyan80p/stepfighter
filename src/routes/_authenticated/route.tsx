@@ -68,8 +68,6 @@ const groups: Group[] = [
     items: [
       { to: "/self-assessments/assessments", label: "Assessments", icon: ClipboardList },
       { to: "/self-assessments/report", label: "Report", icon: LineChart },
-      { to: "/self-assessments/score-predictor", label: "Score Predictor", icon: Calculator },
-      { to: "/self-assessments/nbme-library", label: "NBME Library", icon: Library },
     ],
   },
   {
