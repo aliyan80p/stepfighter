@@ -40,8 +40,8 @@ const tiers: Tier[] = [
     key: "6-months",
     label: "6 Months",
     duration: "6 Months",
-    price: "PKR 9,750 / $39",
-    perMonth: "PKR 1,625 / month",
+    price: "PKR 16,200 / $60",
+    perMonth: "PKR 2,700 / month",
     badge: "Most Popular",
     highlight: true,
     perks: [

@@ -31,7 +31,7 @@ function Pricing() {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Only pay for the Step you're taking</h1>
           <p className="text-lg text-slate-200 max-w-2xl mx-auto">
             Every Step is priced separately so you're not paying for content you don't need.
-            Preparing for more than one? The All-Steps Combo saves you up to 40%.
+            Preparing for more than one? The All-Steps Combo saves you up to 33%.
           </p>
 
           {/* Duration switch */}
