@@ -7,7 +7,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="min-h-screen bg-white text-slate-800" style={{ fontFamily: "Verdana, Geneva, sans-serif" }}>
-      <div className="min-h-screen bg-white text-slate-800" style={{ fontFamily: "Verdana, Geneva, sans-serif" }}>
+
 
 
       {/* Nav */}
