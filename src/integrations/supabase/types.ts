@@ -358,6 +358,36 @@ export type Database = {
         }
         Relationships: []
       }
+      login_otps: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
@@ -366,6 +396,7 @@ export type Database = {
           full_name: string | null
           id: string
           medical_school: string | null
+          mfa_verified_until: string | null
           selected_qbanks: string[] | null
           target_date: string | null
           target_exam: string | null
@@ -377,6 +408,7 @@ export type Database = {
           full_name?: string | null
           id: string
           medical_school?: string | null
+          mfa_verified_until?: string | null
           selected_qbanks?: string[] | null
           target_date?: string | null
           target_exam?: string | null
@@ -388,6 +420,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           medical_school?: string | null
+          mfa_verified_until?: string | null
           selected_qbanks?: string[] | null
           target_date?: string | null
           target_exam?: string | null
