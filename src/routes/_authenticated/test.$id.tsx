@@ -537,7 +537,7 @@ function TestRunner() {
       }
     }
     await finFn({ data: { testId } });
-    try { window.localStorage.removeItem(`test:${id}:idx`); } catch {}
+    try { window.localStorage.removeItem(`test:${id}:idx`); window.localStorage.removeItem(`blockStartedAt:${id}`); } catch {}
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
   };
