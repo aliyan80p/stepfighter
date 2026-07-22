@@ -31,7 +31,7 @@ export type Course = {
   blurb: string;
   tagline: string;
   extras: string[];
-  price: Record<Duration, { usd: number; pkr: number }>;
+  price: Record<Duration, { usd: number }>;
 };
 
 const PLAN_FEATURES = [
