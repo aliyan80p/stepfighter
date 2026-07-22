@@ -45,6 +45,26 @@ export const Route = createFileRoute("/_authenticated/test/$id")({
  * highlighter across parent re-renders (timer ticks, selection state, etc.)
  * so that <img>/<video> inside the HTML never remount and never flash.
  */
+function attachImageAutoRetry(root: HTMLElement) {
+  const imgs = root.querySelectorAll<HTMLImageElement>("img");
+  imgs.forEach((img) => {
+    if ((img as any).__sfRetryBound) return;
+    (img as any).__sfRetryBound = true;
+    let tries = 0;
+    const original = img.getAttribute("src") || "";
+    const retry = () => {
+      if (tries >= 3 || !original) return;
+      tries += 1;
+      const sep = original.includes("?") ? "&" : "?";
+      const bust = `${sep}r=${Date.now()}-${tries}`;
+      setTimeout(() => { img.src = original + bust; }, 200 * tries);
+    };
+    img.addEventListener("error", retry);
+    // If already broken by the time we bind (cached failure), kick a retry.
+    if (img.complete && img.naturalWidth === 0 && original) retry();
+  });
+}
+
 function HighlightableHtml({
   html,
   seedKey,
@@ -57,6 +77,7 @@ function HighlightableHtml({
     if (lastSeed.current !== seedKey) {
       ref.current.innerHTML = html;
       lastSeed.current = seedKey;
+      attachImageAutoRetry(ref.current);
     }
   });
   return <div ref={ref} {...rest} />;
