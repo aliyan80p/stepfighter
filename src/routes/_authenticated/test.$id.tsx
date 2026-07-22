@@ -392,8 +392,7 @@ function TestRunner() {
       const parsed = raw ? JSON.parse(raw) : {};
       return parsed && typeof parsed === "object" ? parsed : {};
     } catch { return {}; }
-    // highlightBump forces re-read after persistHighlights writes new snapshot
-  }, [question?.id, submitted, highlightBump]);
+  }, [question?.id, submitted]);
 
   // Click-to-open exhibit modal for any image in the question/explanation.
   // Also decorates inline .mp4/.mp3/.wav anchors and opens them in the
