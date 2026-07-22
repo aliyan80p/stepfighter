@@ -67,7 +67,7 @@ function Contact() {
               </div>
               <div>
                 <div className="font-bold text-[#0d2b4e]">Serving IMGs worldwide</div>
-                <div className="text-slate-700">40+ countries, all time zones</div>
+                <div className="text-slate-700">All time zones</div>
               </div>
             </div>
           </div>
