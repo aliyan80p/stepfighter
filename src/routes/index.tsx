@@ -173,7 +173,7 @@ function Home() {
           </p>
           <ul className="space-y-4">
             {[
-              { t: "Smarter learning with AI", d: "Personalized study plans, mistake-based flashcards and real-time feedback." },
+              { t: "Smarter learning with AI", d: "AI-generated study plans from your weak areas, SM-2 flashcards, and live performance feedback." },
               { t: "Two powerful study modes", d: "Tutor mode for guided learning, Exam mode for real-test simulation." },
               { t: "Fully integrated system", d: "Custom quizzes, medical library, notebook and analytics — one seamless platform." },
             ].map((v) => (
