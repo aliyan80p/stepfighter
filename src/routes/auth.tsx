@@ -34,6 +34,7 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [country, setCountry] = useState("");
   const [selectedQbanks, setSelectedQbanks] = useState<string[]>(["step2"]);
+  // Signup allows exactly one course; more can be added later from the dashboard.
   const [loading, setLoading] = useState(false);
   const [forgot, setForgot] = useState(false);
   const [verifySent, setVerifySent] = useState<string | null>(null);
