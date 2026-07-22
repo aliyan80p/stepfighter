@@ -164,7 +164,7 @@ function Home() {
               <div className="mt-5">
                 <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-1">Tutor mode</div>
                 <h3 className="text-xl font-bold text-[#0d2b4e] mb-1">Learn as you go</h3>
-                <p className="text-sm text-slate-600">Instant, high-yield explanations with diagrams, Medical Library, Flashcards, Feedback and Suspend — perfect for building weak areas.</p>
+                <p className="text-sm text-slate-600">Instant, high-yield explanations with diagrams, per-question notes, flashcards, feedback and suspend — perfect for building weak areas.</p>
               </div>
             </div>
           </div>
