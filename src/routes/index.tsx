@@ -4,7 +4,7 @@ import { waLink, COURSES } from "@/lib/site";
 import heroBg from "@/assets/hero-bg-navy.jpg";
 import {
   CheckCircle2, BookOpen, Layers, BarChart3, Timer, Brain, ArrowRight, MessageCircle,
-  ShieldCheck, GraduationCap, Highlighter, StickyNote, FileText, Smartphone,
+  GraduationCap, Highlighter, StickyNote, FileText, Smartphone,
   Wallet, UserPlus, KeyRound,
 } from "lucide-react";
 
@@ -241,7 +241,6 @@ function Home() {
               { i: BarChart3, t: "Detailed Explanations", d: "High-yield explanations with images, tables and clinical correlates for every option." },
               { i: Timer, t: "Real Exam Simulation", d: "Prometric-style interface with authentic timers, block navigation and question flagging." },
               { i: Layers, t: "Custom Test Builder", d: "Build blocks by system, subject, difficulty — unused, incorrect or flagged." },
-              { i: ShieldCheck, t: "Continuously refined", d: "AI-verified metadata, tags and explanations are cross-checked against the latest NBME and CMS patterns." },
               { i: Smartphone, t: "Works On Any Device", d: "Responsive on desktop, iPad, Android and iPhone — study anywhere, any time." },
             ].map((f) => (
               <div key={f.t} className="bg-white border border-slate-200 rounded-lg p-6 hover:border-[#1a4b7c] hover:shadow-md transition-all">

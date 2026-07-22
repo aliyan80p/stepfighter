@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { BookOpen, Brain, Timer, Layers, BarChart3, ShieldCheck, Highlighter, StickyNote, Zap, Smartphone, Calculator, FileText } from "lucide-react";
+import { BookOpen, Brain, Timer, Layers, BarChart3, Highlighter, StickyNote, Zap, Smartphone, Calculator } from "lucide-react";
 
 export const Route = createFileRoute("/features")({
   head: () => ({
@@ -16,7 +16,6 @@ export const Route = createFileRoute("/features")({
 
 const features = [
   { i: BookOpen, t: "Board-Style Questions", d: "Comprehensive coverage of Step 1, Step 2 CK and Step 3 with clinical vignettes, media, and detailed answer choices." },
-  { i: FileText, t: "85+ NBME & CMS Forms", d: "Every official-style self-assessment and CMS specialty form for realistic practice and performance tracking." },
   { i: Timer, t: "Real Exam Simulator", d: "Prometric-accurate interface with authentic timers, block navigation, flagging, strikeout and lab values panel." },
   { i: Brain, t: "AI Performance Analytics", d: "Drill-down performance by system, subject and topic. See patterns behind wrong answers, not just tallies." },
   { i: Calculator, t: "NBME/UWSA Score Calculator", d: "Calibrated to NBME 9–31 slopes and intercepts — convert your percent correct to a 3-digit score." },
@@ -26,7 +25,6 @@ const features = [
   { i: BarChart3, t: "Overall Performance Dashboard", d: "Track answer changes, test count, streaks and accuracy trends over time." },
   { i: Zap, t: "Media-Rich Explanations", d: "Every question ships with high-yield imagery, tables, videos and audio where relevant." },
   { i: Smartphone, t: "Works on Every Device", d: "Fully responsive on mobile, tablet and desktop." },
-  { i: ShieldCheck, t: "Continuously refined", d: "AI verifies metadata, tags, and explanations against the latest NBME and CMS patterns." },
 ];
 
 function Features() {

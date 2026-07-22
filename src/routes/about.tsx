@@ -199,7 +199,7 @@ function About() {
               {
                 i: Brain,
                 t: "AI-assisted content + human review",
-                d: "AI verifies metadata, tags, and explanations; physicians review before content reaches the live bank.",
+                d: "Content is enhanced with AI tools and reviewed by physicians before it reaches the live bank.",
               },
               {
                 i: Zap,
