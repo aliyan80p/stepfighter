@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     q: "Is there a free trial?",
-    a: "Yes. Every new account gets a 14-day free trial with access to a sample of each QBank.",
+    a: "Yes. Every new account gets an 8-day free trial with access to a sample of each QBank.",
   },
   {
     q: "How much does StepFighter cost?",
@@ -41,7 +41,7 @@ const faqs = [
     q: "Can I get a refund?",
     a: (
       <>
-        Yes — full refund within 3 days of activation if the platform isn't the right fit for you. No questions asked. For full details, see our{" "}
+        See our{" "}
         <Link to="/refund" className="text-[#1a4b7c] underline hover:text-[#0d2b4e]">
           refund policy
         </Link>

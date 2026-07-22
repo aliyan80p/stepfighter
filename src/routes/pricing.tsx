@@ -251,7 +251,7 @@ function Pricing() {
         </div>
 
         <div className="text-center mt-8 text-sm text-slate-600">
-          Want to test-drive first? <Link to="/auth" search={{ mode: "signup" }} className="text-[#1a4b7c] font-semibold hover:underline">Start a 14-day free trial</Link> — no card, no commitment.
+          Want to test-drive first? <Link to="/auth" search={{ mode: "signup" }} className="text-[#1a4b7c] font-semibold hover:underline">Start an 8-day free trial</Link> — no card, no commitment.
         </div>
       </section>
     </SiteLayout>
