@@ -36,6 +36,7 @@ import { TrialBanner } from "@/components/trial-banner";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { isCurrentUserAdmin } from "@/lib/admin.functions";
+import { getMyEntitlement } from "@/lib/entitlements.functions";
 
 
 
