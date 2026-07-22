@@ -109,7 +109,6 @@ function Home() {
             </div>
             <div className="mt-6 flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs text-white/70 font-semibold">
               <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> 14-day free trial</span>
-              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> No credit card needed</span>
               <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Instant activation</span>
             </div>
           </div>
