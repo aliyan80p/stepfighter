@@ -144,7 +144,7 @@ function Pricing() {
                     <span className="text-slate-300 text-sm">USD · {durationLabel[dur]}</span>
                   </div>
                   <div className="text-xs text-slate-300 mt-1">
-                    PKR {price.pkr.toLocaleString()} · ≈ ${perMonth}/month · buying separately: ${singleTotal}
+                    ≈ ${perMonth}/month · buying separately: ${singleTotal}
                   </div>
                 </div>
 
