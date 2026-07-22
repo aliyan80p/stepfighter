@@ -34,6 +34,16 @@ export type Course = {
   price: Record<Duration, { usd: number; pkr: number }>;
 };
 
+const PLAN_FEATURES = [
+  "AI‑Powered Study Plans & Performance Analysis",
+  "Unlimited Quiz Resets & Custom Quizzes",
+  "Flashcards (Manual)",
+  "Integrated Medical Library",
+  "Peer Ranking & Progress Tracking",
+  "Free Updates During Subscription",
+  "WhatsApp & Email Support",
+];
+
 export const COURSES: Course[] = [
   {
     id: "step1",
@@ -41,7 +51,7 @@ export const COURSES: Course[] = [
     short: "Step 1",
     blurb: "Board-style questions for Step 1.",
     tagline: "Step 1 QBank",
-    extras: ["Step 1 self-assessments (SA1–SA4)", "Full NBME 9–31 score calibration", "AI performance dashboard"],
+    extras: PLAN_FEATURES,
     price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
   },
   {
@@ -50,7 +60,7 @@ export const COURSES: Course[] = [
     short: "Step 2 CK",
     blurb: "Board-style questions for Step 2 CK.",
     tagline: "Step 2 CK QBank",
-    extras: ["Step 2 CK self-assessments (SA1–SA9)", "CMS specialty forms", "Ambulatory + inpatient coverage"],
+    extras: PLAN_FEATURES,
     price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
   },
   {
@@ -59,7 +69,7 @@ export const COURSES: Course[] = [
     short: "Step 3",
     blurb: "Board-style questions for Step 3.",
     tagline: "Step 3 QBank",
-    extras: ["Step 3 SA1 + SA2 assessments", "CCS-style case reasoning", "Biostatistics + ethics drills"],
+    extras: PLAN_FEATURES,
     price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
   },
   {
@@ -68,7 +78,7 @@ export const COURSES: Course[] = [
     short: "Combo",
     blurb: "Every question, every form, every Step — the full StepFighter library in one subscription.",
     tagline: "Full library",
-    extras: ["Step 1 + Step 2 CK + Step 3", "All self-assessment forms", "All CMS forms", "Priority WhatsApp support"],
+    extras: ["Step 1 + Step 2 CK + Step 3 — full access", ...PLAN_FEATURES],
     price: { "6mo": { usd: 60, pkr: 16200 }, "12mo": { usd: 99, pkr: 26500 } },
   },
 ];
