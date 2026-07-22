@@ -24,8 +24,8 @@ function Privacy() {
 
         <h2>Information We Collect</h2>
         <ul>
-          <li><b>Account info:</b> name, email address, target exam, target date, medical school (optional)</li>
-          <li><b>Usage data:</b> questions answered, scores, time spent, feature usage</li>
+          <li><b>Account info:</b> name, email address and course selection during signup</li>
+          <li><b>Usage data:</b> questions answered, scores, time spent and feature usage</li>
           <li><b>Support communications:</b> messages sent via WhatsApp or email</li>
         </ul>
 
