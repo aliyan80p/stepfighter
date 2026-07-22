@@ -17,7 +17,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <div className="h-9 w-9 rounded-md bg-[#1a4b7c] text-white grid place-items-center font-bold">SF</div>
             <div>
               <div className="text-[#1a4b7c] font-bold text-lg leading-none">StepFighter</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest">Step 1 · 2 CK · 3</div>
             </div>
           </Link>
           <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-700">
