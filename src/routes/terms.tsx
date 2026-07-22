@@ -17,8 +17,8 @@ export const Route = createFileRoute("/terms")({
 function Terms() {
   return (
     <SiteLayout>
-      <article className="max-w-3xl mx-auto px-4 py-16 prose prose-slate">
-        <h1 className="text-3xl font-bold text-[#0d2b4e]">Terms of Service</h1>
+      <article className="max-w-3xl mx-auto px-4 py-16 prose prose-lg prose-slate prose-headings:text-[#0d2b4e] prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-3 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-p:text-[17px] prose-p:leading-relaxed prose-li:text-[17px] prose-a:text-[#0d2b4e] prose-a:underline">
+        <h1 className="!text-4xl font-bold text-[#0d2b4e] !mb-2">Terms of Service</h1>
         <p className="text-sm text-slate-500">Last updated: {new Date().toLocaleDateString()}</p>
         <p>This page is maintained by the StepFighter team to describe the terms governing use of the StepFighter platform (the "Service") at stepfighter.app.</p>
 
