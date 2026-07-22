@@ -197,7 +197,6 @@ function AuthPage() {
                     <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. Pakistan" />
                   </div>
                   <div>
-                  <div>
                     <Label>Choose your QBank</Label>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Pick one to start. You can add more courses later from your dashboard.
