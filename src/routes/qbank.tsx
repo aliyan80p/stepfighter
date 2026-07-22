@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { COURSES, waLink } from "@/lib/site";
-import { BookOpen, ChevronRight, FileText, MessageCircle } from "lucide-react";
+import { BookOpen, ChevronRight, MessageCircle } from "lucide-react";
 
 export const Route = createFileRoute("/qbank")({
   head: () => ({
@@ -15,12 +15,6 @@ export const Route = createFileRoute("/qbank")({
   component: QBankPage,
 });
 
-const topicsByStep: Record<string, string[]> = {
-  step1: ["Cardiovascular", "Renal", "Endocrine", "Neurology", "GI", "Hematology", "Pulmonary", "Reproductive", "MSK", "Psychiatry"],
-  step2ck: ["Internal Medicine", "Surgery", "Pediatrics", "OB/GYN", "Psychiatry", "Family Medicine", "Emergency Medicine", "Neurology"],
-  step3: ["Ambulatory", "Emergency", "Inpatient", "CCS cases", "Biostatistics", "Ethics"],
-  combo: ["Step 1", "Step 2 CK", "Step 3", "All self-assessments", "All CMS forms"],
-};
 
 function QBankPage() {
   return (
