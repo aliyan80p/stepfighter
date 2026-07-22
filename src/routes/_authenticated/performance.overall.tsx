@@ -34,12 +34,14 @@ function buildOptions(): Opt[] {
 
   // Step 1
   const s1 = qbId("step1");
+  out.push({ key: "step1-all", label: "All Step 1 QBanks", qbankId: s1 });
   out.push({ key: "step1-uw", label: "UWorld Step 1", qbankId: s1, sources: ["main"] });
   for (const n of [1, 2, 3]) out.push({ key: `step1-sa${n}`, label: `Step 1 Self Assessment ${n}`, qbankId: s1, sources: [`SA${n}`] });
   for (const n of STEP1_NBMES) out.push({ key: `step1-nbme${n}`, label: `Step 1 NBME ${n}`, qbankId: s1, sources: [`NBME${n}`] });
 
   // Step 2
   const s2 = qbId("step2");
+  out.push({ key: "step2-all", label: "All Step 2 CK QBanks", qbankId: s2 });
   out.push({ key: "step2-uw", label: "UWorld Step 2 CK", qbankId: s2, sources: ["main"] });
 
   for (const n of [1, 2, 3]) out.push({ key: `step2-sa${n}`, label: `Step 2 CK Self Assessment ${n}`, qbankId: s2, sources: [`SA${n}`] });
@@ -52,6 +54,7 @@ function buildOptions(): Opt[] {
 
   // Step 3
   const s3 = qbId("step3");
+  out.push({ key: "step3-all", label: "All Step 3 QBanks", qbankId: s3 });
   out.push({ key: "step3-uw", label: "UWorld Step 3", qbankId: s3, sources: ["main"] });
   for (const n of [1, 2, 3]) out.push({ key: `step3-sa${n}`, label: `Step 3 Self Assessment ${n}`, qbankId: s3, sources: [`SA${n}`] });
 
