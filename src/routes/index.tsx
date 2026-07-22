@@ -107,7 +107,7 @@ function Home() {
           </div>
 
           <p className="mt-8 text-center text-xs uppercase tracking-widest font-bold text-slate-500">
-            Fully responsive · Desktop · iPad · Android · iPhone · Works offline (PWA)
+            Multi-device support
           </p>
 
           {/* Feature screenshot strip */}
