@@ -61,48 +61,59 @@ function Home() {
         {/* Device showcase — real screenshots from the live app */}
         <div className="max-w-7xl mx-auto px-4 pb-16">
           <div className="relative flex items-end justify-center gap-4 md:gap-6">
-            {/* iPhone */}
-            <div className="hidden sm:block w-[110px] md:w-[150px] lg:w-[180px] shrink-0 rounded-[26px] bg-slate-900 p-1.5 shadow-2xl ring-1 ring-slate-800 mb-8">
-              <div className="rounded-[20px] overflow-hidden bg-white aspect-[9/19]">
-                <img
-                  src="/__l5e/assets-v1/75cf9d04-b3f1-43b4-ae25-30dd16ea0a0a/iphone_dashboard.png"
-                  alt="StepFighter USMLE QBank on iPhone"
-                  className="w-full h-full object-cover object-top"
-                  loading="lazy"
-                />
-              </div>
+            {/* Ambient glow */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
+              <div className="h-[420px] w-[420px] rounded-full bg-amber-300/25 blur-3xl sf-glow-pulse" />
             </div>
 
-            {/* Laptop */}
-            <div className="relative flex-1 max-w-[720px]">
-              <div className="rounded-t-xl bg-slate-900 p-2.5 shadow-2xl ring-1 ring-slate-800">
-                <div className="flex items-center gap-1.5 mb-2 px-2">
-                  <span className="h-2 w-2 rounded-full bg-red-400" />
-                  <span className="h-2 w-2 rounded-full bg-amber-400" />
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                </div>
-                <div className="rounded-md overflow-hidden bg-white aspect-[16/10]">
+            {/* iPhone — exam mode */}
+            <div className="hidden sm:block sf-fade-up" style={{ animationDelay: "0.25s" }}>
+              <div className="sf-float-slower will-change-transform w-[110px] md:w-[150px] lg:w-[180px] shrink-0 rounded-[26px] bg-slate-900 p-1.5 shadow-2xl ring-1 ring-slate-800 mb-8">
+                <div className="rounded-[20px] overflow-hidden bg-white aspect-[9/19]">
                   <img
-                    src="/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png"
-                    alt="StepFighter USMLE dashboard on laptop"
+                    src="/__l5e/assets-v1/3101a121-ca59-4b1c-920d-a4c823eb2f72/iphone-exam-question.jpg"
+                    alt="StepFighter exam mode question on iPhone"
                     className="w-full h-full object-cover object-top"
-                    loading="eager"
+                    loading="lazy"
                   />
                 </div>
               </div>
-              <div className="h-3 bg-slate-800 rounded-b-xl mx-[-8px]" />
-              <div className="h-1 bg-slate-700 rounded-b-full mx-auto w-24" />
             </div>
 
-            {/* iPad */}
-            <div className="hidden md:block w-[200px] lg:w-[240px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
-              <div className="rounded-xl overflow-hidden bg-white aspect-[3/4]">
-                <img
-                  src="/__l5e/assets-v1/117c4cf2-5a6f-4b73-9923-c50824d14fd1/ipad_dashboard.png"
-                  alt="StepFighter USMLE QBank on iPad"
-                  className="w-full h-full object-cover object-top"
-                  loading="lazy"
-                />
+            {/* Laptop — dashboard */}
+            <div className="relative flex-1 max-w-[720px] sf-fade-up" style={{ animationDelay: "0.05s" }}>
+              <div className="sf-float-slow will-change-transform">
+                <div className="rounded-t-xl bg-slate-900 p-2.5 shadow-2xl ring-1 ring-slate-800">
+                  <div className="flex items-center gap-1.5 mb-2 px-2">
+                    <span className="h-2 w-2 rounded-full bg-red-400" />
+                    <span className="h-2 w-2 rounded-full bg-amber-400" />
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="rounded-md overflow-hidden bg-white aspect-[16/10]">
+                    <img
+                      src="/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png"
+                      alt="StepFighter USMLE dashboard on laptop"
+                      className="w-full h-full object-cover object-top"
+                      loading="eager"
+                    />
+                  </div>
+                </div>
+                <div className="h-3 bg-slate-800 rounded-b-xl mx-[-8px]" />
+                <div className="h-1 bg-slate-700 rounded-b-full mx-auto w-24" />
+              </div>
+            </div>
+
+            {/* iPad — tutor mode */}
+            <div className="hidden md:block sf-fade-up" style={{ animationDelay: "0.15s" }}>
+              <div className="sf-float-slow will-change-transform w-[200px] lg:w-[240px] shrink-0 rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800 mb-4">
+                <div className="rounded-xl overflow-hidden bg-white aspect-[3/4]">
+                  <img
+                    src="/__l5e/assets-v1/e817b329-f357-4140-9dea-6fe059e24980/ipad-tutor-question.jpg"
+                    alt="StepFighter tutor mode question with diagram on iPad"
+                    className="w-full h-full object-cover object-top"
+                    loading="lazy"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -111,57 +122,6 @@ function Home() {
             Multi-device support
           </p>
 
-          {/* Animated real question preview — iPad tutor + iPhone exam */}
-          <div className="relative mt-16 mb-4 grid md:grid-cols-2 gap-10 md:gap-6 items-center">
-            {/* Ambient glow */}
-            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
-              <div className="h-[420px] w-[420px] rounded-full bg-amber-300/30 blur-3xl sf-glow-pulse" />
-            </div>
-
-            {/* iPad tutor */}
-            <div className="flex justify-center md:justify-end sf-fade-up" style={{ animationDelay: "0.05s" }}>
-              <div className="sf-float-slow will-change-transform">
-                <div className="relative w-[300px] sm:w-[380px] md:w-[440px] rounded-[28px] bg-slate-900 p-3 shadow-2xl ring-1 ring-slate-800">
-                  <div className="rounded-[20px] overflow-hidden bg-white aspect-[4/3]">
-                    <img
-                      src="/__l5e/assets-v1/e817b329-f357-4140-9dea-6fe059e24980/ipad-tutor-question.jpg"
-                      alt="StepFighter tutor mode question with diagram on iPad"
-                      loading="lazy"
-                      className="w-full h-full object-cover object-top"
-                    />
-                  </div>
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-1 h-1.5 w-14 rounded-full bg-slate-700" />
-                </div>
-                <div className="mt-4 text-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-[11px] font-bold uppercase tracking-widest text-[#1a4b7c] shadow-sm">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Tutor mode · iPad
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* iPhone exam */}
-            <div className="flex justify-center md:justify-start sf-fade-up" style={{ animationDelay: "0.25s" }}>
-              <div className="sf-float-slower will-change-transform">
-                <div className="relative w-[210px] sm:w-[240px] rounded-[38px] bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-800">
-                  <div className="absolute left-1/2 -translate-x-1/2 top-2 h-5 w-24 rounded-full bg-slate-900 z-10" />
-                  <div className="rounded-[30px] overflow-hidden bg-white aspect-[9/19]">
-                    <img
-                      src="/__l5e/assets-v1/3101a121-ca59-4b1c-920d-a4c823eb2f72/iphone-exam-question.jpg"
-                      alt="StepFighter exam mode question on iPhone"
-                      loading="lazy"
-                      className="w-full h-full object-cover object-top"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4 text-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-[11px] font-bold uppercase tracking-widest text-[#1a4b7c] shadow-sm">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> Exam mode · iPhone
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
 
 
