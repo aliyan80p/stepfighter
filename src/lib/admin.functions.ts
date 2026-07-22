@@ -401,7 +401,12 @@ export const updateQuestion = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      title?: string | null;
+      question?: string;
+      explanation?: string | null;
+      correct_answer?: number | null;
+    } = {};
     if (data.title !== undefined) patch.title = data.title;
     if (data.question !== undefined) patch.question = data.question;
     if (data.explanation !== undefined) patch.explanation = data.explanation;
