@@ -6,7 +6,6 @@ import {
   Heart,
   Users,
   Award,
-  CheckCircle2,
   MessageCircle,
   ShieldCheck,
   Globe,
@@ -14,7 +13,7 @@ import {
   Brain,
   Zap,
   ArrowRight,
-  GraduationCap,
+  BarChart3,
 } from "lucide-react";
 
 export const Route = createFileRoute("/about")({
