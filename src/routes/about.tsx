@@ -68,9 +68,9 @@ function About() {
       <section className="bg-slate-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { n: "Step 1", l: "Foundational science" },
-            { n: "Step 2 CK", l: "Clinical mastery" },
-            { n: "Step 3", l: "Final licensing" },
+            { n: "Step 1", l: "QBank" },
+            { n: "Step 2 CK", l: "QBank" },
+            { n: "Step 3", l: "QBank" },
             { n: "40+", l: "Countries served" },
           ].map((s) => (
             <div key={s.l} className="text-center">
