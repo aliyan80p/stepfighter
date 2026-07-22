@@ -190,15 +190,15 @@ function Pricing() {
           {[
             {
               i: Brain,
-              t: "AI‑Powered Study Plans & Performance Analysis",
-              d: "Smart weak-area breakdowns and AI-generated study plans based on your actual mistakes.",
+              t: "Performance Analysis & Smart Study Plans",
+              d: "Track your weak areas, compare your percentile, and get AI-generated insights plus personalized study plans.",
             },
             { i: RotateCcw, t: "Unlimited Quiz Resets & Custom Quizzes", d: "Retake any block as many times as you want and build custom quizzes by subject or system." },
-            { i: Library, t: "Flashcards (Manual + AI‑Generated)", d: "Create your own decks or let AI generate flashcards from your flagged questions." },
-            { i: BookOpen, t: "Exclusive Medical Library", d: "Quick-reference medical notes, lab values, and high-yield facts integrated into your study flow." },
+            { i: Library, t: "Manual Flashcards from Flagged Questions", d: "Create your own decks and cards from questions you flag or answer incorrectly." },
+            { i: BookOpen, t: "Integrated Medical Library", d: "Quick-reference medical notes, lab values, and high-yield facts integrated into your study flow." },
             { i: Users, t: "Peer Ranking & Progress Tracking", d: "Compare your percentile against other students and track your progress across subjects." },
             { i: Sparkles, t: "Free Updates During Subscription", d: "Every new question, form, and correction lands in your account automatically." },
-            { i: Headphones, t: "24/7 Support", d: "Reach us anytime on WhatsApp or email for account, content, or technical help." },
+            { i: Headphones, t: "WhatsApp & Email Support", d: "Reach us on WhatsApp or email for account, content, or technical help." },
           ].map((f) => (
             <div key={f.t} className="flex items-start gap-3 p-4 rounded-lg border border-slate-200 bg-white">
               <div className="h-10 w-10 rounded-lg bg-[#1a4b7c]/10 flex items-center justify-center flex-shrink-0">
