@@ -391,7 +391,7 @@ function AuthedLayout() {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <Outlet />
+          {trialEnded && !isAllowedWhenLocked(pathname) ? <PaywallGate /> : <Outlet />}
         </div>
       </main>
     </div>
