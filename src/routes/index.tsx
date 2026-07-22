@@ -73,9 +73,6 @@ function Home() {
       {/* Device showcase — real screenshots from the live app */}
       <section className="relative bg-white">
         <div className="max-w-7xl mx-auto px-4 pt-16 pb-16">
-
-        {/* Device showcase — real screenshots from the live app */}
-        <div className="max-w-7xl mx-auto px-4 pb-16">
           <div className="relative flex items-end justify-center gap-3 md:gap-5 lg:gap-6">
             {/* Ambient glow */}
             <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
@@ -131,8 +128,8 @@ function Home() {
                   />
                 </div>
               </div>
+            </div>
           </div>
-        </div>
 
           {/* Feature screenshot strip */}
           <div className="mt-14 grid md:grid-cols-3 gap-6">
