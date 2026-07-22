@@ -382,15 +382,20 @@ function TestRunner() {
 
 
 
-  // Restore saved highlights per question (must run before early returns to keep hook order stable)
-  useEffect(() => {
-    if (!question) return;
-    const saved = (() => {
-      try { return JSON.parse(localStorage.getItem(`qbank-hl-${question.id}`) || "{}"); }
-      catch { return {}; }
-    })();
-    setHighlightHtml(saved && typeof saved === "object" ? saved : {});
-  }, [question?.id, submitted]);
+  // Compute saved highlights synchronously per question so the very first
+  // render after navigation already has the correct HTML — otherwise the
+  // previous question's highlighted snapshot leaks into the next question
+  // because HighlightableHtml's layout effect reseeds innerHTML BEFORE any
+  // parent effect can reset state.
+  const savedHighlights = React.useMemo<Record<string, string>>(() => {
+    if (!question) return {};
+    try {
+      const raw = localStorage.getItem(`qbank-hl-${question.id}`);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch { return {}; }
+    // highlightBump forces re-read after persistHighlights writes new snapshot
+  }, [question?.id, submitted, highlightBump]);
 
   // Click-to-open exhibit modal for any image in the question/explanation.
   // Also decorates inline .mp4/.mp3/.wav anchors and opens them in the
