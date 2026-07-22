@@ -53,10 +53,7 @@ function AuthPage() {
     });
   }, [navigate]);
 
-  const toggleQbank = (slug: string) =>
-    setSelectedQbanks((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
-    );
+  const selectQbank = (slug: string) => setSelectedQbanks([slug]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
