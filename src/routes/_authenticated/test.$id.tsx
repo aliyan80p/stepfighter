@@ -226,7 +226,16 @@ function TestRunner() {
   // Frozen seconds captured at submit — used for the "Time Taken" display so it
   // never falls back to 0 if the query cache is briefly missing time_seconds.
   const [submittedSecs, setSubmittedSecs] = useState<number | null>(null);
-  const [blockStartedAt] = useState(Date.now());
+  const [blockStartedAt] = useState(() => {
+    if (typeof window === "undefined") return Date.now();
+    const key = `blockStartedAt:${id}`;
+    const raw = window.localStorage.getItem(key);
+    const n = raw ? Number(raw) : NaN;
+    if (Number.isFinite(n) && n > 0) return n;
+    const now = Date.now();
+    window.localStorage.setItem(key, String(now));
+    return now;
+  });
   const [blockElapsed, setBlockElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -528,7 +537,7 @@ function TestRunner() {
       }
     }
     await finFn({ data: { testId } });
-    try { window.localStorage.removeItem(`test:${id}:idx`); } catch {}
+    try { window.localStorage.removeItem(`test:${id}:idx`); window.localStorage.removeItem(`blockStartedAt:${id}`); } catch {}
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
   };
