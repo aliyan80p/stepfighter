@@ -2,7 +2,22 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { waLink, SITE, COURSES, durationLabel, type Duration } from "@/lib/site";
-import { CheckCircle2, MessageCircle, Mail, ShieldCheck, Zap, Crown, Layers } from "lucide-react";
+import {
+  CheckCircle2,
+  MessageCircle,
+  Mail,
+  ShieldCheck,
+  Zap,
+  Crown,
+  Layers,
+  Brain,
+  RotateCcw,
+  Library,
+  BookOpen,
+  Users,
+  Sparkles,
+  Headphones,
+} from "lucide-react";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
