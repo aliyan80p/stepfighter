@@ -405,12 +405,15 @@ body { overscroll-behavior-y: none; }
 /* Test runner: horizontally scrollable toolbars on small screens */
 @media (max-width: 767px) {
   .qbank-html img { max-width: 100%; width: auto; height: auto; }
-  /* Let tables size columns by content; only wrap long words if they truly overflow.
-     Avoid `table-layout: fixed` + `word-break: break-word`, which force per-character
-     wrapping and leave empty horizontal space on the right on iOS/Android. */
-  .qbank-html table { width: auto; max-width: 100%; table-layout: auto; white-space: normal; word-break: normal; overflow-wrap: normal; }
-  .qbank-html table td, .qbank-html table th { padding: 0.4rem 0.5rem; white-space: normal; word-break: normal; overflow-wrap: break-word; hyphens: auto; font-size: inherit; }
-  /* Horizontally scroll only when a table genuinely can't fit */
+  /* Wide tables: let them keep their natural width and scroll horizontally
+     inside the parent (.qbank-html has overflow-x:auto below). Never break
+     words mid-spelling to force a fit — that's what caused tall, chopped
+     cells on mobile. Narrow tables still shrink normally because width is
+     auto + max-width:100%. */
+  .qbank-html table { width: auto; max-width: 100%; table-layout: auto; white-space: normal; word-break: normal; overflow-wrap: normal; hyphens: manual; }
+  .qbank-html table td, .qbank-html table th { padding: 0.4rem 0.5rem; white-space: normal; word-break: keep-all; overflow-wrap: normal; hyphens: manual; font-size: inherit; }
+  /* Horizontal scroll (the "little slider") only kicks in when a table is
+     genuinely wider than the viewport. */
   .qbank-html { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   /* Explanation inherits the user's Settings font-size on mobile too */
   .qbank-explanation { font-size: inherit; }
