@@ -138,23 +138,36 @@ function Home() {
         </div>
       </section>
 
-      {/* Feature strip — UF style */}
-      <section className="border-y border-slate-200 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 py-14 grid md:grid-cols-4 gap-8">
-          {[
-            { i: GraduationCap, t: "Tutor & Exam Modes", d: "Guided learning or full Prometric-style simulation — switch any time." },
-            { i: Brain, t: "AI Performance Analytics", d: "Drill down by system, subject and topic to find your weak points." },
-            { i: Layers, t: "Smart Flashcards", d: "SM-2 spaced repetition. Create cards from notes and questions while you study." },
-            { i: Wallet, t: "Affordable Pricing", d: "Per-Step subscriptions from $29 — a fraction of the big brands." },
-          ].map((f) => (
-            <div key={f.t}>
-              <div className="h-10 w-10 rounded-md bg-[#1a4b7c]/10 text-[#1a4b7c] grid place-items-center mb-3">
-                <f.i className="h-5 w-5" />
+      {/* Exam & Tutor mode showcase */}
+      <section className="bg-slate-50 py-16 border-y border-slate-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Two ways to study</div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e]">Exam mode &amp; Tutor mode</h2>
+            <p className="text-slate-600 mt-3">Switch between a full Prometric-style block and a learn-as-you-go tutor session with images, diagrams and explanations.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="group">
+              <div className="rounded-lg overflow-hidden border border-slate-200 shadow-lg bg-white transition-transform group-hover:-translate-y-1">
+                <img src="/__l5e/assets-v1/25717ce4-9b95-4e75-b182-9e7d7b427ce9/exam-mode-full.jpg" alt="StepFighter Exam mode with Prometric-style interface" className="w-full h-auto block" loading="lazy" />
               </div>
-              <h3 className="font-bold text-[#0d2b4e] mb-1">{f.t}</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{f.d}</p>
+              <div className="mt-5">
+                <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-1">Exam mode</div>
+                <h3 className="text-xl font-bold text-[#0d2b4e] mb-1">Real Prometric simulation</h3>
+                <p className="text-sm text-slate-600">Timed blocks, item navigator, Mark for review, Lab Values, Calculator, Reverse Color and Text Zoom — exactly like test day.</p>
+              </div>
             </div>
-          ))}
+            <div className="group">
+              <div className="rounded-lg overflow-hidden border border-slate-200 shadow-lg bg-white transition-transform group-hover:-translate-y-1">
+                <img src="/__l5e/assets-v1/94199958-0d3d-4753-8865-c4c1fed6dee4/tutor-mode-full.jpg" alt="StepFighter Tutor mode with diagram and explanation" className="w-full h-auto block" loading="lazy" />
+              </div>
+              <div className="mt-5">
+                <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-1">Tutor mode</div>
+                <h3 className="text-xl font-bold text-[#0d2b4e] mb-1">Learn as you go</h3>
+                <p className="text-sm text-slate-600">Instant, high-yield explanations with diagrams, Medical Library, Flashcards, Feedback and Suspend — perfect for building weak areas.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -211,38 +224,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Exam & Tutor mode showcase */}
-      <section className="bg-[#0d2b4e] py-20 border-y border-[#1a4b7c]">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-3">Two ways to study</div>
-            <h2 className="text-3xl md:text-4xl font-bold text-white">Exam mode &amp; Tutor mode</h2>
-            <p className="text-slate-300 mt-3">Switch between a full Prometric-style block and a learn-as-you-go tutor session with images, diagrams and explanations.</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="group">
-              <div className="rounded-lg overflow-hidden border border-[#1a4b7c] shadow-2xl bg-white transition-transform group-hover:-translate-y-1">
-                <img src="/__l5e/assets-v1/25717ce4-9b95-4e75-b182-9e7d7b427ce9/exam-mode-full.jpg" alt="StepFighter Exam mode with Prometric-style interface" className="w-full h-auto block" loading="lazy" />
-              </div>
-              <div className="mt-5">
-                <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-1">Exam mode</div>
-                <h3 className="text-xl font-bold text-white mb-1">Real Prometric simulation</h3>
-                <p className="text-sm text-slate-300">Timed blocks, item navigator, Mark for review, Lab Values, Calculator, Reverse Color and Text Zoom — exactly like test day.</p>
-              </div>
-            </div>
-            <div className="group">
-              <div className="rounded-lg overflow-hidden border border-[#1a4b7c] shadow-2xl bg-white transition-transform group-hover:-translate-y-1">
-                <img src="/__l5e/assets-v1/94199958-0d3d-4753-8865-c4c1fed6dee4/tutor-mode-full.jpg" alt="StepFighter Tutor mode with diagram and explanation" className="w-full h-auto block" loading="lazy" />
-              </div>
-              <div className="mt-5">
-                <div className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-1">Tutor mode</div>
-                <h3 className="text-xl font-bold text-white mb-1">Learn as you go</h3>
-                <p className="text-sm text-slate-300">Instant, high-yield explanations with diagrams, Medical Library, Flashcards, Feedback and Suspend — perfect for building weak areas.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
 
 
