@@ -1200,7 +1200,7 @@ function TestRunner() {
                     <div>
                       <div className="text-sm font-semibold">{(() => {
                         const t = (priorAttempt as any)?.time_seconds;
-                        const s = typeof t === "number" ? t : elapsed;
+                        const s = typeof t === "number" ? t : (submittedSecs ?? elapsed);
                         return `${Math.floor(s / 60)}min: ${s % 60}sec`;
                       })()}</div>
                       <div className="text-[11px] opacity-60">Time Taken</div>
