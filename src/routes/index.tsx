@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { waLink, COURSES } from "@/lib/site";
+import heroBg from "@/assets/hero-bg.jpg";
 import {
   CheckCircle2, BookOpen, Layers, BarChart3, Timer, Brain, ArrowRight, MessageCircle,
   ShieldCheck, GraduationCap, Trophy, Highlighter, StickyNote, FileText, Smartphone,
@@ -25,35 +26,53 @@ export const Route = createFileRoute("/")({
 function Home() {
   return (
     <SiteLayout>
-      {/* HERO — clean, single column, big statement */}
-      <section className="relative bg-white">
-        <div className="max-w-6xl mx-auto px-4 pt-16 pb-10 md:pt-24 md:pb-14 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-slate-200 rounded-full text-[11px] font-bold uppercase tracking-widest text-slate-600 mb-6">
-            <Trophy className="h-3 w-3 text-amber-500" /> Built for the 2026 USMLE
+      {/* HERO — full-bleed background image with white text overlay */}
+      <section className="relative min-h-[520px] md:min-h-[620px] flex items-center justify-center overflow-hidden">
+        {/* Background image */}
+        <img
+          src={heroBg}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          loading="eager"
+          width={1920}
+          height={800}
+        />
+        {/* Dark gradient overlay for text readability */}
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#0a1628]/95 via-[#0a1628]/80 to-[#0a1628]/40" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/90 via-transparent to-[#0a1628]/40" />
+
+        <div className="relative z-10 max-w-5xl mx-auto px-4 py-20 md:py-28 text-center md:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-amber-400 bg-white/10 backdrop-blur-sm border border-white/10 mb-6">
+            <Trophy className="h-3 w-3 text-amber-400" /> Built for the 2026 USMLE
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-[#0d2b4e] leading-tight max-w-4xl mx-auto">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight max-w-3xl">
             StepFighter — where every rep builds your score.
           </h1>
-          <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-lg md:text-xl text-white/80 max-w-2xl leading-relaxed">
             Board-style questions for Step 1, Step 2 CK and Step 3.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 flex flex-wrap justify-center md:justify-start gap-3">
             <Link to="/auth" search={{ mode: "signup" }}
-              className="px-6 py-3 bg-[#1a4b7c] text-white font-bold rounded-md hover:bg-[#0d2b4e] transition-colors inline-flex items-center gap-2">
+              className="px-6 py-3 bg-amber-500 text-[#0a1628] font-bold rounded-md hover:bg-amber-400 transition-colors inline-flex items-center gap-2">
               Start Free Trial <ArrowRight className="h-4 w-4" />
             </Link>
             <a href={waLink("Hi, I want to register for StepFighter. Please guide me for activation.")}
               target="_blank" rel="noreferrer"
-              className="px-6 py-3 bg-[#25D366] text-white font-bold rounded-md hover:opacity-90 inline-flex items-center gap-2">
+              className="px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-bold rounded-md hover:bg-white/20 transition-colors inline-flex items-center gap-2 border border-white/20">
               <MessageCircle className="h-4 w-4" /> Register on WhatsApp
             </a>
           </div>
-          <div className="mt-6 flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs text-slate-500 font-semibold">
-            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> 14-day free trial</span>
-            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> No credit card needed</span>
-            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Instant activation</span>
+          <div className="mt-6 flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-xs text-white/70 font-semibold">
+            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> 14-day free trial</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> No credit card needed</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Instant activation</span>
           </div>
         </div>
+      </section>
+
+      {/* Device showcase — real screenshots from the live app */}
+      <section className="relative bg-white">
+        <div className="max-w-7xl mx-auto px-4 pt-16 pb-16">
 
         {/* Device showcase — real screenshots from the live app */}
         <div className="max-w-7xl mx-auto px-4 pb-16">
