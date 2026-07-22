@@ -3,7 +3,7 @@ export const SITE = {
   brand: "StepFighter",
   tagline: "Sharper prep. Sharper score.",
   whatsapp: "923000000000", // intl format, no +
-  email: "support@stepfighter.app",
+  email: "support@stepfighter.com",
   telegram: "stepfighter", // t.me/<handle>
   currencyNote: "USD — regional payment methods confirmed on WhatsApp",
 };

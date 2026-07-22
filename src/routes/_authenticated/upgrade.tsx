@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/upgrade")({
 
 // Change these to your real contact endpoints.
 const WHATSAPP_NUMBER = "923000000000"; // international format, no +
-const SUPPORT_EMAIL = "support@stepfighter.app";
+const SUPPORT_EMAIL = "support@stepfighter.com";
 
 const waLink = (plan: string) =>
   `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
