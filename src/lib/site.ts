@@ -31,7 +31,7 @@ export type Course = {
   blurb: string;
   tagline: string;
   extras: string[];
-  price: Record<Duration, { usd: number; pkr: number }>;
+  price: Record<Duration, { usd: number }>;
 };
 
 const PLAN_FEATURES = [
@@ -52,7 +52,7 @@ export const COURSES: Course[] = [
     blurb: "Board-style questions for Step 1.",
     tagline: "Step 1 QBank",
     extras: PLAN_FEATURES,
-    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
+    price: { "6mo": { usd: 30 }, "12mo": { usd: 50 } },
   },
   {
     id: "step2ck",
@@ -61,7 +61,7 @@ export const COURSES: Course[] = [
     blurb: "Board-style questions for Step 2 CK.",
     tagline: "Step 2 CK QBank",
     extras: PLAN_FEATURES,
-    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
+    price: { "6mo": { usd: 30 }, "12mo": { usd: 50 } },
   },
   {
     id: "step3",
@@ -70,7 +70,7 @@ export const COURSES: Course[] = [
     blurb: "Board-style questions for Step 3.",
     tagline: "Step 3 QBank",
     extras: PLAN_FEATURES,
-    price: { "6mo": { usd: 30, pkr: 8100 }, "12mo": { usd: 50, pkr: 13500 } },
+    price: { "6mo": { usd: 30 }, "12mo": { usd: 50 } },
   },
   {
     id: "combo",
@@ -79,7 +79,7 @@ export const COURSES: Course[] = [
     blurb: "Every question, every form, every Step — the full StepFighter library in one subscription.",
     tagline: "Full library",
     extras: ["Step 1 + Step 2 CK + Step 3 — full access", ...PLAN_FEATURES],
-    price: { "6mo": { usd: 60, pkr: 16200 }, "12mo": { usd: 99, pkr: 26500 } },
+    price: { "6mo": { usd: 60 }, "12mo": { usd: 99 } },
   },
 ];
 
