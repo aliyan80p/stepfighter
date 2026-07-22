@@ -329,6 +329,11 @@ function TestRunner() {
   const isReview = !!data?.test.done;
   const total = data?.questions.length ?? 0;
 
+  // Clamp restored idx once data loads (in case it exceeds range)
+  useEffect(() => {
+    if (total > 0 && idx > total - 1) setIdx(total - 1);
+  }, [total]);
+
   useEffect(() => {
     setSelected(priorAttempt?.selected_answer ?? null);
     setSubmitted(!!priorAttempt);
