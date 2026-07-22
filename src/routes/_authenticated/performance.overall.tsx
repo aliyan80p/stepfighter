@@ -150,68 +150,55 @@ function OverallPerformance() {
               </div>
             )}
 
-            {data && (
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Usage donut */}
-                <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-                  <div className="font-semibold">QBank Usage</div>
-                  <div className="text-xs text-muted-foreground mb-4">Counts each unique question ID once, even if repeated</div>
-                  <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                    <Donut
-                      size={160}
-                      segments={[
-                        { value: data.correctAttempts, color: "hsl(142 71% 45%)" },
-                        { value: data.incorrectAttempts, color: "hsl(0 84% 60%)" },
-                        { value: data.unused, color: "hsl(217 91% 60%)" },
-                      ]}
-                      center={<div className="text-center"><div className="text-2xl font-bold">{data.usedPct}%</div><div className="text-[10px] text-muted-foreground uppercase">Used</div></div>}
-                    />
-                    <div className="flex-1 min-w-0 w-full space-y-3">
-                      <Row icon={HelpCircle} tone="blue" label="Total Questions" value={data.totalQuestions} />
-                      <Row icon={User} tone="rose" label="Used Questions" value={data.answered} />
-                      <Row icon={MinusCircle} tone="sky" label="Unused Questions" value={data.unused} />
+            {data && (() => {
+              const scored = data.correctAttempts + data.incorrectAttempts;
+              const correctPct = scored > 0 ? Math.round((data.correctAttempts / scored) * 100) : 0;
+              return (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* QBank Usage */}
+                  <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+                    <div className="font-semibold">QBank Usage</div>
+                    <div className="text-xs text-muted-foreground mb-4">Counts each unique question ID once, even if repeated</div>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                      <Donut
+                        size={170}
+                        segments={[
+                          { value: data.answered, color: "hsl(217 91% 60%)" },
+                          { value: Math.max(data.unused, 0), color: "hsl(0 0% 90%)" },
+                        ]}
+                        center={<div className="text-center"><div className="text-2xl font-bold">{data.usedPct}%</div><div className="text-[10px] text-muted-foreground uppercase">Used</div></div>}
+                      />
+                      <div className="flex-1 min-w-0 w-full space-y-3">
+                        <Row icon={HelpCircle} tone="blue" label="Total Questions" value={data.totalQuestions} />
+                        <Row icon={User} tone="violet" label="Used Questions" value={data.answered} />
+                        <Row icon={MinusCircle} tone="sky" label="Unused Questions" value={Math.max(data.unused, 0)} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Your Score */}
+                  <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+                    <div className="font-semibold">Your Score</div>
+                    <div className="text-xs text-muted-foreground mb-4">Counts every answer attempt, so repeated attempts count</div>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                      <Donut
+                        size={170}
+                        segments={[
+                          { value: data.correctAttempts, color: "hsl(142 71% 45%)" },
+                          { value: data.incorrectAttempts, color: "hsl(0 84% 60%)" },
+                        ]}
+                        center={<div className="text-center"><div className="text-2xl font-bold">{correctPct}%</div><div className="text-[10px] text-muted-foreground uppercase">Correct</div></div>}
+                      />
+                      <div className="flex-1 min-w-0 w-full space-y-3">
+                        <Row icon={CheckCircle2} tone="green" label="Total Correct" value={data.correctAttempts} />
+                        <Row icon={XCircle} tone="rose" label="Total Incorrect" value={data.incorrectAttempts} />
+                        <Row icon={MinusCircle} tone="sky" label="Total Omitted" value={data.omittedAttempts} />
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Your Score */}
-                <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-                  <div className="font-semibold">Your Score</div>
-                  <div className="text-xs text-muted-foreground mb-4">Counts every answer attempt, so repeated attempts count</div>
-                  <div className="space-y-3">
-                    <Row icon={CheckCircle2} tone="green" label="Total Correct" value={data.correctAttempts} />
-                    <Row icon={XCircle} tone="rose" label="Total Incorrect" value={data.incorrectAttempts} />
-                    <Row icon={MinusCircle} tone="sky" label="Total Omitted" value={data.omittedAttempts} />
-                  </div>
-                </div>
-
-                {/* Total Correct donut */}
-                <div className="rounded-2xl bg-card border border-border p-5 shadow-sm flex flex-col items-center">
-                  <div className="font-semibold mb-4">Total Correct</div>
-                  <Donut
-                    size={160}
-                    segments={[
-                      { value: data.correctAttempts, color: "hsl(142 71% 45%)" },
-                      { value: Math.max(data.totalAttempts - data.correctAttempts, 0), color: "hsl(0 0% 88%)" },
-                    ]}
-                    center={<div className="text-center"><div className="text-2xl font-bold">{data.correctPct}%</div><div className="text-[10px] text-muted-foreground">correct</div></div>}
-                  />
-                </div>
-
-                {/* Total Used donut */}
-                <div className="rounded-2xl bg-card border border-border p-5 shadow-sm flex flex-col items-center">
-                  <div className="font-semibold mb-4">Total Used</div>
-                  <Donut
-                    size={160}
-                    segments={[
-                      { value: data.answered, color: "hsl(217 91% 60%)" },
-                      { value: Math.max(data.unused, 0), color: "hsl(0 0% 88%)" },
-                    ]}
-                    center={<div className="text-center"><div className="text-2xl font-bold">{data.usedPct}%</div><div className="text-[10px] text-muted-foreground">used</div></div>}
-                  />
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {data && (
               <div className="grid gap-4 md:grid-cols-2">
