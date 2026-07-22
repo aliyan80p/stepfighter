@@ -34,6 +34,7 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [country, setCountry] = useState("");
   const [selectedQbanks, setSelectedQbanks] = useState<string[]>(["step2"]);
+  // Signup allows exactly one course; more can be added later from the dashboard.
   const [loading, setLoading] = useState(false);
   const [forgot, setForgot] = useState(false);
   const [verifySent, setVerifySent] = useState<string | null>(null);
@@ -52,10 +53,7 @@ function AuthPage() {
     });
   }, [navigate]);
 
-  const toggleQbank = (slug: string) =>
-    setSelectedQbanks((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
-    );
+  const selectQbank = (slug: string) => setSelectedQbanks([slug]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,10 +197,13 @@ function AuthPage() {
                     <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. Pakistan" />
                   </div>
                   <div>
-                    <Label>Choose your QBank(s)</Label>
+                    <Label>Choose your QBank</Label>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Pick one to start. You can add more courses later from your dashboard.
+                    </p>
                     <div className="mt-1.5 grid gap-2">
                       {QBANK_OPTIONS.map((q) => {
-                        const on = selectedQbanks.includes(q.slug);
+                        const on = selectedQbanks[0] === q.slug;
                         return (
                           <label
                             key={q.slug}
@@ -211,9 +212,10 @@ function AuthPage() {
                             }`}
                           >
                             <input
-                              type="checkbox"
+                              type="radio"
+                              name="qbank"
                               checked={on}
-                              onChange={() => toggleQbank(q.slug)}
+                              onChange={() => selectQbank(q.slug)}
                               className="h-4 w-4 accent-current"
                             />
                             <span className="flex-1">{q.label}</span>

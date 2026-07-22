@@ -28,6 +28,7 @@ import {
   Menu,
   PanelLeftClose,
   Shield,
+  PlusCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ import { TrialBanner } from "@/components/trial-banner";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { isCurrentUserAdmin } from "@/lib/admin.functions";
+import { getMyEntitlement } from "@/lib/entitlements.functions";
 
 
 
@@ -141,6 +143,10 @@ function AuthedLayout() {
   const checkAdminFn = useServerFn(isCurrentUserAdmin);
   const adminQ = useQuery({ queryKey: ["is-admin"], queryFn: () => checkAdminFn(), staleTime: 5 * 60 * 1000 });
   const isAdmin = adminQ.data?.admin === true;
+
+  const entFn = useServerFn(getMyEntitlement);
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60 * 1000 });
+  const trialEnded = entQ.data?.plan === "expired" || (entQ.data?.plan === "trial" && !entQ.data?.is_active);
 
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
@@ -291,6 +297,22 @@ function AuthedLayout() {
               </div>
             );
           })}
+
+          {trialEnded && (
+            <Link
+              to="/upgrade"
+              onClick={closeOnMobile}
+              className={cn(
+                "mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isActive("/upgrade")
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-primary/10 text-primary hover:bg-primary/20",
+              )}
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add Course
+            </Link>
+          )}
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">
