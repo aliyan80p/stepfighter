@@ -37,9 +37,9 @@ function Home() {
           width={1920}
           height={800}
         />
-        {/* Dark gradient overlay for text readability */}
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#0a1628]/95 via-[#0a1628]/80 to-[#0a1628]/40" />
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/95 via-[#0a1628]/50 to-[#0a1628]/50" />
+        {/* Brand navy gradient overlay for text readability */}
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#0d2b4e]/95 via-[#1a4b7c]/75 to-[#1a4b7c]/40" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0d2b4e]/95 via-[#1a4b7c]/45 to-[#1a4b7c]/35" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 pt-20 md:pt-24 pb-16">
           {/* Floating device mockups */}
