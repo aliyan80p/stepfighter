@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { waLink, COURSES } from "@/lib/site";
+import heroBg from "@/assets/hero-bg.jpg";
 import {
   CheckCircle2, BookOpen, Layers, BarChart3, Timer, Brain, ArrowRight, MessageCircle,
   ShieldCheck, GraduationCap, Trophy, Highlighter, StickyNote, FileText, Smartphone,
