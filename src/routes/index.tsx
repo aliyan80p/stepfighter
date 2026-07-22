@@ -115,15 +115,8 @@ function Home() {
                   />
                 </div>
               </div>
-            </div>
           </div>
-
-          <p className="mt-8 text-center text-xs uppercase tracking-widest font-bold text-slate-500">
-            Multi-device support
-          </p>
-
-
-
+        </div>
 
           {/* Feature screenshot strip */}
           <div className="mt-14 grid md:grid-cols-3 gap-6">
