@@ -785,6 +785,10 @@ export type Database = {
     }
     Functions: {
       effective_qbank_access: { Args: { _user_id: string }; Returns: string[] }
+      has_qbank_access: {
+        Args: { _qbank_id: number; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
