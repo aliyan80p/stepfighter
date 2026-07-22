@@ -144,6 +144,10 @@ function AuthedLayout() {
   const adminQ = useQuery({ queryKey: ["is-admin"], queryFn: () => checkAdminFn(), staleTime: 5 * 60 * 1000 });
   const isAdmin = adminQ.data?.admin === true;
 
+  const entFn = useServerFn(getMyEntitlement);
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60 * 1000 });
+  const trialEnded = entQ.data?.plan === "expired" || (entQ.data?.plan === "trial" && !entQ.data?.is_active);
+
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
 
