@@ -176,18 +176,19 @@ function Home() {
         <div>
           <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Why StepFighter</div>
           <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e] leading-tight mb-5">
-            An all-in-one USMLE question bank — built by physicians.
+            An all-in-one question bank for Step 1, Step 2 CK and Step 3.
           </h2>
           <p className="text-slate-600 leading-relaxed mb-6">
-            StepFighter is designed to make your prep smarter and more effective. AI-powered tools, dual
-            study modes, a medical library, flashcards and a personalized study planner — all on desktop,
-            tablet and mobile. Everything you need to master the USMLE in one place.
+            StepFighter is built to make board prep sharper and more focused. Dual study modes, a
+            native multi-device highlighter, AI-analyzed performance, SM-2 flashcards, per-question notes,
+            a real Lab Values panel, and a custom test builder covering NBME forms and CMS specialty forms —
+            all on desktop, tablet and mobile.
           </p>
           <ul className="space-y-4">
             {[
-              { t: "Smarter learning with AI", d: "AI-generated study plans from your weak areas, SM-2 flashcards, and live performance feedback." },
-              { t: "Two powerful study modes", d: "Tutor mode for guided learning, Exam mode for real-test simulation." },
-              { t: "Fully integrated system", d: "Custom quizzes, medical library, notebook and analytics — one seamless platform." },
+              { t: "Native highlighting, everywhere", d: "A custom-built, UWorld-style highlighter with a floating toolbar that works on desktop, iPad and phone — no extra app needed." },
+              { t: "Two powerful study modes", d: "Tutor mode for guided learning with instant explanations; Exam mode for timed Prometric-style simulation." },
+              { t: "AI-analyzed performance", d: "Real-time analytics plus AI-generated test analysis and weak-area quizzes, with peer ranking so you know where you stand." },
             ].map((v) => (
               <li key={v.t} className="flex gap-3">
                 <div className="h-6 w-6 rounded-full bg-amber-400 text-[#0d2b4e] grid place-items-center flex-shrink-0 font-black text-xs">✓</div>
