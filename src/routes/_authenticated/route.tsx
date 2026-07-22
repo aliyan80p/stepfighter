@@ -113,6 +113,13 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("mfa_verified_until")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    const until = prof?.mfa_verified_until ? new Date(prof.mfa_verified_until).getTime() : 0;
+    if (until <= Date.now()) throw redirect({ to: "/verify-2fa" });
     return { user: data.user };
   },
   component: AuthedLayout,

@@ -40,8 +40,15 @@ function AuthPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("mfa_verified_until")
+        .eq("id", data.session.user.id)
+        .maybeSingle();
+      const until = prof?.mfa_verified_until ? new Date(prof.mfa_verified_until).getTime() : 0;
+      navigate({ to: until > Date.now() ? "/dashboard" : "/verify-2fa" });
     });
   }, [navigate]);
 
@@ -81,7 +88,7 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/dashboard" });
+        navigate({ to: "/verify-2fa" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
