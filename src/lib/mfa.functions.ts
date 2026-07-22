@@ -117,6 +117,14 @@ export const verifyLoginOtp = createServerFn({ method: 'POST' })
     return { ok: true as const }
   })
 
+/** Clears the persistent MFA verification for the current user (called on sign-out). */
+export const clearMfaVerification = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await context.supabase.from('profiles').update({ mfa_verified_until: null }).eq('id', context.userId)
+    return { ok: true as const }
+  })
+
 function maskEmail(email: string): string {
   const [local, domain] = email.split('@')
   if (!domain) return email
