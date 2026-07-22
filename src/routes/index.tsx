@@ -32,10 +32,10 @@ function Home() {
             <Trophy className="h-3 w-3 text-amber-500" /> Built for the 2026 USMLE
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-[#0d2b4e] leading-tight max-w-4xl mx-auto">
-            Train like a fighter. <span className="underline decoration-amber-400 decoration-[6px] underline-offset-4">Score like a surgeon.</span>
+            StepFighter — where every rep builds your score.
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            High-yield board prep for Step 1, Step 2 CK and Step 3 — board-style questions, AI explanations and real-time analytics.
+            Board-style questions for Step 1, Step 2 CK and Step 3.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link to="/auth" search={{ mode: "signup" }}
