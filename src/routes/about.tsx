@@ -134,41 +134,6 @@ function About() {
         </div>
       </section>
 
-      {/* Who we are for */}
-      <section className="bg-gradient-to-br from-[#0d2b4e] to-[#1a4b7c] text-white py-20">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <div className="text-xs font-black uppercase tracking-widest text-amber-400 mb-3">
-              Who we serve
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold">For every student taking the fight seriously</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                t: "International Medical Graduates",
-                d: "Affordable, full-quality board prep without the need for international credit cards or expensive bundled subscriptions.",
-              },
-              {
-                t: "US Medical Students",
-                d: "A clean, high-yield complement to your rotations and school curriculum with strong NBME-style assessment coverage.",
-              },
-              {
-                t: "Repeat & Remediation Students",
-                d: "Detailed analytics, weak-area drills, and retake-friendly explanations to turn gaps into gains.",
-              },
-            ].map((a) => (
-              <div
-                key={a.t}
-                className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg p-6 hover:bg-white/15 transition-colors"
-              >
-                <h3 className="font-bold text-lg mb-2">{a.t}</h3>
-                <p className="text-sm text-slate-200 leading-relaxed">{a.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Final CTA */}
       <section className="max-w-4xl mx-auto px-4 py-20 text-center">
