@@ -72,52 +72,6 @@ function About() {
         </p>
       </section>
 
-      {/* Values */}
-      <section className="bg-slate-50 py-20 border-y border-slate-200">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">
-              What guides us
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#0d2b4e]">Our core values</h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                i: Target,
-                t: "Precision",
-                d: "Every question, explanation, and tag is reviewed against the latest NBME content outline and high-yield clinical reasoning.",
-              },
-              {
-                i: Heart,
-                t: "Access",
-                d: "Per-Step pricing means you only pay for what you are studying. No forced bundles, no surprise add-ons, no hidden fees.",
-              },
-              {
-                i: Users,
-                t: "Community",
-                d: "Direct WhatsApp and email support from our medical team. Real humans, fast replies, and activation guidance that actually helps.",
-              },
-              {
-                i: Award,
-                t: "Momentum",
-                d: "Highlighting, flashcards, notes, and AI analytics work together so every study session builds long-term retention, not just clicks.",
-              },
-            ].map((v) => (
-              <div
-                key={v.t}
-                className="bg-white rounded-lg p-6 border border-slate-200 text-center hover:border-[#1a4b7c] hover:shadow-lg transition-all"
-              >
-                <div className="h-12 w-12 rounded-md bg-[#1a4b7c]/10 text-[#1a4b7c] grid place-items-center mx-auto mb-4">
-                  <v.i className="h-6 w-6" />
-                </div>
-                <h3 className="font-bold text-[#0d2b4e] mb-2 text-lg">{v.t}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{v.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* What makes StepFighter different */}
       <section className="max-w-6xl mx-auto px-4 py-20">
