@@ -89,7 +89,6 @@ const groups: Group[] = [
     icon: StickyNote,
     items: [
       { to: "/notes", label: "Notes", icon: StickyNote },
-      { to: "/medical-library", label: "Medical Library", icon: FileText },
     ],
   },
   {
