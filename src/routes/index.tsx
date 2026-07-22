@@ -115,12 +115,8 @@ function Home() {
                   />
                 </div>
               </div>
-            </div>
           </div>
-
-
-
-
+        </div>
 
           {/* Feature screenshot strip */}
           <div className="mt-14 grid md:grid-cols-3 gap-6">
