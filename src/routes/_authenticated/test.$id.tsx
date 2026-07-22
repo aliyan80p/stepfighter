@@ -369,12 +369,22 @@ function TestRunner() {
   useEffect(() => {
     setSelected(priorAttempt?.selected_answer ?? null);
     setSubmitted(!!priorAttempt);
-    setStartedAt(Date.now());
-    setElapsed(0);
+    // Persist per-question start time so refresh doesn't reset the timer
+    let start = Date.now();
+    const qid = question?.id;
+    if (typeof window !== "undefined" && qid != null && !priorAttempt) {
+      const key = `qStartedAt:${id}:${qid}`;
+      const raw = window.localStorage.getItem(key);
+      const n = raw ? Number(raw) : NaN;
+      if (Number.isFinite(n) && n > 0) start = n;
+      else window.localStorage.setItem(key, String(start));
+    }
+    setStartedAt(start);
+    setElapsed(Math.max(0, Math.round((Date.now() - start) / 1000)));
     setSubmittedSecs(typeof (priorAttempt as any)?.time_seconds === "number" ? (priorAttempt as any).time_seconds : null);
     setMediaModalIndex(null);
     setStruck(new Set());
-  }, [idx, question?.id, priorAttempt?.selected_answer]);
+  }, [idx, question?.id, priorAttempt?.selected_answer, id]);
 
   useEffect(() => {
     if (submitted) return;
