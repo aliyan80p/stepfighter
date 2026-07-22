@@ -41,7 +41,10 @@ function Terms() {
         <p>All digital sales are final. Use the free trial to evaluate the platform before purchasing. If you experience a technical issue, contact our support team and we will work to resolve it. See our <a href="/refund">Refund Policy</a> for details.</p>
 
         <h2>7. Intellectual Property</h2>
-        <p>StepFighter owns the platform, software, algorithms, analytics, user interface, and the curated compilation of study materials. The question banks and media were sourced from licensed material supplied by the account owner, decrypted and imported at the owner's direction, then corrected, categorized, and reorganized by StepFighter's AI-assisted tooling. This curated content and platform output are protected. You may not copy, reproduce, distribute, publish, upload, post, transmit, reverse engineer, scrape, or resell any content or platform code without prior written permission.</p>
+        <h3>Ownership and Use</h3>
+        <p>All website content is protected by intellectual property laws; unauthorized use is prohibited.</p>
+        <h3>Prohibition on Unauthorized Use</h3>
+        <p>Copying or using content without prior consent is strictly prohibited.</p>
 
         <h2>8. Prohibited Conduct</h2>
         <ul>
