@@ -377,6 +377,23 @@ a.qbank-media-anchor[data-media-kind="video"]:hover {
 html, body { -webkit-text-size-adjust: 100%; }
 body { overscroll-behavior-y: none; }
 
+/* ---------- Public marketing site: standard, readable font sizing ---------- */
+.site-layout { font-size: 16px; line-height: 1.6; }
+.site-layout p { font-size: 1rem; line-height: 1.65; }
+.site-layout .text-xs { font-size: 0.8125rem; line-height: 1.5; }   /* 13px */
+.site-layout .text-sm { font-size: 0.9375rem; line-height: 1.55; }  /* 15px */
+.site-layout .text-base { font-size: 1rem; line-height: 1.6; }      /* 16px */
+.site-layout .text-lg { font-size: 1.125rem; line-height: 1.6; }    /* 18px */
+.site-layout h1 { line-height: 1.15; }
+.site-layout h2 { line-height: 1.2; }
+.site-layout h3 { line-height: 1.3; }
+@media (max-width: 640px) {
+  .site-layout { font-size: 15.5px; }
+  .site-layout .text-xs { font-size: 0.8125rem; }
+  .site-layout .text-sm { font-size: 0.9375rem; }
+}
+
+
 /* Respect iOS safe areas */
 @supports (padding: env(safe-area-inset-top)) {
   body {
