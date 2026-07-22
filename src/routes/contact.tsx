@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { SITE, waLink } from "@/lib/site";
-import { MessageCircle, Mail, Clock, MapPin } from "lucide-react";
+import { MessageCircle, Mail, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -59,15 +59,6 @@ function Contact() {
                 <div className="font-bold text-[#0d2b4e]">Support Hours</div>
                 <div className="text-slate-700">7 days a week</div>
                 <div className="text-xs text-slate-500 mt-1">Extended hours during exam seasons</div>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="h-12 w-12 rounded-md bg-slate-200 text-slate-700 grid place-items-center flex-shrink-0">
-                <MapPin className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="font-bold text-[#0d2b4e]">Serving IMGs worldwide</div>
-                <div className="text-slate-700">All time zones</div>
               </div>
             </div>
           </div>
