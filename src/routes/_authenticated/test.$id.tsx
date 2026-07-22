@@ -247,6 +247,15 @@ function TestRunner() {
     return window.matchMedia("(min-width: 768px)").matches;
   });
   const [timedMode, setTimedMode] = useState(true);
+  // Persisted timed-mode base: allows toggling Timed on mid-block to countdown
+  // from (unsolved * 90s) instead of restarting the full block allotment.
+  const [timedBase, setTimedBase] = useState<{ startedAt: number; allowed: number } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(`timedBase:${id}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
   const [tutorMode, setTutorMode] = useState(true);
   const [exhibitSrc, setExhibitSrc] = useState<string | null>(null);
   const [exhibitZoom, setExhibitZoom] = useState(1);
