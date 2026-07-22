@@ -114,7 +114,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       totalQuestions: totalQ ?? 0,
       subjects: subjects ?? [],
       answered: uniqueDone,
-      unused: (totalQ ?? 0) - uniqueDone,
+      unused: Math.max(0, (totalQ ?? 0) - uniqueDone),
       totalAttempts: total,
       correctAttempts: correct,
       incorrectAttempts: incorrect,
