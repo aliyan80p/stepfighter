@@ -191,7 +191,12 @@ function TestRunner() {
   }, [error, nav]);
 
 
-  const [idx, setIdx] = useState(0);
+  const [idx, setIdx] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const saved = window.localStorage.getItem(`test:${id}:idx`);
+    const n = saved ? parseInt(saved, 10) : 0;
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  });
   const [selected, setSelected] = useState<number | null>(null);
   const [struck, setStruck] = useState<Set<number>>(new Set());
   const [submitted, setSubmitted] = useState(false);
@@ -323,6 +328,11 @@ function TestRunner() {
   const isRealExam = data?.test.mode === "test";
   const isReview = !!data?.test.done;
   const total = data?.questions.length ?? 0;
+
+  // Clamp restored idx once data loads (in case it exceeds range)
+  useEffect(() => {
+    if (total > 0 && idx > total - 1) setIdx(total - 1);
+  }, [total]);
 
   useEffect(() => {
     setSelected(priorAttempt?.selected_answer ?? null);
@@ -489,6 +499,7 @@ function TestRunner() {
       }
     }
     await finFn({ data: { testId } });
+    try { window.localStorage.removeItem(`test:${id}:idx`); } catch {}
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
   };
@@ -508,6 +519,7 @@ function TestRunner() {
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
     setIdx(bounded);
+    try { window.localStorage.setItem(`test:${id}:idx`, String(bounded)); } catch {}
     setHlBar(null);
     savedRangeRef.current = null;
     savedSelectionRef.current = null;
