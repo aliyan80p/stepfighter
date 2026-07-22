@@ -3,6 +3,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // qbank id → slug mapping (matches public.qbanks)
 export const QBANK_ID_TO_SLUG: Record<number, string> = { 1: "step2", 2: "step1", 3: "step3" };
+export const QBANK_ACCESS_ALIASES: Record<string, string> = {
+  "1": "step2",
+  "2": "step1",
+  "3": "step3",
+  step1: "step1",
+  step2: "step2",
+  step2ck: "step2",
+  step3: "step3",
+};
 export const QBANK_SLUG_TO_LABEL: Record<string, string> = {
   step1: "USMLE Step 1",
   step2: "USMLE Step 2 CK",
@@ -20,6 +29,15 @@ export type Entitlement = {
   is_active: boolean;
 };
 
+export function normalizeQbankAccess(values: string[] | null | undefined): string[] {
+  const normalized = new Set<string>();
+  for (const value of values ?? []) {
+    const slug = QBANK_ACCESS_ALIASES[String(value).trim().toLowerCase()];
+    if (slug) normalized.add(slug);
+  }
+  return Array.from(normalized);
+}
+
 function compute(row: {
   plan: string;
   trial_started_at: string;
@@ -34,7 +52,7 @@ function compute(row: {
   const trialActive = row.plan === "trial" && trialEnds > now;
   const isActive = paidActive || trialActive;
   const daysLeft = Math.max(0, Math.ceil((trialEnds - now) / (1000 * 60 * 60 * 24)));
-  const access = row.qbank_access ?? [];
+  const access = normalizeQbankAccess(row.qbank_access);
   return {
     plan: (paidActive ? "paid" : trialActive ? "trial" : "expired") as Entitlement["plan"],
     trial_started_at: row.trial_started_at,
