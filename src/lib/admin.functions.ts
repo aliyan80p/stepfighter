@@ -171,3 +171,251 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
       countries,
     };
   });
+
+// ============================================================================
+// User management
+// ============================================================================
+
+export type AdminUserRow = {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+  full_name: string | null;
+  country: string | null;
+  target_exam: string | null;
+  created_at: string;
+  plan: string | null;
+  trial_ends_at: string | null;
+  paid_until: string | null;
+  qbank_access: string[];
+  is_admin: boolean;
+};
+
+export const listUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { search?: string; limit?: number; offset?: number }) => d)
+  .handler(async ({ context, data }): Promise<{ rows: AdminUserRow[]; total: number }> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const limit = Math.min(Math.max(data.limit ?? 50, 1), 200);
+    const offset = Math.max(data.offset ?? 0, 0);
+    const search = (data.search ?? "").trim().toLowerCase();
+
+    // Pull auth users via admin API (paged). For search we filter after.
+    const { data: authList, error: authErr } = await supabaseAdmin.auth.admin.listUsers({
+      page: Math.floor(offset / limit) + 1,
+      perPage: search ? 1000 : limit,
+    });
+    if (authErr) throw new Error(authErr.message);
+    let users = authList?.users ?? [];
+    if (search) {
+      users = users.filter((u) => (u.email ?? "").toLowerCase().includes(search));
+      users = users.slice(offset % 1000, (offset % 1000) + limit);
+    }
+    const ids = users.map((u) => u.id);
+    if (ids.length === 0) return { rows: [], total: authList?.total ?? 0 };
+
+    const [{ data: profs }, { data: ents }, { data: roles }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id, display_name, full_name, country, target_exam, created_at").in("id", ids),
+      supabaseAdmin.from("user_entitlements").select("user_id, plan, trial_ends_at, paid_until, qbank_access").in("user_id", ids),
+      supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids).eq("role", "admin"),
+    ]);
+
+    const profMap = new Map((profs ?? []).map((p) => [p.id, p]));
+    const entMap = new Map((ents ?? []).map((e) => [e.user_id, e]));
+    const adminSet = new Set((roles ?? []).map((r) => r.user_id));
+
+    const rows: AdminUserRow[] = users.map((u) => {
+      const p = profMap.get(u.id);
+      const e = entMap.get(u.id);
+      return {
+        id: u.id,
+        email: u.email ?? null,
+        display_name: p?.display_name ?? null,
+        full_name: p?.full_name ?? null,
+        country: p?.country ?? null,
+        target_exam: p?.target_exam ?? null,
+        created_at: (p?.created_at as string) ?? u.created_at,
+        plan: e?.plan ?? null,
+        trial_ends_at: (e?.trial_ends_at as string) ?? null,
+        paid_until: (e?.paid_until as string) ?? null,
+        qbank_access: (e?.qbank_access as string[]) ?? [],
+        is_admin: adminSet.has(u.id),
+      };
+    });
+
+    return { rows, total: authList?.total ?? rows.length };
+  });
+
+export const deleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => d)
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    if (data.userId === context.userId) throw new Error("Cannot delete yourself");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const updateEntitlement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    userId: string;
+    plan: "trial" | "paid" | "expired";
+    trial_ends_at?: string | null;
+    paid_until?: string | null;
+    qbank_access?: string[];
+  }) => d)
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const patch: Record<string, unknown> = { plan: data.plan };
+    if (data.trial_ends_at !== undefined) patch.trial_ends_at = data.trial_ends_at;
+    if (data.paid_until !== undefined) patch.paid_until = data.paid_until;
+    if (data.qbank_access !== undefined) patch.qbank_access = data.qbank_access;
+    const { error } = await supabaseAdmin
+      .from("user_entitlements")
+      .upsert({ user_id: data.userId, ...patch }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; admin: boolean }) => d)
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    if (data.userId === context.userId && !data.admin) throw new Error("Cannot demote yourself");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.admin) {
+      const { error } = await supabaseAdmin.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+// ============================================================================
+// Feedback management
+// ============================================================================
+
+export type AdminFeedbackRow = {
+  id: string;
+  user_id: string;
+  email: string | null;
+  qbank_id: number | null;
+  question_id: number | null;
+  message: string;
+  is_technical: boolean;
+  created_at: string;
+};
+
+export const listFeedback = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { limit?: number; offset?: number }) => d)
+  .handler(async ({ context, data }): Promise<{ rows: AdminFeedbackRow[] }> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const limit = Math.min(Math.max(data.limit ?? 100, 1), 500);
+    const offset = Math.max(data.offset ?? 0, 0);
+    const { data: fb, error } = await supabaseAdmin
+      .from("feedback")
+      .select("id, user_id, qbank_id, question_id, message, is_technical, created_at")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((fb ?? []).map((f) => f.user_id)));
+    const emailMap = new Map<string, string | null>();
+    for (const uid of ids) {
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(uid);
+      emailMap.set(uid, u?.user?.email ?? null);
+    }
+    return {
+      rows: (fb ?? []).map((f) => ({
+        id: f.id as string,
+        user_id: f.user_id as string,
+        email: emailMap.get(f.user_id as string) ?? null,
+        qbank_id: f.qbank_id as number | null,
+        question_id: f.question_id as number | null,
+        message: f.message as string,
+        is_technical: f.is_technical as boolean,
+        created_at: f.created_at as string,
+      })),
+    };
+  });
+
+export const deleteFeedback = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("feedback").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ============================================================================
+// Question management (edit / delete)
+// ============================================================================
+
+export type AdminQuestion = {
+  id: number;
+  qbank_id: number;
+  title: string | null;
+  question: string;
+  explanation: string | null;
+  correct_answer: number | null;
+};
+
+export const getQuestionForAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; id: number }) => d)
+  .handler(async ({ context, data }): Promise<AdminQuestion | null> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: q, error } = await supabaseAdmin
+      .from("questions")
+      .select("id, qbank_id, title, question, explanation, correct_answer")
+      .eq("qbank_id", data.qbank_id)
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return (q as AdminQuestion) ?? null;
+  });
+
+export const updateQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    qbank_id: number;
+    id: number;
+    title?: string | null;
+    question?: string;
+    explanation?: string | null;
+    correct_answer?: number | null;
+  }) => d)
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const patch: {
+      title?: string | null;
+      question?: string;
+      explanation?: string | null;
+      correct_answer?: number | null;
+    } = {};
+    if (data.title !== undefined) patch.title = data.title;
+    if (data.question !== undefined) patch.question = data.question;
+    if (data.explanation !== undefined) patch.explanation = data.explanation;
+    if (data.correct_answer !== undefined) patch.correct_answer = data.correct_answer;
+    const { error } = await supabaseAdmin
+      .from("questions")
+      .update(patch)
+      .eq("qbank_id", data.qbank_id)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
