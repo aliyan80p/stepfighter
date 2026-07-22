@@ -23,7 +23,7 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "StepFighter is physician-built Step 1, 2 CK & 3 prep for medical students worldwide. Learn why we made premium QBank access per-Step, affordable, and free of forced bundles.",
+          "StepFighter is physician-built board prep for medical students worldwide. Learn why we made premium QBank access per-course, affordable, and free of forced bundles.",
       },
       { property: "og:title", content: "About StepFighter" },
       {
