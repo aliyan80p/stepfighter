@@ -598,16 +598,18 @@ function TestRunner() {
     ? Math.max(0, timedBase.allowed - Math.round((Date.now() - timedBase.startedAt) / 1000))
     : total * 90;
 
-  // Auto-end exam mode when block time runs out
+  // Auto-end the block when timed countdown hits zero — applies to real exam
+  // mode AND to practice/tutor blocks running with the Timed toggle on (e.g.
+  // pseudo-exam). The user shouldn't have to click Submit manually.
   const autoEndedRef = useRef(false);
   useEffect(() => {
-    if (isReview || !isRealExam || !timedMode) return;
+    if (isReview || !timedMode) return;
     if (timedRemaining <= 0 && !autoEndedRef.current) {
       autoEndedRef.current = true;
       toast.message("Time's up — submitting your block.");
       finish();
     }
-  }, [blockElapsed, timedRemaining, timedMode, isRealExam, isReview]);
+  }, [blockElapsed, timedRemaining, timedMode, isReview]);
 
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
