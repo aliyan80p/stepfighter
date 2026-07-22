@@ -74,7 +74,7 @@ export const COURSES: Course[] = [
   },
   {
     id: "combo",
-    name: "Combo Plan",
+    name: "All-Steps Combo",
     short: "Combo",
     blurb: "Every question, every form, every Step — the full StepFighter library in one subscription.",
     tagline: "Full library",
