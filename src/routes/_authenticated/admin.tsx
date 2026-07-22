@@ -33,9 +33,9 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 const COLORS = ["#f59e0b","#3b82f6","#10b981","#ef4444","#8b5cf6","#ec4899","#06b6d4","#84cc16","#f97316","#a3a3a3"];
 const QBANK_OPTIONS = [
-  { id: "1", label: "Step 2 CK" },
-  { id: "2", label: "Step 1" },
-  { id: "3", label: "Step 3" },
+  { id: "step2", label: "Step 2 CK" },
+  { id: "step1", label: "Step 1" },
+  { id: "step3", label: "Step 3" },
 ];
 
 function AdminDashboard() {

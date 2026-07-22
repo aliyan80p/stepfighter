@@ -146,7 +146,13 @@ function AuthedLayout() {
   const isAdmin = adminQ.data?.admin === true;
 
   const entFn = useServerFn(getMyEntitlement);
-  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60 * 1000 });
+  const entQ = useQuery({
+    queryKey: ["my-entitlement"],
+    queryFn: () => entFn(),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+  });
   const trialEnded = entQ.data?.plan === "expired" || (entQ.data?.plan === "trial" && !entQ.data?.is_active);
 
   // Enforce single/limited course access: auto-switch active qbank if user has no access to it.
