@@ -114,7 +114,7 @@ function Home() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link to="/auth" search={{ mode: "signup" }}
-                className="px-6 py-3 bg-amber-500 text-[#0a1628] font-bold rounded-md hover:bg-amber-400 transition-colors inline-flex items-center gap-2">
+                className="px-6 py-3 bg-amber-500 text-[#0d2b4e] font-bold rounded-md hover:bg-amber-400 transition-colors inline-flex items-center gap-2">
                 Start Free Trial <ArrowRight className="h-4 w-4" />
               </Link>
               <a href={waLink("Hi, I want to register for StepFighter. Please guide me for activation.")}
