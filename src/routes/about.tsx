@@ -72,7 +72,6 @@ function About() {
         </p>
       </section>
 
-
       {/* What makes StepFighter different */}
       <section className="max-w-6xl mx-auto px-4 py-20">
         <div className="text-center max-w-2xl mx-auto mb-14">
