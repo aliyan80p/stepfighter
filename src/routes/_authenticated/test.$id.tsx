@@ -202,6 +202,9 @@ function TestRunner() {
   const [submitted, setSubmitted] = useState(false);
   const [startedAt, setStartedAt] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
+  // Frozen seconds captured at submit — used for the "Time Taken" display so it
+  // never falls back to 0 if the query cache is briefly missing time_seconds.
+  const [submittedSecs, setSubmittedSecs] = useState<number | null>(null);
   const [blockStartedAt] = useState(Date.now());
   const [blockElapsed, setBlockElapsed] = useState(0);
   const [showCalc, setShowCalc] = useState(false);
