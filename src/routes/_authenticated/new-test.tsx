@@ -252,6 +252,9 @@ function NewTest() {
     queryKey: ["pool", qbankId, selectedSources, subjectIds, systemIds, topicNames, scope],
     queryFn: () => poolFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope } }),
     enabled: !!data,
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
 
 
