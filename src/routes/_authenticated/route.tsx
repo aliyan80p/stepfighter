@@ -160,6 +160,12 @@ function AuthedLayout() {
   }, [sidebarOpen, hydrated]);
 
   const signOut = async () => {
+    try {
+      const { clearMfaVerification } = await import("@/lib/mfa.functions");
+      await clearMfaVerification();
+    } catch {
+      // non-fatal; proceed with sign-out
+    }
     await supabase.auth.signOut();
     router.navigate({ to: "/auth" });
   };

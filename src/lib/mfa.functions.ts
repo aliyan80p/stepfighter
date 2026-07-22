@@ -3,7 +3,8 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { createHash, randomInt } from 'crypto'
 import { z } from 'zod'
 
-const VERIFY_WINDOW_HOURS = 12
+// Persistent until sign-out: ~100 years. clearMfaVerification() resets on logout.
+const VERIFY_WINDOW_HOURS = 24 * 365 * 100
 const CODE_TTL_MIN = 10
 const MAX_ATTEMPTS = 5
 const MAX_CODES_PER_HOUR = 5
@@ -113,6 +114,14 @@ export const verifyLoginOtp = createServerFn({ method: 'POST' })
     const verifiedUntil = new Date(Date.now() + VERIFY_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
     await context.supabase.from('login_otps').update({ consumed_at: new Date().toISOString() }).eq('id', row.id)
     await context.supabase.from('profiles').update({ mfa_verified_until: verifiedUntil }).eq('id', context.userId)
+    return { ok: true as const }
+  })
+
+/** Clears the persistent MFA verification for the current user (called on sign-out). */
+export const clearMfaVerification = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await context.supabase.from('profiles').update({ mfa_verified_until: null }).eq('id', context.userId)
     return { ok: true as const }
   })
 
