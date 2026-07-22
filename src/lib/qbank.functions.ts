@@ -189,10 +189,10 @@ export const createTest = createServerFn({ method: "POST" })
     await assertQbankAccess(supabase, userId, data.qbankId);
     const { data: picked, error: pickErr } = await supabase.rpc("pick_question_ids", {
       p_qbank_id: data.qbankId,
-      p_sources: data.sources.length ? data.sources : null,
-      p_subject_ids: data.subjectIds.length ? data.subjectIds : null,
-      p_system_ids: data.systemIds.length ? data.systemIds : null,
-      p_topic_names: data.topicNames.length ? data.topicNames : null,
+      p_sources: data.sources.length ? data.sources : undefined,
+      p_subject_ids: data.subjectIds.length ? data.subjectIds : undefined,
+      p_system_ids: data.systemIds.length ? data.systemIds : undefined,
+      p_topic_names: data.topicNames.length ? data.topicNames : undefined,
       p_scope: data.scope,
       p_count: data.count,
     });
