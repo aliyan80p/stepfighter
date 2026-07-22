@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { normalizeQbankAccess } from "@/lib/entitlements.functions";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
@@ -239,7 +240,7 @@ export const listUsers = createServerFn({ method: "GET" })
         plan: e?.plan ?? null,
         trial_ends_at: (e?.trial_ends_at as string) ?? null,
         paid_until: (e?.paid_until as string) ?? null,
-        qbank_access: (e?.qbank_access as string[]) ?? [],
+        qbank_access: normalizeQbankAccess(e?.qbank_access as string[] | null),
         is_admin: adminSet.has(u.id),
       };
     });
@@ -274,7 +275,7 @@ export const updateEntitlement = createServerFn({ method: "POST" })
     const patch: Record<string, unknown> = { plan: data.plan };
     if (data.trial_ends_at !== undefined) patch.trial_ends_at = data.trial_ends_at;
     if (data.paid_until !== undefined) patch.paid_until = data.paid_until;
-    if (data.qbank_access !== undefined) patch.qbank_access = data.qbank_access;
+    if (data.qbank_access !== undefined) patch.qbank_access = normalizeQbankAccess(data.qbank_access);
     const { error } = await supabaseAdmin
       .from("user_entitlements")
       .upsert({ user_id: data.userId, ...patch }, { onConflict: "user_id" });
