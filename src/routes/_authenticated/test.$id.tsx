@@ -1438,7 +1438,7 @@ function TestRunner() {
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {!isReview && (
                 <>
-                  <ToggleSwitch label="Timed" checked={timedMode} onChange={setTimedMode} />
+                  <ToggleSwitch label="Timed" checked={timedMode} onChange={handleToggleTimed} />
                   <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
                   <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
                 </>
