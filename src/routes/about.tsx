@@ -24,13 +24,13 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "StepFighter is physician-built USMLE prep for medical students worldwide. Learn why we made premium QBank access per-Step, affordable, and free of forced bundles.",
+          "StepFighter is physician-built Step 1, 2 CK & 3 prep for medical students worldwide. Learn why we made premium QBank access per-Step, affordable, and free of forced bundles.",
       },
       { property: "og:title", content: "About StepFighter" },
       {
         property: "og:description",
         content:
-          "Our mission: make high-yield USMLE preparation accessible with board-style questions, real NBME-style forms, and AI-powered study tools.",
+          "Our mission: make high-yield medical board prep accessible with board-style questions, real NBME-style forms, and AI-powered study tools.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -57,7 +57,7 @@ function About() {
             <span className="text-amber-400">not against the wallet.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
-            StepFighter is a physician-built USMLE preparation platform built to put high-yield,
+            StepFighter is a physician-built medical board prep platform built to put high-yield,
             board-quality practice in reach of every medical student — no matter the country,
             budget, or exam schedule.
           </p>
@@ -244,7 +244,7 @@ function About() {
             {[
               {
                 t: "International Medical Graduates",
-                d: "Affordable, full-quality USMLE prep without the need for international credit cards or expensive bundled subscriptions.",
+                d: "Affordable, full-quality board prep without the need for international credit cards or expensive bundled subscriptions.",
               },
               {
                 t: "US Medical Students",

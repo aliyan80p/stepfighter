@@ -7,9 +7,9 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       { title: "Contact StepFighter — Support & Sales" },
-      { name: "description", content: "Reach the StepFighter team on WhatsApp or email for USMLE QBank support, activation help and subscription questions." },
+      { name: "description", content: "Reach the StepFighter team on WhatsApp or email for Step 1, 2 CK & 3 QBank support, activation help and subscription questions." },
       { property: "og:title", content: "Contact StepFighter" },
-      { property: "og:description", content: "Get in touch with our USMLE prep team — WhatsApp, email, 24/7 support." },
+      { property: "og:description", content: "Get in touch with our board prep team — WhatsApp, email, 24/7 support." },
     ],
   }),
   component: Contact,

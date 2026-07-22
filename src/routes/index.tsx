@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "StepFighter — USMLE Step 1, Step 2 CK & Step 3 QBank" },
-      { name: "description", content: "High-yield USMLE preparation with board-style questions, NBME-style self-assessments, CMS forms and AI analytics for Step 1, Step 2 CK and Step 3." },
+      { name: "description", content: "High-yield medical board prep with board-style questions, NBME-style self-assessments, CMS forms and AI analytics for Step 1, Step 2 CK and Step 3." },
       { property: "og:title", content: "StepFighter — Sharper prep. Sharper score." },
       { property: "og:description", content: "Board-style USMLE questions across Step 1, Step 2 CK and Step 3, on desktop, iPad and mobile." },
       { property: "og:type", content: "website" },
@@ -34,7 +34,7 @@ function Home() {
           <h1 className="text-4xl md:text-6xl font-bold text-[#0d2b4e] leading-tight max-w-4xl mx-auto">
             Train like a fighter. <span className="underline decoration-amber-400 decoration-[6px] underline-offset-4">Score like a surgeon.</span>
             <br className="hidden md:block" />
-            Step-by-step USMLE prep on <span className="text-[#1a4b7c]">your terms</span>.
+            Step-by-step board prep on <span className="text-[#1a4b7c]">your terms</span>.
           </h1>
           <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Board-style questions across Step 1, Step 2 CK and Step 3 — plus NBME-style self-assessments,
