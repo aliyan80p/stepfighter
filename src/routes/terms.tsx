@@ -41,10 +41,7 @@ function Terms() {
         <p>All digital sales are final. Use the free trial to evaluate the platform before purchasing. If you experience a technical issue, contact our support team and we will work to resolve it. See our <a href="/refund">Refund Policy</a> for details.</p>
 
         <h2>7. Intellectual Property</h2>
-        <h3>Ownership and Use</h3>
-        <p>All website content is protected by intellectual property laws; unauthorized use is prohibited.</p>
-        <h3>Prohibition on Unauthorized Use</h3>
-        <p>Copying or using content without prior consent is strictly prohibited.</p>
+        <p>All website content is protected by intellectual property laws; unauthorized use is prohibited. Copying or using content without prior consent is strictly prohibited.</p>
 
         <h2>8. Prohibited Conduct</h2>
         <ul>
