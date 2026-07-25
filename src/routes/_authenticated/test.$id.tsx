@@ -53,11 +53,11 @@ function attachImageAutoRetry(root: HTMLElement) {
     let tries = 0;
     const original = img.getAttribute("src") || "";
     const retry = () => {
-      if (tries >= 5 || !original) return;
+      if (tries >= 3 || !original) return;
       tries += 1;
       const sep = original.includes("?") ? "&" : "?";
       const bust = `${sep}r=${Date.now()}-${tries}`;
-      setTimeout(() => { img.src = original + bust; }, 300 * tries);
+      setTimeout(() => { img.src = original + bust; }, 200 * tries);
     };
     img.addEventListener("error", retry);
     // If already broken by the time we bind (cached failure), kick a retry.
@@ -1179,7 +1179,7 @@ function TestRunner() {
 
 
             
-            <HighlightableHtml seedKey={`q-${question.id}-${mediaToken ? "t" : "n"}`} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
+            <HighlightableHtml seedKey={`q-${question.id}`} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
 
             {mediaItems.length > 0 && (
               <div className="mt-3 flex flex-wrap items-start justify-center gap-3">
@@ -1395,7 +1395,7 @@ function TestRunner() {
                   }}
                 >
                   <HighlightableHtml
-                    seedKey={`e-${question.id}-${mediaToken ? "t" : "n"}`}
+                    seedKey={`e-${question.id}`}
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
                     html={htmlFor("e", question.explanation, true)}
