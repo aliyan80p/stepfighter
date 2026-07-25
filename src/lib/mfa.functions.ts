@@ -31,10 +31,11 @@ export const getMfaStatus = createServerFn({ method: 'GET' })
 export const requestLoginOtp = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
 
     // Rate limit: last hour
-    const { data: recent } = await context.supabase
+    const { data: recent } = await supabaseAdmin
       .from('login_otps')
       .select('id, created_at')
       .eq('user_id', context.userId)
@@ -60,7 +61,7 @@ export const requestLoginOtp = createServerFn({ method: 'POST' })
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
     const expiresAt = new Date(Date.now() + CODE_TTL_MIN * 60 * 1000).toISOString()
 
-    const { error: insErr } = await context.supabase.from('login_otps').insert({
+    const { error: insErr } = await supabaseAdmin.from('login_otps').insert({
       user_id: context.userId,
       code_hash: hashCode(context.userId, code),
       expires_at: expiresAt,
@@ -77,6 +78,7 @@ export const requestLoginOtp = createServerFn({ method: 'POST' })
     }
     return { sent: true, maskedEmail: maskEmail(email) }
   })
+
 
 /** Verifies the latest unconsumed code; on success bumps mfa_verified_until. */
 export const verifyLoginOtp = createServerFn({ method: 'POST' })
