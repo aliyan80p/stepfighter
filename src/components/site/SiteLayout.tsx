@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { Menu, X, MessageCircle, Mail } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { NAV_LINKS, SITE, waLink } from "@/lib/site";
+import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
+
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
