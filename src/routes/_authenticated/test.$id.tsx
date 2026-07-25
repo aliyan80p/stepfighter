@@ -448,11 +448,12 @@ function TestRunner() {
   }, [userSettings.autoNightMode, userSettings.nightStart, userSettings.nightEnd, question?.id]);
 
 
-  // Initialize tutor/exam toggle from test.mode once per test
+  // Initialize tutor/exam + timed toggles from the test record once per test
   useEffect(() => {
     if (!data?.test) return;
     if (modeInitFor === data.test.id) return;
     setTutorMode(data.test.mode === "practice");
+    setTimedMode(!!(data.test as { timed?: boolean }).timed);
     setModeInitFor(data.test.id);
   }, [data?.test?.id, data?.test?.mode, modeInitFor]);
 
