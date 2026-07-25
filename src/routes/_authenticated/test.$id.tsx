@@ -605,24 +605,48 @@ function TestRunner() {
   const autoEndedRef = useRef(false);
   const autoWarnedRef = useRef(false);
   const WARN_SECONDS = 10;
+  // Reset guards if the user switches timed mode off or the base changes.
   useEffect(() => {
-    if (isReview || !timedMode) return;
-    // Don't fire before the test data has loaded (total=0) or before the
-    // timedBase has been established — otherwise a fresh test auto-submits
-    // during the first render pass.
-    if (!data || total <= 0 || !timedBase) return;
-    if (timedRemaining <= WARN_SECONDS && timedRemaining > 0 && !autoWarnedRef.current) {
+    if (!timedMode) {
+      autoEndedRef.current = false;
+      autoWarnedRef.current = false;
+    }
+  }, [timedMode, timedBase?.startedAt, timedBase?.allowed]);
+
+  // Schedule the "time's up in 10s" warning and the auto-submit at absolute
+  // moments derived from timedBase, so a throttled tab or a skipped interval
+  // tick can never miss the warning window.
+  useEffect(() => {
+    if (isReview || !timedMode || !data || total <= 0 || !timedBase) return;
+    const endsAt = timedBase.startedAt + timedBase.allowed * 1000;
+    const now = Date.now();
+    const warnDelay = endsAt - WARN_SECONDS * 1000 - now;
+    const endDelay = endsAt - now;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const showWarn = () => {
+      if (autoWarnedRef.current || autoEndedRef.current) return;
       autoWarnedRef.current = true;
       toast.warning(`Time's up in ${WARN_SECONDS} seconds — your block will auto-submit.`, {
         duration: WARN_SECONDS * 1000,
       });
-    }
-    if (timedRemaining <= 0 && !autoEndedRef.current) {
+    };
+    const doEnd = () => {
+      if (autoEndedRef.current) return;
       autoEndedRef.current = true;
       toast.message("Time's up — submitting your block.");
       finish();
-    }
-  }, [blockElapsed, timedRemaining, timedMode, isReview, data, total, timedBase]);
+    };
+
+    if (warnDelay <= 0 && endDelay > 0) showWarn();
+    else if (warnDelay > 0) timers.push(setTimeout(showWarn, warnDelay));
+
+    if (endDelay <= 0) doEnd();
+    else timers.push(setTimeout(doEnd, endDelay));
+
+    return () => { timers.forEach(clearTimeout); };
+  }, [timedMode, isReview, data, total, timedBase?.startedAt, timedBase?.allowed]);
+
 
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
