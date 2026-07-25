@@ -467,7 +467,10 @@ function NewTest() {
               const c = COURSES.find((x) => x.id === id);
               if (!c) return;
               setCourseIds([c.id]);
-              setQbankIds([]);
+              // Auto-select all QBanks belonging to this course so the user can
+              // generate a test immediately without visiting the QBank tab.
+              const autoQbankIds = QBANK_OPTIONS.filter((q) => q.qbankId === c.qbankId).map((q) => q.id);
+              setQbankIds(autoQbankIds);
               setSubjectIds([]); setSystemIds([]); setTopicNames([]);
               if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
             }}
