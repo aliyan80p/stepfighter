@@ -133,7 +133,12 @@ function TestResults() {
         <div className="flex items-center gap-6 text-sm">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Test Name</div>
-            <div className="font-medium">Custom Quiz {created.toLocaleString()}</div>
+            <div className="font-medium flex items-center gap-2 flex-wrap">
+              <span>Custom Quiz {created.toLocaleString()}</span>
+              <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                {QBANK_NAME[data.qbankId] ?? `QBank #${data.qbankId}`}
+              </span>
+            </div>
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">ID</div>
