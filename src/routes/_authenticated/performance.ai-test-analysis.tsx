@@ -58,7 +58,10 @@ function AiTestAnalysisPage() {
                       )}
                     >
                       <div className="text-sm font-medium truncate">{t.name || `Test #${t.id}`}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="inline-flex items-center rounded border border-primary/30 bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                          {QBANK_NAME[t.qbank_id] ?? `QB#${t.qbank_id}`}
+                        </span>
                         <span>{t.right_count}/{t.total}</span>
                         <span className={cn(
                           "px-1.5 py-0.5 rounded",
