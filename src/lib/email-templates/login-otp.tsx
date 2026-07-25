@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { BrandHeader } from './brand-header'
 import { Body, Container, Head, Heading, Html, Preview, Text } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
@@ -13,6 +14,7 @@ const Email = ({ code, minutes = 10 }: Props) => (
     <Preview>Your StepFighter sign-in code is {code}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <BrandHeader />
         <Heading style={h1}>Your sign-in code</Heading>
         <Text style={text}>
           Use this code to finish signing in to StepFighter. It expires in {minutes} minutes.
