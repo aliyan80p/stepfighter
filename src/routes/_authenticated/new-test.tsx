@@ -616,11 +616,29 @@ function NewTest() {
           />
           <span className="text-sm">/ <b>{poolCount}</b> Questions</span>
         </div>
-        <Button size="lg" onClick={start} disabled={loading || !hasCourse || !hasQbank || count < 1 || poolCount === 0} className="mt-4">
-          {loading ? "Generating…" : "Generate Test"}
+        <Button
+          size="lg"
+          onClick={start}
+          disabled={loading || !hasCourse || !hasQbank || count < 1 || poolCount === 0}
+          className="mt-4 group relative overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:hover:scale-100"
+        >
+          <span className="relative z-10 flex items-center gap-2">
+            {loading && <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
+            {loading ? "Generating…" : "Generate Test"}
+          </span>
+          {!loading && <span aria-hidden className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent group-hover:translate-x-full transition-transform duration-700" />}
         </Button>
       </Card>
       </>)}
+
+      {/* Full-screen generating overlay */}
+      {loading && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm animate-fade-in">
+          <div className="rounded-2xl bg-white/95 dark:bg-slate-900/95 shadow-2xl px-10 py-8 border border-white/20">
+            <Loader label="Preparing your test" size={72} />
+          </div>
+        </div>
+      )}
     </div>
 
   );
