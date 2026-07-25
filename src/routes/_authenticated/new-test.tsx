@@ -315,8 +315,8 @@ function NewTest() {
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Generate Quiz</h1>
+      <div className="animate-fade-in">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0d2b4e] via-[#1a4b7c] to-[#38bdf8] bg-clip-text text-transparent">Generate Quiz</h1>
         <p className="text-muted-foreground mt-1">Build a custom practice session</p>
       </div>
 
