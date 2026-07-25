@@ -351,7 +351,7 @@ function NewTest() {
       </Card>
 
       {/* Quiz Type */}
-      <Card>
+      <Card delay={120}>
         <h2 className="font-semibold mb-3">Quiz Type</h2>
         <div className="rounded-lg border border-border p-3 mb-4">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">Edit Quiz Name</div>
