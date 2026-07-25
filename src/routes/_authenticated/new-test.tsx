@@ -251,7 +251,7 @@ function NewTest() {
   const { data: pool } = useQuery({
     queryKey: ["pool", qbankId, selectedSources, subjectIds, systemIds, topicNames, scope],
     queryFn: () => poolFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope } }),
-    enabled: !!data,
+    enabled: selectedSources.length > 0,
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
     placeholderData: (prev) => prev,
