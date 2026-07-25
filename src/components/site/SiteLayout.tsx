@@ -16,10 +16,11 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       <header className="border-b border-slate-200 bg-white sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-md bg-[#1a4b7c] text-white grid place-items-center font-bold">SF</div>
+            <img src={logoAsset.url} alt="StepFighter logo" className="h-10 w-10 object-contain" />
             <div>
               <div className="text-[#1a4b7c] font-bold text-lg leading-none">StepFighter</div>
             </div>
+
           </Link>
           <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-700">
             {NAV_LINKS.map((l) => (
