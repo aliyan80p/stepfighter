@@ -605,12 +605,16 @@ function TestRunner() {
   const autoEndedRef = useRef(false);
   useEffect(() => {
     if (isReview || !timedMode) return;
+    // Don't fire before the test data has loaded (total=0) or before the
+    // timedBase has been established — otherwise a fresh test auto-submits
+    // during the first render pass.
+    if (!data || total <= 0 || !timedBase) return;
     if (timedRemaining <= 0 && !autoEndedRef.current) {
       autoEndedRef.current = true;
       toast.message("Time's up — submitting your block.");
       finish();
     }
-  }, [blockElapsed, timedRemaining, timedMode, isReview]);
+  }, [blockElapsed, timedRemaining, timedMode, isReview, data, total, timedBase]);
 
   const goToQuestion = (nextIndex: number) => {
     const bounded = Math.max(0, Math.min(total - 1, nextIndex));
