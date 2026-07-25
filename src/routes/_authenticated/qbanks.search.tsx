@@ -232,7 +232,14 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
                 const absIdx = sorted.findIndex((x) => x.id === r.id);
                 return (
                   <tr key={r.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
+                    <td className="px-4 py-3 font-mono text-slate-700">
+                      {r.id}
+                      {r.qbankId && (
+                        <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 align-middle">
+                          {QBANKS.find((q) => q.id === r.qbankId)?.slug?.toUpperCase() ?? `QB${r.qbankId}`}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
