@@ -312,337 +312,475 @@ function NewTest() {
   };
 
 
+  const difficultyLabel = difficulty.length === 5 ? "Any" : difficulty.slice().sort().join(", ");
+  const scopeLabel = ({ all: "All", unused: "Unused", incorrect: "Incorrect", correct: "Correct", omitted: "Omitted", marked: "Marked" } as const)[scope];
+  const pct = poolCount > 0 ? Math.min(100, Math.round((count / Math.min(poolCount, 50)) * 100)) : 0;
+  const canLaunch = quizType === "custom"
+    ? parseIds(customIds).length > 0 && !loading
+    : hasCourse && hasQbank && count >= 1 && poolCount > 0 && !loading;
+
   return (
-    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Generate Quiz</h1>
-        <p className="text-muted-foreground mt-1">Build a custom practice session</p>
-      </div>
-
-      {/* Test Mode */}
-      <Card>
-        <div className="flex items-start gap-3 mb-4">
-          <IconBadge><ClipboardCheck className="h-4 w-4" /></IconBadge>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="mx-auto max-w-7xl px-4 md:px-8 py-6 md:py-10">
+        {/* Page header */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
           <div>
-            <h2 className="font-semibold">Test Mode</h2>
-            <p className="text-xs text-muted-foreground">Choose your preferred testing experience</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <ModeCard active={mode === "practice"} onClick={() => setMode("practice")} icon={<GraduationCap className="h-4 w-4" />} title="Tutor Mode" desc="Learn as you go" />
-          <ModeCard active={mode === "test"} onClick={() => setMode("test")} icon={<ClipboardCheck className="h-4 w-4" />} title="Exam Mode" desc="Simulate real exam" />
-        </div>
-        <button
-          onClick={() => setTimed((t) => !t)}
-          className="mt-3 w-full flex items-center justify-between rounded-lg border border-border p-4 text-left hover:bg-accent/40"
-        >
-          <div className="flex items-center gap-3">
-            <IconBadge><Clock className="h-4 w-4" /></IconBadge>
-            <div>
-              <div className="font-medium text-sm">Timed Mode</div>
-              <div className="text-xs text-muted-foreground">Add time pressure to your test</div>
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary/80 mb-2">
+              <span className="h-px w-8 bg-primary/60" /> Test Composer
             </div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Build a Session</h1>
+            <p className="text-muted-foreground mt-1 text-sm">Compose the exact quiz you want to practice.</p>
           </div>
-          <div className={cn("h-6 w-11 rounded-full transition-colors relative", timed ? "bg-primary" : "bg-muted")}>
-            <div className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-all", timed ? "left-5" : "left-0.5")} />
-          </div>
-        </button>
-      </Card>
-
-      {/* Quiz Type */}
-      <Card>
-        <h2 className="font-semibold mb-3">Quiz Type</h2>
-        <div className="rounded-lg border border-border p-3 mb-4">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">Edit Quiz Name</div>
-          <Input value={quizName} onChange={(e) => setQuizName(e.target.value)} className="border-0 shadow-none p-0 focus-visible:ring-0 h-auto text-sm" />
+          {quizType === "standard" && (
+            <div className="hidden md:flex items-center gap-2 rounded-full border border-border bg-card/60 backdrop-blur px-3 py-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_hsl(var(--primary))]" />
+              <span className="text-xs font-medium">Pool: <b className="tabular-nums">{poolCount}</b> questions</span>
+            </div>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {([
-            { v: "standard", l: "Standard" },
-            { v: "custom", l: "Custom" },
-          ] as const).map((o) => {
-            const active = quizType === o.v;
-            return (
-              <button
-                key={o.v}
-                onClick={() => setQuizType(o.v)}
-                className={cn(
-                  "px-5 py-1.5 rounded-full text-sm font-medium border transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground border-primary shadow"
-                    : "bg-background text-primary border-primary/40 hover:bg-primary/5",
-                )}
-              >
-                {o.l}
-              </button>
-            );
-          })}
-        </div>
-      </Card>
 
-      {quizType === "custom" && (
-        <Card>
-          <h2 className="font-semibold mb-4">Question ID's</h2>
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4 items-start">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Retrieve from a Test ID</label>
-              <div className="flex gap-2">
-                <Input
-                  value={customTestId}
-                  onChange={(e) => setCustomTestId(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="Test Id"
-                  className="h-10"
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 lg:gap-8">
+          {/* LEFT — configuration */}
+          <div className="space-y-5">
+
+            {/* Step 01 — Mode */}
+            <Section step="01" title="Testing Mode" subtitle="How do you want to practice?">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <ModeTile
+                  active={mode === "practice"}
+                  onClick={() => setMode("practice")}
+                  icon={<GraduationCap className="h-5 w-5" />}
+                  title="Tutor Mode"
+                  desc="Explanations after each question"
                 />
-                <Button onClick={retrieveFromTestId} disabled={retrieving} className="h-10">
-                  {retrieving ? "…" : "Retrieve"}
-                </Button>
+                <ModeTile
+                  active={mode === "test"}
+                  onClick={() => setMode("test")}
+                  icon={<ClipboardCheck className="h-5 w-5" />}
+                  title="Exam Mode"
+                  desc="Simulate the real testing day"
+                />
               </div>
-            </div>
-            <div className="hidden md:flex items-center justify-center pt-6">
-              <span className="text-sm font-semibold text-muted-foreground">OR</span>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Paste Question IDs <span className="text-muted-foreground/70">(comma separated)</span>
-              </label>
-              <textarea
-                value={customIds}
-                onChange={(e) => setCustomIds(e.target.value)}
-                placeholder="e.g. 1024, 1025, 1026"
-                rows={5}
-                className="w-full rounded-md border border-border bg-background p-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-              <div className="text-xs text-muted-foreground mt-1">
-                {parseIds(customIds).length} valid ID{parseIds(customIds).length === 1 ? "" : "s"}
-              </div>
-            </div>
-          </div>
-          <Button
-            size="lg"
-            onClick={start}
-            disabled={loading || parseIds(customIds).length === 0}
-            className="mt-6"
-          >
-            {loading ? "Generating…" : "Generate Test"}
-          </Button>
-        </Card>
-      )}
-
-      {quizType === "standard" && (<>
-
-
-      {/* Tabs / Selection */}
-      <Card>
-        <div className="flex flex-wrap items-center gap-x-1 gap-y-0 border-b border-border mb-4 -mt-2 -mx-6 px-2 sm:px-6">
-          {(Object.keys(availableTabs) as Tab[]).map((t) => {
-            const enabled = availableTabs[t];
-            return (
               <button
-                key={t}
-                disabled={!enabled}
-                onClick={() => enabled && setOpenTab(t)}
+                onClick={() => setTimed((t) => !t)}
                 className={cn(
-                  "shrink-0 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium capitalize border-b-2 -mb-px transition-colors",
-                  openTab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground",
-                  enabled ? "hover:text-foreground cursor-pointer" : "opacity-40 cursor-not-allowed",
+                  "mt-3 w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all",
+                  timed ? "border-primary/60 bg-primary/5" : "border-border hover:border-border/80 hover:bg-accent/30",
                 )}
               >
-                {t === "qbank" ? "QBank" : t}
+                <div className="flex items-center gap-3">
+                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg transition-colors", timed ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm">Timed Session</div>
+                    <div className="text-xs text-muted-foreground">Adds ~90s per question countdown</div>
+                  </div>
+                </div>
+                <div className={cn("h-6 w-11 rounded-full transition-colors relative", timed ? "bg-primary" : "bg-muted")}>
+                  <div className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-all", timed ? "left-5" : "left-0.5")} />
+                </div>
               </button>
-            );
-          })}
-          <div className="ml-auto shrink-0 pl-2">
-            <button className="rounded-md border border-border p-1.5 text-muted-foreground hover:text-foreground">
-              <ChevronUp className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+            </Section>
 
+            {/* Step 02 — Quiz Type */}
+            <Section step="02" title="Quiz Source" subtitle="Standard pool or a specific set of IDs">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1">
+                  {([
+                    { v: "standard", l: "Standard" },
+                    { v: "custom", l: "Custom IDs" },
+                  ] as const).map((o) => {
+                    const active = quizType === o.v;
+                    return (
+                      <button
+                        key={o.v}
+                        onClick={() => setQuizType(o.v)}
+                        className={cn(
+                          "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
+                          active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {o.l}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex-1 max-w-sm">
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">Session Label</label>
+                  <Input value={quizName} onChange={(e) => setQuizName(e.target.value)} className="h-9 bg-background/60" />
+                </div>
+              </div>
+            </Section>
 
-        {openTab === "courses" && (
-          <SelectionList
-            items={COURSES.filter((c) => c.qbankId === qbankId).map((c) => ({ id: c.id, label: c.name, count: COURSE_TOTALS[c.qbankId] ?? 0 }))}
-            selected={courseIds}
-            onToggle={(id) => {
-              const c = COURSES.find((x) => x.id === id);
-              if (!c) return;
-              setCourseIds([c.id]);
-              // Auto-select all QBanks belonging to this course so the user can
-              // generate a test immediately without visiting the QBank tab.
-              const autoQbankIds = QBANK_OPTIONS.filter((q) => q.qbankId === c.qbankId).map((q) => q.id);
-              setQbankIds(autoQbankIds);
-              setSubjectIds([]); setSystemIds([]); setTopicNames([]);
-              if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
-            }}
-            columns={3}
-            radio
-          />
-        )}
-        {openTab === "qbank" && (
-          <SelectionList
-            items={QBANK_OPTIONS.filter((q) => courseIds.some((cid) => q.qbankId === COURSES.find((c) => c.id === cid)?.qbankId)).map((q) => ({ id: q.id, label: q.name, count: q.count }))}
-            selected={qbankIds}
-            onToggle={(id) => setQbankIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-            columns={3}
-          />
-        )}
+            {quizType === "custom" && (
+              <Section step="03" title="Question IDs" subtitle="Retrieve from a prior test or paste IDs directly">
+                <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4 items-start">
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block">Retrieve by Test ID</label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={customTestId}
+                        onChange={(e) => setCustomTestId(e.target.value.replace(/[^0-9]/g, ""))}
+                        placeholder="e.g. 4821"
+                        className="h-10"
+                      />
+                      <Button onClick={retrieveFromTestId} disabled={retrieving} variant="secondary" className="h-10">
+                        {retrieving ? "…" : "Fetch"}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="hidden md:flex items-center justify-center pt-7">
+                    <div className="flex flex-col items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                      <span className="h-6 w-px bg-border" />
+                      <span>or</span>
+                      <span className="h-6 w-px bg-border" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block">Paste IDs (comma separated)</label>
+                    <textarea
+                      value={customIds}
+                      onChange={(e) => setCustomIds(e.target.value)}
+                      placeholder="1024, 1025, 1026 …"
+                      rows={5}
+                      className="w-full rounded-lg border border-border bg-background/60 p-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                    <div className="text-xs text-muted-foreground mt-1">
+                      <b className="text-foreground tabular-nums">{parseIds(customIds).length}</b> valid ID{parseIds(customIds).length === 1 ? "" : "s"} detected
+                    </div>
+                  </div>
+                </div>
+              </Section>
+            )}
 
-        {openTab === "subjects" && cmsMode && (() => {
-          const formItems = cmsSelectedOptions.flatMap((o) =>
-            o.cmsForms!.map((f) => ({
-              id: f.source,
-              label: cmsSelectedOptions.length > 1
-                ? `${o.cmsSpecialty} — Form ${f.formNumber}`
-                : `Form ${f.formNumber}`,
-              count: f.count,
-            })),
-          );
-          return (
-            <SelectionList
-              items={formItems}
-              selected={cmsFormSources}
-              onToggle={(id) => setCmsFormSources((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-              search={subjectSearch}
-              onSearch={setSubjectSearch}
-              selectAll={() => setCmsFormSources(formItems.map((i) => i.id))}
-              clearAll={() => setCmsFormSources([])}
-              columns={3}
-            />
-          );
-        })()}
-        {openTab === "subjects" && !cmsMode && (
-          <SelectionList
-            items={subjectItems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
-            selected={subjectIds}
-            onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
-            search={subjectSearch}
-            onSearch={setSubjectSearch}
-            selectAll={() => setSubjectIds((data?.subjects ?? []).map((s) => s.id))}
-            clearAll={() => setSubjectIds([])}
-            columns={3}
-          />
-        )}
-        {openTab === "systems" && (
-          <SelectionList
-            items={filteredSystems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
-            selected={systemIds}
-            onToggle={(id) => setSystemIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
-            search={systemSearch}
-            onSearch={setSystemSearch}
-            selectAll={() => setSystemIds(filteredSystems.map((s) => s.id))}
-            clearAll={() => setSystemIds([])}
-            columns={3}
-          />
-        )}
-        {openTab === "topics" && (
-          <SelectionList
-            items={filteredTopics.map((t) => ({ id: t.name, label: t.name, count: t.count }))}
-            selected={topicNames}
-            onToggle={(id) => setTopicNames((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-            search={topicSearch}
-            onSearch={setTopicSearch}
-            selectAll={() => setTopicNames(filteredTopics.map((t) => t.name))}
-            clearAll={() => setTopicNames([])}
-            columns={3}
-            scrollable
-          />
-        )}
-      </Card>
+            {quizType === "standard" && (
+              <>
+                {/* Step 03 — Selection Tabs */}
+                <Section step="03" title="Scope" subtitle="Course → QBank → Subject → System → Topic">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-4 rounded-xl border border-border bg-muted/30 p-1">
+                    {(Object.keys(availableTabs) as Tab[]).map((t) => {
+                      const enabled = availableTabs[t];
+                      const active = openTab === t;
+                      return (
+                        <button
+                          key={t}
+                          disabled={!enabled}
+                          onClick={() => enabled && setOpenTab(t)}
+                          className={cn(
+                            "px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium capitalize transition-all",
+                            active
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground",
+                            !enabled && "opacity-40 cursor-not-allowed",
+                          )}
+                        >
+                          {t === "qbank" ? "QBank" : t}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-      {/* Question types + Difficulty */}
-      <Card>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <h3 className="font-semibold mb-3">Question Types</h3>
-            <div className="grid grid-cols-2 gap-y-3">
-              {[
-                { v: "marked", l: "Marked Questions" },
-                { v: "omitted", l: "Omitted Questions" },
-                { v: "unused", l: "Unused Questions" },
-                { v: "correct", l: "Correct Questions" },
-                { v: "incorrect", l: "Incorrect Questions" },
-                { v: "all", l: "All" },
-              ].map((o) => (
-                <label key={o.v} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <Checkbox checked={scope === o.v} onCheckedChange={() => setScope(o.v as Scope)} />
-                  {o.l}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-3">Difficulty</h3>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setDifficulty((d) => d.includes(n) ? d.filter((x) => x !== n) : [...d, n])}
-                  className={cn(
-                    "h-10 w-10 rounded-md text-sm font-semibold transition-colors",
-                    difficulty.includes(n) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent",
+                  {openTab === "courses" && (
+                    <SelectionList
+                      items={COURSES.filter((c) => c.qbankId === qbankId).map((c) => ({ id: c.id, label: c.name, count: COURSE_TOTALS[c.qbankId] ?? 0 }))}
+                      selected={courseIds}
+                      onToggle={(id) => {
+                        const c = COURSES.find((x) => x.id === id);
+                        if (!c) return;
+                        setCourseIds([c.id]);
+                        const autoQbankIds = QBANK_OPTIONS.filter((q) => q.qbankId === c.qbankId).map((q) => q.id);
+                        setQbankIds(autoQbankIds);
+                        setSubjectIds([]); setSystemIds([]); setTopicNames([]);
+                        if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
+                      }}
+                      columns={3}
+                      radio
+                    />
                   )}
-                >
-                  {n}
-                </button>
-              ))}
+                  {openTab === "qbank" && (
+                    <SelectionList
+                      items={QBANK_OPTIONS.filter((q) => courseIds.some((cid) => q.qbankId === COURSES.find((c) => c.id === cid)?.qbankId)).map((q) => ({ id: q.id, label: q.name, count: q.count }))}
+                      selected={qbankIds}
+                      onToggle={(id) => setQbankIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+                      columns={3}
+                    />
+                  )}
+                  {openTab === "subjects" && cmsMode && (() => {
+                    const formItems = cmsSelectedOptions.flatMap((o) =>
+                      o.cmsForms!.map((f) => ({
+                        id: f.source,
+                        label: cmsSelectedOptions.length > 1
+                          ? `${o.cmsSpecialty} — Form ${f.formNumber}`
+                          : `Form ${f.formNumber}`,
+                        count: f.count,
+                      })),
+                    );
+                    return (
+                      <SelectionList
+                        items={formItems}
+                        selected={cmsFormSources}
+                        onToggle={(id) => setCmsFormSources((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+                        search={subjectSearch}
+                        onSearch={setSubjectSearch}
+                        selectAll={() => setCmsFormSources(formItems.map((i) => i.id))}
+                        clearAll={() => setCmsFormSources([])}
+                        columns={3}
+                      />
+                    );
+                  })()}
+                  {openTab === "subjects" && !cmsMode && (
+                    <SelectionList
+                      items={subjectItems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+                      selected={subjectIds}
+                      onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
+                      search={subjectSearch}
+                      onSearch={setSubjectSearch}
+                      selectAll={() => setSubjectIds((data?.subjects ?? []).map((s) => s.id))}
+                      clearAll={() => setSubjectIds([])}
+                      columns={3}
+                    />
+                  )}
+                  {openTab === "systems" && (
+                    <SelectionList
+                      items={filteredSystems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+                      selected={systemIds}
+                      onToggle={(id) => setSystemIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
+                      search={systemSearch}
+                      onSearch={setSystemSearch}
+                      selectAll={() => setSystemIds(filteredSystems.map((s) => s.id))}
+                      clearAll={() => setSystemIds([])}
+                      columns={3}
+                    />
+                  )}
+                  {openTab === "topics" && (
+                    <SelectionList
+                      items={filteredTopics.map((t) => ({ id: t.name, label: t.name, count: t.count }))}
+                      selected={topicNames}
+                      onToggle={(id) => setTopicNames((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+                      search={topicSearch}
+                      onSearch={setTopicSearch}
+                      selectAll={() => setTopicNames(filteredTopics.map((t) => t.name))}
+                      clearAll={() => setTopicNames([])}
+                      columns={3}
+                      scrollable
+                    />
+                  )}
+                </Section>
+
+                {/* Step 04 — Filters */}
+                <Section step="04" title="Filters" subtitle="Question set + difficulty tuning">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Question Set</h3>
+                      <div className="grid grid-cols-2 gap-y-2.5 gap-x-3">
+                        {[
+                          { v: "unused", l: "Unused" },
+                          { v: "marked", l: "Marked" },
+                          { v: "incorrect", l: "Incorrect" },
+                          { v: "correct", l: "Correct" },
+                          { v: "omitted", l: "Omitted" },
+                          { v: "all", l: "All" },
+                        ].map((o) => {
+                          const active = scope === o.v;
+                          return (
+                            <button
+                              key={o.v}
+                              onClick={() => setScope(o.v as Scope)}
+                              className={cn(
+                                "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm text-left transition-all",
+                                active ? "border-primary bg-primary/10 text-foreground" : "border-border hover:border-border/80 hover:bg-accent/30 text-muted-foreground",
+                              )}
+                            >
+                              <span className={cn("h-2 w-2 rounded-full", active ? "bg-primary" : "bg-muted-foreground/40")} />
+                              {o.l}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Difficulty</h3>
+                      <div className="relative flex items-end justify-between gap-2 h-24 px-1">
+                        <div className="absolute left-0 right-0 bottom-4 h-px bg-border" />
+                        {[1, 2, 3, 4, 5].map((n) => {
+                          const active = difficulty.includes(n);
+                          const h = 20 + n * 12;
+                          return (
+                            <button
+                              key={n}
+                              onClick={() => setDifficulty((d) => d.includes(n) ? d.filter((x) => x !== n) : [...d, n])}
+                              className="relative flex flex-col items-center gap-1.5 group flex-1"
+                            >
+                              <div
+                                style={{ height: `${h}px` }}
+                                className={cn(
+                                  "w-full max-w-[36px] rounded-t-md transition-all",
+                                  active ? "bg-gradient-to-t from-primary to-primary/70 shadow-[0_0_12px_hsl(var(--primary)/0.35)]" : "bg-muted group-hover:bg-muted-foreground/25",
+                                )}
+                              />
+                              <span className={cn("text-xs font-semibold tabular-nums", active ? "text-primary" : "text-muted-foreground")}>{n}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-2">{difficulty.length === 0 ? "Pick at least one" : `${difficulty.length} level${difficulty.length === 1 ? "" : "s"} selected`}</div>
+                    </div>
+                  </div>
+                </Section>
+
+                {/* Step 05 — Amount */}
+                <Section step="05" title="Question Count" subtitle="Up to 50 per session">
+                  <div className="flex items-center gap-3 rounded-xl bg-primary/5 border border-primary/20 px-3 py-2 mb-4">
+                    <Info className="h-4 w-4 text-primary shrink-0" />
+                    <div className="text-xs text-muted-foreground flex-1">Max <b className="text-foreground">50 questions</b> per quiz.</div>
+                    <span className="text-[10px] font-bold tracking-wider rounded-full bg-primary text-primary-foreground px-2.5 py-0.5">50 MAX</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="range"
+                      min={1}
+                      max={Math.max(1, Math.min(50, poolCount))}
+                      value={Math.min(count, Math.max(1, Math.min(50, poolCount)))}
+                      onChange={(e) => setCount(Math.max(1, Math.min(50, +e.target.value)))}
+                      className="flex-1 accent-primary"
+                      disabled={poolCount === 0}
+                    />
+                    <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 min-w-[130px] justify-center">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={Math.min(50, poolCount)}
+                        value={count}
+                        onChange={(e) => setCount(Math.max(0, Math.min(50, +e.target.value)))}
+                        className="w-14 h-7 border-0 shadow-none p-0 text-center text-base font-semibold focus-visible:ring-0"
+                      />
+                      <span className="text-xs text-muted-foreground">/ <b className="text-foreground tabular-nums">{poolCount}</b></span>
+                    </div>
+                  </div>
+                </Section>
+              </>
+            )}
+          </div>
+
+          {/* RIGHT — sticky launch rail */}
+          <aside className="lg:sticky lg:top-6 h-fit">
+            <div className="rounded-2xl border border-border bg-card/70 backdrop-blur-sm p-5 shadow-lg shadow-primary/5 relative overflow-hidden">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">Session</div>
+                  <div className="text-sm font-semibold mt-0.5">Ready to launch</div>
+                </div>
+                <ProgressRing pct={pct} label={String(count)} />
+              </div>
+
+              <div className="space-y-2 mb-5">
+                <SummaryRow label="Mode" value={mode === "practice" ? "Tutor" : "Exam"} />
+                <SummaryRow label="Timer" value={timed ? "On" : "Off"} />
+                {quizType === "standard" ? (
+                  <>
+                    <SummaryRow label="Set" value={scopeLabel} />
+                    <SummaryRow label="Difficulty" value={difficultyLabel} />
+                    <SummaryRow label="Pool" value={`${poolCount}`} />
+                    <SummaryRow label="Count" value={`${count}`} />
+                  </>
+                ) : (
+                  <>
+                    <SummaryRow label="Source" value="Custom IDs" />
+                    <SummaryRow label="IDs" value={String(parseIds(customIds).length)} />
+                  </>
+                )}
+              </div>
+
+              <Button
+                size="lg"
+                onClick={start}
+                disabled={!canLaunch}
+                className="w-full h-11 font-semibold tracking-wide"
+              >
+                {loading ? "Generating…" : "Launch Session"}
+              </Button>
+              {quizType === "standard" && !hasCourse && (
+                <p className="text-[11px] text-muted-foreground mt-2 text-center">Pick a course to begin</p>
+              )}
+              {quizType === "standard" && hasCourse && poolCount === 0 && (
+                <p className="text-[11px] text-muted-foreground mt-2 text-center">No questions match — loosen filters</p>
+              )}
             </div>
-          </div>
+          </aside>
         </div>
-      </Card>
-
-      {/* Limit + Generate */}
-      <Card>
-        <div className="flex items-center gap-3 rounded-lg border-l-4 border-primary bg-primary/5 p-3 mb-4">
-          <Info className="h-4 w-4 text-primary" />
-          <div className="text-sm flex-1">
-            <span className="text-primary font-semibold text-xs uppercase tracking-wider">Question Limit</span>
-            <div>New limit! Now Maximum <b>50 questions</b> per quiz</div>
-          </div>
-          <span className="text-xs font-semibold rounded-full bg-primary text-primary-foreground px-3 py-1">50 MAX</span>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-border p-4">
-          <span className="text-sm">Generate</span>
-          <Input
-            type="number"
-            min={0}
-            max={Math.min(50, poolCount)}
-            value={count}
-            onChange={(e) => setCount(Math.max(0, Math.min(50, +e.target.value)))}
-            className="w-20 text-center"
-          />
-          <span className="text-sm">/ <b>{poolCount}</b> Questions</span>
-        </div>
-        <Button size="lg" onClick={start} disabled={loading || !hasCourse || !hasQbank || count < 1 || poolCount === 0} className="mt-4">
-          {loading ? "Generating…" : "Generate Test"}
-        </Button>
-      </Card>
-      </>)}
+      </div>
     </div>
-
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-xl border border-border bg-card p-6 shadow-sm">{children}</div>;
+function Section({ step, title, subtitle, children }: { step: string; title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <section className="relative rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-5 md:p-6 shadow-sm">
+      <div className="flex items-start gap-4 mb-5">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 text-primary font-mono font-bold text-sm tabular-nums">
+          {step}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold text-base leading-tight">{title}</h2>
+          {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+        </div>
+      </div>
+      {children}
+    </section>
+  );
 }
-function IconBadge({ children }: { children: React.ReactNode }) {
-  return <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary shrink-0">{children}</div>;
-}
-function ModeCard({ active, onClick, icon, title, desc }: { active: boolean; onClick: () => void; icon: React.ReactNode; title: string; desc: string }) {
+
+function ModeTile({ active, onClick, icon, title, desc }: { active: boolean; onClick: () => void; icon: React.ReactNode; title: string; desc: string }) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "flex items-start gap-3 rounded-lg border p-4 text-left transition-colors",
-        active ? "border-primary bg-primary/10" : "border-border hover:bg-accent/40",
+        "group relative flex items-start gap-3 rounded-xl border p-4 text-left transition-all overflow-hidden",
+        active ? "border-primary bg-primary/10 shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.35)]" : "border-border hover:border-border/80 hover:bg-accent/30",
       )}
     >
-      <IconBadge>{icon}</IconBadge>
+      {active && <span className="absolute right-3 top-3 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />}
+      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors", active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+        {icon}
+      </div>
       <div>
-        <div className="font-medium text-sm">{title}</div>
-        <div className="text-xs text-muted-foreground">{desc}</div>
+        <div className="font-semibold text-sm">{title}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">{desc}</div>
       </div>
     </button>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function ProgressRing({ pct, label }: { pct: number; label: string }) {
+  const r = 22;
+  const c = 2 * Math.PI * r;
+  const off = c - (Math.max(0, Math.min(100, pct)) / 100) * c;
+  return (
+    <div className="relative h-14 w-14">
+      <svg viewBox="0 0 56 56" className="h-14 w-14 -rotate-90">
+        <circle cx="28" cy="28" r={r} stroke="hsl(var(--muted))" strokeWidth="4" fill="none" />
+        <circle
+          cx="28" cy="28" r={r}
+          stroke="hsl(var(--primary))" strokeWidth="4" fill="none"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={off}
+          className="transition-all duration-300"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums">{label}</div>
+    </div>
   );
 }
 
@@ -664,37 +802,53 @@ function SelectionList<T extends string | number>({
   const allSelected = items.length > 0 && selected.length === items.length;
   return (
     <div>
-      <div className="flex items-center gap-4 mb-3">
+      <div className="flex flex-wrap items-center gap-3 mb-3">
         {!radio && selectAll && (
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <Checkbox checked={allSelected} onCheckedChange={() => (allSelected ? clearAll?.() : selectAll())} />
-            Select All
-          </label>
+          <button
+            onClick={() => (allSelected ? clearAll?.() : selectAll())}
+            className="text-[11px] font-semibold uppercase tracking-wider text-primary hover:underline"
+          >
+            {allSelected ? "Clear all" : "Select all"}
+          </button>
         )}
         {onSearch && (
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative flex-1 min-w-[180px] max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Search" className="pl-8 h-9" />
+            <Input value={search} onChange={(e) => onSearch(e.target.value)} placeholder="Search" className="pl-8 h-9 bg-background/60" />
           </div>
         )}
+        <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">
+          {selected.length}/{items.length} selected
+        </span>
       </div>
-      <div className={cn("grid gap-2", scrollable && "max-h-[380px] overflow-y-auto pr-2", columns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-3")}>
+      <div className={cn("grid gap-2", scrollable && "max-h-[380px] overflow-y-auto pr-1", columns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3")}>
         {filtered.map((it) => {
           const isSel = selected.includes(it.id);
           return (
-            <label
+            <button
               key={String(it.id)}
+              onClick={() => onToggle(it.id)}
               className={cn(
-                "flex items-center gap-2 rounded-lg border p-2.5 cursor-pointer transition-colors text-sm",
-                isSel ? "border-primary bg-primary/5" : "border-border hover:bg-accent/40",
+                "group relative flex items-center gap-2 rounded-lg border pl-3 pr-2 py-2 text-left transition-all text-sm",
+                isSel
+                  ? "border-primary/60 bg-primary/8 shadow-[inset_3px_0_0_hsl(var(--primary))]"
+                  : "border-border hover:border-border/80 hover:bg-accent/30",
               )}
             >
-              <Checkbox checked={isSel} onCheckedChange={() => onToggle(it.id)} />
+              <span className={cn(
+                "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+                isSel ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40",
+              )}>
+                {isSel && <svg viewBox="0 0 12 12" className="h-3 w-3"><path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+              </span>
               <span className="flex-1 truncate">{it.label}</span>
-              <span className="rounded bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 min-w-[2rem] text-center">
+              <span className={cn(
+                "rounded-md text-[11px] font-mono font-semibold px-1.5 py-0.5 min-w-[2.25rem] text-center tabular-nums",
+                isSel ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground",
+              )}>
                 {it.count}
               </span>
-            </label>
+            </button>
           );
         })}
         {filtered.length === 0 && <p className="text-sm text-muted-foreground col-span-full py-6 text-center">No items</p>}
@@ -702,3 +856,4 @@ function SelectionList<T extends string | number>({
     </div>
   );
 }
+
