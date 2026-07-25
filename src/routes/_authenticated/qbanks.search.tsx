@@ -385,7 +385,8 @@ function QuestionModal({
   };
 
   const bookmarkFn = useServerFn(toggleBookmark);
-  const modalQbankId = r.qbankId ?? useActiveQbankId();
+  const activeQbankId = useActiveQbankId();
+  const modalQbankId = r.qbankId ?? activeQbankId;
   const mediaToken = useMediaToken(modalQbankId);
   const toggleMark = async () => {
     const prev = !!marked[r.id];
