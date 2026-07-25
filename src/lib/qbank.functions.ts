@@ -529,53 +529,68 @@ export const searchQuestions = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const q = data.query.trim();
     if (!q) return { results: [], total: 0, truncated: false };
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const qbankId = data.qbankId;
     const LIMIT = 200;
+
+    // Admins can search across all qbanks (auto-detect qbank from ID)
+    const { data: roleRow } = await supabase
+      .from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
+    const isAdmin = !!roleRow;
 
     const idTokens = q.split(/[\s,]+/).map((s) => Number(s)).filter((n) => Number.isFinite(n) && n > 0);
     const isPureIds = idTokens.length > 0 && q.split(/[\s,]+/).every((s) => /^\d+$/.test(s.trim()) || s.trim() === "");
 
     let rows: any[] = [];
     if (isPureIds) {
-      const { data: r } = await supabase
+      let qb1 = supabase
         .from("questions")
-        .select("id,title,question,explanation,correct_answer,subject_id,system_id")
-        .eq("qbank_id", qbankId)
+        .select("id,qbank_id,title,question,explanation,correct_answer,subject_id,system_id")
         .in("id", idTokens.slice(0, LIMIT));
+      if (!isAdmin) qb1 = qb1.eq("qbank_id", qbankId);
+      const { data: r } = await qb1;
       rows = r ?? [];
     } else {
       const like = `%${q.replace(/[%_]/g, (m) => "\\" + m)}%`;
-      const { data: r } = await supabase
+      let qb2 = supabase
         .from("questions")
-        .select("id,title,question,explanation,correct_answer,subject_id,system_id")
-        .eq("qbank_id", qbankId)
+        .select("id,qbank_id,title,question,explanation,correct_answer,subject_id,system_id")
         .or(`title.ilike.${like},question.ilike.${like}`)
         .limit(LIMIT + 1);
+      if (!isAdmin) qb2 = qb2.eq("qbank_id", qbankId);
+      const { data: r } = await qb2;
       rows = r ?? [];
     }
     const truncated = rows.length > LIMIT;
     rows = rows.slice(0, LIMIT);
     const ids = rows.map((r) => r.id);
+    const qbankIds = Array.from(new Set(rows.map((r) => r.qbank_id as number)));
     const [{ data: answers }, { data: subjects }, { data: systems }] = await Promise.all([
       ids.length
-        ? supabase.from("answers").select("question_id,answer_index,answer_text").eq("qbank_id", qbankId).in("question_id", ids).order("answer_index")
+        ? (isAdmin
+            ? supabase.from("answers").select("question_id,answer_index,answer_text").in("question_id", ids).order("answer_index")
+            : supabase.from("answers").select("question_id,answer_index,answer_text").eq("qbank_id", qbankId).in("question_id", ids).order("answer_index"))
         : Promise.resolve({ data: [] as any[] }),
-      supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
-      supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
+      isAdmin && qbankIds.length
+        ? supabase.from("subjects").select("id,name,qbank_id").in("qbank_id", qbankIds)
+        : supabase.from("subjects").select("id,name,qbank_id").eq("qbank_id", qbankId),
+      isAdmin && qbankIds.length
+        ? supabase.from("systems").select("id,name,qbank_id").in("qbank_id", qbankIds)
+        : supabase.from("systems").select("id,name,qbank_id").eq("qbank_id", qbankId),
     ]);
-    const subjMap: Record<number, string> = Object.fromEntries((subjects ?? []).map((s: any) => [s.id, s.name]));
-    const sysMap: Record<number, string> = Object.fromEntries((systems ?? []).map((s: any) => [s.id, s.name]));
+    const subjMap: Record<string, string> = Object.fromEntries((subjects ?? []).map((s: any) => [`${s.qbank_id}:${s.id}`, s.name]));
+    const sysMap: Record<string, string> = Object.fromEntries((systems ?? []).map((s: any) => [`${s.qbank_id}:${s.id}`, s.name]));
     const ansByQ: Record<number, { answer_index: number; answer_text: string }[]> = {};
     for (const a of answers ?? []) (ansByQ[a.question_id] ??= []).push(a);
     const results = rows.map((r) => ({
       id: r.id as number,
+      qbankId: r.qbank_id as number,
       title: r.title as string,
       question: r.question as string,
       explanation: (r.explanation ?? "") as string,
       correctAnswer: r.correct_answer as number,
-      subject: r.subject_id != null ? subjMap[r.subject_id] ?? "" : "",
-      system: r.system_id != null ? sysMap[r.system_id] ?? "" : "",
+      subject: r.subject_id != null ? subjMap[`${r.qbank_id}:${r.subject_id}`] ?? "" : "",
+      system: r.system_id != null ? sysMap[`${r.qbank_id}:${r.system_id}`] ?? "" : "",
       answers: ansByQ[r.id] ?? [],
     }));
     return { results, total: results.length, truncated };
