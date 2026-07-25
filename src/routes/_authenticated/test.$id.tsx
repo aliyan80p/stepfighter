@@ -53,11 +53,11 @@ function attachImageAutoRetry(root: HTMLElement) {
     let tries = 0;
     const original = img.getAttribute("src") || "";
     const retry = () => {
-      if (tries >= 3 || !original) return;
+      if (tries >= 5 || !original) return;
       tries += 1;
       const sep = original.includes("?") ? "&" : "?";
       const bust = `${sep}r=${Date.now()}-${tries}`;
-      setTimeout(() => { img.src = original + bust; }, 200 * tries);
+      setTimeout(() => { img.src = original + bust; }, 300 * tries);
     };
     img.addEventListener("error", retry);
     // If already broken by the time we bind (cached failure), kick a retry.
