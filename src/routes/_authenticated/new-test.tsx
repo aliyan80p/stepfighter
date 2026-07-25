@@ -436,7 +436,7 @@ function NewTest() {
 
 
       {/* Tabs / Selection */}
-      <Card>
+      <Card delay={180}>
         <div className="flex flex-wrap items-center gap-x-1 gap-y-0 border-b border-border mb-4 -mt-2 -mx-6 px-2 sm:px-6">
           {(Object.keys(availableTabs) as Tab[]).map((t) => {
             const enabled = availableTabs[t];
