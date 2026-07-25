@@ -4,9 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listTests, getTest } from "@/lib/qbank.functions";
 import { getAiTestAnalysis } from "@/lib/performance.functions";
-import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
-
-const QBANK_NAME: Record<number, string> = Object.fromEntries(QBANKS.map((q) => [q.id, q.name]));
+import { useActiveQbankId } from "@/lib/active-qbank";
 import { Sparkles, Loader2, FileText, ChevronRight, ArrowUpDown, HelpCircle, XCircle, CheckCircle2, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -34,7 +32,7 @@ function AiTestAnalysisPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Test Analysis</h1>
-            <p className="text-sm text-muted-foreground">Per-test breakdown for <span className="font-semibold text-foreground">{QBANK_NAME[qbankId] ?? `QBank #${qbankId}`}</span></p>
+            <p className="text-sm text-muted-foreground">Per-test breakdown with subject and system analysis</p>
           </div>
         </div>
 
@@ -58,10 +56,7 @@ function AiTestAnalysisPage() {
                       )}
                     >
                       <div className="text-sm font-medium truncate">{t.name || `Test #${t.id}`}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="inline-flex items-center rounded border border-primary/30 bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                          {QBANK_NAME[t.qbank_id] ?? `QB#${t.qbank_id}`}
-                        </span>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
                         <span>{t.right_count}/{t.total}</span>
                         <span className={cn(
                           "px-1.5 py-0.5 rounded",

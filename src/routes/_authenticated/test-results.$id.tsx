@@ -3,9 +3,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getTest } from "@/lib/qbank.functions";
-import { QBANKS } from "@/lib/active-qbank";
-
-const QBANK_NAME: Record<number, string> = Object.fromEntries(QBANKS.map((q) => [q.id, q.name]));
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -133,12 +130,7 @@ function TestResults() {
         <div className="flex items-center gap-6 text-sm">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Test Name</div>
-            <div className="font-medium flex items-center gap-2 flex-wrap">
-              <span>Custom Quiz {created.toLocaleString()}</span>
-              <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                {QBANK_NAME[data.qbankId] ?? `QBank #${data.qbankId}`}
-              </span>
-            </div>
+            <div className="font-medium">Custom Quiz {created.toLocaleString()}</div>
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">ID</div>

@@ -3,9 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listTests, deleteTest, suspendTest, renameTest } from "@/lib/qbank.functions";
-import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
-
-const QBANK_NAME: Record<number, string> = Object.fromEntries(QBANKS.map((q) => [q.id, q.name]));
+import { useActiveQbankId } from "@/lib/active-qbank";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,7 +120,7 @@ function TestsList() {
             <div>
               <h1 className="text-2xl font-bold">Previous Tests</h1>
               <p className="text-sm text-muted-foreground max-w-2xl">
-                Showing tests for <span className="font-semibold text-foreground">{QBANK_NAME[qbankId] ?? `QBank #${qbankId}`}</span>. Switch course from My Courses to see other tests.
+                Review every saved attempt, continue suspended quizzes, and open results without losing any table tools.
               </p>
             </div>
           </div>
@@ -188,12 +186,7 @@ function TestsList() {
             return (
               <div key={r.id} className="flex flex-col gap-3 md:grid md:grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] md:gap-4 px-4 py-4 md:items-center hover:bg-muted/30 transition-colors">
                 <div>
-                  <div className="font-medium text-sm flex items-center gap-2 flex-wrap">
-                    <span>{r.name}</span>
-                    <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                      {QBANK_NAME[(r as any).qbank_id] ?? `QBank #${(r as any).qbank_id}`}
-                    </span>
-                  </div>
+                  <div className="font-medium text-sm">{r.name}</div>
                   <div className="mt-2 flex gap-1.5 items-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

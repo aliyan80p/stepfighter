@@ -606,13 +606,11 @@ function TestRunner() {
   const autoEndedRef = useRef(false);
   const autoWarnedRef = useRef(false);
   const WARN_SECONDS = 10;
-  const [warnCountdown, setWarnCountdown] = useState<number | null>(null);
   // Reset guards if the user switches timed mode off or the base changes.
   useEffect(() => {
     if (!timedMode) {
       autoEndedRef.current = false;
       autoWarnedRef.current = false;
-      setWarnCountdown(null);
     }
   }, [timedMode, timedBase?.startedAt, timedBase?.allowed]);
 
@@ -627,24 +625,19 @@ function TestRunner() {
     const endDelay = endsAt - now;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    let countdownInt: ReturnType<typeof setInterval> | null = null;
     const showWarn = () => {
       if (autoWarnedRef.current || autoEndedRef.current) return;
       autoWarnedRef.current = true;
-      const tick = () => {
-        const remain = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
-        setWarnCountdown(remain);
-        if (remain <= 0 && countdownInt) { clearInterval(countdownInt); countdownInt = null; }
-      };
-      tick();
-      countdownInt = setInterval(tick, 250);
+      toast.warning(`Time's up in ${WARN_SECONDS} seconds — your block will auto-submit.`, {
+        duration: WARN_SECONDS * 1000,
+      });
     };
     const doEnd = () => {
       if (autoEndedRef.current) return;
       autoEndedRef.current = true;
-      if (countdownInt) { clearInterval(countdownInt); countdownInt = null; }
-      setWarnCountdown(null);
+      toast.message("Time's up — submitting your block.");
       finish({ force: true });
+
     };
 
     if (warnDelay <= 0 && endDelay > 0) showWarn();
@@ -653,10 +646,7 @@ function TestRunner() {
     if (endDelay <= 0) doEnd();
     else timers.push(setTimeout(doEnd, endDelay));
 
-    return () => {
-      timers.forEach(clearTimeout);
-      if (countdownInt) clearInterval(countdownInt);
-    };
+    return () => { timers.forEach(clearTimeout); };
   }, [timedMode, isReview, data, total, timedBase?.startedAt, timedBase?.allowed]);
 
 
@@ -1003,16 +993,6 @@ function TestRunner() {
 
   return (
     <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
-      {warnCountdown !== null && warnCountdown > 0 && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
-          <div className="pointer-events-auto rounded-2xl border-2 border-amber-400 bg-slate-900/95 shadow-2xl px-8 py-6 text-center animate-in fade-in zoom-in duration-200">
-            <div className="text-amber-400 text-lg font-bold uppercase tracking-wider mb-2">⏰ Time's Up</div>
-            <div className="text-white text-base mb-3">Your block will auto-submit in</div>
-            <div className="text-amber-300 text-6xl font-bold tabular-nums">{warnCountdown}</div>
-            <div className="text-slate-400 text-sm mt-2">seconds</div>
-          </div>
-        </div>
-      )}
       {hlBar && (
         <div
           data-hl-toolbar

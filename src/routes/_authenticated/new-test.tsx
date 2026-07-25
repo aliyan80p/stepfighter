@@ -461,18 +461,18 @@ function NewTest() {
 
         {openTab === "courses" && (
           <SelectionList
-            items={COURSES.map((c) => ({ id: c.id, label: c.name, count: COURSE_TOTALS[c.qbankId] ?? 0 }))}
+            items={COURSES.filter((c) => c.qbankId === qbankId).map((c) => ({ id: c.id, label: c.name, count: COURSE_TOTALS[c.qbankId] ?? 0 }))}
             selected={courseIds}
             onToggle={(id) => {
               const c = COURSES.find((x) => x.id === id);
               if (!c) return;
               setCourseIds([c.id]);
-              // Switch active qbank first so pool count / filters query the right qbank.
-              if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
-              // Auto-select all QBanks belonging to this course.
+              // Auto-select all QBanks belonging to this course so the user can
+              // generate a test immediately without visiting the QBank tab.
               const autoQbankIds = QBANK_OPTIONS.filter((q) => q.qbankId === c.qbankId).map((q) => q.id);
               setQbankIds(autoQbankIds);
               setSubjectIds([]); setSystemIds([]); setTopicNames([]);
+              if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
             }}
             columns={3}
             radio
