@@ -538,17 +538,27 @@ export const searchQuestions = createServerFn({ method: "POST" })
 
     let rows: any[] = [];
     if (isPureIds) {
+      // ID lookups first try the active qbank; if nothing matches, fall back
+      // across any qbank the user can read via RLS so IDs from sibling banks
+      // still resolve.
       const { data: r } = await supabase
         .from("questions")
-        .select("id,title,question,explanation,correct_answer,subject_id,system_id")
+        .select("id,title,question,explanation,correct_answer,subject_id,system_id,qbank_id")
         .eq("qbank_id", qbankId)
         .in("id", idTokens.slice(0, LIMIT));
       rows = r ?? [];
+      if (rows.length === 0) {
+        const { data: r2 } = await supabase
+          .from("questions")
+          .select("id,title,question,explanation,correct_answer,subject_id,system_id,qbank_id")
+          .in("id", idTokens.slice(0, LIMIT));
+        rows = r2 ?? [];
+      }
     } else {
       const like = `%${q.replace(/[%_]/g, (m) => "\\" + m)}%`;
       const { data: r } = await supabase
         .from("questions")
-        .select("id,title,question,explanation,correct_answer,subject_id,system_id")
+        .select("id,title,question,explanation,correct_answer,subject_id,system_id,qbank_id")
         .eq("qbank_id", qbankId)
         .or(`title.ilike.${like},question.ilike.${like}`)
         .limit(LIMIT + 1);
@@ -557,12 +567,14 @@ export const searchQuestions = createServerFn({ method: "POST" })
     const truncated = rows.length > LIMIT;
     rows = rows.slice(0, LIMIT);
     const ids = rows.map((r) => r.id);
+    const qbankIds = Array.from(new Set(rows.map((r) => r.qbank_id as number))).filter((n) => n != null);
+    const bankIdsForLookups = qbankIds.length ? qbankIds : [qbankId];
     const [{ data: answers }, { data: subjects }, { data: systems }] = await Promise.all([
       ids.length
-        ? supabase.from("answers").select("question_id,answer_index,answer_text").eq("qbank_id", qbankId).in("question_id", ids).order("answer_index")
+        ? supabase.from("answers").select("question_id,answer_index,answer_text").in("qbank_id", bankIdsForLookups).in("question_id", ids).order("answer_index")
         : Promise.resolve({ data: [] as any[] }),
-      supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
-      supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
+      supabase.from("subjects").select("id,name").in("qbank_id", bankIdsForLookups),
+      supabase.from("systems").select("id,name").in("qbank_id", bankIdsForLookups),
     ]);
     const subjMap: Record<number, string> = Object.fromEntries((subjects ?? []).map((s: any) => [s.id, s.name]));
     const sysMap: Record<number, string> = Object.fromEntries((systems ?? []).map((s: any) => [s.id, s.name]));
