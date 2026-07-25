@@ -623,11 +623,18 @@ function NewTest() {
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-xl border border-border bg-card p-6 shadow-sm">{children}</div>;
+function Card({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <div
+      className="rounded-xl border border-border bg-card p-6 shadow-sm animate-fade-in transition-all duration-300 hover:shadow-md hover:border-primary/30"
+      style={{ animationDelay: `${delay}ms`, animationFillMode: "both" }}
+    >
+      {children}
+    </div>
+  );
 }
 function IconBadge({ children }: { children: React.ReactNode }) {
-  return <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary shrink-0">{children}</div>;
+  return <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary shrink-0 transition-transform hover:scale-110">{children}</div>;
 }
 function ModeCard({ active, onClick, icon, title, desc }: { active: boolean; onClick: () => void; icon: React.ReactNode; title: string; desc: string }) {
   return (
