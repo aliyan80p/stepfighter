@@ -132,6 +132,7 @@ function SearchPage() {
       <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6 flex gap-3">
         <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
         <ol className="text-sm text-slate-700 space-y-1 list-decimal list-inside">
+          <li>Question ID search works across every course you're subscribed to — keyword search is limited to the course above.</li>
           <li>Search can generate up to a maximum of 200 questions. To generate more questions, please refine your search criteria.</li>
           <li>Questions viewed through Search will have their correct answers revealed. To practice these questions unanswered, copy the question IDs using the "Copy IDs" button and use them to generate a custom quiz.</li>
         </ol>
