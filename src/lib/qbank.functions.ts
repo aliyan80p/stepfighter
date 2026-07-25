@@ -275,7 +275,7 @@ async function insertTest(supabase: any, userId: string, ids: number[], data: z.
   await assertQbankAccess(supabase, userId, data.qbankId);
   const { data: inserted, error } = await supabase
     .from("tests")
-    .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: data.qbankId })
+    .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: data.qbankId, timed: !!data.timed })
     .select("id")
     .single();
   if (error) throw error;
