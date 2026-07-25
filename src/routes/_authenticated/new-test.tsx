@@ -599,32 +599,56 @@ function NewTest() {
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Difficulty</h3>
-                      <div className="relative flex items-end justify-between gap-2 h-24 px-1">
-                        <div className="absolute left-0 right-0 bottom-4 h-px bg-border" />
-                        {[1, 2, 3, 4, 5].map((n) => {
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Difficulty</h3>
+                        <button
+                          type="button"
+                          onClick={() => setDifficulty(difficulty.length === 5 ? [] : [1, 2, 3, 4, 5])}
+                          className="text-[11px] font-medium text-primary hover:underline"
+                        >
+                          {difficulty.length === 5 ? "Clear" : "All"}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-5 gap-2">
+                        {[
+                          { n: 1, label: "Very Easy" },
+                          { n: 2, label: "Easy" },
+                          { n: 3, label: "Medium" },
+                          { n: 4, label: "Hard" },
+                          { n: 5, label: "Expert" },
+                        ].map(({ n, label }) => {
                           const active = difficulty.includes(n);
-                          const h = 20 + n * 12;
                           return (
                             <button
                               key={n}
+                              type="button"
                               onClick={() => setDifficulty((d) => d.includes(n) ? d.filter((x) => x !== n) : [...d, n])}
-                              className="relative flex flex-col items-center gap-1.5 group flex-1"
+                              className={cn(
+                                "rounded-lg border px-2 py-2.5 flex flex-col items-center gap-1.5 transition-all",
+                                active
+                                  ? "border-primary bg-primary/10 shadow-sm"
+                                  : "border-border bg-background hover:border-muted-foreground/40",
+                              )}
                             >
-                              <div
-                                style={{ height: `${h}px` }}
-                                className={cn(
-                                  "w-full max-w-[36px] rounded-t-md transition-all",
-                                  active ? "bg-gradient-to-t from-primary to-primary/70 shadow-[0_0_12px_hsl(var(--primary)/0.35)]" : "bg-muted group-hover:bg-muted-foreground/25",
-                                )}
-                              />
-                              <span className={cn("text-xs font-semibold tabular-nums", active ? "text-primary" : "text-muted-foreground")}>{n}</span>
+                              <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((d) => (
+                                  <span
+                                    key={d}
+                                    className={cn(
+                                      "h-1.5 w-1.5 rounded-full",
+                                      d <= n ? (active ? "bg-primary" : "bg-muted-foreground/60") : "bg-muted",
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                              <span className={cn("text-[10px] font-medium leading-tight text-center", active ? "text-primary" : "text-muted-foreground")}>{label}</span>
                             </button>
                           );
                         })}
                       </div>
                       <div className="text-[11px] text-muted-foreground mt-2">{difficulty.length === 0 ? "Pick at least one" : `${difficulty.length} level${difficulty.length === 1 ? "" : "s"} selected`}</div>
                     </div>
+
                   </div>
                 </Section>
 
