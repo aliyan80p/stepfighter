@@ -321,7 +321,7 @@ function NewTest() {
       </div>
 
       {/* Test Mode */}
-      <Card>
+      <Card delay={60}>
         <div className="flex items-start gap-3 mb-4">
           <IconBadge><ClipboardCheck className="h-4 w-4" /></IconBadge>
           <div>
