@@ -603,12 +603,20 @@ function TestRunner() {
   // mode AND to practice/tutor blocks running with the Timed toggle on (e.g.
   // pseudo-exam). The user shouldn't have to click Submit manually.
   const autoEndedRef = useRef(false);
+  const autoWarnedRef = useRef(false);
+  const WARN_SECONDS = 10;
   useEffect(() => {
     if (isReview || !timedMode) return;
     // Don't fire before the test data has loaded (total=0) or before the
     // timedBase has been established — otherwise a fresh test auto-submits
     // during the first render pass.
     if (!data || total <= 0 || !timedBase) return;
+    if (timedRemaining <= WARN_SECONDS && timedRemaining > 0 && !autoWarnedRef.current) {
+      autoWarnedRef.current = true;
+      toast.warning(`Time's up in ${WARN_SECONDS} seconds — your block will auto-submit.`, {
+        duration: WARN_SECONDS * 1000,
+      });
+    }
     if (timedRemaining <= 0 && !autoEndedRef.current) {
       autoEndedRef.current = true;
       toast.message("Time's up — submitting your block.");
