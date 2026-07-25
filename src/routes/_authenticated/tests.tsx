@@ -122,7 +122,7 @@ function TestsList() {
             <div>
               <h1 className="text-2xl font-bold">Previous Tests</h1>
               <p className="text-sm text-muted-foreground max-w-2xl">
-                Review every saved attempt, continue suspended quizzes, and open results without losing any table tools.
+                Showing tests for <span className="font-semibold text-foreground">{QBANK_NAME[qbankId] ?? `QBank #${qbankId}`}</span>. Switch course from My Courses to see other tests.
               </p>
             </div>
           </div>
