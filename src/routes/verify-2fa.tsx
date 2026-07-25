@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ShieldCheck } from "lucide-react";
 import { requestLoginOtp, verifyLoginOtp, getMfaStatus } from "@/lib/mfa.functions";
+import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 
 export const Route = createFileRoute("/verify-2fa")({
   ssr: false,
@@ -97,6 +98,10 @@ function Verify2FA() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
+        <div className="flex flex-col items-center mb-6 gap-2">
+          <img src={logoAsset.url} alt="StepFighter" className="h-14 w-14 object-contain" />
+          <span className="text-[#1a4b7c] font-bold text-lg">StepFighter</span>
+        </div>
         <div className="rounded-lg border border-border bg-card p-6">
           <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 grid place-items-center mb-4">
             <ShieldCheck className="h-6 w-6 text-primary" />

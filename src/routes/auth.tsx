@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { z } from "zod";
 import { CheckCircle2 } from "lucide-react";
+import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -143,8 +144,9 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
-        <Link to="/" className="block text-center mb-6">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">SF</span>
+        <Link to="/" className="flex flex-col items-center mb-6 gap-2">
+          <img src={logoAsset.url} alt="StepFighter" className="h-14 w-14 object-contain" />
+          <span className="text-[#1a4b7c] font-bold text-lg">StepFighter</span>
         </Link>
         <div className="rounded-lg border border-border bg-card p-6">
           <h1 className="text-xl font-semibold">

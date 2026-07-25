@@ -38,6 +38,7 @@ import { TrialBanner } from "@/components/trial-banner";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { isCurrentUserAdmin } from "@/lib/admin.functions";
+import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { QBANKS, useActiveQbankId, setActiveQbankId } from "@/lib/active-qbank";
 
@@ -227,10 +228,8 @@ function AuthedLayout() {
 
         <div className="flex items-center justify-between px-4 h-14 border-b border-sidebar-border">
           <Link to="/dashboard" className="flex items-center gap-2" onClick={closeOnMobile}>
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
-              SF
-            </div>
-            <span className="font-semibold">QBank</span>
+            <img src={logoAsset.url} alt="StepFighter" className="h-8 w-8 object-contain bg-white/95 rounded-md p-0.5" />
+            <span className="font-semibold">StepFighter</span>
           </Link>
           <button
             type="button"
