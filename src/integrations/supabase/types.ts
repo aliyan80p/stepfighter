@@ -716,6 +716,7 @@ export type Database = {
           study_plan_index: number | null
           subject_label: string | null
           system_label: string | null
+          timed: boolean
           user_id: string
           wrong_count: number
         }
@@ -732,6 +733,7 @@ export type Database = {
           study_plan_index?: number | null
           subject_label?: string | null
           system_label?: string | null
+          timed?: boolean
           user_id: string
           wrong_count?: number
         }
@@ -748,6 +750,7 @@ export type Database = {
           study_plan_index?: number | null
           subject_label?: string | null
           system_label?: string | null
+          timed?: boolean
           user_id?: string
           wrong_count?: number
         }
