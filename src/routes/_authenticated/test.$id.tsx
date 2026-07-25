@@ -52,33 +52,12 @@ function attachImageAutoRetry(root: HTMLElement) {
     (img as any).__sfRetryBound = true;
     let tries = 0;
     const original = img.getAttribute("src") || "";
-    // Build a fallback ladder for "highresdefault_" style media names —
-    // if the highest-resolution copy is missing, try progressively smaller
-    // variants (and finally the un-prefixed base name) before giving up.
-    const variants: string[] = [original];
-    const prefixes = ["highresdefault_", "hqdefault_", "sddefault_", "mqdefault_", "default_"];
-    const fileMatch = original.match(/\/([^/?]+)(\?|$)/);
-    if (fileMatch) {
-      const file = fileMatch[1];
-      const decoded = (() => { try { return decodeURIComponent(file); } catch { return file; } })();
-      const lower = decoded.toLowerCase();
-      const currentPrefix = prefixes.find((p) => lower.startsWith(p));
-      const bare = currentPrefix ? decoded.slice(currentPrefix.length) : decoded;
-      const startIdx = currentPrefix ? prefixes.indexOf(currentPrefix) + 1 : 0;
-      for (let i = startIdx; i < prefixes.length; i++) {
-        const alt = original.replace(file, encodeURIComponent(prefixes[i] + bare));
-        if (!variants.includes(alt)) variants.push(alt);
-      }
-      const altBare = original.replace(file, encodeURIComponent(bare));
-      if (!variants.includes(altBare)) variants.push(altBare);
-    }
     const retry = () => {
-      if (tries >= variants.length + 4 || !original) return;
+      if (tries >= 5 || !original) return;
       tries += 1;
-      const nextSrc = variants[Math.min(tries, variants.length - 1)];
-      const sep = nextSrc.includes("?") ? "&" : "?";
+      const sep = original.includes("?") ? "&" : "?";
       const bust = `${sep}r=${Date.now()}-${tries}`;
-      setTimeout(() => { img.src = nextSrc + bust; }, 300 * tries);
+      setTimeout(() => { img.src = original + bust; }, 300 * tries);
     };
     img.addEventListener("error", retry);
     // If already broken by the time we bind (cached failure), kick a retry.
