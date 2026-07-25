@@ -600,7 +600,7 @@ function NewTest() {
           <Info className="h-4 w-4 text-primary" />
           <div className="text-sm flex-1">
             <span className="text-primary font-semibold text-xs uppercase tracking-wider">Question Limit</span>
-            <div>New limit! Now Maximum <b>50 questions</b> per quiz</div>
+            <div>Maximum <b>50 questions</b> per quiz</div>
           </div>
           <span className="text-xs font-semibold rounded-full bg-primary text-primary-foreground px-3 py-1">50 MAX</span>
         </div>
