@@ -220,7 +220,7 @@ export const createCustomTest = createServerFn({ method: "POST" })
     const validIds = (found ?? []).map((r: any) => r.id as number);
     if (!validIds.length) throw new Error("None of the provided question IDs were found.");
     const ordered = uniq.filter((id) => validIds.includes(id));
-    const insertRow: any = { user_id: userId, question_ids: ordered, mode: data.mode, qbank_id: data.qbankId };
+    const insertRow: any = { user_id: userId, question_ids: ordered, mode: data.mode, qbank_id: data.qbankId, timed: !!data.timed };
     if (data.name) insertRow.name = data.name;
     if (data.studyPlanIndex) insertRow.study_plan_index = data.studyPlanIndex;
     const { data: inserted, error: e2 } = await supabase
