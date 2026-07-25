@@ -422,9 +422,12 @@ function NewTest() {
             size="lg"
             onClick={start}
             disabled={loading || parseIds(customIds).length === 0}
-            className="mt-6"
+            className="mt-6 group relative overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            {loading ? "Generating…" : "Generate Test"}
+            <span className="relative z-10 flex items-center gap-2">
+              {loading && <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
+              {loading ? "Generating…" : "Generate Test"}
+            </span>
           </Button>
         </Card>
       )}
