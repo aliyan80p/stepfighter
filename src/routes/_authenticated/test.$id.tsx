@@ -570,8 +570,8 @@ function TestRunner() {
     qc.invalidateQueries({ queryKey: ["test", testId] });
   };
 
-  const finish = async () => {
-    if (userSettings.confirmOmission && !isReview && data) {
+  const finish = async (opts?: { force?: boolean }) => {
+    if (!opts?.force && userSettings.confirmOmission && !isReview && data) {
       const answeredCount = data.questions.reduce((n, q) => n + (data.attemptsByQ[q.id] ? 1 : 0), 0);
       const omitted = total - answeredCount;
       if (omitted > 0) {
@@ -593,6 +593,7 @@ function TestRunner() {
     qc.invalidateQueries({ queryKey: ["test", testId] });
     nav({ to: "/test-results/$id", params: { id } });
   };
+
 
   // Timed-mode remaining seconds, based on the persisted timedBase.
   const timedRemaining = timedBase
