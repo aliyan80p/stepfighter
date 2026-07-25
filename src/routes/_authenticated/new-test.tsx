@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ChevronUp, Search, Info, Clock, GraduationCap, ClipboardCheck } from "lucide-react";
-import { Loader } from "@/components/loader";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/new-test")({
@@ -315,13 +314,13 @@ function NewTest() {
 
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
-      <div className="animate-fade-in">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0d2b4e] via-[#1a4b7c] to-[#38bdf8] bg-clip-text text-transparent">Generate Quiz</h1>
+      <div>
+        <h1 className="text-3xl font-bold">Generate Quiz</h1>
         <p className="text-muted-foreground mt-1">Build a custom practice session</p>
       </div>
 
       {/* Test Mode */}
-      <Card delay={60}>
+      <Card>
         <div className="flex items-start gap-3 mb-4">
           <IconBadge><ClipboardCheck className="h-4 w-4" /></IconBadge>
           <div>
@@ -351,7 +350,7 @@ function NewTest() {
       </Card>
 
       {/* Quiz Type */}
-      <Card delay={120}>
+      <Card>
         <h2 className="font-semibold mb-3">Quiz Type</h2>
         <div className="rounded-lg border border-border p-3 mb-4">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">Edit Quiz Name</div>
@@ -382,7 +381,7 @@ function NewTest() {
       </Card>
 
       {quizType === "custom" && (
-        <Card delay={180}>
+        <Card>
           <h2 className="font-semibold mb-4">Question ID's</h2>
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4 items-start">
             <div>
@@ -422,12 +421,9 @@ function NewTest() {
             size="lg"
             onClick={start}
             disabled={loading || parseIds(customIds).length === 0}
-            className="mt-6 group relative overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            className="mt-6"
           >
-            <span className="relative z-10 flex items-center gap-2">
-              {loading && <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
-              {loading ? "Generating…" : "Generate Test"}
-            </span>
+            {loading ? "Generating…" : "Generate Test"}
           </Button>
         </Card>
       )}
@@ -436,7 +432,7 @@ function NewTest() {
 
 
       {/* Tabs / Selection */}
-      <Card delay={180}>
+      <Card>
         <div className="flex flex-wrap items-center gap-x-1 gap-y-0 border-b border-border mb-4 -mt-2 -mx-6 px-2 sm:px-6">
           {(Object.keys(availableTabs) as Tab[]).map((t) => {
             const enabled = availableTabs[t];
@@ -554,7 +550,7 @@ function NewTest() {
       </Card>
 
       {/* Question types + Difficulty */}
-      <Card delay={240}>
+      <Card>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <h3 className="font-semibold mb-3">Question Types</h3>
@@ -567,7 +563,7 @@ function NewTest() {
                 { v: "incorrect", l: "Incorrect Questions" },
                 { v: "all", l: "All" },
               ].map((o) => (
-                <label key={o.v} className="flex items-center gap-2 text-sm cursor-pointer transition-colors hover:text-primary">
+                <label key={o.v} className="flex items-center gap-2 text-sm cursor-pointer">
                   <Checkbox checked={scope === o.v} onCheckedChange={() => setScope(o.v as Scope)} />
                   {o.l}
                 </label>
@@ -582,8 +578,8 @@ function NewTest() {
                   key={n}
                   onClick={() => setDifficulty((d) => d.includes(n) ? d.filter((x) => x !== n) : [...d, n])}
                   className={cn(
-                    "h-10 w-10 rounded-md text-sm font-semibold transition-all duration-200 hover:scale-110 active:scale-95",
-                    difficulty.includes(n) ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" : "bg-muted text-muted-foreground hover:bg-accent",
+                    "h-10 w-10 rounded-md text-sm font-semibold transition-colors",
+                    difficulty.includes(n) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent",
                   )}
                 >
                   {n}
@@ -595,7 +591,7 @@ function NewTest() {
       </Card>
 
       {/* Limit + Generate */}
-      <Card delay={300}>
+      <Card>
         <div className="flex items-center gap-3 rounded-lg border-l-4 border-primary bg-primary/5 p-3 mb-4">
           <Info className="h-4 w-4 text-primary" />
           <div className="text-sm flex-1">
@@ -616,46 +612,21 @@ function NewTest() {
           />
           <span className="text-sm">/ <b>{poolCount}</b> Questions</span>
         </div>
-        <Button
-          size="lg"
-          onClick={start}
-          disabled={loading || !hasCourse || !hasQbank || count < 1 || poolCount === 0}
-          className="mt-4 group relative overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:hover:scale-100"
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            {loading && <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
-            {loading ? "Generating…" : "Generate Test"}
-          </span>
-          {!loading && <span aria-hidden className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent group-hover:translate-x-full transition-transform duration-700" />}
+        <Button size="lg" onClick={start} disabled={loading || !hasCourse || !hasQbank || count < 1 || poolCount === 0} className="mt-4">
+          {loading ? "Generating…" : "Generate Test"}
         </Button>
       </Card>
       </>)}
-
-      {/* Full-screen generating overlay */}
-      {loading && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm animate-fade-in">
-          <div className="rounded-2xl bg-white/95 dark:bg-slate-900/95 shadow-2xl px-10 py-8 border border-white/20">
-            <Loader label="Preparing your test" size={72} />
-          </div>
-        </div>
-      )}
     </div>
 
   );
 }
 
-function Card({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  return (
-    <div
-      className="rounded-xl border border-border bg-card p-6 shadow-sm animate-fade-in transition-all duration-300 hover:shadow-md hover:border-primary/30"
-      style={{ animationDelay: `${delay}ms`, animationFillMode: "both" }}
-    >
-      {children}
-    </div>
-  );
+function Card({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-xl border border-border bg-card p-6 shadow-sm">{children}</div>;
 }
 function IconBadge({ children }: { children: React.ReactNode }) {
-  return <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary shrink-0 transition-transform hover:scale-110">{children}</div>;
+  return <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary shrink-0">{children}</div>;
 }
 function ModeCard({ active, onClick, icon, title, desc }: { active: boolean; onClick: () => void; icon: React.ReactNode; title: string; desc: string }) {
   return (
