@@ -1,0 +1,5 @@
+CREATE POLICY "qbank_media_service_only_select" ON storage.objects FOR SELECT TO service_role USING (bucket_id IN ('qbank-media','qbank-media-plain'));
+CREATE POLICY "qbank_media_service_only_insert" ON storage.objects FOR INSERT TO service_role WITH CHECK (bucket_id IN ('qbank-media','qbank-media-plain'));
+CREATE POLICY "qbank_media_service_only_update" ON storage.objects FOR UPDATE TO service_role USING (bucket_id IN ('qbank-media','qbank-media-plain')) WITH CHECK (bucket_id IN ('qbank-media','qbank-media-plain'));
+CREATE POLICY "qbank_media_service_only_delete" ON storage.objects FOR DELETE TO service_role USING (bucket_id IN ('qbank-media','qbank-media-plain'));
+CREATE POLICY "qbank_media_deny_anon_select" ON storage.objects FOR SELECT TO anon, authenticated USING (bucket_id NOT IN ('qbank-media','qbank-media-plain'));
