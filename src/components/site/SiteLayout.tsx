@@ -63,7 +63,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="h-9 w-9 rounded-md bg-amber-400 text-[#0d2b4e] grid place-items-center font-bold">SF</div>
+              <img src={logoAsset.url} alt="StepFighter logo" className="h-10 w-10 object-contain bg-white/95 rounded-md p-0.5" />
               <span className="text-white font-bold text-lg">StepFighter</span>
             </div>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
