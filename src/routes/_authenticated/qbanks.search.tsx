@@ -222,6 +222,7 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
             <thead className="bg-[#2c5aa0]">
               <tr>
                 {th("ID", "id")}
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Course</th>
                 {th("Subject", "subject")}
                 {th("System", "system")}
                 {th("Topic", "topic")}
@@ -234,6 +235,7 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
                 return (
                   <tr key={r.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
+                    <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{r.qbankName || "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
