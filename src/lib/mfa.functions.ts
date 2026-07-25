@@ -85,7 +85,8 @@ export const verifyLoginOtp = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ code: z.string().trim().regex(/^\d{6}$/) }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: rows } = await context.supabase
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+    const { data: rows } = await supabaseAdmin
       .from('login_otps')
       .select('id, code_hash, expires_at, consumed_at, attempts')
       .eq('user_id', context.userId)
@@ -105,7 +106,7 @@ export const verifyLoginOtp = createServerFn({ method: 'POST' })
     const expected = hashCode(context.userId, data.code)
     if (expected !== row.code_hash) {
       const newAttempts = row.attempts + 1
-      await context.supabase.from('login_otps').update({ attempts: newAttempts }).eq('id', row.id)
+      await supabaseAdmin.from('login_otps').update({ attempts: newAttempts }).eq('id', row.id)
       return {
         ok: false,
         error: 'Incorrect code.' as const,
@@ -114,10 +115,11 @@ export const verifyLoginOtp = createServerFn({ method: 'POST' })
     }
 
     const verifiedUntil = new Date(Date.now() + VERIFY_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
-    await context.supabase.from('login_otps').update({ consumed_at: new Date().toISOString() }).eq('id', row.id)
+    await supabaseAdmin.from('login_otps').update({ consumed_at: new Date().toISOString() }).eq('id', row.id)
     await context.supabase.from('profiles').update({ mfa_verified_until: verifiedUntil }).eq('id', context.userId)
     return { ok: true as const }
   })
+
 
 /** Clears the persistent MFA verification for the current user (called on sign-out). */
 export const clearMfaVerification = createServerFn({ method: 'POST' })
