@@ -41,8 +41,6 @@ export const Route = createFileRoute("/_authenticated/qbanks/search")({
 
 type SearchResult = {
   id: number;
-  qbankId: number;
-  qbankName: string;
   title: string;
   question: string;
   explanation: string;
@@ -112,7 +110,7 @@ function SearchPage() {
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Course (keyword search)</label>
+            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Course</label>
             <div className="w-full mt-1 py-2.5 px-3 border rounded-md bg-slate-100 text-slate-700 font-medium">
               {currentBank.name}
             </div>
@@ -132,7 +130,6 @@ function SearchPage() {
       <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6 flex gap-3">
         <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
         <ol className="text-sm text-slate-700 space-y-1 list-decimal list-inside">
-          <li>Question ID search works across every course you're subscribed to — keyword search is limited to the course above.</li>
           <li>Search can generate up to a maximum of 200 questions. To generate more questions, please refine your search criteria.</li>
           <li>Questions viewed through Search will have their correct answers revealed. To practice these questions unanswered, copy the question IDs using the "Copy IDs" button and use them to generate a custom quiz.</li>
         </ol>
@@ -223,7 +220,6 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
             <thead className="bg-[#2c5aa0]">
               <tr>
                 {th("ID", "id")}
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">Course</th>
                 {th("Subject", "subject")}
                 {th("System", "system")}
                 {th("Topic", "topic")}
@@ -236,7 +232,6 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
                 return (
                   <tr key={r.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
-                    <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{r.qbankName || "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
                     <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
@@ -389,7 +384,7 @@ function QuestionModal({
   };
 
   const bookmarkFn = useServerFn(toggleBookmark);
-  const modalQbankId = r.qbankId;
+  const modalQbankId = useActiveQbankId();
   const mediaToken = useMediaToken(modalQbankId);
   const toggleMark = async () => {
     const prev = !!marked[r.id];
