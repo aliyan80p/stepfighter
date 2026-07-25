@@ -1003,6 +1003,16 @@ function TestRunner() {
 
   return (
     <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
+      {warnCountdown !== null && warnCountdown > 0 && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
+          <div className="pointer-events-auto rounded-2xl border-2 border-amber-400 bg-slate-900/95 shadow-2xl px-8 py-6 text-center animate-in fade-in zoom-in duration-200">
+            <div className="text-amber-400 text-lg font-bold uppercase tracking-wider mb-2">⏰ Time's Up</div>
+            <div className="text-white text-base mb-3">Your block will auto-submit in</div>
+            <div className="text-amber-300 text-6xl font-bold tabular-nums">{warnCountdown}</div>
+            <div className="text-slate-400 text-sm mt-2">seconds</div>
+          </div>
+        </div>
+      )}
       {hlBar && (
         <div
           data-hl-toolbar
