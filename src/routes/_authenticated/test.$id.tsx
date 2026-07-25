@@ -453,7 +453,7 @@ function TestRunner() {
     if (!data?.test) return;
     if (modeInitFor === data.test.id) return;
     setTutorMode(data.test.mode === "practice");
-    setTimedMode(!!(data.test as { timed?: boolean }).timed);
+    setTimedMode(data.test.mode === "test" ? true : !!(data.test as { timed?: boolean }).timed);
     setModeInitFor(data.test.id);
   }, [data?.test?.id, data?.test?.mode, modeInitFor]);
 
