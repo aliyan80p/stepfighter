@@ -4,7 +4,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listTests, getTest } from "@/lib/qbank.functions";
 import { getAiTestAnalysis } from "@/lib/performance.functions";
-import { useActiveQbankId } from "@/lib/active-qbank";
+import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
+
+const QBANK_NAME: Record<number, string> = Object.fromEntries(QBANKS.map((q) => [q.id, q.name]));
 import { Sparkles, Loader2, FileText, ChevronRight, ArrowUpDown, HelpCircle, XCircle, CheckCircle2, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
