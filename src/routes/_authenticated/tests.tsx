@@ -188,7 +188,12 @@ function TestsList() {
             return (
               <div key={r.id} className="flex flex-col gap-3 md:grid md:grid-cols-[2fr_1fr_1fr_0.8fr_1fr_1.2fr_0.7fr_1.4fr] md:gap-4 px-4 py-4 md:items-center hover:bg-muted/30 transition-colors">
                 <div>
-                  <div className="font-medium text-sm">{r.name}</div>
+                  <div className="font-medium text-sm flex items-center gap-2 flex-wrap">
+                    <span>{r.name}</span>
+                    <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                      {QBANK_NAME[(r as any).qbank_id] ?? `QBank #${(r as any).qbank_id}`}
+                    </span>
+                  </div>
                   <div className="mt-2 flex gap-1.5 items-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
