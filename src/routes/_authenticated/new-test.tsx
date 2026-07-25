@@ -382,7 +382,7 @@ function NewTest() {
       </Card>
 
       {quizType === "custom" && (
-        <Card>
+        <Card delay={180}>
           <h2 className="font-semibold mb-4">Question ID's</h2>
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4 items-start">
             <div>
