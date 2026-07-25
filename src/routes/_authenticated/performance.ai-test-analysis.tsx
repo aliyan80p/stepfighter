@@ -34,7 +34,7 @@ function AiTestAnalysisPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Test Analysis</h1>
-            <p className="text-sm text-muted-foreground">Per-test breakdown with subject and system analysis</p>
+            <p className="text-sm text-muted-foreground">Per-test breakdown for <span className="font-semibold text-foreground">{QBANK_NAME[qbankId] ?? `QBank #${qbankId}`}</span></p>
           </div>
         </div>
 
