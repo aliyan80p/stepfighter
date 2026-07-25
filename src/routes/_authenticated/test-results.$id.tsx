@@ -3,6 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getTest } from "@/lib/qbank.functions";
+import { QBANKS } from "@/lib/active-qbank";
+
+const QBANK_NAME: Record<number, string> = Object.fromEntries(QBANKS.map((q) => [q.id, q.name]));
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
