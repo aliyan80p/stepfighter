@@ -1395,7 +1395,7 @@ function TestRunner() {
                   }}
                 >
                   <HighlightableHtml
-                    seedKey={`e-${question.id}`}
+                    seedKey={`e-${question.id}-${mediaToken ? "t" : "n"}`}
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
                     html={htmlFor("e", question.explanation, true)}
