@@ -251,7 +251,7 @@ function NewTest() {
   const { data: pool } = useQuery({
     queryKey: ["pool", qbankId, selectedSources, subjectIds, systemIds, topicNames, scope],
     queryFn: () => poolFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope } }),
-    enabled: !!data,
+    enabled: selectedSources.length > 0,
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
     placeholderData: (prev) => prev,
@@ -467,12 +467,14 @@ function NewTest() {
               const c = COURSES.find((x) => x.id === id);
               if (!c) return;
               setCourseIds([c.id]);
-              // Auto-select all QBanks belonging to this course so the user can
-              // generate a test immediately without visiting the QBank tab.
-              const autoQbankIds = QBANK_OPTIONS.filter((q) => q.qbankId === c.qbankId).map((q) => q.id);
-              setQbankIds(autoQbankIds);
+              // Pre-select only the main UWorld QBank so the pool has questions
+              // right away; user can add/remove more in the QBank tab.
+              const mainId = `${c.id}:main`;
+              const hasMain = QBANK_OPTIONS.some((q) => q.id === mainId);
+              setQbankIds(hasMain ? [mainId] : []);
               setSubjectIds([]); setSystemIds([]); setTopicNames([]);
               if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
+              setOpenTab("qbank");
             }}
             columns={3}
             radio
