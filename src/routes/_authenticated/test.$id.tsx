@@ -636,7 +636,8 @@ function TestRunner() {
       if (autoEndedRef.current) return;
       autoEndedRef.current = true;
       toast.message("Time's up — submitting your block.");
-      finish();
+      finish({ force: true });
+
     };
 
     if (warnDelay <= 0 && endDelay > 0) showWarn();
