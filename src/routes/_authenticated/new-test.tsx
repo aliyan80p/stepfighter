@@ -554,7 +554,7 @@ function NewTest() {
       </Card>
 
       {/* Question types + Difficulty */}
-      <Card>
+      <Card delay={240}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <h3 className="font-semibold mb-3">Question Types</h3>
@@ -567,7 +567,7 @@ function NewTest() {
                 { v: "incorrect", l: "Incorrect Questions" },
                 { v: "all", l: "All" },
               ].map((o) => (
-                <label key={o.v} className="flex items-center gap-2 text-sm cursor-pointer">
+                <label key={o.v} className="flex items-center gap-2 text-sm cursor-pointer transition-colors hover:text-primary">
                   <Checkbox checked={scope === o.v} onCheckedChange={() => setScope(o.v as Scope)} />
                   {o.l}
                 </label>
@@ -582,8 +582,8 @@ function NewTest() {
                   key={n}
                   onClick={() => setDifficulty((d) => d.includes(n) ? d.filter((x) => x !== n) : [...d, n])}
                   className={cn(
-                    "h-10 w-10 rounded-md text-sm font-semibold transition-colors",
-                    difficulty.includes(n) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent",
+                    "h-10 w-10 rounded-md text-sm font-semibold transition-all duration-200 hover:scale-110 active:scale-95",
+                    difficulty.includes(n) ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" : "bg-muted text-muted-foreground hover:bg-accent",
                   )}
                 >
                   {n}
@@ -595,7 +595,7 @@ function NewTest() {
       </Card>
 
       {/* Limit + Generate */}
-      <Card>
+      <Card delay={300}>
         <div className="flex items-center gap-3 rounded-lg border-l-4 border-primary bg-primary/5 p-3 mb-4">
           <Info className="h-4 w-4 text-primary" />
           <div className="text-sm flex-1">
