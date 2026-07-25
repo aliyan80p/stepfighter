@@ -41,6 +41,8 @@ export const Route = createFileRoute("/_authenticated/qbanks/search")({
 
 type SearchResult = {
   id: number;
+  qbankId: number;
+  qbankName: string;
   title: string;
   question: string;
   explanation: string;
