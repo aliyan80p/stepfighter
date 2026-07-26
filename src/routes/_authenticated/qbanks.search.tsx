@@ -373,10 +373,10 @@ function QuestionModal({
 
   const themeStyles =
     theme === "dark"
-      ? { text: "#e5e7eb", bg: "#0f172a", border: "#334155" }
+      ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
       : theme === "sepia"
-      ? { text: "#3b2f1c", bg: "#f4ecd8", border: "#d6c9a8" }
-      : { text: "#1f2937", bg: "#ffffff", border: "#d1d9e6" };
+      ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
+      : { pageBg: "#f5f7fa", sideBg: "#eef1f5", text: "#1f2937", cardBg: "#ffffff", border: "#d1d5db" };
 
   const goFullscreen = () => {
     if (!document.fullscreenElement) rootRef.current?.requestFullscreen?.();
@@ -412,9 +412,10 @@ function QuestionModal({
       <div
         ref={rootRef}
         className="w-full h-full md:w-[95vw] md:h-[95vh] md:rounded-lg overflow-hidden shadow-2xl flex flex-col"
-        style={{ background: themeStyles.bg }}
+        style={{ background: themeStyles.pageBg, color: themeStyles.text }}
         onClick={(e) => e.stopPropagation()}
       >
+
         {/* Top nav */}
         <div className="flex items-center justify-between px-3 py-1.5 text-white shrink-0" style={{ background: NAV_BG }}>
           <div className="flex items-center gap-4">
