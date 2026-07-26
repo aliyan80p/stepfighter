@@ -221,7 +221,7 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
               Pick a specialty on the left to browse topics, or search for a condition to jump straight to the article.
             </p>
           </div>
-        ) : loadingDoc && !doc ? (
+        ) : (loadingDoc && !doc) || (doc && !mediaToken) ? (
           <div className="p-10"><Loader label="Opening article…" /></div>
         ) : (
           <article className="mx-auto max-w-4xl p-5 sm:p-8">
@@ -240,13 +240,10 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
                 ))}
               </nav>
             )}
-            <div
-              ref={bodyRef}
-              className="library-article"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
+            <div ref={bodyRef} className="library-article" suppressHydrationWarning />
           </article>
         )}
+
       </main>
     </div>
   );
