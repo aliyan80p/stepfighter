@@ -212,22 +212,30 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
           let offset = 0;
           let part = 0;
           let total = 0;
+          let buffer: unknown[] = [];
+          const flush = async () => {
+            if (!buffer.length && part > 0) return;
+            part += 1;
+            const name = `${table}.part${String(part).padStart(3, "0")}.json.gz`;
+            const gz = await gzip(JSON.stringify(buffer));
+            await putObject(supaUrl, srk, `${stamp}/${name}`, gz);
+            if (headers && driveDay) await driveUpload(headers, driveDay, name, gz);
+            buffer = [];
+          };
           try {
             for (;;) {
               const rows = await fetchPage(supaUrl, srk, table, offset);
-              if (!rows.length && part > 0) break;
-              part += 1;
               total += rows.length;
-              const name = `${table}.part${String(part).padStart(3, "0")}.json.gz`;
-              const gz = await gzip(JSON.stringify(rows));
-              await putObject(supaUrl, srk, `${stamp}/${name}`, gz);
-              if (headers && driveDay) await driveUpload(headers, driveDay, name, gz);
+              buffer.push(...rows);
+              if (buffer.length >= FILE_ROWS) await flush();
               if (rows.length < PAGE) break;
               offset += PAGE;
             }
+            await flush();
             report[table] = total;
           } catch (e) {
             errors.push(`${table}: ${(e as Error).message}`);
+
           }
         }
 
