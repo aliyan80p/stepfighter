@@ -148,6 +148,13 @@ function NewTest() {
     }
     return out;
   }, [selectedQbankOptions, cmsFormSources]);
+
+  const selectedCourse = useMemo(
+    () => COURSES.find((c) => courseIds.includes(c.id)),
+    [courseIds],
+  );
+  const selectedQbankId = selectedCourse?.qbankId ?? qbankId;
+
   const { data } = useQuery({
     queryKey: ["filters", selectedQbankId, selectedSources],
     queryFn: () => getFn({ data: { qbankId: selectedQbankId, sources: selectedSources } }),
@@ -174,12 +181,6 @@ function NewTest() {
   const [subjectSearch, setSubjectSearch] = useState("");
   const [systemSearch, setSystemSearch] = useState("");
   const [topicSearch, setTopicSearch] = useState("");
-
-  const selectedCourse = useMemo(
-    () => COURSES.find((c) => courseIds.includes(c.id)),
-    [courseIds],
-  );
-  const selectedQbankId = selectedCourse?.qbankId ?? qbankId;
 
   // gating
   const hasCourse = courseIds.length > 0;
