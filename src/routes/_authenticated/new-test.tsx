@@ -114,17 +114,15 @@ function NewTest() {
   const entFn = useServerFn(getMyEntitlement);
   const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60_000 });
   const entitledSlugs = entQ.data?.effective_access ?? [];
-  // Only show the currently-active course, even if user is entitled to more.
+  // Always show ONLY the currently-active course — applies to users and admins alike.
   const entitledCourses = useMemo(
     () => {
       const activeCourse = COURSES.find((c) => c.qbankId === qbankId);
-      if (activeCourse && (!entitledSlugs.length || entitledSlugs.includes(activeCourse.id))) {
-        return [activeCourse];
-      }
-      return entitledSlugs.length ? COURSES.filter((c) => entitledSlugs.includes(c.id)).slice(0, 1) : [];
+      return activeCourse ? [activeCourse] : [];
     },
     [entitledSlugs, qbankId],
   );
+
 
 
 
