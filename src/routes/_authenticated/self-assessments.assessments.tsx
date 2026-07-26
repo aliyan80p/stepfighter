@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/self-assessments/assessmen
 type Assessment = { id: string; label: string; source: string; qbankId: number; total: number };
 
 const NBME_COUNTS: Record<string, number> = {
-  NBME25: 200, NBME26: 200, NBME27: 198, NBME28: 200,
+  NBME25: 200, NBME26: 200, NBME27: 198, NBME28: 200, NBME29: 199,
   NBME30: 200, NBME31: 200, NBME32: 200, NBME33: 199,
   NBME8: 200, NBME9: 200, NBME10: 200, NBME11: 200, NBME12: 200,
   NBME13: 200, NBME14: 200, NBME15: 200, NBME16: 200,
@@ -26,9 +26,10 @@ const ASSESSMENTS: Assessment[] = [
   { id: "step1:SA1", label: "UWorld Self Assessment 1", source: "SA1", qbankId: 2, total: 160 },
   { id: "step1:SA2", label: "UWorld Self Assessment 2", source: "SA2", qbankId: 2, total: 159 },
   { id: "step1:SA3", label: "UWorld Self Assessment 3", source: "SA3", qbankId: 2, total: 158 },
-  ...[25, 26, 27, 28, 30, 31, 32, 33].map((n) => ({
+  ...[25, 26, 27, 28, 29, 30, 31, 32, 33].map((n) => ({
     id: `step1:NBME${n}`, label: `NBME ${n}`, source: `NBME${n}`, qbankId: 2, total: NBME_COUNTS[`NBME${n}`],
   })),
+
   { id: "step2:SA1", label: "UWorld Self Assessment 1", source: "SA1", qbankId: 1, total: 157 },
   { id: "step2:SA2", label: "UWorld Self Assessment 2", source: "SA2", qbankId: 1, total: 159 },
   { id: "step2:SA3", label: "UWorld Self Assessment 3", source: "SA3", qbankId: 1, total: 160 },
