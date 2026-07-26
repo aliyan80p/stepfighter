@@ -1489,7 +1489,7 @@ function TestRunner() {
 
 
               
-              <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
+              <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={() => setShowLibrary(true)} />
               <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
               <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
