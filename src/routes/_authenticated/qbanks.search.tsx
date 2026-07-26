@@ -621,7 +621,7 @@ function QuestionModal({
           <div className="font-semibold tracking-wide" />
           <div className="font-semibold tracking-wide hidden md:block">StepFighter</div>
           <div className="flex items-center gap-3">
-            <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
+            <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={() => setShowLibrary(true)} />
             <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
             <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
             <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={onClose} />
