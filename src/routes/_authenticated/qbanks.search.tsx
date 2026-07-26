@@ -18,6 +18,7 @@ import { useMediaToken } from "@/lib/use-media-token";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 import { NotesModal } from "@/components/notes-modal";
 import { FlashcardsModal } from "@/components/flashcards-modal";
+import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { ExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
 import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
@@ -352,6 +353,7 @@ function QuestionModal({
   const [showSettings, setShowSettings] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [marked, setMarked] = useState<Record<number, boolean>>({});
