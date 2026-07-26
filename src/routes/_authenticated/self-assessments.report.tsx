@@ -57,8 +57,9 @@ function ReportPage() {
     const allowed = new Set(entQ.data?.effective_access ?? []);
     return new Set(QBANKS.filter((q) => allowed.has(QBANK_ID_TO_SLUG[q.id])).map((q) => q.name));
   }, [entQ.data]);
-  const allGroups = Array.from(new Set(OPTIONS.map((o) => o.group)));
-  const groups = entitledGroupNames.size ? allGroups.filter((g) => entitledGroupNames.has(g)) : [activeGroup];
+  // Only show the active course's group.
+  const groups = entitledGroupNames.size && entitledGroupNames.has(activeGroup) ? [activeGroup] : [activeGroup];
+
   useEffect(() => {
     if (groups.length && !groups.includes(group)) setGroup(groups[0]);
   }, [groups, group]);
