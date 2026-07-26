@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getAssessmentReport } from "@/lib/performance.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
+import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { Check, X, RotateCcw, Info, TrendingUp, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
