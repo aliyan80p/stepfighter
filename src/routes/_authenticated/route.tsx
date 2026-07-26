@@ -22,6 +22,7 @@ import {
   LogOut,
   ChevronDown,
   StickyNote,
+  Library,
   CalendarDays,
   Zap,
   Flag,
