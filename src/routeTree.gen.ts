@@ -56,6 +56,7 @@ import { Route as AuthenticatedAccountResetRouteImport } from './routes/_authent
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksMediaBackupRouteImport } from './routes/api/public/hooks/media-backup'
 import { Route as ApiPublicHooksBackupRouteImport } from './routes/api/public/hooks/backup'
 import { Route as AuthenticatedTestIdResultsRouteImport } from './routes/_authenticated/test.$id.results'
 
@@ -312,6 +313,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksMediaBackupRoute =
+  ApiPublicHooksMediaBackupRouteImport.update({
+    id: '/api/public/hooks/media-backup',
+    path: '/api/public/hooks/media-backup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBackupRoute = ApiPublicHooksBackupRouteImport.update({
   id: '/api/public/hooks/backup',
   path: '/api/public/hooks/backup',
@@ -370,6 +377,7 @@ export interface FileRoutesByFullPath {
   '/notes/': typeof AuthenticatedNotesIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
+  '/api/public/hooks/media-backup': typeof ApiPublicHooksMediaBackupRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -420,6 +428,7 @@ export interface FileRoutesByTo {
   '/notes': typeof AuthenticatedNotesIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
+  '/api/public/hooks/media-backup': typeof ApiPublicHooksMediaBackupRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -472,6 +481,7 @@ export interface FileRoutesById {
   '/_authenticated/notes/': typeof AuthenticatedNotesIndexRoute
   '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
+  '/api/public/hooks/media-backup': typeof ApiPublicHooksMediaBackupRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
     | '/notes/'
     | '/test/$id/results'
     | '/api/public/hooks/backup'
+    | '/api/public/hooks/media-backup'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/test/$id/results'
     | '/api/public/hooks/backup'
+    | '/api/public/hooks/media-backup'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -625,6 +637,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notes/'
     | '/_authenticated/test/$id/results'
     | '/api/public/hooks/backup'
+    | '/api/public/hooks/media-backup'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -650,6 +663,7 @@ export interface RootRouteChildren {
   ApiPublicNbmeExportRoute: typeof ApiPublicNbmeExportRoute
   ApiPublicWarmMediaRoute: typeof ApiPublicWarmMediaRoute
   ApiPublicHooksBackupRoute: typeof ApiPublicHooksBackupRoute
+  ApiPublicHooksMediaBackupRoute: typeof ApiPublicHooksMediaBackupRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -986,6 +1000,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/media-backup': {
+      id: '/api/public/hooks/media-backup'
+      path: '/api/public/hooks/media-backup'
+      fullPath: '/api/public/hooks/media-backup'
+      preLoaderRoute: typeof ApiPublicHooksMediaBackupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backup': {
       id: '/api/public/hooks/backup'
       path: '/api/public/hooks/backup'
@@ -1103,6 +1124,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicNbmeExportRoute: ApiPublicNbmeExportRoute,
   ApiPublicWarmMediaRoute: ApiPublicWarmMediaRoute,
   ApiPublicHooksBackupRoute: ApiPublicHooksBackupRoute,
+  ApiPublicHooksMediaBackupRoute: ApiPublicHooksMediaBackupRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,

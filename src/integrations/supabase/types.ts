@@ -448,6 +448,33 @@ export type Database = {
         }
         Relationships: []
       }
+      media_backup_log: {
+        Row: {
+          bucket: string
+          drive_file_id: string | null
+          id: number
+          name: string
+          size: number | null
+          uploaded_at: string
+        }
+        Insert: {
+          bucket: string
+          drive_file_id?: string | null
+          id?: number
+          name: string
+          size?: number | null
+          uploaded_at?: string
+        }
+        Update: {
+          bucket?: string
+          drive_file_id?: string | null
+          id?: number
+          name?: string
+          size?: number | null
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
@@ -895,6 +922,21 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_media_objects: {
+        Args: { _bucket: string; _limit?: number }
+        Returns: {
+          name: string
+          size: number
+        }[]
+      }
+      media_backup_progress: {
+        Args: never
+        Returns: {
+          backed_up: number
+          bucket: string
+          total: number
+        }[]
       }
       pick_question_ids: {
         Args: {
