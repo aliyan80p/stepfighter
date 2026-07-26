@@ -51,14 +51,12 @@ function AssessmentsPage() {
   const entFn = useServerFn(getMyEntitlement);
   const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60_000 });
   const entitledSlugs = entQ.data?.effective_access ?? [];
-  // Show every course the user is entitled to (not only the currently active one),
-  // so users with a combo plan can pick any of their unlocked self assessments.
+  // Only show the currently-active course.
   const availableCourses = useMemo(
-    () => (entitledSlugs.length
-      ? QBANKS.filter((q) => entitledSlugs.includes(QBANK_ID_TO_SLUG[q.id]))
-      : QBANKS.filter((q) => q.id === activeQbankId)),
+    () => QBANKS.filter((q) => q.id === activeQbankId && (!entitledSlugs.length || entitledSlugs.includes(QBANK_ID_TO_SLUG[q.id]))),
     [entitledSlugs, activeQbankId],
   );
+
 
   const [courseId, setCourseId] = useState<number>(activeQbankId);
   useEffect(() => {
