@@ -1559,6 +1559,7 @@ function TestRunner() {
 
 
       {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+      <MedicalLibraryModal open={showLibrary} onClose={() => setShowLibrary(false)} />
       <FlashcardsModal
         open={showFlashcards}
         onClose={() => setShowFlashcards(false)}
