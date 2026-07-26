@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { ClipboardCheck, Filter, ListChecks, Play, BarChart2, FileText, RotateCcw, Calendar, Lock } from "lucide-react";
 import { listAssessmentBlocks, startAssessmentBlock, resetAssessment } from "@/lib/qbank.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
+import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -46,15 +47,25 @@ function AssessmentsPage() {
   const resetFn = useServerFn(resetAssessment);
   const qc = useQueryClient();
 
-  // Only show the course the user has activated in "My Courses"
   const activeQbankId = useActiveQbankId();
+  const entFn = useServerFn(getMyEntitlement);
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60_000 });
+  const entitledSlugs = entQ.data?.effective_access ?? [];
+  // Show every course the user is entitled to (not only the currently active one),
+  // so users with a combo plan can pick any of their unlocked self assessments.
   const availableCourses = useMemo(
-    () => QBANKS.filter((q) => q.id === activeQbankId),
-    [activeQbankId],
+    () => (entitledSlugs.length
+      ? QBANKS.filter((q) => entitledSlugs.includes(QBANK_ID_TO_SLUG[q.id]))
+      : QBANKS.filter((q) => q.id === activeQbankId)),
+    [entitledSlugs, activeQbankId],
   );
 
   const [courseId, setCourseId] = useState<number>(activeQbankId);
-  useEffect(() => setCourseId(activeQbankId), [activeQbankId]);
+  useEffect(() => {
+    if (!availableCourses.find((c) => c.id === courseId) && availableCourses[0]) {
+      setCourseId(availableCourses[0].id);
+    }
+  }, [availableCourses, courseId]);
 
   const assessmentsForCourse = useMemo(() => ASSESSMENTS.filter((a) => a.qbankId === courseId), [courseId]);
   const [assessmentId, setAssessmentId] = useState<string>(assessmentsForCourse[0]?.id ?? "");
