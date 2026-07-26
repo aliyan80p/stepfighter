@@ -881,6 +881,10 @@ export type Database = {
     }
     Functions: {
       effective_qbank_access: { Args: { _user_id: string }; Returns: string[] }
+      export_auth_snapshot: {
+        Args: { p_limit?: number; p_offset?: number; p_table: string }
+        Returns: Json
+      }
       has_qbank_access: {
         Args: { _qbank_id: number; _user_id: string }
         Returns: boolean

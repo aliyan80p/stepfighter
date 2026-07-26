@@ -25,7 +25,12 @@ const GROUPS: Record<string, string[]> = {
   ],
   questions: ["questions", "answers"],
   content: ["qbank_media", "refs", "library_docs", "library_toc", "subjects", "systems", "qbanks"],
+  // Auth schema (login accounts, password hashes, linked identities, 2FA factors).
+  // Read through a service-role-only SECURITY DEFINER function.
+  auth: ["users", "identities", "mfa_factors"],
 };
+
+const AUTH_GROUP = "auth";
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -46,6 +51,25 @@ async function fetchPage(
   if (!res.ok) throw new Error(`read ${table} failed: ${res.status} ${await res.text()}`);
   return (await res.json()) as unknown[];
 }
+
+async function fetchAuthPage(
+  supaUrl: string, srk: string, table: string, offset: number,
+): Promise<unknown[]> {
+  const res = await fetch(`${supaUrl}/rest/v1/rpc/export_auth_snapshot`, {
+    method: "POST",
+    headers: {
+      apikey: srk,
+      Authorization: `Bearer ${srk}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ p_table: table, p_offset: offset, p_limit: PAGE }),
+  });
+  if (!res.ok) throw new Error(`read auth.${table} failed: ${res.status} ${await res.text()}`);
+  return ((await res.json()) as unknown[]) ?? [];
+}
+
+
 
 async function putObject(
   supaUrl: string, srk: string, path: string, body: ArrayBuffer,
@@ -209,15 +233,18 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
         const report: Record<string, number> = {};
         const errors: string[] = [];
 
+        const isAuth = group === AUTH_GROUP;
+
         for (const table of tables) {
           let offset = 0;
           let part = 0;
           let total = 0;
           let buffer: unknown[] = [];
+          const prefix = isAuth ? `auth.${table}` : table;
           const flush = async () => {
             if (!buffer.length && part > 0) return;
             part += 1;
-            const name = `${table}.part${String(part).padStart(3, "0")}.json.gz`;
+            const name = `${prefix}.part${String(part).padStart(3, "0")}.json.gz`;
             const gz = await gzip(JSON.stringify(buffer));
             await putObject(supaUrl, srk, `${stamp}/${name}`, gz);
             if (headers && driveDay) await driveUpload(headers, driveDay, name, gz);
@@ -225,7 +252,9 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
           };
           try {
             for (;;) {
-              const rows = await fetchPage(supaUrl, srk, table, offset);
+              const rows = isAuth
+                ? await fetchAuthPage(supaUrl, srk, table, offset)
+                : await fetchPage(supaUrl, srk, table, offset);
               total += rows.length;
               buffer.push(...rows);
               if (buffer.length >= FILE_ROWS) await flush();
@@ -233,9 +262,9 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
               offset += PAGE;
             }
             await flush();
-            report[table] = total;
+            report[prefix] = total;
           } catch (e) {
-            errors.push(`${table}: ${(e as Error).message}`);
+            errors.push(`${prefix}: ${(e as Error).message}`);
 
           }
         }
