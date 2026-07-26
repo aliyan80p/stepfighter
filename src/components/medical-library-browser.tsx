@@ -11,6 +11,61 @@ import { ChevronRight, ChevronDown, BookOpen, Search, X } from "lucide-react";
 
 type Tree = { node: LibraryNode; children: Tree[] };
 
+function mediaUrlWithFreshToken(src: string, token: string, retryKey?: string): string | null {
+  try {
+    const url = new URL(src, window.location.origin);
+    if (url.origin !== window.location.origin || !url.pathname.startsWith("/api/media/")) return null;
+    url.searchParams.set("t", token);
+    if (retryKey) url.searchParams.set("r", retryKey);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return null;
+  }
+}
+
+function attachLibraryMediaReload(root: HTMLElement, token: string) {
+  root.querySelectorAll<HTMLImageElement>("img[src]").forEach((img) => {
+    const current = img.getAttribute("src") || "";
+    const fresh = mediaUrlWithFreshToken(current, token);
+    if (!fresh) return;
+
+    img.dataset.sfLibraryMediaToken = token;
+
+    // Update lazy/broken images in-place when the hourly media token refreshes.
+    // Already-loaded images are left alone so the article does not blink.
+    if ((!img.complete || img.naturalWidth === 0) && fresh !== current) {
+      img.setAttribute("src", fresh);
+    }
+
+    if (img.dataset.sfLibraryRetryBound === "1") return;
+    img.dataset.sfLibraryRetryBound = "1";
+    img.dataset.sfLibraryRetryCount = "0";
+
+    const retry = () => {
+      const tries = Number(img.dataset.sfLibraryRetryCount || "0");
+      const latestToken = img.dataset.sfLibraryMediaToken;
+      const src = img.getAttribute("src") || current;
+      if (tries >= 5 || !latestToken || !src) return;
+      const next = mediaUrlWithFreshToken(src, latestToken, `${Date.now()}-${tries + 1}`);
+      if (!next) return;
+      img.dataset.sfLibraryRetryCount = String(tries + 1);
+      window.setTimeout(() => img.setAttribute("src", next), 250 * (tries + 1));
+    };
+
+    img.addEventListener("error", retry);
+    img.addEventListener("load", () => {
+      img.dataset.sfLibraryRetryCount = "0";
+    });
+    if (img.complete && img.naturalWidth === 0) retry();
+  });
+
+  root.querySelectorAll<HTMLVideoElement | HTMLAudioElement | HTMLSourceElement>("video[src], audio[src], source[src]").forEach((node) => {
+    const current = node.getAttribute("src") || "";
+    const fresh = mediaUrlWithFreshToken(current, token);
+    if (fresh && fresh !== current) node.setAttribute("src", fresh);
+  });
+}
+
 function buildTree(rows: LibraryNode[]): Tree[] {
   const map = new Map<number, Tree>();
   for (const n of rows) map.set(n.id, { node: n, children: [] });
@@ -83,12 +138,14 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
   const seededRef = useRef<string>("");
   useEffect(() => {
     const el = bodyRef.current;
-    if (!el || !html) return;
+    if (!el || !html || !mediaToken) return;
     const key = `${doc?.id ?? ""}:${html.length}`;
-    if (seededRef.current === key) return;
-    seededRef.current = key;
-    el.innerHTML = html;
-  }, [html, doc?.id]);
+    if (seededRef.current !== key) {
+      seededRef.current = key;
+      el.innerHTML = html;
+    }
+    attachLibraryMediaReload(el, mediaToken);
+  }, [html, doc?.id, mediaToken]);
 
   // Scroll to the requested section once the article is painted.
   useEffect(() => {
