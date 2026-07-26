@@ -358,6 +358,66 @@ export type Database = {
         }
         Relationships: []
       }
+      library_docs: {
+        Row: {
+          created_at: string
+          html: string
+          id: number
+          path: string | null
+          plain: string | null
+          qbank_id: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          html: string
+          id: number
+          path?: string | null
+          plain?: string | null
+          qbank_id?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          html?: string
+          id?: number
+          path?: string | null
+          plain?: string | null
+          qbank_id?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      library_toc: {
+        Row: {
+          doc_id: number | null
+          id: number
+          leaf: number | null
+          name: string
+          parent_id: number | null
+          qbank_id: number
+          section: string | null
+        }
+        Insert: {
+          doc_id?: number | null
+          id: number
+          leaf?: number | null
+          name: string
+          parent_id?: number | null
+          qbank_id?: number
+          section?: string | null
+        }
+        Update: {
+          doc_id?: number | null
+          id?: number
+          leaf?: number | null
+          name?: string
+          parent_id?: number | null
+          qbank_id?: number
+          section?: string | null
+        }
+        Relationships: []
+      }
       login_otps: {
         Row: {
           attempts: number
