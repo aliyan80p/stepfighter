@@ -111,6 +111,17 @@ function NewTest() {
   const navigate = useNavigate();
   const qbankId = useActiveQbankId();
 
+  const entFn = useServerFn(getMyEntitlement);
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60_000 });
+  const entitledSlugs = entQ.data?.effective_access ?? [];
+  const entitledCourses = useMemo(
+    () => (entitledSlugs.length
+      ? COURSES.filter((c) => entitledSlugs.includes(c.id))
+      : COURSES.filter((c) => c.qbankId === qbankId)),
+    [entitledSlugs, qbankId],
+  );
+
+
   const [openTab, setOpenTab] = useState<Tab>("courses");
   const [courseIds, setCourseIds] = useState<string[]>([]);
   const [qbankIds, setQbankIds] = useState<string[]>([]);
