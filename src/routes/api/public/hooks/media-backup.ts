@@ -1,0 +1,216 @@
+import { createFileRoute } from "@tanstack/react-router";
+
+/**
+ * Incremental media backup endpoint.
+ *
+ * Mirrors the binary contents of the `qbank-media` and `qbank-media-plain`
+ * storage buckets into a Google Drive folder ("StepFighter Media Backup"),
+ * one Drive sub-folder per bucket. Files already mirrored are tracked in
+ * `public.media_backup_log`, so each run only uploads what is new or changed
+ * and the job is fully resumable.
+ *
+ * Called on a schedule by pg_cron. Auth: `apikey` header must match the
+ * project publishable key.
+ */
+
+const BUCKETS = ["qbank-media", "qbank-media-plain"] as const;
+const DRIVE_ROOT_NAME = "StepFighter Media Backup";
+const DEFAULT_BATCH = 120;
+const BYTE_BUDGET = 60 * 1024 * 1024; // ~60MB per invocation
+
+const DRIVE = "https://connector-gateway.lovable.dev/google_drive";
+
+function driveHeaders() {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const driveKey = process.env.GOOGLE_DRIVE_API_KEY;
+  if (!lovableKey || !driveKey) return null;
+  return { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": driveKey };
+}
+
+async function driveFindOrCreateFolder(
+  headers: Record<string, string>, name: string, parent?: string,
+): Promise<string | null> {
+  const q = [
+    `name='${name.replace(/'/g, "\\'")}'`,
+    "mimeType='application/vnd.google-apps.folder'",
+    "trashed=false",
+    parent ? `'${parent}' in parents` : null,
+  ].filter(Boolean).join(" and ");
+  const found = await fetch(
+    `${DRIVE}/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&pageSize=1`,
+    { headers },
+  );
+  if (found.ok) {
+    const j = (await found.json()) as { files?: Array<{ id: string }> };
+    if (j.files?.length) return j.files[0].id;
+  }
+  const created = await fetch(`${DRIVE}/drive/v3/files?fields=id`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name,
+      mimeType: "application/vnd.google-apps.folder",
+      ...(parent ? { parents: [parent] } : {}),
+    }),
+  });
+  if (!created.ok) return null;
+  return ((await created.json()) as { id: string }).id;
+}
+
+async function driveUpload(
+  headers: Record<string, string>,
+  parent: string,
+  name: string,
+  contentType: string,
+  bytes: ArrayBuffer,
+): Promise<string> {
+  const boundary = "sfmedia" + Math.random().toString(36).slice(2);
+  const meta = JSON.stringify({ name, parents: [parent] });
+  const enc = new TextEncoder();
+  const head = enc.encode(
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n` +
+    `--${boundary}\r\nContent-Type: ${contentType}\r\n\r\n`,
+  );
+  const tail = enc.encode(`\r\n--${boundary}--\r\n`);
+  const body = new Uint8Array(bytes);
+  const payload = new Uint8Array(head.length + body.length + tail.length);
+  payload.set(head, 0);
+  payload.set(body, head.length);
+  payload.set(tail, head.length + body.length);
+  const res = await fetch(`${DRIVE}/upload/drive/v3/files?uploadType=multipart&fields=id`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": `multipart/related; boundary=${boundary}` },
+    body: payload.buffer as ArrayBuffer,
+  });
+  if (!res.ok) throw new Error(`drive upload ${name} failed: ${res.status} ${await res.text()}`);
+  return ((await res.json()) as { id: string }).id;
+}
+
+/* ---------------- Supabase helpers ---------------- */
+
+async function rpc<T>(supaUrl: string, srk: string, fn: string, args: unknown): Promise<T> {
+  const res = await fetch(`${supaUrl}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: {
+      apikey: srk,
+      Authorization: `Bearer ${srk}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) throw new Error(`${fn} failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as T;
+}
+
+async function downloadObject(
+  supaUrl: string, srk: string, bucket: string, name: string,
+): Promise<{ bytes: ArrayBuffer; contentType: string }> {
+  const res = await fetch(
+    `${supaUrl}/storage/v1/object/${bucket}/${name.split("/").map(encodeURIComponent).join("/")}`,
+    { headers: { apikey: srk, Authorization: `Bearer ${srk}` } },
+  );
+  if (!res.ok) throw new Error(`download ${bucket}/${name} failed: ${res.status}`);
+  return {
+    bytes: await res.arrayBuffer(),
+    contentType: res.headers.get("content-type") || "application/octet-stream",
+  };
+}
+
+async function logUploaded(
+  supaUrl: string, srk: string,
+  rows: Array<{ bucket: string; name: string; size: number | null; drive_file_id: string }>,
+) {
+  if (!rows.length) return;
+  const res = await fetch(`${supaUrl}/rest/v1/media_backup_log?on_conflict=bucket,name`, {
+    method: "POST",
+    headers: {
+      apikey: srk,
+      Authorization: `Bearer ${srk}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(rows.map((r) => ({ ...r, uploaded_at: new Date().toISOString() }))),
+  });
+  if (!res.ok) throw new Error(`log failed: ${res.status} ${await res.text()}`);
+}
+
+/* ---------------- Route ---------------- */
+
+export const Route = createFileRoute("/api/public/hooks/media-backup")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const supaUrl = process.env.SUPABASE_URL;
+        const srk = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const publishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!supaUrl || !srk || !publishable) {
+          return Response.json({ error: "not configured" }, { status: 500 });
+        }
+        if (request.headers.get("apikey") !== publishable) {
+          return Response.json({ error: "unauthorized" }, { status: 401 });
+        }
+
+        let body: { batch?: number; status?: boolean } = {};
+        try { body = (await request.json()) as typeof body; } catch { /* empty body ok */ }
+
+        const progress = await rpc<Array<{ bucket: string; total: number; backed_up: number }>>(
+          supaUrl, srk, "media_backup_progress", {},
+        );
+        if (body.status) return Response.json({ ok: true, progress });
+
+        const headers = driveHeaders();
+        if (!headers) return Response.json({ error: "drive not connected" }, { status: 500 });
+        const root = await driveFindOrCreateFolder(headers, DRIVE_ROOT_NAME);
+        if (!root) return Response.json({ error: "drive root unavailable" }, { status: 502 });
+
+        const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 400);
+        const uploaded: Record<string, number> = {};
+        const errors: string[] = [];
+        let bytes = 0;
+        let count = 0;
+
+        for (const bucket of BUCKETS) {
+          if (count >= batch || bytes >= BYTE_BUDGET) break;
+          const folder = await driveFindOrCreateFolder(headers, bucket, root);
+          if (!folder) { errors.push(`${bucket}: drive folder unavailable`); continue; }
+
+          const pending = await rpc<Array<{ name: string; size: number | null }>>(
+            supaUrl, srk, "list_media_objects", { _bucket: bucket, _limit: batch - count },
+          );
+
+          const done: Array<{ bucket: string; name: string; size: number | null; drive_file_id: string }> = [];
+          for (const obj of pending) {
+            if (count >= batch || bytes >= BYTE_BUDGET) break;
+            try {
+              const { bytes: buf, contentType } = await downloadObject(supaUrl, srk, bucket, obj.name);
+              // Flatten the path so nested keys stay unique inside one Drive folder.
+              const driveName = obj.name.replace(/\//g, "__");
+              const id = await driveUpload(headers, folder, driveName, contentType, buf);
+              done.push({ bucket, name: obj.name, size: obj.size, drive_file_id: id });
+              bytes += buf.byteLength;
+              count += 1;
+            } catch (e) {
+              errors.push(`${bucket}/${obj.name}: ${(e as Error).message}`);
+            }
+          }
+          await logUploaded(supaUrl, srk, done);
+          uploaded[bucket] = done.length;
+        }
+
+        const after = await rpc<Array<{ bucket: string; total: number; backed_up: number }>>(
+          supaUrl, srk, "media_backup_progress", {},
+        );
+
+        return Response.json({
+          ok: errors.length === 0,
+          uploaded,
+          bytes,
+          progress: after,
+          remaining: after.reduce((s, p) => s + (p.total - p.backed_up), 0),
+          errors: errors.slice(0, 20),
+        });
+      },
+    },
+  },
+});
