@@ -398,7 +398,11 @@ function AuthedLayout() {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          {trialEnded && !isAllowedWhenLocked(pathname) ? <PaywallGate /> : <Outlet />}
+          {trialEnded && !isAllowedWhenLocked(pathname)
+            ? <PaywallGate />
+            : !activeMatchesEntitlement
+              ? <div className="min-h-full grid place-items-center p-6"><PageLoader label="Loading your workspace" /></div>
+              : <Outlet />}
         </div>
       </main>
     </div>
