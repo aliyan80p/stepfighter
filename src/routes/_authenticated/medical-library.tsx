@@ -149,7 +149,7 @@ function MedicalLibrary() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-var(--qbank-header,56px))] flex-col lg:flex-row">
+    <div className="flex min-h-[calc(100vh-56px)] flex-col lg:h-[calc(100vh-56px)] lg:flex-row">
       {/* Sidebar */}
       <aside className="flex w-full shrink-0 flex-col border-b border-border bg-card lg:h-full lg:w-80 lg:border-b-0 lg:border-r">
         <div className="border-b border-border p-3">
