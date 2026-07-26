@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { getFilters, createTest, getPoolCount, createCustomTest, getTestQuestionIds } from "@/lib/qbank.functions";
 import { useActiveQbankId, setActiveQbankId, QBANKS as ALL_QBANKS } from "@/lib/active-qbank";
+import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +110,17 @@ function NewTest() {
   const poolFn = useServerFn(getPoolCount);
   const navigate = useNavigate();
   const qbankId = useActiveQbankId();
+
+  const entFn = useServerFn(getMyEntitlement);
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60_000 });
+  const entitledSlugs = entQ.data?.effective_access ?? [];
+  const entitledCourses = useMemo(
+    () => (entitledSlugs.length
+      ? COURSES.filter((c) => entitledSlugs.includes(c.id))
+      : COURSES.filter((c) => c.qbankId === qbankId)),
+    [entitledSlugs, qbankId],
+  );
+
 
   const [openTab, setOpenTab] = useState<Tab>("courses");
   const [courseIds, setCourseIds] = useState<string[]>([]);
@@ -461,7 +473,7 @@ function NewTest() {
 
         {openTab === "courses" && (
           <SelectionList
-            items={COURSES.map((c) => ({ id: c.id, label: c.name, count: COURSE_TOTALS[c.qbankId] ?? 0 }))}
+            items={entitledCourses.map((c) => ({ id: c.id, label: c.name, count: COURSE_TOTALS[c.qbankId] ?? 0 }))}
             selected={courseIds}
             onToggle={(id) => {
               const c = COURSES.find((x) => x.id === id);

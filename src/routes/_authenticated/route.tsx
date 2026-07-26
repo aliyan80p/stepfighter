@@ -35,12 +35,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TrialBanner } from "@/components/trial-banner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { isCurrentUserAdmin } from "@/lib/admin.functions";
 import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { QBANKS, useActiveQbankId, setActiveQbankId } from "@/lib/active-qbank";
+import { PageLoader } from "@/components/loader";
 
 
 
@@ -160,15 +161,22 @@ function AuthedLayout() {
 
   // Enforce single/limited course access: auto-switch active qbank if user has no access to it.
   const activeQbankId = useActiveQbankId();
+  const qc = useQueryClient();
+  const entitledAccess = entQ.data?.effective_access;
+  const currentSlug = QBANK_ID_TO_SLUG[activeQbankId];
+  const activeMatchesEntitlement = !entitledAccess || entitledAccess.length === 0 || (currentSlug && entitledAccess.includes(currentSlug));
   useEffect(() => {
-    const access = entQ.data?.effective_access;
-    if (!access || access.length === 0) return;
-    const currentSlug = QBANK_ID_TO_SLUG[activeQbankId];
-    if (!currentSlug || !access.includes(currentSlug)) {
-      const first = QBANKS.find((q) => access.includes(QBANK_ID_TO_SLUG[q.id]));
-      if (first && first.id !== activeQbankId) setActiveQbankId(first.id);
+    if (!entitledAccess || entitledAccess.length === 0) return;
+    if (!currentSlug || !entitledAccess.includes(currentSlug)) {
+      const first = QBANKS.find((q) => entitledAccess.includes(QBANK_ID_TO_SLUG[q.id]));
+      if (first && first.id !== activeQbankId) {
+        setActiveQbankId(first.id);
+        // The active qbank drives most data queries; refresh them so pages
+        // don't linger on stale results tied to the previous qbank.
+        qc.invalidateQueries();
+      }
     }
-  }, [entQ.data, activeQbankId]);
+  }, [entitledAccess, activeQbankId, currentSlug, qc]);
 
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
@@ -390,7 +398,11 @@ function AuthedLayout() {
           </div>
         )}
         <div className="flex-1 min-w-0">
-          {trialEnded && !isAllowedWhenLocked(pathname) ? <PaywallGate /> : <Outlet />}
+          {trialEnded && !isAllowedWhenLocked(pathname)
+            ? <PaywallGate />
+            : !activeMatchesEntitlement
+              ? <div className="min-h-full grid place-items-center p-6"><PageLoader label="Loading your workspace" /></div>
+              : <Outlet />}
         </div>
       </main>
     </div>
