@@ -32,6 +32,12 @@ function ImprovementsPage() {
   const planFn = useServerFn(getStudyPlan);
   const predictFn = useServerFn(generatePerformancePrediction);
   const createFn = useServerFn(createCustomTest);
+  const entFn = useServerFn(getMyEntitlement);
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60_000 });
+  const entitledQbanks = useMemo(() => {
+    const allowed = new Set(entQ.data?.effective_access ?? []);
+    return QBANKS.filter((q) => allowed.has(QBANK_ID_TO_SLUG[q.id]));
+  }, [entQ.data]);
 
   const [statsOpen, setStatsOpen] = useState(false);
   const [howOpen, setHowOpen] = useState(true);
