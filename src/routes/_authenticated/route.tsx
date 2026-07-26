@@ -41,7 +41,7 @@ import { isCurrentUserAdmin } from "@/lib/admin.functions";
 import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { QBANKS, useActiveQbankId, setActiveQbankId } from "@/lib/active-qbank";
-import { BrandLoader } from "@/components/brand-loader";
+import { PageLoader } from "@/components/loader";
 
 
 
