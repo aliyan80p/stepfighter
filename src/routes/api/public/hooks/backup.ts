@@ -13,7 +13,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const BUCKET = "backups";
 const RETENTION = 14;
-const PAGE = 5000;
+const PAGE = 1000;
 const DRIVE_ROOT_NAME = "StepFighter Backups";
 
 const GROUPS: Record<string, string[]> = {
