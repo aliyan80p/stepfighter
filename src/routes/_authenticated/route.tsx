@@ -161,15 +161,22 @@ function AuthedLayout() {
 
   // Enforce single/limited course access: auto-switch active qbank if user has no access to it.
   const activeQbankId = useActiveQbankId();
+  const qc = useQueryClient();
+  const entitledAccess = entQ.data?.effective_access;
+  const currentSlug = QBANK_ID_TO_SLUG[activeQbankId];
+  const activeMatchesEntitlement = !entitledAccess || entitledAccess.length === 0 || (currentSlug && entitledAccess.includes(currentSlug));
   useEffect(() => {
-    const access = entQ.data?.effective_access;
-    if (!access || access.length === 0) return;
-    const currentSlug = QBANK_ID_TO_SLUG[activeQbankId];
-    if (!currentSlug || !access.includes(currentSlug)) {
-      const first = QBANKS.find((q) => access.includes(QBANK_ID_TO_SLUG[q.id]));
-      if (first && first.id !== activeQbankId) setActiveQbankId(first.id);
+    if (!entitledAccess || entitledAccess.length === 0) return;
+    if (!currentSlug || !entitledAccess.includes(currentSlug)) {
+      const first = QBANKS.find((q) => entitledAccess.includes(QBANK_ID_TO_SLUG[q.id]));
+      if (first && first.id !== activeQbankId) {
+        setActiveQbankId(first.id);
+        // The active qbank drives most data queries; refresh them so pages
+        // don't linger on stale results tied to the previous qbank.
+        qc.invalidateQueries();
+      }
     }
-  }, [entQ.data, activeQbankId]);
+  }, [entitledAccess, activeQbankId, currentSlug, qc]);
 
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
