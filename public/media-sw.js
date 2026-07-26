@@ -10,7 +10,7 @@
  * the network untouched.
  */
 
-const CACHE_NAME = "sf-media-v1";
+const CACHE_NAME = "sf-media-v2";
 const MEDIA_PREFIX = "/api/media/";
 
 self.addEventListener("install", (event) => {
@@ -52,11 +52,14 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       const cache = await caches.open(CACHE_NAME);
       const key = cacheKey(url);
+      const isRetry = url.searchParams.has("r");
       const cached = await cache.match(key);
-      if (cached) return cached;
+      if (cached && !isRetry) return cached;
       try {
         const fresh = await fetch(req);
         // Only cache successful, full (200) responses that we can replay.
+        // A retry request (`?r=`) intentionally bypasses stale cache first,
+        // then replaces it when the media route returns a healthy response.
         if (fresh.ok && fresh.status === 200 && fresh.type !== "opaque") {
           cache.put(key, fresh.clone()).catch(() => {});
         }
