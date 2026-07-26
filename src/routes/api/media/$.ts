@@ -368,6 +368,18 @@ export const Route = createFileRoute("/api/media/$")({
         const plainObject = await fetchPlainObject(`${storagePrefix}${name}`, cacheKey, supaUrl, srk, range);
         if (plainObject) return plainObject;
 
+        // Cross-namespace fallback. Medical Library articles are shared by all
+        // qbanks, but their images were warmed under whichever qbank namespace
+        // first requested them (root / step1 / step3). Without this fallback a
+        // Step 2 user gets 404s for every library image warmed under step1, and
+        // vice versa — which is why "some" media loads and some never does.
+        const altPrefixes = ["", "step1/", "step3/"].filter((p) => p !== storagePrefix);
+        for (const alt of altPrefixes) {
+          const altObject = await fetchPlainObject(`${alt}${name}`, `${alt}|${name}`, supaUrl, srk, range);
+          if (altObject) return altObject;
+        }
+
+
         // Images must never bypass this route via old signed URLs: affected
         // highresdefault_* records can have stale cached links, which causes
         // persistent broken icons on iOS/Android/Chrome even after storage repair.
@@ -409,7 +421,16 @@ export const Route = createFileRoute("/api/media/$")({
         if (!encrypted) {
           encrypted = await resolveEncryptedFromDrive(qbankId, name, supaUrl, srk);
         }
+        if (!encrypted) {
+          // Library images are indexed under whichever qbank imported them, so
+          // fall back to the other qbanks' media index before giving up.
+          for (const altQbank of [1, 2, 3].filter((q) => q !== qbankId)) {
+            encrypted = await resolveEncryptedFromDrive(altQbank, name, supaUrl, srk);
+            if (encrypted) break;
+          }
+        }
         if (!encrypted) return new Response("Not found", { status: 404 });
+
 
         const { bytes, resolvedName } = encrypted;
         const data = decryptImdMedia(bytes, [name, resolvedName, stripPrefix(name), stripPrefix(resolvedName)]);
