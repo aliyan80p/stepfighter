@@ -24,10 +24,10 @@ const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name
 
 type CmsForm = { source: string; formNumber: number; count: number };
 type QbankOption = { id: string; qbankId: number; name: string; source: string; count: number; cmsSpecialty?: string; cmsForms?: CmsForm[] };
-const STEP1_NBMES = [25, 26, 27, 28, 30, 31, 32, 33];
+const STEP1_NBMES = [25, 26, 27, 28, 29, 30, 31, 32, 33];
 const STEP2_NBMES = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 const NBME_COUNTS: Record<string, number> = {
-  NBME25: 200, NBME26: 200, NBME27: 198, NBME28: 200,
+  NBME25: 200, NBME26: 200, NBME27: 198, NBME28: 200, NBME29: 199,
   NBME30: 200, NBME31: 200, NBME32: 200, NBME33: 199,
   NBME8: 200, NBME9: 200, NBME10: 200, NBME11: 200, NBME12: 200,
   NBME13: 200, NBME14: 200, NBME15: 200, NBME16: 200,
@@ -148,11 +148,19 @@ function NewTest() {
     }
     return out;
   }, [selectedQbankOptions, cmsFormSources]);
+
+  const selectedCourse = useMemo(
+    () => COURSES.find((c) => courseIds.includes(c.id)),
+    [courseIds],
+  );
+  const selectedQbankId = selectedCourse?.qbankId ?? qbankId;
+
   const { data } = useQuery({
-    queryKey: ["filters", qbankId, selectedSources],
-    queryFn: () => getFn({ data: { qbankId, sources: selectedSources } }),
+    queryKey: ["filters", selectedQbankId, selectedSources],
+    queryFn: () => getFn({ data: { qbankId: selectedQbankId, sources: selectedSources } }),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    enabled: qbankIds.length > 0,
   });
 
 
@@ -179,6 +187,18 @@ function NewTest() {
   const hasQbank = qbankIds.length > 0;
   const hasSubject = subjectIds.length > 0;
   const hasSystem = systemIds.length > 0;
+
+  useEffect(() => {
+    if (courseIds.length || entQ.isLoading || entitledCourses.length !== 1) return;
+    const c = entitledCourses[0];
+    const mainId = `${c.id}:main`;
+    setCourseIds([c.id]);
+    setQbankIds(QBANK_OPTIONS.some((q) => q.id === mainId) ? [mainId] : []);
+    setSubjectIds([]);
+    setSystemIds([]);
+    setTopicNames([]);
+    if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
+  }, [courseIds.length, entQ.isLoading, entitledCourses, qbankId]);
 
   // CMS aggregates surface forms in the Subjects tab and hide Systems/Topics
   const cmsSelectedOptions = useMemo(
@@ -261,8 +281,8 @@ function NewTest() {
 
   // pool count
   const { data: pool } = useQuery({
-    queryKey: ["pool", qbankId, selectedSources, subjectIds, systemIds, topicNames, scope],
-    queryFn: () => poolFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope } }),
+    queryKey: ["pool", selectedQbankId, selectedSources, subjectIds, systemIds, topicNames, scope],
+    queryFn: () => poolFn({ data: { qbankId: selectedQbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope } }),
     enabled: selectedSources.length > 0,
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -299,7 +319,7 @@ function NewTest() {
       if (!ids.length) return toast.error("Enter at least one question ID");
       setLoading(true);
       try {
-        const r = await createCustomFn({ data: { qbankId, questionIds: ids, mode, timed } });
+        const r = await createCustomFn({ data: { qbankId: selectedQbankId, questionIds: ids, mode, timed } });
         if (r.skipped > 0) toast.message(`${r.skipped} ID(s) were not found and skipped`);
         navigate({ to: "/test/$id", params: { id: String(r.id) } });
       } catch (e) {
@@ -313,7 +333,7 @@ function NewTest() {
     if (count < 1) return toast.error("Enter a question count");
     setLoading(true);
     try {
-      const r = await createFn({ data: { qbankId, sources: selectedSources, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
+      const r = await createFn({ data: { qbankId: selectedQbankId, sources: selectedSources, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
       navigate({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to create test";
