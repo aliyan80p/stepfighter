@@ -503,15 +503,13 @@ function NewTest() {
               const c = COURSES.find((x) => x.id === id);
               if (!c) return;
               setCourseIds([c.id]);
-              // Pre-select only the main UWorld QBank so the pool has questions
-              // right away; user can add/remove more in the QBank tab.
-              const mainId = `${c.id}:main`;
-              const hasMain = QBANK_OPTIONS.some((q) => q.id === mainId);
-              setQbankIds(hasMain ? [mainId] : []);
+              // Do not auto-select a QBank; let the user pick in the QBank tab.
+              setQbankIds([]);
               setSubjectIds([]); setSystemIds([]); setTopicNames([]);
               if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
               setOpenTab("qbank");
             }}
+
             columns={3}
             radio
           />
