@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { getFilters, createTest, getPoolCount, createCustomTest, getTestQuestionIds } from "@/lib/qbank.functions";
 import { useActiveQbankId, setActiveQbankId, QBANKS as ALL_QBANKS } from "@/lib/active-qbank";
+import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
