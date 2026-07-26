@@ -637,6 +637,7 @@ function QuestionModal({
           qbankId={modalQbankId}
           questionId={r.id}
         />
+        <MedicalLibraryModal open={showLibrary} onClose={() => setShowLibrary(false)} />
         <FlashcardsModal
           open={showFlashcards}
           onClose={() => setShowFlashcards(false)}
