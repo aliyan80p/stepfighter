@@ -52,6 +52,25 @@ async function fetchPage(
   return (await res.json()) as unknown[];
 }
 
+async function fetchAuthPage(
+  supaUrl: string, srk: string, table: string, offset: number,
+): Promise<unknown[]> {
+  const res = await fetch(`${supaUrl}/rest/v1/rpc/export_auth_snapshot`, {
+    method: "POST",
+    headers: {
+      apikey: srk,
+      Authorization: `Bearer ${srk}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ p_table: table, p_offset: offset, p_limit: PAGE }),
+  });
+  if (!res.ok) throw new Error(`read auth.${table} failed: ${res.status} ${await res.text()}`);
+  return ((await res.json()) as unknown[]) ?? [];
+}
+
+
+
 async function putObject(
   supaUrl: string, srk: string, path: string, body: ArrayBuffer,
 ): Promise<void> {
