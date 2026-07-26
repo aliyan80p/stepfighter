@@ -70,10 +70,25 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
     return toc.filter((n) => n.parentId === topic.id && n.section);
   }, [toc, activeDoc]);
 
+  // Only build the article HTML once the media token exists, otherwise the
+  // first paint would request images without auth (broken/blank) and the
+  // token arriving would swap the whole DOM again (visible blink).
   const html = useMemo(
-    () => (doc ? rewriteMedia(doc.html, { qbankId, mediaToken }) : ""),
+    () => (doc && mediaToken ? rewriteMedia(doc.html, { qbankId, mediaToken }) : ""),
     [doc, qbankId, mediaToken],
   );
+
+  // Seed the article imperatively and only when the content actually changes,
+  // so re-renders (token refresh, sidebar state) never remount <img> elements.
+  const seededRef = useRef<string>("");
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el || !html) return;
+    const key = `${doc?.id ?? ""}:${html.length}`;
+    if (seededRef.current === key) return;
+    seededRef.current = key;
+    el.innerHTML = html;
+  }, [html, doc?.id]);
 
   // Scroll to the requested section once the article is painted.
   useEffect(() => {
@@ -89,6 +104,7 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
   useEffect(() => {
     if (doc) bodyRef.current?.parentElement?.scrollTo({ top: 0 });
   }, [doc?.id]);
+
 
   const openDoc = (docId: number, section?: string | null) => {
     setActiveDoc(docId);
@@ -205,7 +221,7 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
               Pick a specialty on the left to browse topics, or search for a condition to jump straight to the article.
             </p>
           </div>
-        ) : loadingDoc && !doc ? (
+        ) : (loadingDoc && !doc) || (doc && !mediaToken) ? (
           <div className="p-10"><Loader label="Opening article…" /></div>
         ) : (
           <article className="mx-auto max-w-4xl p-5 sm:p-8">
@@ -224,13 +240,10 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
                 ))}
               </nav>
             )}
-            <div
-              ref={bodyRef}
-              className="library-article"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
+            <div ref={bodyRef} className="library-article" suppressHydrationWarning />
           </article>
         )}
+
       </main>
     </div>
   );
