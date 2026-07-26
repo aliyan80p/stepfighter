@@ -30,9 +30,9 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-async function gzip(text: string): Promise<Uint8Array> {
+async function gzip(text: string): Promise<ArrayBuffer> {
   const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  return await new Response(stream).arrayBuffer();
 }
 
 async function fetchPage(
@@ -47,7 +47,7 @@ async function fetchPage(
 }
 
 async function putObject(
-  supaUrl: string, srk: string, path: string, body: Uint8Array,
+  supaUrl: string, srk: string, path: string, body: ArrayBuffer,
 ): Promise<void> {
   const res = await fetch(`${supaUrl}/storage/v1/object/${BUCKET}/${path}`, {
     method: "POST",
@@ -133,7 +133,7 @@ async function driveFindOrCreateFolder(
 }
 
 async function driveUpload(
-  headers: Record<string, string>, parent: string, name: string, body: Uint8Array,
+  headers: Record<string, string>, parent: string, name: string, gzBody: ArrayBuffer,
 ) {
   const boundary = "sfbackup" + Math.random().toString(36).slice(2);
   const meta = JSON.stringify({ name, parents: [parent] });
@@ -143,6 +143,7 @@ async function driveUpload(
     `--${boundary}\r\nContent-Type: application/gzip\r\n\r\n`,
   );
   const tail = enc.encode(`\r\n--${boundary}--\r\n`);
+  const body = new Uint8Array(gzBody);
   const payload = new Uint8Array(head.length + body.length + tail.length);
   payload.set(head, 0);
   payload.set(body, head.length);
@@ -150,7 +151,7 @@ async function driveUpload(
   const res = await fetch(`${DRIVE}/upload/drive/v3/files?uploadType=multipart&fields=id`, {
     method: "POST",
     headers: { ...headers, "Content-Type": `multipart/related; boundary=${boundary}` },
-    body: payload,
+    body: payload.buffer as ArrayBuffer,
   });
   if (!res.ok) throw new Error(`drive upload ${name} failed: ${res.status} ${await res.text()}`);
 }
