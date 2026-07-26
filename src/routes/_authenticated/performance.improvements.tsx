@@ -100,7 +100,8 @@ function ImprovementsPage() {
               onChange={(e) => setActiveQbankId(Number(e.target.value))}
               className="h-10 min-w-0 flex-1 sm:flex-none rounded-md border border-input bg-background px-3 text-sm"
             >
-              {QBANKS.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+              {(entitledQbanks.length ? entitledQbanks : QBANKS.filter((q) => q.id === qbankId))
+                .map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
             </select>
             <Button className="bg-blue-700 hover:bg-blue-800 text-white shrink-0" onClick={() => setStatsOpen(true)}>
               <Sparkles className="h-4 w-4 mr-2" />
