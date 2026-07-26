@@ -514,3 +514,43 @@ body { overscroll-behavior-y: none; }
 }
 
 
+
+/* ---------- Medical Library article body ---------- */
+.library-article {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: hsl(var(--foreground));
+  overflow-wrap: anywhere;
+}
+.library-article p { margin: 0 0 0.85rem; }
+.library-article ul, .library-article ol { margin: 0 0 0.85rem 1.25rem; list-style: revert; }
+.library-article li { margin-bottom: 0.3rem; }
+.library-article .article-body-header,
+.library-article .article-body-headers {
+  display: block;
+  margin: 1.5rem 0 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: hsl(var(--primary));
+  scroll-margin-top: 1rem;
+}
+.library-article img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.75rem auto;
+  border-radius: 6px;
+}
+.library-article table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.library-article table td, .library-article table th {
+  border: 1px solid hsl(var(--border));
+  padding: 6px 8px;
+  vertical-align: top;
+}
+.library-article div:has(> table) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.library-article a { color: hsl(var(--primary)); text-decoration: underline; text-underline-offset: 2px; }
