@@ -27,6 +27,7 @@ import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 import textZoomIcon from "@/assets/icons/text-zoom.png.asset.json";
 import { DEFAULT_SETTINGS, useHydratedSettings, setUserSettings, TOOLBAR_ITEMS } from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
+import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { NotesModal } from "@/components/notes-modal";
 import { highlightRange, unwrapHighlightsInRange } from "@/lib/highlighter";
