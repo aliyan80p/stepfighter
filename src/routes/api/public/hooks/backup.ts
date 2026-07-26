@@ -233,15 +233,18 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
         const report: Record<string, number> = {};
         const errors: string[] = [];
 
+        const isAuth = group === AUTH_GROUP;
+
         for (const table of tables) {
           let offset = 0;
           let part = 0;
           let total = 0;
           let buffer: unknown[] = [];
+          const prefix = isAuth ? `auth.${table}` : table;
           const flush = async () => {
             if (!buffer.length && part > 0) return;
             part += 1;
-            const name = `${table}.part${String(part).padStart(3, "0")}.json.gz`;
+            const name = `${prefix}.part${String(part).padStart(3, "0")}.json.gz`;
             const gz = await gzip(JSON.stringify(buffer));
             await putObject(supaUrl, srk, `${stamp}/${name}`, gz);
             if (headers && driveDay) await driveUpload(headers, driveDay, name, gz);
@@ -249,7 +252,9 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
           };
           try {
             for (;;) {
-              const rows = await fetchPage(supaUrl, srk, table, offset);
+              const rows = isAuth
+                ? await fetchAuthPage(supaUrl, srk, table, offset)
+                : await fetchPage(supaUrl, srk, table, offset);
               total += rows.length;
               buffer.push(...rows);
               if (buffer.length >= FILE_ROWS) await flush();
@@ -257,9 +262,9 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
               offset += PAGE;
             }
             await flush();
-            report[table] = total;
+            report[prefix] = total;
           } catch (e) {
-            errors.push(`${table}: ${(e as Error).message}`);
+            errors.push(`${prefix}: ${(e as Error).message}`);
 
           }
         }
