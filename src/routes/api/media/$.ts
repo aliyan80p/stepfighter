@@ -421,7 +421,16 @@ export const Route = createFileRoute("/api/media/$")({
         if (!encrypted) {
           encrypted = await resolveEncryptedFromDrive(qbankId, name, supaUrl, srk);
         }
+        if (!encrypted) {
+          // Library images are indexed under whichever qbank imported them, so
+          // fall back to the other qbanks' media index before giving up.
+          for (const altQbank of [1, 2, 3].filter((q) => q !== qbankId)) {
+            encrypted = await resolveEncryptedFromDrive(altQbank, name, supaUrl, srk);
+            if (encrypted) break;
+          }
+        }
         if (!encrypted) return new Response("Not found", { status: 404 });
+
 
         const { bytes, resolvedName } = encrypted;
         const data = decryptImdMedia(bytes, [name, resolvedName, stripPrefix(name), stripPrefix(resolvedName)]);
