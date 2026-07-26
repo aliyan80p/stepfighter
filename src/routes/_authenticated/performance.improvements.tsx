@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useActiveQbankId, setActiveQbankId, QBANKS } from "@/lib/active-qbank";
+import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import {
   getImprovementsOverview,
   generatePerformancePrediction,
@@ -31,6 +32,12 @@ function ImprovementsPage() {
   const planFn = useServerFn(getStudyPlan);
   const predictFn = useServerFn(generatePerformancePrediction);
   const createFn = useServerFn(createCustomTest);
+  const entFn = useServerFn(getMyEntitlement);
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60_000 });
+  const entitledQbanks = useMemo(() => {
+    const allowed = new Set(entQ.data?.effective_access ?? []);
+    return QBANKS.filter((q) => allowed.has(QBANK_ID_TO_SLUG[q.id]));
+  }, [entQ.data]);
 
   const [statsOpen, setStatsOpen] = useState(false);
   const [howOpen, setHowOpen] = useState(true);
@@ -93,7 +100,8 @@ function ImprovementsPage() {
               onChange={(e) => setActiveQbankId(Number(e.target.value))}
               className="h-10 min-w-0 flex-1 sm:flex-none rounded-md border border-input bg-background px-3 text-sm"
             >
-              {QBANKS.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+              {(entitledQbanks.length ? entitledQbanks : QBANKS.filter((q) => q.id === qbankId))
+                .map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
             </select>
             <Button className="bg-blue-700 hover:bg-blue-800 text-white shrink-0" onClick={() => setStatsOpen(true)}>
               <Sparkles className="h-4 w-4 mr-2" />

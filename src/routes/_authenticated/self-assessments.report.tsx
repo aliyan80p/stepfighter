@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getAssessmentReport } from "@/lib/performance.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
+import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { Check, X, RotateCcw, Info, TrendingUp, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,17 @@ function ReportPage() {
     enabled: !!opt,
   });
 
-  const groups = Array.from(new Set(OPTIONS.map((o) => o.group)));
+  const entFn = useServerFn(getMyEntitlement);
+  const entQ = useQuery({ queryKey: ["my-entitlement"], queryFn: () => entFn(), staleTime: 60_000 });
+  const entitledGroupNames = useMemo(() => {
+    const allowed = new Set(entQ.data?.effective_access ?? []);
+    return new Set(QBANKS.filter((q) => allowed.has(QBANK_ID_TO_SLUG[q.id])).map((q) => q.name));
+  }, [entQ.data]);
+  const allGroups = Array.from(new Set(OPTIONS.map((o) => o.group)));
+  const groups = entitledGroupNames.size ? allGroups.filter((g) => entitledGroupNames.has(g)) : [activeGroup];
+  useEffect(() => {
+    if (groups.length && !groups.includes(group)) setGroup(groups[0]);
+  }, [groups, group]);
 
   return (
     <div className="min-h-screen bg-muted/30">
