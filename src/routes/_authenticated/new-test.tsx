@@ -195,14 +195,14 @@ function NewTest() {
   useEffect(() => {
     if (courseIds.length || entQ.isLoading || entitledCourses.length !== 1) return;
     const c = entitledCourses[0];
-    const mainId = `${c.id}:main`;
     setCourseIds([c.id]);
-    setQbankIds(QBANK_OPTIONS.some((q) => q.id === mainId) ? [mainId] : []);
+    setQbankIds([]);
     setSubjectIds([]);
     setSystemIds([]);
     setTopicNames([]);
     if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
   }, [courseIds.length, entQ.isLoading, entitledCourses, qbankId]);
+
 
   // CMS aggregates surface forms in the Subjects tab and hide Systems/Topics
   const cmsSelectedOptions = useMemo(
