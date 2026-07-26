@@ -116,12 +116,24 @@ select cron.schedule('backup-users','0 2 * * *', $$select net.http_post(
 
 ---
 
-## 5. Rebuilding media binaries
+## 5. Restoring media binaries
 
-The `qbank_media` rows carry the storage paths. Re-run the warm-media endpoint
-with `WARM_MEDIA_SECRET` pointed at the original Drive source folders; it
-re-uploads every missing object into `qbank-media` / `qbank-media-plain`.
+**Primary path — Drive mirror (exact copy of the buckets).**
+`POST /api/public/hooks/media-backup` mirrors every object in `qbank-media`
+and `qbank-media-plain` into Google Drive → **StepFighter Media Backup** →
+one sub-folder per bucket. Nested keys are flattened with `__`
+(`step1/L62835.jpg` → `step1__L62835.jpg`), so restoring means downloading a
+bucket folder and re-uploading each file with `__` turned back into `/`.
+Progress lives in `public.media_backup_log`; check it with
+`{"status": true}`. Cron runs every 10 minutes, 120 files per run — the
+initial ~19k-file / ~4.4 GB sync takes about a day, after that only new or
+changed files upload.
+
+**Fallback — rebuild from source.** The `qbank_media` rows carry the storage
+paths. Re-run the warm-media endpoint with `WARM_MEDIA_SECRET` pointed at the
+original Drive source folders; it re-uploads every missing object.
 Expect ~11.6k question media + ~5.7k library images, several hours.
+
 
 ---
 
