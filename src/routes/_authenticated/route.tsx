@@ -22,6 +22,7 @@ import {
   LogOut,
   ChevronDown,
   StickyNote,
+  Library,
   CalendarDays,
   Zap,
   Flag,
@@ -94,6 +95,7 @@ const groups: Group[] = [
     icon: StickyNote,
     items: [
       { to: "/notes", label: "Notes", icon: StickyNote },
+      { to: "/medical-library", label: "Medical Library", icon: Library },
     ],
   },
   {

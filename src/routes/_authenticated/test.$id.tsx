@@ -27,6 +27,7 @@ import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 import textZoomIcon from "@/assets/icons/text-zoom.png.asset.json";
 import { DEFAULT_SETTINGS, useHydratedSettings, setUserSettings, TOOLBAR_ITEMS } from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
+import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { NotesModal } from "@/components/notes-modal";
 import { highlightRange, unwrapHighlightsInRange } from "@/lib/highlighter";
@@ -240,6 +241,7 @@ function TestRunner() {
   const [showCalc, setShowCalc] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -1487,7 +1489,7 @@ function TestRunner() {
 
 
               
-              <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
+              <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={() => setShowLibrary(true)} />
               <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
               <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
@@ -1557,6 +1559,7 @@ function TestRunner() {
 
 
       {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+      <MedicalLibraryModal open={showLibrary} onClose={() => setShowLibrary(false)} />
       <FlashcardsModal
         open={showFlashcards}
         onClose={() => setShowFlashcards(false)}

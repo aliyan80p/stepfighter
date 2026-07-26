@@ -18,6 +18,7 @@ import { useMediaToken } from "@/lib/use-media-token";
 import { SciCalculator, SettingsPanel } from "./test.$id";
 import { NotesModal } from "@/components/notes-modal";
 import { FlashcardsModal } from "@/components/flashcards-modal";
+import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { ExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
 import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
@@ -352,6 +353,7 @@ function QuestionModal({
   const [showSettings, setShowSettings] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [marked, setMarked] = useState<Record<number, boolean>>({});
@@ -621,7 +623,7 @@ function QuestionModal({
           <div className="font-semibold tracking-wide" />
           <div className="font-semibold tracking-wide hidden md:block">StepFighter</div>
           <div className="flex items-center gap-3">
-            <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={notImpl("Medical Library")} />
+            <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={() => setShowLibrary(true)} />
             <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
             <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
             <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={onClose} />
@@ -635,6 +637,7 @@ function QuestionModal({
           qbankId={modalQbankId}
           questionId={r.id}
         />
+        <MedicalLibraryModal open={showLibrary} onClose={() => setShowLibrary(false)} />
         <FlashcardsModal
           open={showFlashcards}
           onClose={() => setShowFlashcards(false)}
