@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useActiveQbankId, setActiveQbankId, QBANKS } from "@/lib/active-qbank";
+import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import {
   getImprovementsOverview,
   generatePerformancePrediction,
