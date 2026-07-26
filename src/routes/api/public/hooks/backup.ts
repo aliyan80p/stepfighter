@@ -25,7 +25,12 @@ const GROUPS: Record<string, string[]> = {
   ],
   questions: ["questions", "answers"],
   content: ["qbank_media", "refs", "library_docs", "library_toc", "subjects", "systems", "qbanks"],
+  // Auth schema (login accounts, password hashes, linked identities, 2FA factors).
+  // Read through a service-role-only SECURITY DEFINER function.
+  auth: ["users", "identities", "mfa_factors"],
 };
+
+const AUTH_GROUP = "auth";
 
 function today() {
   return new Date().toISOString().slice(0, 10);
