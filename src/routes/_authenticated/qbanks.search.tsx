@@ -373,10 +373,10 @@ function QuestionModal({
 
   const themeStyles =
     theme === "dark"
-      ? { text: "#e5e7eb", bg: "#0f172a", border: "#334155" }
+      ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
       : theme === "sepia"
-      ? { text: "#3b2f1c", bg: "#f4ecd8", border: "#d6c9a8" }
-      : { text: "#1f2937", bg: "#ffffff", border: "#d1d9e6" };
+      ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
+      : { pageBg: "#f5f7fa", sideBg: "#eef1f5", text: "#1f2937", cardBg: "#ffffff", border: "#d1d5db" };
 
   const goFullscreen = () => {
     if (!document.fullscreenElement) rootRef.current?.requestFullscreen?.();
@@ -412,9 +412,10 @@ function QuestionModal({
       <div
         ref={rootRef}
         className="w-full h-full md:w-[95vw] md:h-[95vh] md:rounded-lg overflow-hidden shadow-2xl flex flex-col"
-        style={{ background: themeStyles.bg }}
+        style={{ background: themeStyles.pageBg, color: themeStyles.text }}
         onClick={(e) => e.stopPropagation()}
       >
+
         {/* Top nav */}
         <div className="flex items-center justify-between px-3 py-1.5 text-white shrink-0" style={{ background: NAV_BG }}>
           <div className="flex items-center gap-4">
@@ -455,7 +456,10 @@ function QuestionModal({
         <div className="flex flex-1 overflow-hidden">
           {/* Left navigator */}
           {sidebarOpen && (
-            <aside className="w-14 overflow-auto border-r" style={{ background: "#eef2f9", borderColor: "#d1d9e6" }}>
+            <aside
+              className="w-14 md:w-24 shrink-0 overflow-auto border-r"
+              style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
+            >
               {items.map((q, i) => {
                 const active = i === index;
                 return (
@@ -464,8 +468,12 @@ function QuestionModal({
                     key={q.id}
                     onClick={() => setIndex(i)}
                     aria-label={`Go to question ${i + 1}`}
-                    className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:bg-white/60 ${active ? "bg-white font-semibold" : ""}`}
-                    style={{ borderColor: "#d1d9e6", color: "#1f2937" }}
+                    className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:bg-black/10 ${active ? "font-semibold" : ""}`}
+                    style={{
+                      borderColor: themeStyles.border,
+                      color: themeStyles.text,
+                      background: active ? themeStyles.cardBg : "transparent",
+                    }}
                   >
                     <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                     <span>{i + 1}</span>
@@ -475,114 +483,138 @@ function QuestionModal({
             </aside>
           )}
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div
-            className={`w-full mx-auto px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`}
-            style={{ fontSize, fontWeight, color: themeStyles.text }}
-          >
+          {/* Content */}
+          <div className="flex-1 overflow-auto" ref={contentRef}>
             <div
-              data-hlkey="q"
-              className="qbank-html qbank-light"
-              dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "", { qbankId: modalQbankId, mediaToken }) }}
-            />
-
-            <div
-              className="mt-3 inline-block rounded border-2 px-4 py-2"
-              style={{
-                borderColor: theme === "dark" ? "#475569" : "#5b8fc9",
-                background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff",
-                color: themeStyles.text,
-              }}
+              className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`}
+              style={{ fontSize, fontWeight, color: themeStyles.text }}
             >
-              {r.answers.map((a, i) => {
-                const letter = String.fromCharCode(65 + a.answer_index);
-                const isCorrect = a.answer_index === r.correctAnswer;
-                const pct = isCorrect
-                  ? 55 + ((r.id * 7) % 25)
-                  : 2 + ((r.id * 3 + a.answer_index * 11) % 18);
-                return (
-                  <div key={i} className="w-full text-left flex items-center gap-2 py-1.5" style={{ fontSize }}>
-                    <span className="w-4 flex justify-center shrink-0">
-                      {isCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
-                    </span>
-                    <span className="h-4 w-4 rounded-full border border-gray-400 flex items-center justify-center shrink-0" />
-                    <span className="flex-1">
-                      <span className="font-normal">{letter}. </span>
-                      <span
-                        data-hlkey={`a${i}`}
-                        className="qbank-html qbank-light inline"
-                        dangerouslySetInnerHTML={{ __html: rewriteMedia(a.answer_text ?? "", { qbankId: modalQbankId, mediaToken }) }}
-                      />
-                      <span className="text-gray-600 ml-1">({pct}%)</span>
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+              <div
+                data-hlkey="q"
+                className="qbank-html qbank-light"
+                dangerouslySetInnerHTML={{ __html: rewriteMedia(r.question ?? "", { qbankId: modalQbankId, mediaToken }) }}
+              />
 
-            <div className="mt-4 rounded-md border-l-4 p-3 border-green-500 bg-green-50 flex items-start justify-between gap-6">
-              <div>
-                <div className="font-semibold text-green-700">Answered Correctly</div>
-                <div className="text-xs text-gray-600 mt-1">The correct answer is:</div>
-                <div
-                  className="font-semibold text-gray-800 mt-1"
-                  dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: modalQbankId, mediaToken })}` }}
-                />
+              <div
+                className="mt-3 inline-block rounded border-2 px-4 py-2"
+                style={{
+                  borderColor: theme === "dark" ? "#475569" : "#5b8fc9",
+                  background: themeStyles.cardBg,
+                  color: themeStyles.text,
+                }}
+              >
+                {r.answers.map((a, i) => {
+                  const letter = String.fromCharCode(65 + a.answer_index);
+                  const isCorrect = a.answer_index === r.correctAnswer;
+                  const pct = isCorrect
+                    ? 55 + ((r.id * 7) % 25)
+                    : 2 + ((r.id * 3 + a.answer_index * 11) % 18);
+                  return (
+                    <div
+                      key={i}
+                      className="qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 text-[15px]"
+                      style={{ color: themeStyles.text }}
+                    >
+                      <span className="w-4 flex justify-center shrink-0">
+                        {isCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
+                      </span>
+                      <span className="h-4 w-4 rounded-full border border-gray-400 flex items-center justify-center shrink-0" />
+                      <span className="flex-1 min-w-0">
+                        <span
+                          data-hlkey={`a${i}`}
+                          className="qbank-html qbank-light inline"
+                          dangerouslySetInnerHTML={{ __html: `<b>${letter}.</b> ${rewriteMedia(a.answer_text ?? "", { qbankId: modalQbankId, mediaToken })}` }}
+                        />
+                        <span className="text-gray-600 ml-1">({pct}%)</span>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex items-center gap-4 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-blue-700" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">0min: 0sec</div>
-                    <div className="text-[11px] text-gray-500">Time Taken</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle2 className="h-4 w-4 text-green-700" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">73%</div>
-                    <div className="text-[11px] text-gray-500">Answered Correctly</div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {r.explanation && (
-              <div className="mt-4">
-                <div className="border-b" style={{ borderColor: "#d1d9e6" }}>
+              <div
+                className="mt-4 rounded-md border-l-4 border-green-500 p-3 flex items-start justify-between gap-6"
+                style={{
+                  background: theme === "dark" ? "rgba(34,197,94,0.12)" : "#f0fdf4",
+                  color: themeStyles.text,
+                }}
+              >
+                <div>
+                  <div className="font-semibold text-green-500">Answered Correctly</div>
+                  <div className="text-xs mt-1 opacity-70">The correct answer is:</div>
                   <div
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md bg-white font-semibold text-sm relative -mb-px"
-                    style={{ color: "#1e3a8a", boxShadow: "inset 0 -3px 0 #1e3a8a" }}
-                  >
-                    <FileText className="h-4 w-4" /> Explanation
-                  </div>
-                </div>
-                <div
-                  className="pt-3 pb-6"
-                  style={{
-                    background: transparentExpl ? "transparent" : "transparent",
-                    lineHeight: 1.7,
-                    fontSize,
-                    fontWeight,
-                    color: themeStyles.text,
-                  }}
-                >
-                  <div
-                    data-hlkey="e"
-                    className="qbank-html qbank-light qbank-explanation"
-                    dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true, qbankId: modalQbankId, mediaToken }) }}
+                    className="font-semibold mt-1"
+                    style={{ color: themeStyles.text }}
+                    dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: modalQbankId, mediaToken })}` }}
                   />
                 </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-9 w-9 rounded-full flex items-center justify-center"
+                      style={{ background: theme === "dark" ? "rgba(59,130,246,0.2)" : "#dbeafe" }}
+                    >
+                      <Clock className="h-4 w-4" style={{ color: theme === "dark" ? "#60a5fa" : "#1d4ed8" }} />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">0min: 0sec</div>
+                      <div className="text-[11px] opacity-60">Time Taken</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-9 w-9 rounded-full flex items-center justify-center"
+                      style={{ background: theme === "dark" ? "rgba(34,197,94,0.2)" : "#dcfce7" }}
+                    >
+                      <CheckCircle2 className="h-4 w-4" style={{ color: theme === "dark" ? "#4ade80" : "#15803d" }} />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">73%</div>
+                      <div className="text-[11px] opacity-60">Answered Correctly</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {r.explanation && (
+                <div className="mt-4">
+                  <div className="border-b" style={{ borderColor: themeStyles.border }}>
+                    <div
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
+                      style={{
+                        background: themeStyles.cardBg,
+                        color: theme === "dark" ? "#60a5fa" : "#1e3a8a",
+                        boxShadow: `inset 0 -3px 0 ${theme === "dark" ? "#60a5fa" : "#1e3a8a"}`,
+                      }}
+                    >
+                      <FileText className="h-4 w-4" /> Explanation
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      background: transparentExpl ? "transparent" : themeStyles.cardBg,
+                      border: transparentExpl ? "none" : `1px solid ${themeStyles.border}`,
+                      borderRadius: transparentExpl ? 0 : 8,
+                      padding: transparentExpl ? "12px 0" : "16px 18px",
+                      marginTop: transparentExpl ? 0 : 0,
+                      lineHeight: 1.7,
+                      fontSize,
+                      fontWeight,
+                      color: themeStyles.text,
+                    }}
+                  >
+                    <div
+                      data-hlkey="e"
+                      className="qbank-html qbank-light qbank-explanation"
+                      dangerouslySetInnerHTML={{ __html: rewriteMedia(r.explanation, { deferMedia: true, qbankId: modalQbankId, mediaToken }) }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        </div>
+
 
         {/* Bottom nav */}
         <div className="flex items-center justify-between px-4 py-1.5 text-white text-xs shrink-0" style={{ background: NAV_BG }}>
