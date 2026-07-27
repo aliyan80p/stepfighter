@@ -262,7 +262,7 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
                 const driveName = obj.name.replace(/\//g, "__");
                 let payload: Uint8Array = new Uint8Array(buf);
                 let type = contentType;
-                if (bucket === ENCRYPTED_BUCKET) {
+                if ((bucket as string) === ENCRYPTED_BUCKET) {
                   // Legacy AES media: key derives from the file name. Store plain
                   // bytes in Drive so the backup is directly viewable.
                   const leaf = obj.name.slice(obj.name.lastIndexOf("/") + 1);
