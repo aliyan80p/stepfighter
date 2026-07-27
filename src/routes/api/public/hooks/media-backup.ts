@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { contentTypeFromBytes, decryptImdMedia } from "@/lib/imd-media-crypto";
 
 /**
  * Incremental media backup endpoint.
@@ -9,15 +10,22 @@ import { createFileRoute } from "@tanstack/react-router";
  * `public.media_backup_log`, so each run only uploads what is new or changed
  * and the job is fully resumable.
  *
+ * Objects in `qbank-media` are stored AES-encrypted (legacy app format); they
+ * are decrypted here so the Drive copies are plain, viewable images/audio.
+ * Restoring plain bytes back into the bucket is safe — the media route passes
+ * already-plain files straight through.
+ *
  * Called on a schedule by pg_cron. Auth: `apikey` header must match the
  * project publishable key.
  */
 
 const BUCKETS = ["qbank-media", "qbank-media-plain"] as const;
+const ENCRYPTED_BUCKET = "qbank-media";
 const DRIVE_ROOT_NAME = "StepFighter Media Backup";
 const DEFAULT_BATCH = 400;
 const BYTE_BUDGET = 220 * 1024 * 1024; // ~220MB per invocation
 const CONCURRENCY = 8; // parallel download+upload workers per bucket
+
 
 
 const DRIVE = "https://connector-gateway.lovable.dev/google_drive";
