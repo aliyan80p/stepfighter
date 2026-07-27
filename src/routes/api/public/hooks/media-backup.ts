@@ -241,7 +241,7 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
         }
 
 
-        const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 1000);
+        const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 20);
         const uploaded: Record<string, number> = {};
         const errors: string[] = [];
         let bytes = 0;
