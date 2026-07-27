@@ -4,23 +4,23 @@ import { contentTypeFromBytes, decryptImdMedia } from "@/lib/imd-media-crypto";
 /**
  * Incremental media backup endpoint.
  *
- * Mirrors the binary contents of the `qbank-media` and `qbank-media-plain`
- * storage buckets into a Google Drive folder ("StepFighter Media Backup"),
- * one Drive sub-folder per bucket. Files already mirrored are tracked in
- * `public.media_backup_log`, so each run only uploads what is new or changed
- * and the job is fully resumable.
+ * Mirrors the binary contents of the `qbank-media-plain` storage bucket into a
+ * Google Drive folder ("StepFighter Media Backup"), one Drive sub-folder per
+ * bucket. Files already mirrored are tracked in `public.media_backup_log`, so
+ * each run only uploads what is new or changed and the job is fully resumable.
  *
- * Objects in `qbank-media` are stored AES-encrypted (legacy app format); they
- * are decrypted here so the Drive copies are plain, viewable images/audio.
- * Restoring plain bytes back into the bucket is safe — the media route passes
- * already-plain files straight through.
+ * The legacy `qbank-media` bucket is intentionally NOT backed up: every one of
+ * its objects already exists, decrypted and verified, under the same name in
+ * `qbank-media-plain`. Mirroring it would only duplicate ~580MB in Drive. It is
+ * kept in storage purely as a read fallback for the media route.
  *
  * Called on a schedule by pg_cron. Auth: `apikey` header must match the
  * project publishable key.
  */
 
-const BUCKETS = ["qbank-media", "qbank-media-plain"] as const;
+const BUCKETS = ["qbank-media-plain"] as const;
 const ENCRYPTED_BUCKET = "qbank-media";
+
 const DRIVE_ROOT_NAME = "StepFighter Media Backup";
 const DEFAULT_BATCH = 400;
 const BYTE_BUDGET = 220 * 1024 * 1024; // ~220MB per invocation
