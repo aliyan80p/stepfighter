@@ -239,7 +239,7 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
         }
 
 
-        const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 400);
+        const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 1000);
         const uploaded: Record<string, number> = {};
         const errors: string[] = [];
         let bytes = 0;
@@ -250,9 +250,14 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
           const folder = await driveFindOrCreateFolder(headers, bucket, root);
           if (!folder) { errors.push(`${bucket}: drive folder unavailable`); continue; }
 
-          const pending = await rpc<Array<{ name: string; size: number | null }>>(
-            supaUrl, srk, "list_media_objects", { _bucket: bucket, _limit: batch - count },
+          const want = batch - count;
+          const listed = await rpc<Array<{ name: string; size: number | null }>>(
+            supaUrl, srk, "list_media_objects",
+            { _bucket: bucket, _limit: shards > 1 ? want * shards : want },
           );
+          const pending = shards > 1
+            ? listed.filter((_, i) => i % shards === shard).slice(0, want)
+            : listed;
 
           const done: Array<{ bucket: string; name: string; size: number | null; drive_file_id: string }> = [];
           const queue = pending.slice();
