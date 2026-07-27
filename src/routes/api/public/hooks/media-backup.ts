@@ -212,7 +212,7 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
 
-        let body: { batch?: number; status?: boolean } = {};
+        let body: { batch?: number; status?: boolean; redo?: boolean } = {};
         try { body = (await request.json()) as typeof body; } catch { /* empty body ok */ }
 
         const progress = await rpc<Array<{ bucket: string; total: number; backed_up: number }>>(
@@ -224,6 +224,14 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
         if (!headers) return Response.json({ error: "drive not connected" }, { status: 500 });
         const root = await driveFindOrCreateFolder(headers, DRIVE_ROOT_NAME);
         if (!root) return Response.json({ error: "drive root unavailable" }, { status: 502 });
+
+        if (body.redo) {
+          const result = await redoEncrypted(
+            supaUrl, srk, headers, Math.min(Math.max(body.batch ?? 200, 1), 500),
+          );
+          return Response.json({ ok: result.errors.length === 0, redo: result });
+        }
+
 
         const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 400);
         const uploaded: Record<string, number> = {};
