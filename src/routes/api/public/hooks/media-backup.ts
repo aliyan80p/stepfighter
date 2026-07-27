@@ -260,15 +260,17 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
                 const { bytes: buf, contentType } = await downloadObject(supaUrl, srk, bucket, obj.name);
                 // Flatten the path so nested keys stay unique inside one Drive folder.
                 const driveName = obj.name.replace(/\//g, "__");
-                let payload = new Uint8Array(buf);
+                let payload: Uint8Array = new Uint8Array(buf);
                 let type = contentType;
                 if (bucket === ENCRYPTED_BUCKET) {
                   // Legacy AES media: key derives from the file name. Store plain
                   // bytes in Drive so the backup is directly viewable.
                   const leaf = obj.name.slice(obj.name.lastIndexOf("/") + 1);
-                  payload = decryptImdMedia(payload, [leaf]);
+                  const plain = decryptImdMedia(payload, [leaf]);
+                  payload = new Uint8Array(plain);
                   type = contentTypeFromBytes(payload, contentType);
                 }
+
                 const id = await driveUpload(
                   headers, folder, driveName, type,
                   payload.buffer.slice(
