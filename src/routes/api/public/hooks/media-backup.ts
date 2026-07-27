@@ -23,8 +23,8 @@ const ENCRYPTED_BUCKET = "qbank-media";
 
 const DRIVE_ROOT_NAME = "StepFighter Media Backup";
 const DEFAULT_BATCH = 600;
-const BYTE_BUDGET = 400 * 1024 * 1024; // ~400MB per invocation
-const CONCURRENCY = 24; // parallel download+upload workers per bucket
+const BYTE_BUDGET = 600 * 1024 * 1024; // ~600MB per invocation
+const CONCURRENCY = 32; // parallel download+upload workers per bucket
 
 
 
@@ -218,7 +218,7 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
         } = {};
         try { body = (await request.json()) as typeof body; } catch { /* empty body ok */ }
         // Sharding lets several passes run in parallel without picking the same files.
-        const shards = Math.min(Math.max(body.shards ?? 1, 1), 12);
+        const shards = Math.min(Math.max(body.shards ?? 1, 1), 32);
         const shard = Math.min(Math.max(body.shard ?? 0, 0), shards - 1);
 
         const progress = await rpc<Array<{ bucket: string; total: number; backed_up: number }>>(
