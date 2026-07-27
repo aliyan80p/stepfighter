@@ -15,8 +15,10 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const BUCKETS = ["qbank-media", "qbank-media-plain"] as const;
 const DRIVE_ROOT_NAME = "StepFighter Media Backup";
-const DEFAULT_BATCH = 120;
-const BYTE_BUDGET = 60 * 1024 * 1024; // ~60MB per invocation
+const DEFAULT_BATCH = 400;
+const BYTE_BUDGET = 220 * 1024 * 1024; // ~220MB per invocation
+const CONCURRENCY = 8; // parallel download+upload workers per bucket
+
 
 const DRIVE = "https://connector-gateway.lovable.dev/google_drive";
 
