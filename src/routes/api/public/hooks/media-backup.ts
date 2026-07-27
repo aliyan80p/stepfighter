@@ -15,8 +15,10 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const BUCKETS = ["qbank-media", "qbank-media-plain"] as const;
 const DRIVE_ROOT_NAME = "StepFighter Media Backup";
-const DEFAULT_BATCH = 120;
-const BYTE_BUDGET = 60 * 1024 * 1024; // ~60MB per invocation
+const DEFAULT_BATCH = 400;
+const BYTE_BUDGET = 220 * 1024 * 1024; // ~220MB per invocation
+const CONCURRENCY = 8; // parallel download+upload workers per bucket
+
 
 const DRIVE = "https://connector-gateway.lovable.dev/google_drive";
 
@@ -180,23 +182,32 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
           );
 
           const done: Array<{ bucket: string; name: string; size: number | null; drive_file_id: string }> = [];
-          for (const obj of pending) {
-            if (count >= batch || bytes >= BYTE_BUDGET) break;
-            try {
-              const { bytes: buf, contentType } = await downloadObject(supaUrl, srk, bucket, obj.name);
-              // Flatten the path so nested keys stay unique inside one Drive folder.
-              const driveName = obj.name.replace(/\//g, "__");
-              const id = await driveUpload(headers, folder, driveName, contentType, buf);
-              done.push({ bucket, name: obj.name, size: obj.size, drive_file_id: id });
-              bytes += buf.byteLength;
-              count += 1;
-            } catch (e) {
-              errors.push(`${bucket}/${obj.name}: ${(e as Error).message}`);
+          const queue = pending.slice();
+          const worker = async () => {
+            for (;;) {
+              if (count >= batch || bytes >= BYTE_BUDGET) return;
+              const obj = queue.shift();
+              if (!obj) return;
+              count += 1; // reserve a slot before the async work so workers don't overshoot
+              try {
+                const { bytes: buf, contentType } = await downloadObject(supaUrl, srk, bucket, obj.name);
+                // Flatten the path so nested keys stay unique inside one Drive folder.
+                const driveName = obj.name.replace(/\//g, "__");
+                const id = await driveUpload(headers, folder, driveName, contentType, buf);
+                done.push({ bucket, name: obj.name, size: obj.size, drive_file_id: id });
+                bytes += buf.byteLength;
+              } catch (e) {
+                errors.push(`${bucket}/${obj.name}: ${(e as Error).message}`);
+              }
             }
-          }
+          };
+          await Promise.all(
+            Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker()),
+          );
           await logUploaded(supaUrl, srk, done);
           uploaded[bucket] = done.length;
         }
+
 
         const after = await rpc<Array<{ bucket: string; total: number; backed_up: number }>>(
           supaUrl, srk, "media_backup_progress", {},
