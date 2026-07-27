@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { contentTypeFromBytes, decryptImdMedia } from "@/lib/imd-media-crypto";
 
 /**
  * Incremental media backup endpoint.
@@ -9,15 +10,22 @@ import { createFileRoute } from "@tanstack/react-router";
  * `public.media_backup_log`, so each run only uploads what is new or changed
  * and the job is fully resumable.
  *
+ * Objects in `qbank-media` are stored AES-encrypted (legacy app format); they
+ * are decrypted here so the Drive copies are plain, viewable images/audio.
+ * Restoring plain bytes back into the bucket is safe — the media route passes
+ * already-plain files straight through.
+ *
  * Called on a schedule by pg_cron. Auth: `apikey` header must match the
  * project publishable key.
  */
 
 const BUCKETS = ["qbank-media", "qbank-media-plain"] as const;
+const ENCRYPTED_BUCKET = "qbank-media";
 const DRIVE_ROOT_NAME = "StepFighter Media Backup";
 const DEFAULT_BATCH = 400;
 const BYTE_BUDGET = 220 * 1024 * 1024; // ~220MB per invocation
 const CONCURRENCY = 8; // parallel download+upload workers per bucket
+
 
 
 const DRIVE = "https://connector-gateway.lovable.dev/google_drive";
@@ -137,7 +145,58 @@ async function logUploaded(
   if (!res.ok) throw new Error(`log failed: ${res.status} ${await res.text()}`);
 }
 
+/**
+ * One-time cleanup: removes already-mirrored copies of `qbank-media` that were
+ * uploaded before decryption was added, so the next passes re-upload them plain.
+ * Deletes the Drive file and the log row, in batches. Idempotent and resumable.
+ */
+async function redoEncrypted(
+  supaUrl: string, srk: string, headers: Record<string, string>, limit: number,
+): Promise<{ removed: number; remaining: number; errors: string[] }> {
+  const errors: string[] = [];
+  const listRes = await fetch(
+    `${supaUrl}/rest/v1/media_backup_log?select=id,drive_file_id&bucket=eq.${ENCRYPTED_BUCKET}` +
+    `&order=id&limit=${limit}`,
+    { headers: { apikey: srk, Authorization: `Bearer ${srk}`, Prefer: "count=exact" } },
+  );
+  if (!listRes.ok) throw new Error(`redo list failed: ${listRes.status}`);
+  const rows = (await listRes.json()) as Array<{ id: number; drive_file_id: string }>;
+  const total = Number(listRes.headers.get("content-range")?.split("/")[1] ?? rows.length);
+
+  const queue = rows.slice();
+  const removedIds: number[] = [];
+  const worker = async () => {
+    for (;;) {
+      const row = queue.shift();
+      if (!row) return;
+      try {
+        if (row.drive_file_id) {
+          const del = await fetch(`${DRIVE}/drive/v3/files/${row.drive_file_id}`, {
+            method: "DELETE", headers,
+          });
+          // 404 means it is already gone — treat as success.
+          if (!del.ok && del.status !== 404) throw new Error(`drive delete ${del.status}`);
+        }
+        removedIds.push(row.id);
+      } catch (e) {
+        errors.push(`redo ${row.drive_file_id}: ${(e as Error).message}`);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker()));
+
+  if (removedIds.length) {
+    const del = await fetch(
+      `${supaUrl}/rest/v1/media_backup_log?id=in.(${removedIds.join(",")})`,
+      { method: "DELETE", headers: { apikey: srk, Authorization: `Bearer ${srk}`, Prefer: "return=minimal" } },
+    );
+    if (!del.ok) throw new Error(`redo log delete failed: ${del.status}`);
+  }
+  return { removed: removedIds.length, remaining: Math.max(total - removedIds.length, 0), errors };
+}
+
 /* ---------------- Route ---------------- */
+
 
 export const Route = createFileRoute("/api/public/hooks/media-backup")({
   server: {
@@ -153,7 +212,7 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
 
-        let body: { batch?: number; status?: boolean } = {};
+        let body: { batch?: number; status?: boolean; redo?: boolean } = {};
         try { body = (await request.json()) as typeof body; } catch { /* empty body ok */ }
 
         const progress = await rpc<Array<{ bucket: string; total: number; backed_up: number }>>(
@@ -165,6 +224,14 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
         if (!headers) return Response.json({ error: "drive not connected" }, { status: 500 });
         const root = await driveFindOrCreateFolder(headers, DRIVE_ROOT_NAME);
         if (!root) return Response.json({ error: "drive root unavailable" }, { status: 502 });
+
+        if (body.redo) {
+          const result = await redoEncrypted(
+            supaUrl, srk, headers, Math.min(Math.max(body.batch ?? 200, 1), 500),
+          );
+          return Response.json({ ok: result.errors.length === 0, redo: result });
+        }
+
 
         const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 400);
         const uploaded: Record<string, number> = {};
@@ -193,12 +260,29 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
                 const { bytes: buf, contentType } = await downloadObject(supaUrl, srk, bucket, obj.name);
                 // Flatten the path so nested keys stay unique inside one Drive folder.
                 const driveName = obj.name.replace(/\//g, "__");
-                const id = await driveUpload(headers, folder, driveName, contentType, buf);
+                let payload: Uint8Array = new Uint8Array(buf);
+                let type = contentType;
+                if (bucket === ENCRYPTED_BUCKET) {
+                  // Legacy AES media: key derives from the file name. Store plain
+                  // bytes in Drive so the backup is directly viewable.
+                  const leaf = obj.name.slice(obj.name.lastIndexOf("/") + 1);
+                  const plain = decryptImdMedia(payload, [leaf]);
+                  payload = new Uint8Array(plain);
+                  type = contentTypeFromBytes(payload, contentType);
+                }
+
+                const id = await driveUpload(
+                  headers, folder, driveName, type,
+                  payload.buffer.slice(
+                    payload.byteOffset, payload.byteOffset + payload.byteLength,
+                  ) as ArrayBuffer,
+                );
                 done.push({ bucket, name: obj.name, size: obj.size, drive_file_id: id });
-                bytes += buf.byteLength;
+                bytes += payload.byteLength;
               } catch (e) {
                 errors.push(`${bucket}/${obj.name}: ${(e as Error).message}`);
               }
+
             }
           };
           await Promise.all(

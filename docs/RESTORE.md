@@ -128,17 +128,24 @@ Progress lives in `public.media_backup_log`; check it with
 `{"status": true}`. Cron runs every 2 minutes — the initial ~19k-file /
 ~4.4 GB sync takes a few hours, after that only new or changed files upload.
 
-**Note on encryption.** Objects in `qbank-media` are stored exactly as they
-came out of the original app — AES-128-CBC encrypted, with the key derived
-from the file name. The app decrypts them on the fly in
-`src/routes/api/media/$.ts`, so a restore only needs the bytes re-uploaded
-as-is; no decryption step is required. Objects in `qbank-media-plain` are
-already plain. To view a backup file locally:
+**Note on encryption.** Objects in `qbank-media` are stored AES-128-CBC
+encrypted (legacy app format, key derived from the file name); the app
+decrypts them on the fly in `src/routes/api/media/$.ts`. The backup job
+**decrypts before uploading**, so Drive holds plain, viewable files. Restoring
+those plain bytes into the bucket is safe — the media route passes
+already-plain files straight through. Objects in `qbank-media-plain` were
+always plain.
+
+Files mirrored before this change are still encrypted in Drive. Re-mirror them
+with `{"redo": true, "batch": 200}`, which deletes the old Drive copies and
+their log rows so the normal pass re-uploads them decrypted. To decrypt any
+leftover file locally:
 
 ```bash
 node scripts/decrypt-media.mjs ./L10140.jpg ./out
 node scripts/decrypt-media.mjs ./StepFighter\ Media\ Backup/qbank-media ./out
 ```
+
 
 
 **Fallback — rebuild from source.** The `qbank_media` rows carry the storage
