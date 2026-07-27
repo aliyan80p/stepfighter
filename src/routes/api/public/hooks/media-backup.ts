@@ -212,8 +212,14 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
 
-        let body: { batch?: number; status?: boolean; redo?: boolean } = {};
+        let body: {
+          batch?: number; status?: boolean; redo?: boolean;
+          shard?: number; shards?: number;
+        } = {};
         try { body = (await request.json()) as typeof body; } catch { /* empty body ok */ }
+        // Sharding lets several passes run in parallel without picking the same files.
+        const shards = Math.min(Math.max(body.shards ?? 1, 1), 12);
+        const shard = Math.min(Math.max(body.shard ?? 0, 0), shards - 1);
 
         const progress = await rpc<Array<{ bucket: string; total: number; backed_up: number }>>(
           supaUrl, srk, "media_backup_progress", {},
