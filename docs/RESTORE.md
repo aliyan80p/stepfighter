@@ -118,33 +118,30 @@ select cron.schedule('backup-users','0 2 * * *', $$select net.http_post(
 
 ## 5. Restoring media binaries
 
-**Primary path — Drive mirror (exact copy of the buckets).**
-`POST /api/public/hooks/media-backup` mirrors every object in `qbank-media`
-and `qbank-media-plain` into Google Drive → **StepFighter Media Backup** →
+**Primary path — Drive mirror.**
+`POST /api/public/hooks/media-backup` mirrors every object in
+`qbank-media-plain` into Google Drive → **StepFighter Media Backup** →
 one sub-folder per bucket. Nested keys are flattened with `__`
 (`step1/L62835.jpg` → `step1__L62835.jpg`), so restoring means downloading a
 bucket folder and re-uploading each file with `__` turned back into `/`.
 Progress lives in `public.media_backup_log`; check it with
-`{"status": true}`. Cron runs every 2 minutes — the initial ~19k-file /
-~4.4 GB sync takes a few hours, after that only new or changed files upload.
+`{"status": true}`. Cron runs every 2 minutes — the initial ~16k-file /
+~3.8 GB sync takes a few hours, after that only new or changed files upload.
 
-**Note on encryption.** Objects in `qbank-media` are stored AES-128-CBC
-encrypted (legacy app format, key derived from the file name); the app
-decrypts them on the fly in `src/routes/api/media/$.ts`. The backup job
-**decrypts before uploading**, so Drive holds plain, viewable files. Restoring
-those plain bytes into the bucket is safe — the media route passes
-already-plain files straight through. Objects in `qbank-media-plain` were
-always plain.
+**Why `qbank-media` is not mirrored.** That bucket holds the 3,046 legacy
+AES-128-CBC objects (key derived from the file name). Every one of them was
+already decrypted into `qbank-media-plain` under the identical file name and
+verified byte-healthy, so mirroring it would duplicate ~580 MB in Drive for no
+recovery value. The bucket stays in storage only as a read fallback for
+`src/routes/api/media/$.ts`, and a restore that omits it loses nothing.
 
-Files mirrored before this change are still encrypted in Drive. Re-mirror them
-with `{"redo": true, "batch": 200}`, which deletes the old Drive copies and
-their log rows so the normal pass re-uploads them decrypted. To decrypt any
-leftover file locally:
+If you ever need to decrypt a legacy file by hand:
 
 ```bash
 node scripts/decrypt-media.mjs ./L10140.jpg ./out
-node scripts/decrypt-media.mjs ./StepFighter\ Media\ Backup/qbank-media ./out
+node scripts/decrypt-media.mjs ./legacy-encrypted-folder ./out
 ```
+
 
 
 
