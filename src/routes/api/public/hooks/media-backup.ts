@@ -145,7 +145,58 @@ async function logUploaded(
   if (!res.ok) throw new Error(`log failed: ${res.status} ${await res.text()}`);
 }
 
+/**
+ * One-time cleanup: removes already-mirrored copies of `qbank-media` that were
+ * uploaded before decryption was added, so the next passes re-upload them plain.
+ * Deletes the Drive file and the log row, in batches. Idempotent and resumable.
+ */
+async function redoEncrypted(
+  supaUrl: string, srk: string, headers: Record<string, string>, limit: number,
+): Promise<{ removed: number; remaining: number; errors: string[] }> {
+  const errors: string[] = [];
+  const listRes = await fetch(
+    `${supaUrl}/rest/v1/media_backup_log?select=id,drive_file_id&bucket=eq.${ENCRYPTED_BUCKET}` +
+    `&order=id&limit=${limit}`,
+    { headers: { apikey: srk, Authorization: `Bearer ${srk}`, Prefer: "count=exact" } },
+  );
+  if (!listRes.ok) throw new Error(`redo list failed: ${listRes.status}`);
+  const rows = (await listRes.json()) as Array<{ id: number; drive_file_id: string }>;
+  const total = Number(listRes.headers.get("content-range")?.split("/")[1] ?? rows.length);
+
+  const queue = rows.slice();
+  const removedIds: number[] = [];
+  const worker = async () => {
+    for (;;) {
+      const row = queue.shift();
+      if (!row) return;
+      try {
+        if (row.drive_file_id) {
+          const del = await fetch(`${DRIVE}/drive/v3/files/${row.drive_file_id}`, {
+            method: "DELETE", headers,
+          });
+          // 404 means it is already gone — treat as success.
+          if (!del.ok && del.status !== 404) throw new Error(`drive delete ${del.status}`);
+        }
+        removedIds.push(row.id);
+      } catch (e) {
+        errors.push(`redo ${row.drive_file_id}: ${(e as Error).message}`);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => worker()));
+
+  if (removedIds.length) {
+    const del = await fetch(
+      `${supaUrl}/rest/v1/media_backup_log?id=in.(${removedIds.join(",")})`,
+      { method: "DELETE", headers: { apikey: srk, Authorization: `Bearer ${srk}`, Prefer: "return=minimal" } },
+    );
+    if (!del.ok) throw new Error(`redo log delete failed: ${del.status}`);
+  }
+  return { removed: removedIds.length, remaining: Math.max(total - removedIds.length, 0), errors };
+}
+
 /* ---------------- Route ---------------- */
+
 
 export const Route = createFileRoute("/api/public/hooks/media-backup")({
   server: {
