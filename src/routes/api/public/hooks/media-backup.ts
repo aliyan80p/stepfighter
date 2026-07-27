@@ -22,9 +22,9 @@ const BUCKETS = ["qbank-media-plain"] as const;
 const ENCRYPTED_BUCKET = "qbank-media";
 
 const DRIVE_ROOT_NAME = "StepFighter Media Backup";
-const DEFAULT_BATCH = 400;
-const BYTE_BUDGET = 220 * 1024 * 1024; // ~220MB per invocation
-const CONCURRENCY = 8; // parallel download+upload workers per bucket
+const DEFAULT_BATCH = 600;
+const BYTE_BUDGET = 400 * 1024 * 1024; // ~400MB per invocation
+const CONCURRENCY = 16; // parallel download+upload workers per bucket
 
 
 
@@ -212,8 +212,14 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
           return Response.json({ error: "unauthorized" }, { status: 401 });
         }
 
-        let body: { batch?: number; status?: boolean; redo?: boolean } = {};
+        let body: {
+          batch?: number; status?: boolean; redo?: boolean;
+          shard?: number; shards?: number;
+        } = {};
         try { body = (await request.json()) as typeof body; } catch { /* empty body ok */ }
+        // Sharding lets several passes run in parallel without picking the same files.
+        const shards = Math.min(Math.max(body.shards ?? 1, 1), 12);
+        const shard = Math.min(Math.max(body.shard ?? 0, 0), shards - 1);
 
         const progress = await rpc<Array<{ bucket: string; total: number; backed_up: number }>>(
           supaUrl, srk, "media_backup_progress", {},
@@ -233,7 +239,7 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
         }
 
 
-        const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 400);
+        const batch = Math.min(Math.max(body.batch ?? DEFAULT_BATCH, 1), 1000);
         const uploaded: Record<string, number> = {};
         const errors: string[] = [];
         let bytes = 0;
@@ -244,9 +250,14 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
           const folder = await driveFindOrCreateFolder(headers, bucket, root);
           if (!folder) { errors.push(`${bucket}: drive folder unavailable`); continue; }
 
-          const pending = await rpc<Array<{ name: string; size: number | null }>>(
-            supaUrl, srk, "list_media_objects", { _bucket: bucket, _limit: batch - count },
+          const want = batch - count;
+          const listed = await rpc<Array<{ name: string; size: number | null }>>(
+            supaUrl, srk, "list_media_objects",
+            { _bucket: bucket, _limit: shards > 1 ? want * shards : want },
           );
+          const pending = shards > 1
+            ? listed.filter((_, i) => i % shards === shard).slice(0, want)
+            : listed;
 
           const done: Array<{ bucket: string; name: string; size: number | null; drive_file_id: string }> = [];
           const queue = pending.slice();
