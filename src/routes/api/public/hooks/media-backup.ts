@@ -22,9 +22,9 @@ const BUCKETS = ["qbank-media-plain"] as const;
 const ENCRYPTED_BUCKET = "qbank-media";
 
 const DRIVE_ROOT_NAME = "StepFighter Media Backup";
-const DEFAULT_BATCH = 200;
-const BYTE_BUDGET = 150 * 1024 * 1024; // ~150MB per invocation (Worker memory safe)
-const CONCURRENCY = 10; // parallel download+upload workers per bucket
+const DEFAULT_BATCH = 60;
+const BYTE_BUDGET = 80 * 1024 * 1024; // ~80MB per invocation (Worker memory safe)
+const CONCURRENCY = 6; // parallel download+upload workers per bucket
 
 
 
