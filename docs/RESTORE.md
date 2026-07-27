@@ -125,9 +125,21 @@ one sub-folder per bucket. Nested keys are flattened with `__`
 (`step1/L62835.jpg` → `step1__L62835.jpg`), so restoring means downloading a
 bucket folder and re-uploading each file with `__` turned back into `/`.
 Progress lives in `public.media_backup_log`; check it with
-`{"status": true}`. Cron runs every 10 minutes, 120 files per run — the
-initial ~19k-file / ~4.4 GB sync takes about a day, after that only new or
-changed files upload.
+`{"status": true}`. Cron runs every 2 minutes — the initial ~19k-file /
+~4.4 GB sync takes a few hours, after that only new or changed files upload.
+
+**Note on encryption.** Objects in `qbank-media` are stored exactly as they
+came out of the original app — AES-128-CBC encrypted, with the key derived
+from the file name. The app decrypts them on the fly in
+`src/routes/api/media/$.ts`, so a restore only needs the bytes re-uploaded
+as-is; no decryption step is required. Objects in `qbank-media-plain` are
+already plain. To view a backup file locally:
+
+```bash
+node scripts/decrypt-media.mjs ./L10140.jpg ./out
+node scripts/decrypt-media.mjs ./StepFighter\ Media\ Backup/qbank-media ./out
+```
+
 
 **Fallback — rebuild from source.** The `qbank_media` rows carry the storage
 paths. Re-run the warm-media endpoint with `WARM_MEDIA_SECRET` pointed at the
