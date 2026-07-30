@@ -13,8 +13,10 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const BUCKET = "backups";
 const RETENTION = 14;
-const PAGE = 1000;
-const FILE_ROWS = 25000;
+const PAGE = 500;
+// Flush every page: buffering tens of thousands of long-text rows in memory
+// blew the Worker memory limit and made the heavy groups fail with 502s.
+const FILE_ROWS = 500;
 const DRIVE_ROOT_NAME = "StepFighter Backups";
 
 const GROUPS: Record<string, string[]> = {
@@ -23,8 +25,12 @@ const GROUPS: Record<string, string[]> = {
     "bookmarks", "flashcards", "flashcard_decks", "flashcard_reviews",
     "question_notes", "feedback", "qbank_resets", "internal_config",
   ],
-  questions: ["questions", "answers"],
-  content: ["qbank_media", "refs", "library_docs", "library_toc", "subjects", "systems", "qbanks"],
+  // Heavy tables are split into their own groups so each invocation stays
+  // well inside the Worker memory/CPU budget.
+  questions: ["questions"],
+  answers: ["answers"],
+  library: ["library_docs", "library_toc"],
+  content: ["qbank_media", "refs", "subjects", "systems", "qbanks"],
   // Auth schema (login accounts, password hashes, linked identities, 2FA factors).
   // Read through a service-role-only SECURITY DEFINER function.
   auth: ["users", "identities", "mfa_factors"],
