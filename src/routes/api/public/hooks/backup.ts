@@ -13,10 +13,10 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const BUCKET = "backups";
 const RETENTION = 14;
-const PAGE = 500;
+const PAGE = 1000;
 // Flush every page: buffering tens of thousands of long-text rows in memory
 // blew the Worker memory limit and made the heavy groups fail with 502s.
-const FILE_ROWS = 500;
+const FILE_ROWS = 2000;
 const DRIVE_ROOT_NAME = "StepFighter Backups";
 
 const GROUPS: Record<string, string[]> = {
