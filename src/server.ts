@@ -3,6 +3,8 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { redactPII } from "./lib/redact";
+import { withSecurityHeaders } from "./lib/security-headers";
+
 
 
 type ServerEntry = {
