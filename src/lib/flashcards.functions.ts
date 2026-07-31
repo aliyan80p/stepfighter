@@ -52,10 +52,11 @@ export const createFlashcard = createServerFn({ method: "POST" })
       deck_id: data.deckId ?? null,
       front: data.front ?? "",
       back: data.back ?? "",
-      front_html: data.frontHtml ?? null,
-      back_html: data.backHtml ?? null,
-      front_image: data.frontImage ?? null,
-      back_image: data.backImage ?? null,
+      front_html: data.frontHtml ? sanitizeHtml(data.frontHtml) : null,
+      back_html: data.backHtml ? sanitizeHtml(data.backHtml) : null,
+      front_image: sanitizeImageSrc(data.frontImage),
+      back_image: sanitizeImageSrc(data.backImage),
+
       tags: data.tags ?? [],
     }).select(CARD_COLS).single();
     if (error) throw internalError(error);
@@ -89,10 +90,10 @@ export const updateFlashcard = createServerFn({ method: "POST" })
     if (rest.deckId !== undefined) patch.deck_id = rest.deckId;
     if (rest.front !== undefined) patch.front = rest.front;
     if (rest.back !== undefined) patch.back = rest.back;
-    if (rest.frontHtml !== undefined) patch.front_html = rest.frontHtml;
-    if (rest.backHtml !== undefined) patch.back_html = rest.backHtml;
-    if (rest.frontImage !== undefined) patch.front_image = rest.frontImage;
-    if (rest.backImage !== undefined) patch.back_image = rest.backImage;
+    if (rest.frontHtml !== undefined) patch.front_html = rest.frontHtml ? sanitizeHtml(rest.frontHtml) : null;
+    if (rest.backHtml !== undefined) patch.back_html = rest.backHtml ? sanitizeHtml(rest.backHtml) : null;
+    if (rest.frontImage !== undefined) patch.front_image = sanitizeImageSrc(rest.frontImage);
+    if (rest.backImage !== undefined) patch.back_image = sanitizeImageSrc(rest.backImage);
     if (rest.tags !== undefined) patch.tags = rest.tags;
     const { error } = await supabase.from("flashcards").update(patch).eq("id", id).eq("user_id", userId);
     if (error) throw internalError(error);
