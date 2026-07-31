@@ -461,9 +461,12 @@ export const getAiTestAnalysis = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
+    // Privacy: only aggregate performance numbers go to the AI provider. The
+    // user-authored test name is deliberately omitted — it is free text that
+    // can contain personal details and the model does not need it.
     const prompt = `You are a USMLE tutor. Analyze this test result and produce a concise, personalized study plan in Markdown.
 
-Test: ${summary.name ?? "Untitled"}  (mode: ${summary.mode})
+Test mode: ${summary.mode}
 Score: ${summary.correct}/${summary.total} = ${summary.score}% (omitted counted as wrong, UWorld-style)
 Accuracy on answered only: ${summary.accuracyOnAnswered}%
 Incorrect: ${summary.incorrect} | Omitted: ${summary.omitted}
