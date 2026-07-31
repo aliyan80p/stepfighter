@@ -333,6 +333,13 @@ export const Route = createFileRoute("/api/media/$")({
         const raw = (params as any)._splat as string;
         if (!raw) return new Response("Bad request", { status: 400 });
         const segments = raw.split("/").filter(Boolean).map((s) => decodeURIComponent(s));
+        // Reject anything that could escape the media namespace once the
+        // storage URL is normalized (e.g. "..%2F..%2Fbackups/dump.json"),
+        // which would otherwise read from other private buckets.
+        const isSafeSegment = (s: string) => /^[A-Za-z0-9._-]+$/.test(s) && s !== "." && s !== "..";
+        if (!segments.length || !segments.every(isSafeSegment)) {
+          return new Response("Bad request", { status: 400 });
+        }
         let qbankId = 1;
         let qbankSlug = "";
         let name = segments[segments.length - 1] ?? "";
@@ -341,6 +348,7 @@ export const Route = createFileRoute("/api/media/$")({
           qbankId = QBANK_SLUGS[qbankSlug];
         }
         if (!name) return new Response("Bad request", { status: 400 });
+
 
         // Require a valid, entitlement-checked media token bound to this qbank.
         // The token is minted by getMediaToken() only for users whose plan
