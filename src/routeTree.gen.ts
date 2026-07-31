@@ -57,6 +57,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksMediaBackupRouteImport } from './routes/api/public/hooks/media-backup'
+import { Route as ApiPublicHooksDriveDedupRouteImport } from './routes/api/public/hooks/drive-dedup'
 import { Route as ApiPublicHooksBackupRouteImport } from './routes/api/public/hooks/backup'
 import { Route as AuthenticatedTestIdResultsRouteImport } from './routes/_authenticated/test.$id.results'
 
@@ -319,6 +320,12 @@ const ApiPublicHooksMediaBackupRoute =
     path: '/api/public/hooks/media-backup',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksDriveDedupRoute =
+  ApiPublicHooksDriveDedupRouteImport.update({
+    id: '/api/public/hooks/drive-dedup',
+    path: '/api/public/hooks/drive-dedup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBackupRoute = ApiPublicHooksBackupRouteImport.update({
   id: '/api/public/hooks/backup',
   path: '/api/public/hooks/backup',
@@ -377,6 +384,7 @@ export interface FileRoutesByFullPath {
   '/notes/': typeof AuthenticatedNotesIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
+  '/api/public/hooks/drive-dedup': typeof ApiPublicHooksDriveDedupRoute
   '/api/public/hooks/media-backup': typeof ApiPublicHooksMediaBackupRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -428,6 +436,7 @@ export interface FileRoutesByTo {
   '/notes': typeof AuthenticatedNotesIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
+  '/api/public/hooks/drive-dedup': typeof ApiPublicHooksDriveDedupRoute
   '/api/public/hooks/media-backup': typeof ApiPublicHooksMediaBackupRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -481,6 +490,7 @@ export interface FileRoutesById {
   '/_authenticated/notes/': typeof AuthenticatedNotesIndexRoute
   '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
+  '/api/public/hooks/drive-dedup': typeof ApiPublicHooksDriveDedupRoute
   '/api/public/hooks/media-backup': typeof ApiPublicHooksMediaBackupRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -534,6 +544,7 @@ export interface FileRouteTypes {
     | '/notes/'
     | '/test/$id/results'
     | '/api/public/hooks/backup'
+    | '/api/public/hooks/drive-dedup'
     | '/api/public/hooks/media-backup'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/test/$id/results'
     | '/api/public/hooks/backup'
+    | '/api/public/hooks/drive-dedup'
     | '/api/public/hooks/media-backup'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -637,6 +649,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notes/'
     | '/_authenticated/test/$id/results'
     | '/api/public/hooks/backup'
+    | '/api/public/hooks/drive-dedup'
     | '/api/public/hooks/media-backup'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -663,6 +676,7 @@ export interface RootRouteChildren {
   ApiPublicNbmeExportRoute: typeof ApiPublicNbmeExportRoute
   ApiPublicWarmMediaRoute: typeof ApiPublicWarmMediaRoute
   ApiPublicHooksBackupRoute: typeof ApiPublicHooksBackupRoute
+  ApiPublicHooksDriveDedupRoute: typeof ApiPublicHooksDriveDedupRoute
   ApiPublicHooksMediaBackupRoute: typeof ApiPublicHooksMediaBackupRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1007,6 +1021,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMediaBackupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/drive-dedup': {
+      id: '/api/public/hooks/drive-dedup'
+      path: '/api/public/hooks/drive-dedup'
+      fullPath: '/api/public/hooks/drive-dedup'
+      preLoaderRoute: typeof ApiPublicHooksDriveDedupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backup': {
       id: '/api/public/hooks/backup'
       path: '/api/public/hooks/backup'
@@ -1124,6 +1145,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicNbmeExportRoute: ApiPublicNbmeExportRoute,
   ApiPublicWarmMediaRoute: ApiPublicWarmMediaRoute,
   ApiPublicHooksBackupRoute: ApiPublicHooksBackupRoute,
+  ApiPublicHooksDriveDedupRoute: ApiPublicHooksDriveDedupRoute,
   ApiPublicHooksMediaBackupRoute: ApiPublicHooksMediaBackupRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
