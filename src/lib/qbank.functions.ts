@@ -556,11 +556,14 @@ export const searchQuestions = createServerFn({ method: "POST" })
       }
     } else {
       const like = `%${q.replace(/[%_]/g, (m) => "\\" + m)}%`;
+      // Quote the pattern so commas/parens in the query cannot break out of
+      // the PostgREST `or=` filter expression and inject extra conditions.
+      const quoted = `"${like.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
       const { data: r } = await supabase
         .from("questions")
         .select("id,title,question,explanation,correct_answer,subject_id,system_id,qbank_id")
         .eq("qbank_id", qbankId)
-        .or(`title.ilike.${like},question.ilike.${like}`)
+        .or(`title.ilike.${quoted},question.ilike.${quoted}`)
         .limit(LIMIT + 1);
       rows = r ?? [];
     }
