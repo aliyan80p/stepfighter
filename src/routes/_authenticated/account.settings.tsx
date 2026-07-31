@@ -158,10 +158,69 @@ function SettingsPage() {
             ))}
           </div>
         </Card>
+
+        <DangerZone />
       </div>
     </div>
   );
 }
+
+function DangerZone() {
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+  const remove = useServerFn(deleteMyAccount);
+
+  const onDelete = async () => {
+    setBusy(true);
+    try {
+      await remove({ data: { confirm: "DELETE" } });
+      await supabase.auth.signOut();
+      try {
+        localStorage.clear();
+      } catch { /* storage may be blocked */ }
+      toast.success("Your account and all personal data have been deleted.");
+      navigate({ to: "/" });
+    } catch {
+      toast.error("Could not delete the account. Please contact support.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border-2 border-destructive/30 bg-card p-6 shadow-sm space-y-4">
+      <div className="flex items-start gap-3">
+        <div className="h-9 w-9 rounded-lg bg-destructive text-destructive-foreground flex items-center justify-center shrink-0">
+          <ShieldAlert className="h-4 w-4" />
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-destructive">Delete account</div>
+          <div className="text-sm text-muted-foreground">
+            Permanently erases your profile, subscription record, test history, answers,
+            bookmarks, notes, flashcards and feedback. This cannot be undone.
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2 border-t border-border">
+        <Input
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          placeholder='Type DELETE to confirm'
+          aria-label="Type DELETE to confirm account deletion"
+          className="sm:max-w-xs"
+        />
+        <Button
+          variant="destructive"
+          disabled={confirm !== "DELETE" || busy}
+          onClick={onDelete}
+        >
+          {busy ? "Deleting…" : "Delete my account"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 
 function Card({ icon, iconBg, title, subtitle, children }: { icon: React.ReactNode; iconBg: string; title: string; subtitle: string; children: React.ReactNode }) {
   return (
