@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
-import { createHash, randomInt } from 'crypto'
+import { createHash, createHmac, randomInt, timingSafeEqual } from 'crypto'
 import { z } from 'zod'
 
 // Persistent until sign-out: ~100 years. clearMfaVerification() resets on logout.
@@ -10,9 +10,30 @@ const MAX_ATTEMPTS = 5
 const MAX_CODES_PER_HOUR = 5
 const RESEND_COOLDOWN_SEC = 60
 
+/**
+ * Keyed (peppered) hash of a one-time code. A 6-digit code has only 10^6
+ * possible values, so a bare SHA-256 digest in the database could be reversed
+ * instantly by anyone who read the table. HMAC with a server-held pepper means
+ * the stored digest is useless without the runtime secret. Plaintext codes are
+ * never stored, logged, or returned to the client.
+ */
 function hashCode(userId: string, code: string): string {
+  const pepper = process.env.OTP_PEPPER
+  if (!pepper) throw new Error('OTP hashing is not configured')
+  return `v2:${createHmac('sha256', pepper).update(`${userId}:${code}`).digest('hex')}`
+}
+
+/** Legacy unsalted digest — accepted only for codes issued before the upgrade. */
+function legacyHashCode(userId: string, code: string): string {
   return createHash('sha256').update(`${userId}:${code}`).digest('hex')
 }
+
+function safeEqual(a: string, b: string): boolean {
+  const x = Buffer.from(a)
+  const y = Buffer.from(b)
+  return x.length === y.length && timingSafeEqual(x, y)
+}
+
 
 /** Returns whether the current session already satisfies 2FA. */
 export const getMfaStatus = createServerFn({ method: 'GET' })
