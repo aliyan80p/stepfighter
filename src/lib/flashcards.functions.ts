@@ -45,6 +45,15 @@ export const createFlashcard = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    // Abuse guard: cards can carry up to 3 MB of inline image data, so cap the
+    // total per account to stop a script from filling the database.
+    const { count } = await supabase
+      .from("flashcards")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if ((count ?? 0) >= 20000) {
+      throw new Error("Flashcard limit reached (20,000 cards).");
+    }
     const { data: row, error } = await supabase.from("flashcards").insert({
       user_id: userId,
       qbank_id: data.qbankId ?? null,
