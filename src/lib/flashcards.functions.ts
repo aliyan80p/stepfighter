@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { schedule, type Rating } from "@/lib/srs";
+import { internalError } from "./errors";
 
 const CARD_COLS =
   "id,question_id,qbank_id,deck_id,front,back,front_html,back_html,front_image,back_image,tags,state,due_at,interval_days,ease,reps,lapses,last_reviewed_at,created_at";
@@ -21,7 +22,7 @@ export const listFlashcards = createServerFn({ method: "GET" })
     if (data.qbankId) q = q.eq("qbank_id", data.qbankId);
     if (data.deckId) q = q.eq("deck_id", data.deckId);
     const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return rows ?? [];
   });
 
@@ -56,7 +57,7 @@ export const createFlashcard = createServerFn({ method: "POST" })
       back_image: data.backImage ?? null,
       tags: data.tags ?? [],
     }).select(CARD_COLS).single();
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return row;
   });
 
@@ -93,7 +94,7 @@ export const updateFlashcard = createServerFn({ method: "POST" })
     if (rest.backImage !== undefined) patch.back_image = rest.backImage;
     if (rest.tags !== undefined) patch.tags = rest.tags;
     const { error } = await supabase.from("flashcards").update(patch).eq("id", id).eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
 
@@ -103,7 +104,7 @@ export const deleteFlashcard = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { error } = await supabase.from("flashcards").delete().eq("id", data.id).eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
 
@@ -120,7 +121,7 @@ export const getStudyQueue = createServerFn({ method: "GET" })
       .select(CARD_COLS)
       .eq("user_id", userId)
       .eq("deck_id", data.deckId);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
 
     const newCards = (cards ?? []).filter(c => c.state === "new");
     const learning = (cards ?? []).filter(c => c.state === "learning" && (!c.due_at || c.due_at <= nowIso));
@@ -191,7 +192,7 @@ export const getDeckStats = createServerFn({ method: "GET" })
     let q = supabase.from("flashcard_reviews").select("card_id,rating,time_ms,reviewed_at,deck_id").eq("user_id", userId).gte("reviewed_at", since);
     if (data.deckId) q = q.eq("deck_id", data.deckId);
     const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
 
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     let todayCount = 0, todayMs = 0, totalReviews = 0, totalMs = 0;

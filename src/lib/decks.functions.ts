@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { internalError } from "./errors";
 
 const COLOR = z.string().regex(/^#([0-9a-fA-F]{6})$/);
 
@@ -13,7 +14,7 @@ export const listDecks = createServerFn({ method: "GET" })
       .select("id,name,color,new_cards_per_day,reviews_per_day,new_card_order,last_used_at,created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
 
     // stats per deck
     const { data: cards, error: e2 } = await supabase
@@ -51,7 +52,7 @@ export const createDeck = createServerFn({ method: "POST" })
       .insert({ user_id: userId, name: data.name, color: data.color })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return row;
   });
 
@@ -71,7 +72,7 @@ export const updateDeck = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { id, ...patch } = data;
     const { error } = await supabase.from("flashcard_decks").update(patch).eq("id", id).eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
 
@@ -84,7 +85,7 @@ export const deleteDeck = createServerFn({ method: "POST" })
     const { error: e1 } = await supabase.from("flashcards").delete().eq("deck_id", data.id).eq("user_id", userId);
     if (e1) throw new Error(e1.message);
     const { error } = await supabase.from("flashcard_decks").delete().eq("id", data.id).eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
 

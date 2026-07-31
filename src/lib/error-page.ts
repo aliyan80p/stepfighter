@@ -1,4 +1,10 @@
-export function renderErrorPage(): string {
+/**
+ * Generic failure page. It never contains stack traces, query text, or file
+ * paths — only an optional correlation id the user can quote to support,
+ * which matches the (redacted) server-side log entry.
+ */
+export function renderErrorPage(correlationId?: string): string {
+
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -24,6 +30,8 @@ export function renderErrorPage(): string {
         <button class="primary" onclick="location.reload()">Try again</button>
         <a class="secondary" href="/">Go home</a>
       </div>
+      ${correlationId ? `<p style="margin-top:1.5rem;font-size:12px;color:#9ca3af">Reference: ${correlationId.replace(/[^a-f0-9-]/gi, "")}</p>` : ""}
+
     </div>
   </body>
 </html>`;

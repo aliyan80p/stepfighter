@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { internalError } from "./errors";
 
 const qb = () => z.number().int().positive().default(2);
 
@@ -27,7 +28,7 @@ export const getLibraryToc = createServerFn({ method: "GET" })
         .eq("qbank_id", data.qbankId)
         .order("id")
         .range(from, from + page - 1);
-      if (error) throw new Error(error.message);
+      if (error) throw internalError(error);
       if (!chunk?.length) break;
       for (const r of chunk as any[]) {
         rows.push({
@@ -54,7 +55,7 @@ export const getLibraryDoc = createServerFn({ method: "GET" })
       .select("id,title,html,qbank_id")
       .eq("id", data.id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     if (!row) throw new Error("Article not found");
     return row as { id: number; title: string; html: string; qbank_id: number };
   });

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { internalError } from "./errors";
 
 export const getNote = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -13,7 +14,7 @@ export const getNote = createServerFn({ method: "GET" })
       .eq("user_id", userId)
       .eq("question_id", data.questionId)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return row ?? null;
   });
 
@@ -41,7 +42,7 @@ export const saveNote = createServerFn({ method: "POST" })
       )
       .select("id,content,updated_at")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return row;
   });
 
@@ -54,7 +55,7 @@ export const listNotes = createServerFn({ method: "GET" })
       .select("id,question_id,qbank_id,content,updated_at,created_at")
       .eq("user_id", userId)
       .order("updated_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     if (!notes || notes.length === 0) return [];
 
     const qIds = Array.from(new Set(notes.map((n) => n.question_id)));
@@ -107,7 +108,7 @@ export const deleteNote = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
 

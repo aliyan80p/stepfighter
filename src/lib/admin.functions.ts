@@ -1,10 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizeQbankAccess } from "@/lib/entitlements.functions";
+import { internalError } from "./errors";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error) throw new Error(error.message);
+  if (error) throw internalError(error);
   if (!data) throw new Error("Forbidden");
 }
 
@@ -256,7 +257,7 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (data.userId === context.userId) throw new Error("Cannot delete yourself");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
 
@@ -279,7 +280,7 @@ export const updateEntitlement = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("user_entitlements")
       .upsert({ user_id: data.userId, ...patch }, { onConflict: "user_id" });
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
 
@@ -292,10 +293,10 @@ export const setAdminRole = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.admin) {
       const { error } = await supabaseAdmin.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
-      if (error) throw new Error(error.message);
+      if (error) throw internalError(error);
     } else {
       const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
-      if (error) throw new Error(error.message);
+      if (error) throw internalError(error);
     }
     return { ok: true };
   });
@@ -328,7 +329,7 @@ export const listFeedback = createServerFn({ method: "GET" })
       .select("id, user_id, qbank_id, question_id, message, is_technical, created_at")
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     const ids = Array.from(new Set((fb ?? []).map((f) => f.user_id)));
     const emailMap = new Map<string, string | null>();
     for (const uid of ids) {
@@ -356,7 +357,7 @@ export const deleteFeedback = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("feedback").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
 
@@ -385,7 +386,7 @@ export const getQuestionForAdmin = createServerFn({ method: "GET" })
       .eq("qbank_id", data.qbank_id)
       .eq("id", data.id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return (q as AdminQuestion) ?? null;
   });
 
@@ -417,6 +418,6 @@ export const updateQuestion = createServerFn({ method: "POST" })
       .update(patch)
       .eq("qbank_id", data.qbank_id)
       .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });

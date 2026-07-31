@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { internalError } from "./errors";
 
 export const submitFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -21,6 +22,6 @@ export const submitFeedback = createServerFn({ method: "POST" })
       message: data.message,
       is_technical: data.isTechnical,
     });
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
     return { ok: true };
   });
