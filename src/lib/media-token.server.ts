@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
 function secret(): string {
-  const s = process.env.MEDIA_TOKEN_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Dedicated signing key only — never reuse the service-role key for signing.
+  const s = process.env.MEDIA_TOKEN_SECRET;
   if (!s) throw new Error("media-token secret not configured");
   return s;
 }

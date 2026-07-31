@@ -17,7 +17,12 @@ import { createDecipheriv, pbkdf2Sync } from "node:crypto";
 import { readdirSync, readFileSync, statSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 
-const PASSWORD = "hs;d,hghdk[;ak";
+// Passphrase comes from the environment: LEGACY_MEDIA_PASSWORD=... node scripts/decrypt-media.mjs ...
+const PASSWORD = process.env.LEGACY_MEDIA_PASSWORD;
+if (!PASSWORD) {
+  console.error("LEGACY_MEDIA_PASSWORD env var is required");
+  process.exit(1);
+}
 const IV = Buffer.from([17, 115, 105, 102, 103, 104, 111, 107, 108, 122, 120, 119, 118, 98, 110, 109]);
 
 const isPlain = (b) =>
