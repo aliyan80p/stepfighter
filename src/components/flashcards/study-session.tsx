@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { getStudyQueue, reviewCard } from "@/lib/flashcards.functions";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 type Props = { open: boolean; onClose: () => void; deckId: string; deckName: string };
 
