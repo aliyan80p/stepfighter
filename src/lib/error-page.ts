@@ -30,6 +30,8 @@ export function renderErrorPage(correlationId?: string): string {
         <button class="primary" onclick="location.reload()">Try again</button>
         <a class="secondary" href="/">Go home</a>
       </div>
+      ${correlationId ? `<p style="margin-top:1.5rem;font-size:12px;color:#9ca3af">Reference: ${correlationId.replace(/[^a-f0-9-]/gi, "")}</p>` : ""}
+
     </div>
   </body>
 </html>`;
