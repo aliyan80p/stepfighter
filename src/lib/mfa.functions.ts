@@ -124,8 +124,11 @@ export const verifyLoginOtp = createServerFn({ method: 'POST' })
       return { ok: false, error: 'Too many attempts. Request a new code.' as const, remaining: 0 }
     }
 
-    const expected = hashCode(context.userId, data.code)
-    if (expected !== row.code_hash) {
+    const stored = String(row.code_hash ?? '')
+    const matches = stored.startsWith('v2:')
+      ? safeEqual(hashCode(context.userId, data.code), stored)
+      : safeEqual(legacyHashCode(context.userId, data.code), stored)
+    if (!matches) {
       const newAttempts = row.attempts + 1
       await supabaseAdmin.from('login_otps').update({ attempts: newAttempts }).eq('id', row.id)
       return {

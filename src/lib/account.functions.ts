@@ -18,9 +18,9 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
     const userId = context.userId;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Tables keyed by user_id. Ordered children-first; auth cascade covers the
-    // FK-linked ones too, but we clear them explicitly so nothing survives on
-    // tables without an auth.users foreign key (decks, reviews, notes).
+    // Tables keyed by user_id. Ordered children-first; the auth cascade covers
+    // the FK-linked ones too, but we clear them explicitly so nothing survives
+    // on tables without an auth.users foreign key (decks, reviews, notes).
     const owned = [
       "flashcard_reviews",
       "flashcards",
@@ -34,22 +34,20 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
       "login_otps",
       "user_entitlements",
       "user_roles",
-      "profiles",
-    ] as const;
+    ];
+
+    const db = supabaseAdmin as unknown as {
+      from: (t: string) => { delete: () => { eq: (c: string, v: string) => Promise<{ error: unknown }> } };
+    };
 
     const failed: string[] = [];
     for (const table of owned) {
-      const { error } = await supabaseAdmin.from(table).delete().eq("user_id", userId);
-      // profiles is keyed by `id`, not `user_id`.
-      if (error && table === "profiles") {
-        const retry = await supabaseAdmin.from("profiles").delete().eq("id", userId);
-        if (retry.error) failed.push(table);
-      } else if (error) {
-        failed.push(table);
-      }
+      const { error } = await db.from(table).delete().eq("user_id", userId);
+      if (error) failed.push(table);
     }
-    // profiles uses `id`; the loop above may have been a no-op.
-    await supabaseAdmin.from("profiles").delete().eq("id", userId);
+    // profiles is keyed by `id`, not `user_id`.
+    const { error: profErr } = await db.from("profiles").delete().eq("id", userId);
+    if (profErr) failed.push("profiles");
 
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (authErr) {
@@ -59,3 +57,4 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
 
     return { ok: true as const, partial: failed.length > 0 };
   });
+
