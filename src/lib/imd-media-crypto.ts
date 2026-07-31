@@ -1,6 +1,9 @@
 import { createDecipheriv, pbkdf2Sync } from "crypto";
 
-const LEGACY_MEDIA_PASSWORD = "hs;d,hghdk[;ak";
+// Server-only. The legacy media passphrase lives in the LEGACY_MEDIA_PASSWORD
+// env var (never in source). Without it, legacy files are passed through as-is.
+const LEGACY_MEDIA_PASSWORD = process.env.LEGACY_MEDIA_PASSWORD ?? "";
+// IVs are not secret.
 const LEGACY_MEDIA_IV = Buffer.from([
   17, 115, 105, 102, 103, 104, 111, 107, 108, 122, 120, 119, 118, 98, 110, 109,
 ]);
@@ -12,6 +15,7 @@ function paddedName(name: string): Buffer {
 }
 
 function tryLegacyDecrypt(data: Buffer, name: string): Buffer | null {
+  if (!LEGACY_MEDIA_PASSWORD) return null;
   try {
     const key = pbkdf2Sync(LEGACY_MEDIA_PASSWORD, paddedName(name), 19, 16, "sha1");
     const decipher = createDecipheriv("aes-128-cbc", key, LEGACY_MEDIA_IV);
