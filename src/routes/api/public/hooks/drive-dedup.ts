@@ -84,14 +84,15 @@ export const Route = createFileRoute("/api/public/hooks/drive-dedup")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const publishable = process.env.SUPABASE_PUBLISHABLE_KEY;
+        const { requireHookSecret } = await import("@/lib/hook-auth.server");
+        const denied = await requireHookSecret(request);
+        if (denied) return denied;
+
         const headers = driveHeaders();
-        if (!publishable || !headers) {
+        if (!headers) {
           return Response.json({ error: "not configured" }, { status: 500 });
         }
-        if (request.headers.get("apikey") !== publishable) {
-          return Response.json({ error: "unauthorized" }, { status: 401 });
-        }
+
 
         let body: { batch?: number; concurrency?: number } = {};
         try { body = (await request.json()) as typeof body; } catch { /* optional */ }

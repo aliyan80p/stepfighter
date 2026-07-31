@@ -204,15 +204,16 @@ export const Route = createFileRoute("/api/public/hooks/media-backup")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const { requireHookSecret } = await import("@/lib/hook-auth.server");
+        const denied = await requireHookSecret(request);
+        if (denied) return denied;
+
         const supaUrl = process.env.SUPABASE_URL;
         const srk = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        const publishable = process.env.SUPABASE_PUBLISHABLE_KEY;
-        if (!supaUrl || !srk || !publishable) {
+        if (!supaUrl || !srk) {
           return Response.json({ error: "not configured" }, { status: 500 });
         }
-        if (request.headers.get("apikey") !== publishable) {
-          return Response.json({ error: "unauthorized" }, { status: 401 });
-        }
+
 
         let body: {
           batch?: number; status?: boolean; redo?: boolean;
