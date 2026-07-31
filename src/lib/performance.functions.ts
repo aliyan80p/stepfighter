@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { internalError } from "./errors";
 
 const qb = () => z.number().int().min(1);
 
@@ -43,7 +44,7 @@ export const getPerformanceGraphs = createServerFn({ method: "GET" })
       else atq = atq.in("question_id", sourceQIds);
     }
     const { data: attempts, error } = await atq;
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
 
     // question -> subject/system map (only for attempted qs)
     const attemptedIds = Array.from(new Set((attempts ?? []).map((a) => a.question_id)));
@@ -175,7 +176,7 @@ export const getPeerRanking = createServerFn({ method: "GET" })
       else q = q.in("question_id", sourceQIds);
     }
     const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
 
     const perUser = new Map<string, { correct: number; total: number; unique: Set<number> }>();
     for (const r of rows ?? []) {
@@ -363,7 +364,7 @@ export const getPerformanceCharts = createServerFn({ method: "GET" })
       .eq("done", true)
       .order("created_at", { ascending: true })
       .limit(2000);
-    if (error) throw new Error(error.message);
+    if (error) throw internalError(error);
 
     const rows = (tests ?? [])
       .filter((t) => {
