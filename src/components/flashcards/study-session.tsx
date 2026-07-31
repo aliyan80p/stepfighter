@@ -84,12 +84,12 @@ export function StudySession({ open, onClose, deckId, deckName }: Props) {
         ) : (
           <div className="w-full max-w-2xl">
             <div className="border rounded-xl p-8 min-h-[300px] shadow-sm">
-              <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: card.front_html || escapeHtml(card.front || "") }} />
+              <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: card.front_html ? sanitizeHtml(card.front_html) : escapeHtml(card.front || "") }} />
               {card.front_image && <img src={card.front_image} alt="" className="mt-4 max-h-64 rounded" />}
               {flipped && (
                 <>
                   <hr className="my-6" />
-                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: card.back_html || escapeHtml(card.back || "") }} />
+                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: card.back_html ? sanitizeHtml(card.back_html) : escapeHtml(card.back || "") }} />
                   {card.back_image && <img src={card.back_image} alt="" className="mt-4 max-h-64 rounded" />}
                 </>
               )}
