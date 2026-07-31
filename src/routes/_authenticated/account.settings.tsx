@@ -1,8 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Check, Minus, Plus, Trash2, User, Sparkles, Palette, LayoutGrid, BookOpen, Highlighter } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Check, Minus, Plus, Trash2, User, Sparkles, Palette, LayoutGrid, BookOpen, Highlighter, ShieldAlert } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { deleteMyAccount } from "@/lib/account.functions";
 import {
   useUserSettings,
   DEFAULT_SETTINGS,
@@ -18,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/account/settings")({
 
 function SettingsPage() {
   const [s, set] = useUserSettings();
+
 
   return (
     <div className="min-h-screen bg-muted/30">
