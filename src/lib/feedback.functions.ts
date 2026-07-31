@@ -15,6 +15,17 @@ export const submitFeedback = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    // Abuse guard: cap submissions per user per hour so the feedback table
+    // cannot be flooded by a script.
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count } = await supabase
+      .from("feedback")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", since);
+    if ((count ?? 0) >= 15) {
+      throw new Error("Too many messages sent. Please try again in an hour.");
+    }
     const { error } = await supabase.from("feedback").insert({
       user_id: userId,
       qbank_id: data.qbankId ?? null,
