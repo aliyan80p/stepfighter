@@ -1,4 +1,10 @@
-export function renderErrorPage(): string {
+/**
+ * Generic failure page. It never contains stack traces, query text, or file
+ * paths — only an optional correlation id the user can quote to support,
+ * which matches the (redacted) server-side log entry.
+ */
+export function renderErrorPage(correlationId?: string): string {
+
   return `<!doctype html>
 <html lang="en">
   <head>
