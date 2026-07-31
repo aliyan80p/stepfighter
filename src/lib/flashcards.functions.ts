@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { schedule, type Rating } from "@/lib/srs";
 import { internalError } from "./errors";
+import { sanitizeHtml, sanitizeImageSrc } from "./sanitize-html";
 
 const CARD_COLS =
   "id,question_id,qbank_id,deck_id,front,back,front_html,back_html,front_image,back_image,tags,state,due_at,interval_days,ease,reps,lapses,last_reviewed_at,created_at";
