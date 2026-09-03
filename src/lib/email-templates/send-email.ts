@@ -37,10 +37,14 @@ export async function sendTemplateEmail(
   to: string,
   options: SendTemplateEmailOptions = {}
 ): Promise<SendTemplateEmailResult> {
+  // Standby (Cloudflare/Supabase) opts into Brevo with EMAIL_PROVIDER=brevo.
+  // Live Lovable never sets it, so production keeps the managed path untouched.
+  const useBrevo = (process.env.EMAIL_PROVIDER ?? '').toLowerCase() === 'brevo'
   const apiKey = process.env.LOVABLE_API_KEY
-  if (!apiKey) {
+  if (!useBrevo && !apiKey) {
     throw new Error('LOVABLE_API_KEY is not configured')
   }
+
 
   const template = TEMPLATES[templateName]
   if (!template) {
