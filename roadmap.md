@@ -9,5 +9,5 @@
 - [x] Phase 0 — standby readiness verified (deploy, data, media, auth)
 - [x] Phase 2 — final data/media delta sync run + verified (scripts/sync-user-data.mjs)
 - [ ] Phase 3 — move stepfighter.com DNS out of Lovable into your Cloudflare, then attach to the Worker
-- [ ] Phase 4 — backups rebuilt without the Lovable Drive connector
+- [x] Phase 4 — nightly bucket backups via pg_cron on your Supabase (deploy Worker + off-site copy pending)
 - [ ] Phase 5 — decommission Lovable, rotate secrets, drop @lovable.dev deps

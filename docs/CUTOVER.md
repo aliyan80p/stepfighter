@@ -94,17 +94,37 @@ written to your Supabase during the rollback window must be re-synced back.
 
 ---
 
-## Phase 4 — Rebuild backups on your own stack
+## Phase 4 — Backups on your own stack — configured (2026-09-03)
 
-Lovable's Drive connector stops working after the cutover, so:
+Lovable's Drive connector stops working after the cutover, so backups now run
+entirely inside your own Supabase project.
 
-1. Set `DISABLE_DRIVE_HOOKS=1` on the Worker.
-2. Keep nightly dumps into the private Supabase `backups` bucket via pg_cron +
-   pg_net calling `/api/public/hooks/backup` with the `internal_config.hook_secret`
-   bearer token (the endpoint already writes the bucket copy).
-3. Add an off-site copy: either a scheduled `wrangler` cron Worker that pulls the
-   dated folder into R2, or a weekly manual download to Drive/local disk.
-4. Rehearse `docs/RESTORE.md` Section 6 once against a scratch project.
+What is already in place:
+
+- `DISABLE_DRIVE_HOOKS=1` no longer disables the whole backup endpoint — it only
+  skips the Google Drive half. `/api/public/hooks/backup` still writes the
+  gzipped dated snapshot into the private `backups` bucket.
+- `pg_cron` + `pg_net` enabled on your Supabase project.
+- `public.trigger_backup(group)` (security definer, no anon/authenticated grant)
+  reads `internal_config.hook_secret` and `internal_config.backup_base_url` and
+  POSTs to `<base>/api/public/hooks/backup` with `x-hook-secret`.
+- Six nightly jobs, staggered so each Worker invocation stays inside its memory
+  and CPU budget (times are UTC — 01:00-01:40 Karachi):
+  `sf-backup-users` 20:00, `sf-backup-auth` 20:05, `sf-backup-content` 20:10,
+  `sf-backup-library` 20:20, `sf-backup-questions` 20:30, `sf-backup-answers` 20:40.
+- Retention: newest 14 dated folders in the `backups` bucket; older ones pruned.
+
+Remaining manual steps:
+
+1. Deploy the Worker (`npx wrangler deploy`) so the updated backup route is live —
+   until then the endpoint still answers 501 and the cron calls are no-ops.
+2. Set `internal_config.backup_base_url` to `https://stepfighter.com` after the
+   domain switch (it currently points at the `workers.dev` host).
+3. Verify the first night: `select * from cron.job_run_details order by start_time desc limit 10;`
+   and check that a `YYYY-MM-DD/` folder appeared in the `backups` bucket.
+4. Off-site copy: a scheduled `wrangler` cron Worker pulling the dated folder into
+   R2, or a weekly manual download.
+5. Rehearse `docs/RESTORE.md` Section 6 once against a scratch project.
 
 ---
 
