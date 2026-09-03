@@ -213,9 +213,10 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
       POST: async ({ request }) => {
         // Standby/external deployments set DISABLE_DRIVE_HOOKS so two
         // deployments never write to the same Google Drive backup folder.
-        if (process.env.DISABLE_DRIVE_HOOKS) {
-          return Response.json({ error: "drive hooks disabled on this deployment" }, { status: 501 });
-        }
+        // The storage-bucket half of the backup still runs — that is the
+        // only backup path once the Lovable Drive connector is gone.
+        const driveDisabled = Boolean(process.env.DISABLE_DRIVE_HOOKS);
+
         const { requireHookSecret } = await import("@/lib/hook-auth.server");
         const denied = await requireHookSecret(request);
         if (denied) return denied;
@@ -231,7 +232,7 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
         try { body = (await request.json()) as typeof body; } catch { /* empty body ok */ }
         const group = body.group && GROUPS[body.group] ? body.group : "users";
         const tables = GROUPS[group];
-        const wantDrive = body.drive !== false;
+        const wantDrive = body.drive !== false && !driveDisabled;
         const stamp = today();
 
         const headers = wantDrive ? driveHeaders() : null;
