@@ -2,8 +2,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { getLibraryToc, getLibraryDoc, searchLibrary, type LibraryNode } from "@/lib/library.functions";
-import { useActiveQbankId } from "@/lib/active-qbank";
-import { useMediaToken } from "@/lib/use-media-token";
+import { useLibraryMediaToken } from "@/lib/use-media-token";
 import { rewriteMedia } from "@/lib/media";
 import { Input } from "@/components/ui/input";
 import { Loader } from "@/components/loader";
@@ -79,11 +78,12 @@ function buildTree(rows: LibraryNode[]): Tree[] {
 }
 
 export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: string }) {
-  const qbankId = useActiveQbankId();
+  // The Medical Library is one shared dataset (qbank 2) for Step 1/2 CK/3.
+  const LIBRARY_QBANK_ID = 2;
   const tocFn = useServerFn(getLibraryToc);
   const docFn = useServerFn(getLibraryDoc);
   const searchFn = useServerFn(searchLibrary);
-  const mediaToken = useMediaToken(qbankId);
+  const mediaToken = useLibraryMediaToken();
 
   const [open, setOpen] = useState<Set<number>>(new Set());
   const [activeDoc, setActiveDoc] = useState<number | null>(null);
@@ -129,8 +129,8 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
   // first paint would request images without auth (broken/blank) and the
   // token arriving would swap the whole DOM again (visible blink).
   const html = useMemo(
-    () => (doc && mediaToken ? rewriteMedia(doc.html, { qbankId, mediaToken }) : ""),
-    [doc, qbankId, mediaToken],
+    () => (doc && mediaToken ? rewriteMedia(doc.html, { qbankId: LIBRARY_QBANK_ID, mediaToken }) : ""),
+    [doc, mediaToken],
   );
 
   // Seed the article imperatively and only when the content actually changes,
