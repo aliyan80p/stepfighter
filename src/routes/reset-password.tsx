@@ -22,13 +22,48 @@ export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
 });
 
+const USED_LINKS_KEY = "sf_used_recovery_links";
+
+function hashToken(token: string) {
+  let h = 5381;
+  for (let i = 0; i < token.length; i += 1) h = ((h << 5) + h + token.charCodeAt(i)) | 0;
+  return `r${(h >>> 0).toString(36)}`;
+}
+
+function readUsedLinks(): string[] {
+  try {
+    const raw = window.localStorage.getItem(USED_LINKS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function isLinkUsed(id: string | null) {
+  if (!id) return false;
+  return readUsedLinks().includes(id);
+}
+
+function markLinkUsed(id: string | null) {
+  if (!id) return;
+  try {
+    const next = Array.from(new Set([...readUsedLinks(), id])).slice(-25);
+    window.localStorage.setItem(USED_LINKS_KEY, JSON.stringify(next));
+  } catch {
+    /* storage unavailable — server-side single-use still applies */
+  }
+}
+
 function ResetPasswordPage() {
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const settledRef = useRef(false);
+  const linkIdRef = useRef<string | null>(null);
   const navigate = useNavigate();
+
 
   useEffect(() => {
     let cancelled = false;
