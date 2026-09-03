@@ -12,19 +12,24 @@ if (!SRC || !SRC_KEY || !DST || !DST_KEY) throw new Error('missing credentials')
 
 const h = (k) => ({ Authorization: `Bearer ${k}`, apikey: k });
 
-async function listAll(base, key) {
-  const out = new Map();
+const enc = (name) => name.split('/').map(encodeURIComponent).join('/');
+
+async function listAll(base, key, prefix = '', out = new Map()) {
   let offset = 0;
   for (;;) {
     const res = await fetch(`${base}/storage/v1/object/list/${BUCKET}`, {
       method: 'POST',
       headers: { ...h(key), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ limit: 1000, offset, prefix: '', sortBy: { column: 'name', order: 'asc' } }),
+      body: JSON.stringify({ limit: 1000, offset, prefix, sortBy: { column: 'name', order: 'asc' } }),
     });
     if (!res.ok) throw new Error(`list ${base}: ${res.status} ${await res.text()}`);
     const rows = await res.json();
     if (!rows.length) break;
-    for (const r of rows) if (r.id) out.set(r.name, r.metadata?.size ?? null);
+    for (const r of rows) {
+      const full = prefix ? `${prefix}${r.name}` : r.name;
+      if (r.id) out.set(full, r.metadata?.size ?? null);
+      else await listAll(base, key, `${full}/`, out);
+    }
     offset += rows.length;
     if (rows.length < 1000) break;
   }
@@ -32,11 +37,11 @@ async function listAll(base, key) {
 }
 
 async function copyOne(name) {
-  const get = await fetch(`${SRC}/storage/v1/object/${BUCKET}/${encodeURIComponent(name)}`, { headers: h(SRC_KEY) });
+  const get = await fetch(`${SRC}/storage/v1/object/${BUCKET}/${enc(name)}`, { headers: h(SRC_KEY) });
   if (!get.ok) throw new Error(`download ${name}: ${get.status}`);
   const body = Buffer.from(await get.arrayBuffer());
   const type = get.headers.get('content-type') || 'application/octet-stream';
-  const put = await fetch(`${DST}/storage/v1/object/${BUCKET}/${encodeURIComponent(name)}`, {
+  const put = await fetch(`${DST}/storage/v1/object/${BUCKET}/${enc(name)}`, {
     method: 'POST',
     headers: { ...h(DST_KEY), 'Content-Type': type, 'x-upsert': 'true', 'cache-control': 'public, max-age=31536000, immutable' },
     body,
