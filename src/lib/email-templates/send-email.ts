@@ -45,7 +45,6 @@ export async function sendTemplateEmail(
     throw new Error('LOVABLE_API_KEY is not configured')
   }
 
-
   const template = TEMPLATES[templateName]
   if (!template) {
     throw new Error(
@@ -74,7 +73,6 @@ export async function sendTemplateEmail(
   }
 
   try {
-
     await sendLovableEmail(
       {
         to: recipient,
@@ -162,4 +160,3 @@ async function sendViaBrevo(args: {
 
   return { sent: true }
 }
-
