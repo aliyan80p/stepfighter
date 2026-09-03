@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -15,17 +15,23 @@ import {
 } from "lucide-react";
 import { Loader } from "@/components/loader";
 import { TestAnalysisPane } from "./performance.ai-test-analysis";
+import { testNav, resultsNav } from "@/lib/active-test";
 
 
 export const Route = createFileRoute("/_authenticated/test-results/$id")({
-  component: TestResults,
+  component: TestResultsIdRedirect,
 });
+
+/** Legacy /test-results/:id URLs: remember the id, then show the clean URL. */
+function TestResultsIdRedirect() {
+  const { id } = Route.useParams();
+  return <Navigate {...resultsNav(id)} replace />;
+}
 
 type Status = "correct" | "wrong" | "omitted";
 type SortKey = "id" | "subject" | "system" | "topic" | "others" | "time" | "status";
 
-function TestResults() {
-  const { id } = Route.useParams();
+export function TestResults({ testId: id }: { testId: string }) {
   const fn = useServerFn(getTest);
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
@@ -154,7 +160,7 @@ function TestResults() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowQList(true)}><ListOrdered className="h-4 w-4 mr-1.5" /> Questions List</Button>
           <Button variant="outline" size="sm"><StickyNote className="h-4 w-4 mr-1.5" /> Notes</Button>
-          <Button size="sm" onClick={() => navigate({ to: "/test/$id", params: { id } })}>
+          <Button size="sm" onClick={() => navigate(testNav(id))}>
             <CheckCircle2 className="h-4 w-4 mr-1.5" /> Review
           </Button>
         </div>
@@ -302,7 +308,7 @@ function TestResults() {
               <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.others.toFixed(1)}% others</span></div>
               <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.time} sec</span></div>
               <div className="md:text-right">
-                <Link to="/test/$id" params={{ id }} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border hover:bg-muted">
+                <Link {...testNav(id)} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border hover:bg-muted">
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>

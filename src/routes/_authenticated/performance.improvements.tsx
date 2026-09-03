@@ -20,6 +20,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { testNav, resultsNav } from "@/lib/active-test";
 
 export const Route = createFileRoute("/_authenticated/performance/improvements")({
   component: ImprovementsPage,
@@ -75,7 +76,7 @@ function ImprovementsPage() {
         },
       });
     },
-    onSuccess: (r) => navigate({ to: "/test/$id", params: { id: String(r.id) } }),
+    onSuccess: (r) => navigate(testNav(r.id)),
   });
 
   const chartData = useMemo(
@@ -210,7 +211,7 @@ function ImprovementsPage() {
                   {q.completedTestId ? (
                     <Button
                       variant="outline"
-                      onClick={() => navigate({ to: "/test/$id/results", params: { id: String(q.completedTestId) } })}
+                      onClick={() => navigate(resultsNav(q.completedTestId!))}
                     >
                       Review
                     </Button>
