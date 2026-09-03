@@ -89,8 +89,9 @@ install time.
 1. In the Cloudflare dashboard: Workers & Pages → Create → connect this GitHub
    repository (a dedicated branch is recommended so the Lovable project keeps
    deploying from `main`).
-2. Build command `npm run build`, deploy command `npx wrangler deploy`.
+2. Build command `npm run build:cf`, deploy command `npx wrangler deploy`.
    Wrangler reads `wrangler.jsonc` for the entry point and assets.
+
 3. Add every variable from section 1 — client `VITE_*` ones as build-time
    variables, all server-only ones as **encrypted secrets**
    (`npx wrangler secret put NAME`, or Settings → Variables and Secrets).
