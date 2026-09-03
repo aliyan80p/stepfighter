@@ -45,9 +45,20 @@ async function copyOne(name) {
   return body.length;
 }
 
-const src = await listAll(SRC, SRC_KEY);
+// SRC_LIST: CSV of "name,size" (recursive listing exported from storage.objects).
+const src = new Map();
+if (process.env.SRC_LIST) {
+  const fs = await import('node:fs');
+  for (const line of fs.readFileSync(process.env.SRC_LIST, 'utf8').split('\n')) {
+    if (!line.trim()) continue;
+    const i = line.lastIndexOf(',');
+    src.set(line.slice(0, i), Number(line.slice(i + 1)));
+  }
+} else {
+  for (const [k, v] of await listAll(SRC, SRC_KEY)) src.set(k, v);
+}
 const dst = await listAll(DST, DST_KEY);
-const todo = [...src.entries()].filter(([n, s]) => dst.get(n) !== s || !dst.has(n)).map(([n]) => n);
+const todo = [...src.entries()].filter(([n, s]) => dst.get(n) !== s).map(([n]) => n);
 console.log(`source=${src.size} mirror=${dst.size} to_copy=${todo.length}`);
 
 let done = 0, bytes = 0, failed = [];
