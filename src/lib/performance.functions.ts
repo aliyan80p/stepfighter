@@ -518,7 +518,7 @@ async function loadAttemptContext(supabase: any, userId: string, qbankId: number
   const [{ data: attempts }, { data: questions }, { data: subjects }, { data: systems }, { data: tests }] = await Promise.all([
     supabase.from("attempts").select("question_id,is_correct,selected_answer,created_at,test_id")
       .eq("user_id", userId).eq("qbank_id", qbankId).order("created_at", { ascending: true }).limit(200000),
-    supabase.from("questions").select("id,subject_id,system_id,topic").eq("qbank_id", qbankId).limit(200000),
+    supabase.from("questions").select("id,subject_id,system_id,title").eq("qbank_id", qbankId).limit(200000),
     supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
     supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
     supabase.from("tests").select("id,name,question_ids,right_count,wrong_count,done,created_at,study_plan_index")
