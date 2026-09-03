@@ -92,7 +92,13 @@ async function serveStaticAsset(request: Request, env: unknown): Promise<Respons
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     hydrateProcessEnv(env);
+
+    const staticAsset = await serveStaticAsset(request, env);
+    if (staticAsset) return withSecurityHeaders(staticAsset, request);
+
     const { assertServerEnv } = await import("./lib/env.server");
+
+
 
     const missing = assertServerEnv();
     if (missing.length) {
