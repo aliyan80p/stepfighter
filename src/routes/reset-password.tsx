@@ -96,9 +96,15 @@ function ResetPasswordPage() {
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
       const linkError = url.searchParams.get("error_description") ?? hash.get("error_description");
+      const linkToken = code ?? tokenHash ?? accessToken;
+      linkIdRef.current = linkToken ? hashToken(linkToken) : null;
 
       try {
         if (linkError) throw new Error(linkError);
+        // A recovery link is single-use: once a password has been set with it,
+        // re-opening the same link must not reopen the reset form.
+        if (isLinkUsed(linkIdRef.current)) throw new Error("Recovery link already used");
+
 
         let sessionEstablished = false;
         if (code) {
