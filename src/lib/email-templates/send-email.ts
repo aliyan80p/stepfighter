@@ -99,3 +99,67 @@ export async function sendTemplateEmail(
 
   return { sent: true }
 }
+
+/**
+ * Standby-only transport: Brevo's transactional API. Same contract and return
+ * type as the managed path. The API key is read from the server env and is
+ * never logged, returned, or sent to the browser.
+ */
+async function sendViaBrevo(args: {
+  recipient: string
+  subject: string
+  html: string
+  text: string
+  templateName: string
+  replyTo?: string
+}): Promise<SendTemplateEmailResult> {
+  const brevoKey = process.env.BREVO_API_KEY
+  if (!brevoKey) {
+    throw new Error('BREVO_API_KEY is not configured')
+  }
+
+  let response: Response
+  try {
+    response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'api-key': brevoKey,
+      },
+      body: JSON.stringify({
+        sender: { name: SITE_NAME, email: `noreply@${FROM_DOMAIN}` },
+        to: [{ email: args.recipient }],
+        subject: args.subject,
+        htmlContent: args.html,
+        textContent: args.text,
+        ...(args.replyTo ? { replyTo: { email: args.replyTo } } : {}),
+        tags: [args.templateName],
+      }),
+    })
+  } catch (error) {
+    console.error('[brevo] network failure', {
+      template: args.templateName,
+      message: error instanceof Error ? error.message : String(error),
+    })
+    throw new Error('Email service unreachable. Please try again.')
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '')
+    // Brevo has no dedicated suppression error code; blocked recipients come
+    // back as 400 invalid_parameter mentioning the blocked/unsubscribed contact.
+    const suppressed =
+      response.status === 400 && /blocked|unsubscrib|blacklist/i.test(body)
+    console.error('[brevo] send failed', {
+      template: args.templateName,
+      status: response.status,
+      body: body.slice(0, 500),
+    })
+    if (suppressed) return { sent: false, reason: 'recipient_suppressed' }
+    throw new Error(`Email send failed (${response.status}).`)
+  }
+
+  return { sent: true }
+}
+
