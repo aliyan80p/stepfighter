@@ -83,6 +83,11 @@ install time.
   do not point them at the same Drive folder as the live project.
 - `internal_config.hook_secret` is already copied; it authenticates
   `/api/public/hooks/*`.
+- **Sequence / function grants**: run `docs/standby-grants.sql` once against the
+  mirror. A schema+data copy brings table grants but not sequence grants, so
+  inserts into `tests`, `attempts`, etc. fail with
+  `permission denied for sequence ..._id_seq` (symptom: "test cannot be created").
+
 
 ## 5. Deployment steps
 
