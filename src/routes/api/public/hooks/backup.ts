@@ -211,6 +211,11 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Standby/external deployments set DISABLE_DRIVE_HOOKS so two
+        // deployments never write to the same Google Drive backup folder.
+        if (process.env.DISABLE_DRIVE_HOOKS) {
+          return Response.json({ error: "drive hooks disabled on this deployment" }, { status: 501 });
+        }
         const { requireHookSecret } = await import("@/lib/hook-auth.server");
         const denied = await requireHookSecret(request);
         if (denied) return denied;

@@ -26,7 +26,7 @@ function csp(): string {
     "font-src 'self' https://fonts.gstatic.com data:",
     `img-src 'self' data: blob: ${backend}`,
     `media-src 'self' data: blob: ${backend}`,
-    `connect-src 'self' ${backend} https://ai.gateway.lovable.dev`,
+    `connect-src 'self' ${backend} https://ai.gateway.lovable.dev https://generativelanguage.googleapis.com`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

@@ -5,6 +5,44 @@ import { internalError } from "./errors";
 
 const qb = () => z.number().int().min(1);
 
+/**
+ * AI provider abstraction.
+ *
+ * Inside Lovable the AI gateway is used (LOVABLE_API_KEY, provisioned by the
+ * platform). On an independently hosted deployment there is no gateway, so a
+ * plain Google Gemini key is used instead through Gemini's OpenAI-compatible
+ * endpoint — same request/response shape, so call sites are unchanged.
+ * Both are read inside handlers only.
+ */
+function hasAiProvider(): boolean {
+  return Boolean(process.env.LOVABLE_API_KEY || process.env.GEMINI_API_KEY);
+}
+
+function aiChat(prompt: string): Promise<Response> {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  if (lovableKey) {
+    return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": lovableKey },
+      body: JSON.stringify({
+        model: "google/gemini-3.5-flash",
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+  }
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey) return Promise.resolve(new Response("no AI provider configured", { status: 503 }));
+  return fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${geminiKey}` },
+    body: JSON.stringify({
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+}
+
+
 // ============ Performance Graphs ============
 export const getPerformanceGraphs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -459,8 +497,8 @@ export const getAiTestAnalysis = createServerFn({ method: "POST" })
       systems: sysRows.sort((a, b) => a.pct - b.pct),
     };
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+    if (!hasAiProvider()) throw new Error("No AI provider configured");
+
 
     // Privacy: only aggregate performance numbers go to the AI provider. The
     // user-authored test name is deliberately omitted — it is free text that
@@ -489,17 +527,7 @@ Return sections:
 
 Keep it under 350 words. Be direct and specific.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Lovable-API-Key": apiKey,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3.5-flash",
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
+    const resp = await aiChat(prompt);
     if (!resp.ok) {
       const text = await resp.text().catch(() => "");
       if (resp.status === 429) throw new Error("AI rate limit reached. Please try again in a moment.");
@@ -508,6 +536,7 @@ Keep it under 350 words. Be direct and specific.`;
     }
     const json = await resp.json() as { choices?: { message?: { content?: string } }[] };
     const analysis = json.choices?.[0]?.message?.content ?? "No analysis generated.";
+
 
     return { summary, analysis };
   });
@@ -757,19 +786,12 @@ export const generatePerformancePrediction = createServerFn({ method: "POST" })
       return `Your current overall score is **${data.overallPct}%**. Your study plan contains **${data.studyPlanTotal}** questions covering your weakest subjects. If you score at least **70%** on these quizzes, your overall score is predicted to reach **${predicted}%**.`;
     };
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) return { text: deterministic() };
+    if (!hasAiProvider()) return { text: deterministic() };
 
     try {
       const prompt = `A USMLE student's current overall accuracy is ${data.overallPct}%. Their personalized study plan has ${data.studyPlanTotal} questions from their weakest subjects. Write ONE short paragraph (max 40 words) predicting their overall score if they answer 70% of the study-plan questions correctly. Use this exact structure, bolding key numbers with markdown: "Your current overall score is **${data.overallPct}%**. Your study plan contains **${data.studyPlanTotal}** questions covering your weakest subjects. If you score at least **70%** on these quizzes, your overall score is predicted to reach **X%**." Replace X with a realistic single integer prediction.`;
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
-        body: JSON.stringify({
-          model: "google/gemini-3.5-flash",
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
+      const resp = await aiChat(prompt);
+
       if (!resp.ok) return { text: deterministic() };
       const json = await resp.json() as { choices?: { message?: { content?: string } }[] };
       const text = json.choices?.[0]?.message?.content?.trim();
