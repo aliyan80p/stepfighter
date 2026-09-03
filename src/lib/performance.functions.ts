@@ -748,19 +748,12 @@ export const generatePerformancePrediction = createServerFn({ method: "POST" })
       return `Your current overall score is **${data.overallPct}%**. Your study plan contains **${data.studyPlanTotal}** questions covering your weakest subjects. If you score at least **70%** on these quizzes, your overall score is predicted to reach **${predicted}%**.`;
     };
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) return { text: deterministic() };
+    if (!hasAiProvider()) return { text: deterministic() };
 
     try {
       const prompt = `A USMLE student's current overall accuracy is ${data.overallPct}%. Their personalized study plan has ${data.studyPlanTotal} questions from their weakest subjects. Write ONE short paragraph (max 40 words) predicting their overall score if they answer 70% of the study-plan questions correctly. Use this exact structure, bolding key numbers with markdown: "Your current overall score is **${data.overallPct}%**. Your study plan contains **${data.studyPlanTotal}** questions covering your weakest subjects. If you score at least **70%** on these quizzes, your overall score is predicted to reach **X%**." Replace X with a realistic single integer prediction.`;
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
-        body: JSON.stringify({
-          model: "google/gemini-3.5-flash",
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
+      const resp = await aiChat(prompt);
+
       if (!resp.ok) return { text: deterministic() };
       const json = await resp.json() as { choices?: { message?: { content?: string } }[] };
       const text = json.choices?.[0]?.message?.content?.trim();
