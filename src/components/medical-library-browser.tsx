@@ -242,6 +242,12 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
 
         <div className="max-h-[45vh] flex-1 overflow-y-auto p-2 lg:max-h-none">
           {isLoading && <div className="p-6"><Loader label="Loading library…" /></div>}
+          {!isLoading && (toc?.length ?? 0) === 0 && (
+            <div className="px-3 py-6 text-sm text-muted-foreground">
+              The medical library is not available for the course you have selected. Switch to USMLE Step 1 to browse it.
+            </div>
+          )}
+
           {debounced.length >= 2 ? (
             <div className="space-y-0.5">
               {searching && <div className="px-2 py-2 text-sm text-muted-foreground">Searching…</div>}
