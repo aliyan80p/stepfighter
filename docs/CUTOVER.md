@@ -12,10 +12,16 @@ Companion docs: `docs/STANDBY-DEPLOY.md` (env + deploy details),
 
 ## Phase 0 — What must be true before you start
 
-- [ ] Standby Worker deploys green from this repo (`npm run build:cf` → `npx wrangler deploy`).
-- [ ] Standby Supabase has schema + data + `docs/standby-grants.sql` applied.
-- [ ] Standby storage bucket `qbank-media-plain` mirrored (15,959 objects).
-- [ ] Standby auth works: sign in, OTP email, password reset (10-min links).
+- [x] Standby Worker live and clean on `stepfighter-5859cf60.aliyan80p.workers.dev`
+      (200, no console errors, no failed requests, `/api/media/*` rejects unsigned tokens).
+- [x] Schema parity: 28 RLS policies, 10 functions, RLS on every public table,
+      all four sequences granted to `authenticated`.
+- [x] Content parity: questions 16,602 / answers 87,628 / refs 17,516 /
+      qbank_media 15,555 / library_docs 1,529 / library_toc 14,646 — identical both sides.
+- [x] Media parity: `qbank-media-plain` 15,959 objects / 3,820 MB — identical.
+      (Only the `backups` bucket, 1,246 files, is Lovable-side; rebuilt in Phase 4.)
+- [x] Auth config: Brevo SMTP live, sign-ups on, confirmations on, link expiry 600s.
+- [ ] Manual smoke test with a real account: sign in, OTP email, password reset.
 - [ ] You own the domain DNS (`stepfighter.com`) at your registrar / Cloudflare.
 
 ---
