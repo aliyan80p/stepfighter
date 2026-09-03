@@ -459,8 +459,8 @@ export const getAiTestAnalysis = createServerFn({ method: "POST" })
       systems: sysRows.sort((a, b) => a.pct - b.pct),
     };
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+    if (!hasAiProvider()) throw new Error("No AI provider configured");
+
 
     // Privacy: only aggregate performance numbers go to the AI provider. The
     // user-authored test name is deliberately omitted — it is free text that
