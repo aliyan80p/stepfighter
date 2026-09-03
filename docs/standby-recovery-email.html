@@ -1,45 +1,38 @@
-<!--
-  StepFighter — password reset email (STANDBY ONLY).
-  Paste into the standby Supabase project: Authentication → Emails → "Reset Password"
-  template. Do NOT apply this to the live Lovable production project.
-  Supabase substitutes {{ .ConfirmationURL }} with the recovery link.
-  Suggested subject: Reset your StepFighter password
--->
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;margin:0;padding:0;">
   <tr>
-    <td align="center" style="padding:24px 12px;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;border-top:4px solid #f59e0b;padding:24px 28px;">
+    <td align="center" style="padding:32px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:480px;background:#ffffff;border:1px solid #e2e8f0;border-top:4px solid #f59e0b;border-radius:8px;box-shadow:0 4px 14px rgba(15,23,42,.08);">
         <tr>
-          <td align="center" style="padding:4px 0 20px;">
+          <td align="center" style="padding:28px 28px 18px;">
             <img src="https://stepfighter.com/brand/stepfighter-logo.png" alt="StepFighter" width="56" height="56" style="border-radius:8px;display:block;margin:0 auto;" />
             <div style="font-size:16px;font-weight:bold;color:#1e3a8a;margin-top:8px;">StepFighter</div>
           </td>
         </tr>
         <tr>
-          <td style="font-size:24px;font-weight:bold;color:#1e3a8a;padding-bottom:20px;">Reset your password</td>
+          <td align="center" style="font-size:24px;font-weight:bold;color:#1e3a8a;padding:0 28px 16px;">Reset your password</td>
         </tr>
         <tr>
-          <td style="font-size:14px;color:#475569;line-height:1.6;padding-bottom:22px;">
+          <td align="center" style="font-size:14px;color:#475569;line-height:1.6;padding:0 28px 24px;">
             We received a request to reset the password for your StepFighter account.
             Click the button below to choose a new password. This link expires in 60 minutes.
           </td>
         </tr>
         <tr>
-          <td style="padding-bottom:22px;">
+          <td align="center" style="padding:0 28px 26px;">
             <a href="{{ .ConfirmationURL }}"
-               style="background:#1e3a8a;color:#ffffff;font-size:14px;font-weight:bold;border-radius:8px;padding:12px 24px;text-decoration:none;display:inline-block;">
+               style="background:#1e3a8a;color:#ffffff;font-size:15px;font-weight:bold;border-radius:8px;padding:14px 28px;text-decoration:none;display:inline-block;">
               Reset Password
             </a>
           </td>
         </tr>
         <tr>
-          <td style="font-size:12px;color:#94a3b8;line-height:1.6;">
+          <td style="font-size:12px;color:#64748b;line-height:1.6;padding:0 28px 22px;">
             If the button doesn't work, copy and paste this link into your browser:<br />
-            <a href="{{ .ConfirmationURL }}" style="color:#1e3a8a;word-break:break-all;">{{ .ConfirmationURL }}</a>
+            <a href="{{ .ConfirmationURL }}" style="color:#1e3a8a;word-break:break-all;text-decoration:underline;">{{ .ConfirmationURL }}</a>
           </td>
         </tr>
         <tr>
-          <td style="font-size:12px;color:#94a3b8;padding-top:24px;">
+          <td style="font-size:12px;color:#94a3b8;line-height:1.6;padding:20px 28px 28px;border-top:1px solid #e2e8f0;">
             If you didn't request a password reset, you can safely ignore this email — your password will not be changed.
           </td>
         </tr>

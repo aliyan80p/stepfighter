@@ -1,16 +1,22 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { CheckCircle2, LoaderCircle, LockKeyhole } from "lucide-react";
+import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
       { title: "Reset password — StepFighter" },
       { name: "description", content: "Set a new password for your StepFighter account." },
+      { property: "og:title", content: "Reset password — StepFighter" },
+      { property: "og:description", content: "Set a new password for your StepFighter account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ResetPasswordPage,
@@ -21,47 +27,87 @@ function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const settledRef = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Recovery links arrive in three shapes depending on project settings:
-    //  - hash tokens (#access_token=...)  -> picked up automatically by the client
-    //  - PKCE code (?code=...)            -> needs exchangeCodeForSession
-    //  - token_hash (?token_hash=...)     -> needs verifyOtp
     let cancelled = false;
-    const check = async () => {
+    let recoveryEventReceived = false;
+    let resolveRecoveryEvent: (() => void) | undefined;
+    const recoveryEvent = new Promise<void>((resolve) => {
+      resolveRecoveryEvent = resolve;
+    });
+
+    const markReady = () => {
+      if (cancelled || settledRef.current) return;
+      settledRef.current = true;
+      setStatus("ready");
+      resolveRecoveryEvent?.();
+    };
+
+    // Subscribe before processing the URL so an early PASSWORD_RECOVERY event
+    // cannot be missed while the auth client hydrates its session.
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "PASSWORD_RECOVERY") return;
+      recoveryEventReceived = true;
+      markReady();
+    });
+
+    const processRecoveryLink = async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
       const tokenHash = url.searchParams.get("token_hash");
       const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-      const hasHashTokens = !!hash.get("access_token");
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+      const linkError = url.searchParams.get("error_description") ?? hash.get("error_description");
+
       try {
+        if (linkError) throw new Error(linkError);
+
+        let sessionEstablished = false;
         if (code) {
-          await supabase.auth.exchangeCodeForSession(code);
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          sessionEstablished = Boolean(data.session);
         } else if (tokenHash) {
-          await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
+          const { data, error } = await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
+          if (error) throw error;
+          sessionEstablished = Boolean(data.session);
+        } else if (accessToken && refreshToken) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
+          sessionEstablished = Boolean(data.session);
+        } else {
+          // The auth client may already be consuming an implicit recovery hash.
+          // Wait only for the authoritative recovery event; never show an error
+          // and then reverse it into the password form.
+          await Promise.race([
+            recoveryEvent,
+            new Promise<void>((resolve) => window.setTimeout(resolve, 5000)),
+          ]);
+          sessionEstablished = recoveryEventReceived || settledRef.current;
         }
-      } catch {
-        // fall through: session check below decides what the user sees
-      }
-      // Hash-token links are consumed asynchronously by the client; poll briefly
-      // so a valid link never flashes the "invalid" state.
-      const deadline = Date.now() + (hasHashTokens ? 6000 : 2500);
-      while (!cancelled) {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          if (!cancelled) setStatus("ready");
+
+        if (sessionEstablished) {
+          markReady();
+          window.history.replaceState({}, document.title, "/reset-password");
           return;
         }
-        if (Date.now() > deadline) break;
-        await new Promise((r) => setTimeout(r, 250));
+      } catch {
+        // A genuine exchange/verification failure is handled below.
       }
-      if (!cancelled) setStatus("invalid");
+
+      if (!cancelled && !settledRef.current) {
+        settledRef.current = true;
+        setStatus("invalid");
+      }
     };
-    check();
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setStatus("ready");
-    });
+
+    void processRecoveryLink();
     return () => {
       cancelled = true;
       sub.subscription.unsubscribe();
@@ -87,25 +133,39 @@ function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
-        <Link to="/" className="block text-center mb-6">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">SF</span>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+      <div className="w-full max-w-md">
+        <Link to="/" className="mb-6 flex flex-col items-center gap-2">
+          <img src={logoAsset.url} alt="StepFighter" className="h-14 w-14 object-contain" />
+          <span className="text-lg font-bold text-primary">StepFighter</span>
         </Link>
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h1 className="text-xl font-semibold">
-            {status === "ready" ? "Set a new password" : "Reset your password"}
-          </h1>
+        <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="h-1 bg-accent" />
+          <div className="p-6 sm:p-8">
           {status === "checking" ? (
-            <p className="mt-4 text-sm text-muted-foreground">Verifying your reset link…</p>
+            <div className="py-8 text-center" aria-live="polite">
+              <LoaderCircle className="mx-auto h-8 w-8 animate-spin text-primary" />
+              <h1 className="mt-5 text-xl font-semibold">Securing your reset link</h1>
+              <p className="mt-2 text-sm text-muted-foreground">Please wait while we verify your recovery session.</p>
+            </div>
           ) : status === "invalid" ? (
-            <p className="mt-4 text-sm text-muted-foreground">
-              This link is invalid or has expired. Request a new one from the{" "}
-              <Link to="/auth" className="underline hover:text-foreground">sign-in page</Link>.
-            </p>
+            <div className="py-4 text-center" aria-live="polite">
+              <LockKeyhole className="mx-auto h-9 w-9 text-muted-foreground" />
+              <h1 className="mt-4 text-xl font-semibold">Reset link expired</h1>
+              <p className="mt-2 text-sm text-muted-foreground">This reset link is invalid or has expired. Request a fresh link to continue.</p>
+              <Button asChild className="mt-6 w-full">
+                <Link to="/auth">Request a new reset link</Link>
+              </Button>
+            </div>
           ) : (
-
-            <form onSubmit={submit} className="space-y-3 mt-4">
+            <form onSubmit={submit} className="space-y-4">
+              <div className="mb-6 text-center">
+                <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-primary/10">
+                  <CheckCircle2 className="h-6 w-6 text-primary" />
+                </span>
+                <h1 className="mt-4 text-xl font-semibold">Set a new password</h1>
+                <p className="mt-1 text-sm text-muted-foreground">Choose a secure password with at least 8 characters.</p>
+              </div>
               <div>
                 <Label htmlFor="pw">New password</Label>
                 <Input id="pw" type="password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
@@ -119,6 +179,7 @@ function ResetPasswordPage() {
               </Button>
             </form>
           )}
+          </div>
         </div>
       </div>
     </div>
