@@ -35,17 +35,10 @@ import { ExhibitModal as MediaExhibitModal, type ExhibitContent } from "@/compon
 import { LabValuesPanel } from "@/components/lab-values-panel";
 import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
 import { Loader } from "@/components/loader";
-import { testNav, resultsNav } from "@/lib/active-test";
 
 export const Route = createFileRoute("/_authenticated/test/$id")({
-  component: TestIdRedirect,
+  component: TestRunner,
 });
-
-/** Legacy /test/:id URLs: remember the id, then show the clean /test URL. */
-function TestIdRedirect() {
-  const { id } = Route.useParams();
-  return <Navigate {...testNav(id)} replace />;
-}
 
 /**
  * Renders arbitrary HTML into a div imperatively, only reseeding innerHTML
@@ -197,7 +190,8 @@ function ToggleSwitch({
 }
 
 
-export function TestRunner({ testId: id }: { testId: string }) {
+function TestRunner() {
+  const { id } = Route.useParams();
   const testId = Number(id);
   const nav = useNavigate();
   const getFn = useServerFn(getTest);
@@ -599,7 +593,7 @@ export function TestRunner({ testId: id }: { testId: string }) {
       window.localStorage.removeItem(`timedBase:${id}`);
     } catch {}
     qc.invalidateQueries({ queryKey: ["test", testId] });
-    nav(resultsNav(id));
+    nav({ to: "/test-results/$id", params: { id } });
   };
 
 
@@ -677,7 +671,7 @@ export function TestRunner({ testId: id }: { testId: string }) {
   };
 
   if (isLoading || !data || !question) return <div className="p-8"><Loader label="Loading question…" /></div>;
-  if (data.test.done && !isReview) return <Navigate {...resultsNav(id)} replace />;
+  if (data.test.done && !isReview) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
   const answered = submitted || selected != null;
@@ -1397,7 +1391,7 @@ export function TestRunner({ testId: id }: { testId: string }) {
               {isReview ? (
                 <button
                   onClick={() => {
-                    if (idx === total - 1) nav(resultsNav(id));
+                    if (idx === total - 1) nav({ to: "/test-results/$id", params: { id } });
                     else goToQuestion(idx + 1);
                   }}
                   className="px-6 py-2 rounded text-white text-sm font-semibold"
@@ -1499,7 +1493,7 @@ export function TestRunner({ testId: id }: { testId: string }) {
               <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
               <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
-                <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={() => nav(resultsNav(id))} />
+                <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
                   <TopBtn imgSrc={suspendIcon.url} label="Suspend" onClick={async () => {

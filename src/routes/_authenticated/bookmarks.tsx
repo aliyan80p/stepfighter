@@ -5,7 +5,6 @@ import { listBookmarks, createTest } from "@/lib/qbank.functions";
 import { useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { testNav } from "@/lib/active-test";
 
 export const Route = createFileRoute("/_authenticated/bookmarks")({
   component: Bookmarks,
@@ -21,7 +20,7 @@ function Bookmarks() {
   const startReview = async () => {
     try {
       const r = await createFn({ data: { qbankId, count: Math.min(data?.length ?? 20, 40), mode: "practice", scope: "marked" } });
-      navigate(testNav(r.id));
+      navigate({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }

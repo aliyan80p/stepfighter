@@ -1,12 +1,12 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { resultsNav } from "@/lib/active-test";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/test/$id/results")({
-  component: LegacyResultsRedirect,
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: "/test-results/$id",
+      params: { id: params.id },
+      replace: true,
+    });
+  },
+  component: () => null,
 });
-
-/** Legacy /test/:id/results URLs: keep the id internally, show the clean URL. */
-function LegacyResultsRedirect() {
-  const { id } = Route.useParams();
-  return <Navigate {...resultsNav(id)} replace />;
-}

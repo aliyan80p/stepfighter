@@ -9,7 +9,6 @@ import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
-import { testNav, resultsNav } from "@/lib/active-test";
 
 export const Route = createFileRoute("/_authenticated/self-assessments/assessments")({
   component: AssessmentsPage,
@@ -118,14 +117,14 @@ function AssessmentsPage() {
     }
     try {
       const r = await startFn({ data: { qbankId: current.qbankId, source: current.source, blockIndex } });
-      nav(testNav(r.id));
+      nav({ to: "/test/$id", params: { id: String(r.id) } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to start block");
     }
   };
 
-  const handleResults = (testId: number) => nav(resultsNav(testId));
-  const handleAnalysis = (testId: number) => nav(resultsNav(testId));
+  const handleResults = (testId: number) => nav({ to: "/test-results/$id", params: { id: String(testId) } });
+  const handleAnalysis = (testId: number) => nav({ to: "/test-results/$id", params: { id: String(testId) } });
 
   const { confirm, dialog: confirmDialog } = useConfirm();
 
