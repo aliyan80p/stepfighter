@@ -2,13 +2,15 @@
  * Response hardening applied to every request the Worker serves.
  */
 
-const SUPABASE_ORIGIN = (() => {
+// Read lazily: on Cloudflare Workers env is injected per-request, so a
+// module-scope read runs before any binding exists and yields "".
+function supabaseOrigin(): string {
   try {
     return new URL(process.env.SUPABASE_URL ?? "https://example.supabase.co").origin;
   } catch {
     return "";
   }
-})();
+}
 
 /**
  * Content-Security-Policy.
