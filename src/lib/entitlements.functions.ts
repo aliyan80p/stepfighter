@@ -98,3 +98,22 @@ export async function assertQbankAccess(
   if (!slug || !e.effective_access.includes(slug))
     throw new Error(`ACCESS_DENIED: no_access_to_${slug ?? qbankId}`);
 }
+
+/**
+ * Server-only: throws unless the user has an active plan for at least one
+ * qbank. Used for the Medical Library, which is shared by Step 1/2 CK/3.
+ */
+export async function assertAnyQbankAccess(
+  supabase: any,
+  userId: string,
+): Promise<void> {
+  const { data } = await supabase
+    .from("user_entitlements")
+    .select("plan,trial_started_at,trial_ends_at,paid_until,qbank_access")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!data) throw new Error("ACCESS_DENIED: no entitlement");
+  const e = compute(data as any);
+  if (!e.is_active || e.effective_access.length === 0)
+    throw new Error("ACCESS_DENIED: trial_expired");
+}
