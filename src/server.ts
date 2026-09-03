@@ -60,10 +60,46 @@ function hydrateProcessEnv(env: unknown): void {
   }
 }
 
+type AssetsBinding = { fetch: (request: Request) => Promise<Response> };
+
+function assetsBinding(env: unknown): AssetsBinding | undefined {
+  const candidate = (env as { ASSETS?: AssetsBinding } | null | undefined)?.ASSETS;
+  return candidate && typeof candidate.fetch === "function" ? candidate : undefined;
+}
+
+/**
+ * Cloudflare routes every request to the Worker, so static files under
+ * dist/client (JS/CSS chunks, favicon, manifest, service worker) must be
+ * served from the ASSETS binding before the SSR handler runs — otherwise the
+ * app ships HTML with no JavaScript and every image 404s.
+ * Hosts without the binding (Lovable) simply skip this.
+ */
+async function serveStaticAsset(request: Request, env: unknown): Promise<Response | undefined> {
+  if (request.method !== "GET" && request.method !== "HEAD") return undefined;
+  const assets = assetsBinding(env);
+  if (!assets) return undefined;
+  const { pathname } = new URL(request.url);
+  if (pathname === "/" || pathname.startsWith("/api/")) return undefined;
+  try {
+    const response = await assets.fetch(request);
+    if (response.status === 404) return undefined;
+    return response;
+  } catch {
+    return undefined;
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     hydrateProcessEnv(env);
+
+    const staticAsset = await serveStaticAsset(request, env);
+    if (staticAsset) return withSecurityHeaders(staticAsset, request);
+
     const { assertServerEnv } = await import("./lib/env.server");
+
+
+
     const missing = assertServerEnv();
     if (missing.length) {
       // Refuse to serve rather than run half-configured. The response says

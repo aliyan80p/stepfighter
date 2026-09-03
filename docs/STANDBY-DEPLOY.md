@@ -48,17 +48,24 @@ and `OTP_PEPPER` are all set.
 ## 3. Build target — Cloudflare Workers
 
 The build already targets Cloudflare: `@lovable.dev/vite-tanstack-config` uses
-Nitro's Cloudflare preset by default, so `npm run build` needs no override.
-`wrangler.jsonc` wires that output up:
+Nitro's Cloudflare preset by default. Use **`npm run build:cf`** as the build
+command: it runs `vite build` and then deletes `.wrangler/deploy/config.json`.
+That generated file redirects Wrangler to `dist/server/wrangler.json`, whose
+relative `../client` assets path does not resolve at deploy time — the Worker
+then serves **no static files at all** (every `/assets/*.js` and image 404s,
+so the page loads but stays unstyled with broken images). Removing the
+redirect makes Wrangler use the repository's `wrangler.jsonc`:
 
-- `main`: `.output/server/index.mjs`
-- static assets: `.output/public`
+- `main`: `dist/server/index.mjs`
+- static assets: `dist/client` (binding `ASSETS`)
+- `no_bundle: true` — Nitro already bundled the Worker
 - `compatibility_flags: ["nodejs_compat"]` — **required**, the app uses
   `node:crypto` for HMAC media tokens and OTP hashing.
 
 Deploy either with Cloudflare **Workers Builds** (connect the GitHub repo;
-build command `npm run build`, deploy command `npx wrangler deploy`) or
-manually with `npx wrangler deploy` after a local build.
+build command `npm run build:cf`, deploy command `npx wrangler deploy`) or
+manually with `npx wrangler deploy` after a local `npm run build:cf`.
+
 
 The `@lovable.dev/*` packages must remain resolvable from the registry at
 install time.
@@ -82,8 +89,9 @@ install time.
 1. In the Cloudflare dashboard: Workers & Pages → Create → connect this GitHub
    repository (a dedicated branch is recommended so the Lovable project keeps
    deploying from `main`).
-2. Build command `npm run build`, deploy command `npx wrangler deploy`.
+2. Build command `npm run build:cf`, deploy command `npx wrangler deploy`.
    Wrangler reads `wrangler.jsonc` for the entry point and assets.
+
 3. Add every variable from section 1 — client `VITE_*` ones as build-time
    variables, all server-only ones as **encrypted secrets**
    (`npx wrangler secret put NAME`, or Settings → Variables and Secrets).

@@ -4,7 +4,7 @@ import { Img, Section, Text } from '@react-email/components'
 // Public CDN URL for the StepFighter logo (Lovable asset infrastructure serves
 // this at any project domain; email clients fetch it directly).
 export const LOGO_URL =
-  'https://stepfighter.com/__l5e/assets-v1/ffb3450b-16d8-4739-80cd-5e50c1316d8a/stepfighter-logo.png'
+  'https://stepfighter.com/brand/stepfighter-logo.png'
 
 export const BrandHeader = () => (
   <Section style={wrap}>
