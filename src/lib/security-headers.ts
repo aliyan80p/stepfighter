@@ -20,7 +20,7 @@ function supabaseOrigin(): string {
  * plumbing. Everything else is locked to our own origin plus the backend.
  */
 function csp(): string {
-  const backend = SUPABASE_ORIGIN;
+  const backend = supabaseOrigin();
   return [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline'`,
