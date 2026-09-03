@@ -32,6 +32,8 @@ import { Route as AuthenticatedMedicalLibraryRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBookmarksRouteImport } from './routes/_authenticated/bookmarks'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedTestIndexRouteImport } from './routes/_authenticated/test.index'
+import { Route as AuthenticatedTestResultsIndexRouteImport } from './routes/_authenticated/test-results.index'
 import { Route as AuthenticatedNotesIndexRouteImport } from './routes/_authenticated/notes.index'
 import { Route as ApiPublicWarmMediaRouteImport } from './routes/api/public/warm-media'
 import { Route as ApiPublicNbmeExportRouteImport } from './routes/api/public/nbme-export'
@@ -177,6 +179,17 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTestIndexRoute = AuthenticatedTestIndexRouteImport.update({
+  id: '/test/',
+  path: '/test/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTestResultsIndexRoute =
+  AuthenticatedTestResultsIndexRouteImport.update({
+    id: '/test-results/',
+    path: '/test-results/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedNotesIndexRoute = AuthenticatedNotesIndexRouteImport.update({
   id: '/notes/',
   path: '/notes/',
@@ -382,6 +395,8 @@ export interface FileRoutesByFullPath {
   '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/notes/': typeof AuthenticatedNotesIndexRoute
+  '/test-results/': typeof AuthenticatedTestResultsIndexRoute
+  '/test/': typeof AuthenticatedTestIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
   '/api/public/hooks/drive-dedup': typeof ApiPublicHooksDriveDedupRoute
@@ -434,6 +449,8 @@ export interface FileRoutesByTo {
   '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/notes': typeof AuthenticatedNotesIndexRoute
+  '/test-results': typeof AuthenticatedTestResultsIndexRoute
+  '/test': typeof AuthenticatedTestIndexRoute
   '/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
   '/api/public/hooks/drive-dedup': typeof ApiPublicHooksDriveDedupRoute
@@ -488,6 +505,8 @@ export interface FileRoutesById {
   '/api/public/nbme-export': typeof ApiPublicNbmeExportRoute
   '/api/public/warm-media': typeof ApiPublicWarmMediaRoute
   '/_authenticated/notes/': typeof AuthenticatedNotesIndexRoute
+  '/_authenticated/test-results/': typeof AuthenticatedTestResultsIndexRoute
+  '/_authenticated/test/': typeof AuthenticatedTestIndexRoute
   '/_authenticated/test/$id/results': typeof AuthenticatedTestIdResultsRoute
   '/api/public/hooks/backup': typeof ApiPublicHooksBackupRoute
   '/api/public/hooks/drive-dedup': typeof ApiPublicHooksDriveDedupRoute
@@ -542,6 +561,8 @@ export interface FileRouteTypes {
     | '/api/public/nbme-export'
     | '/api/public/warm-media'
     | '/notes/'
+    | '/test-results/'
+    | '/test/'
     | '/test/$id/results'
     | '/api/public/hooks/backup'
     | '/api/public/hooks/drive-dedup'
@@ -594,6 +615,8 @@ export interface FileRouteTypes {
     | '/api/public/nbme-export'
     | '/api/public/warm-media'
     | '/notes'
+    | '/test-results'
+    | '/test'
     | '/test/$id/results'
     | '/api/public/hooks/backup'
     | '/api/public/hooks/drive-dedup'
@@ -647,6 +670,8 @@ export interface FileRouteTypes {
     | '/api/public/nbme-export'
     | '/api/public/warm-media'
     | '/_authenticated/notes/'
+    | '/_authenticated/test-results/'
+    | '/_authenticated/test/'
     | '/_authenticated/test/$id/results'
     | '/api/public/hooks/backup'
     | '/api/public/hooks/drive-dedup'
@@ -844,6 +869,20 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/test/': {
+      id: '/_authenticated/test/'
+      path: '/test'
+      fullPath: '/test/'
+      preLoaderRoute: typeof AuthenticatedTestIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/test-results/': {
+      id: '/_authenticated/test-results/'
+      path: '/test-results'
+      fullPath: '/test-results/'
+      preLoaderRoute: typeof AuthenticatedTestResultsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notes/': {
@@ -1083,6 +1122,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTestResultsIdRoute: typeof AuthenticatedTestResultsIdRoute
   AuthenticatedTestIdRoute: typeof AuthenticatedTestIdRouteWithChildren
   AuthenticatedNotesIndexRoute: typeof AuthenticatedNotesIndexRoute
+  AuthenticatedTestResultsIndexRoute: typeof AuthenticatedTestResultsIndexRoute
+  AuthenticatedTestIndexRoute: typeof AuthenticatedTestIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1120,6 +1161,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTestResultsIdRoute: AuthenticatedTestResultsIdRoute,
   AuthenticatedTestIdRoute: AuthenticatedTestIdRouteWithChildren,
   AuthenticatedNotesIndexRoute: AuthenticatedNotesIndexRoute,
+  AuthenticatedTestResultsIndexRoute: AuthenticatedTestResultsIndexRoute,
+  AuthenticatedTestIndexRoute: AuthenticatedTestIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
