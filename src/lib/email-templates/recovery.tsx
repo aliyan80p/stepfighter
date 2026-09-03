@@ -30,7 +30,8 @@ export const RecoveryEmail = ({
         <Heading style={h1}>Reset your password</Heading>
         <Text style={text}>
           We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
+          the button below to choose a new password. This link expires in 10
+          minutes.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Reset Password
