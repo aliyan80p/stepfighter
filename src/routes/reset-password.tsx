@@ -24,9 +24,23 @@ function ResetPasswordPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase places tokens in the URL hash when the user arrives from the reset email.
-    // The client picks them up automatically and creates a recovery session.
+    // Recovery links arrive in three shapes depending on project settings:
+    //  - hash tokens (#access_token=...)  -> picked up automatically by the client
+    //  - PKCE code (?code=...)            -> needs exchangeCodeForSession
+    //  - token_hash (?token_hash=...)     -> needs verifyOtp
     const check = async () => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const tokenHash = url.searchParams.get("token_hash");
+      try {
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code);
+        } else if (tokenHash) {
+          await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
+        }
+      } catch {
+        // fall through: session check below decides what the user sees
+      }
       const { data } = await supabase.auth.getSession();
       setReady(!!data.session);
     };
