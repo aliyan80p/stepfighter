@@ -45,14 +45,24 @@ and `OTP_PEPPER` are all set.
 | Lovable OAuth broker | unused (sign-in is email + password), no impact |
 | Everything else — QBank, tests, attempts, statistics, flashcards, notes, library, media | works unchanged against your Supabase |
 
-## 3. Build target
+## 3. Build target — Cloudflare Workers
 
-The build uses `@lovable.dev/vite-tanstack-config`, whose Nitro target defaults
-to Cloudflare Workers. `vercel.json` builds with `NITRO_PRESET=vercel`.
-Use the Vercel **Node.js** runtime, not Edge (`node:crypto` is used for HMAC).
+The build already targets Cloudflare: `@lovable.dev/vite-tanstack-config` uses
+Nitro's Cloudflare preset by default, so `npm run build` needs no override.
+`wrangler.jsonc` wires that output up:
+
+- `main`: `.output/server/index.mjs`
+- static assets: `.output/public`
+- `compatibility_flags: ["nodejs_compat"]` — **required**, the app uses
+  `node:crypto` for HMAC media tokens and OTP hashing.
+
+Deploy either with Cloudflare **Workers Builds** (connect the GitHub repo;
+build command `npm run build`, deploy command `npx wrangler deploy`) or
+manually with `npx wrangler deploy` after a local build.
 
 The `@lovable.dev/*` packages must remain resolvable from the registry at
 install time.
+
 
 ## 4. Supabase configuration to recreate
 
