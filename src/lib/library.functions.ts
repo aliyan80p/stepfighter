@@ -5,6 +5,13 @@ import { internalError } from "./errors";
 
 const qb = () => z.number().int().positive().default(2);
 
+/**
+ * The medical library is shared across every course (Step 1 / 2 CK / 3):
+ * the content lives under a single qbank row, so all queries pin to it and
+ * the caller's active course is ignored.
+ */
+const LIBRARY_QBANK_ID = 2;
+
 export type LibraryNode = {
   id: number;
   name: string;
@@ -25,7 +32,7 @@ export const getLibraryToc = createServerFn({ method: "GET" })
       const { data: chunk, error } = await context.supabase
         .from("library_toc")
         .select("id,name,doc_id,section,parent_id,leaf")
-        .eq("qbank_id", data.qbankId)
+        .eq("qbank_id", LIBRARY_QBANK_ID)
         .order("id")
         .range(from, from + page - 1);
       if (error) throw internalError(error);
@@ -37,7 +44,7 @@ export const getLibraryToc = createServerFn({ method: "GET" })
     const { count, error: countError } = await context.supabase
       .from("library_toc")
       .select("id", { count: "exact", head: true })
-      .eq("qbank_id", data.qbankId);
+      .eq("qbank_id", LIBRARY_QBANK_ID);
     if (countError) throw internalError(countError);
 
     const total = count ?? 0;
@@ -88,13 +95,13 @@ export const searchLibrary = createServerFn({ method: "GET" })
     const byTitle = await context.supabase
       .from("library_docs")
       .select("id,title")
-      .eq("qbank_id", data.qbankId)
+      .eq("qbank_id", LIBRARY_QBANK_ID)
       .ilike("title", `%${term}%`)
       .limit(40);
     const byBody = await context.supabase
       .from("library_docs")
       .select("id,title")
-      .eq("qbank_id", data.qbankId)
+      .eq("qbank_id", LIBRARY_QBANK_ID)
       .ilike("plain", `%${term}%`)
       .limit(40);
     const seen = new Set<number>();

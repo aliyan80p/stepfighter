@@ -98,14 +98,14 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
   }, [query]);
 
   const { data: toc, isLoading } = useQuery({
-    queryKey: ["library-toc", qbankId],
-    queryFn: () => tocFn({ data: { qbankId } }),
+    queryKey: ["library-toc"],
+    queryFn: () => tocFn({ data: { qbankId: 2 } }),
     staleTime: 60 * 60 * 1000,
   });
 
   const { data: results, isFetching: searching } = useQuery({
-    queryKey: ["library-search", qbankId, debounced],
-    queryFn: () => searchFn({ data: { qbankId, q: debounced } }),
+    queryKey: ["library-search", debounced],
+    queryFn: () => searchFn({ data: { qbankId: 2, q: debounced } }),
     enabled: debounced.length >= 2,
     staleTime: 5 * 60 * 1000,
   });
@@ -244,7 +244,7 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
           {isLoading && <div className="p-6"><Loader label="Loading library…" /></div>}
           {!isLoading && (toc?.length ?? 0) === 0 && (
             <div className="px-3 py-6 text-sm text-muted-foreground">
-              The medical library is not available for the course you have selected. Switch to USMLE Step 1 to browse it.
+              The medical library is empty right now. Please try again in a moment.
             </div>
           )}
 
