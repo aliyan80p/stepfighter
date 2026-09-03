@@ -5,6 +5,44 @@ import { internalError } from "./errors";
 
 const qb = () => z.number().int().min(1);
 
+/**
+ * AI provider abstraction.
+ *
+ * Inside Lovable the AI gateway is used (LOVABLE_API_KEY, provisioned by the
+ * platform). On an independently hosted deployment there is no gateway, so a
+ * plain Google Gemini key is used instead through Gemini's OpenAI-compatible
+ * endpoint — same request/response shape, so call sites are unchanged.
+ * Both are read inside handlers only.
+ */
+function hasAiProvider(): boolean {
+  return Boolean(process.env.LOVABLE_API_KEY || process.env.GEMINI_API_KEY);
+}
+
+function aiChat(prompt: string): Promise<Response> {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  if (lovableKey) {
+    return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": lovableKey },
+      body: JSON.stringify({
+        model: "google/gemini-3.5-flash",
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+  }
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey) return Promise.resolve(new Response("no AI provider configured", { status: 503 }));
+  return fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${geminiKey}` },
+    body: JSON.stringify({
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+}
+
+
 // ============ Performance Graphs ============
 export const getPerformanceGraphs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
