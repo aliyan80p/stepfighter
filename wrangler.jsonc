@@ -1,0 +1,18 @@
+{
+  // Cloudflare Workers deployment for the standby/external hosting of StepFighter.
+  // The build already targets Cloudflare (Nitro's default preset in
+  // @lovable.dev/vite-tanstack-config), so `npm run build` output is used as-is.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stepfighter",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2025-09-01",
+  // Required: node:crypto (HMAC media tokens, OTP hashing) and node:buffer.
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".output/public",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
