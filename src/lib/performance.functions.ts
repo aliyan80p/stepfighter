@@ -651,7 +651,7 @@ export const getCategoryStats = createServerFn({ method: "GET" })
       let key: string | null = null;
       if (data.kind === "subject") key = q.subject_id != null ? (subjectName.get(q.subject_id) ?? null) : null;
       else if (data.kind === "system") key = q.system_id != null ? (systemName.get(q.system_id) ?? null) : null;
-      else key = q.topic ?? null;
+      else key = q.title ?? null;
       if (!key) continue;
       const x = agg.get(key) ?? { c: 0, t: 0 };
       x.t++; if (a.is_correct) x.c++;
