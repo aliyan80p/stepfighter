@@ -7,6 +7,7 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { loadEnv } from "vite";
 import path from "path";
+import fs from "fs";
 
 // Load all env vars into process.env for server routes (no VITE_ prefix).
 // VITE_* env injection is still handled by the wrapped config for client code.
@@ -21,15 +22,28 @@ const platformEnv = {
   VITE_SUPABASE_PROJECT_ID: process.env.VITE_SUPABASE_PROJECT_ID,
 } as Record<string, string | undefined>;
 
-Object.assign(process.env, serverEnv);
+// .env.local, parsed directly: Vite's loadEnv lets pre-existing process.env values win,
+// so an explicit read is the only way a local file can override platform-injected vars.
+const localEnv: Record<string, string> = {};
+const localEnvPath = path.resolve(process.cwd(), ".env.local");
+if (fs.existsSync(localEnvPath)) {
+  for (const line of fs.readFileSync(localEnvPath, "utf8").split("\n")) {
+    const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/.exec(line);
+    if (match && !line.trimStart().startsWith("#")) {
+      localEnv[match[1]] = match[2].replace(/^["']|["']$/g, "");
+    }
+  }
+}
+
+Object.assign(process.env, serverEnv, localEnv);
 
 // When .env.local points at a self-managed Supabase project, rewrite the platform-injected
 // import.meta.env literals in client code so dev/preview talks to that project instead.
 const overrides = Object.entries(platformEnv)
   .map(([key, oldValue]) => {
     const newValue =
-      serverEnv[key] ??
-      (key === "VITE_SUPABASE_ANON_KEY" ? serverEnv["VITE_SUPABASE_PUBLISHABLE_KEY"] : undefined);
+      localEnv[key] ??
+      (key === "VITE_SUPABASE_ANON_KEY" ? localEnv["VITE_SUPABASE_PUBLISHABLE_KEY"] : undefined);
     return oldValue && newValue && oldValue !== newValue ? ([oldValue, newValue] as const) : null;
   })
   .filter((pair): pair is readonly [string, string] => pair !== null);
