@@ -4,12 +4,12 @@
   // @lovable.dev/vite-tanstack-config), so `npm run build` output is used as-is.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "stepfighter",
-  "main": ".output/server/index.mjs",
+  "main": "dist/server/index.mjs",
   "compatibility_date": "2025-09-01",
   // Required: node:crypto (HMAC media tokens, OTP hashing) and node:buffer.
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
-    "directory": ".output/public",
+    "directory": "dist/client",
     "binding": "ASSETS"
   },
   "observability": {
