@@ -175,6 +175,75 @@ function upstreamMediaResponse(res: Response, fallbackContentType: string): Resp
   });
 }
 
+async function probePlainPath(
+  path: string,
+  supaUrl: string,
+  srk: string,
+  range: string | null,
+): Promise<Response | null> {
+  const headers: Record<string, string> = { Authorization: `Bearer ${srk}`, apikey: srk };
+  if (range) headers.Range = range;
+  const res = await fetch(
+    `${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
+    { headers },
+  );
+  if (!(res.ok || res.status === 206)) {
+    try { await res.body?.cancel(); } catch {}
+    return null;
+  }
+  return res;
+}
+
+/**
+ * Fetch one exact storage path. Returns a ready-to-send Response, or null when
+ * the object is missing / still encrypted.
+ */
+async function fetchPlainExact(
+  path: string,
+  requestedPath: string,
+  supaUrl: string,
+  srk: string,
+  range: string | null,
+): Promise<Response | null> {
+  const res = await probePlainPath(path, supaUrl, srk, range);
+  if (!res) return null;
+  if (!range && contentTypeFor(path).startsWith("image/")) {
+    const bytes = Buffer.from(await res.arrayBuffer());
+    if (!looksLikePlainMedia(bytes)) return null;
+    const type = contentTypeFromBytes(bytes, contentTypeFor(path));
+    if (path !== requestedPath) void uploadPlain(requestedPath, bytes, type, supaUrl, srk);
+    return rangeResponse(bytes, type, null);
+  }
+  return upstreamMediaResponse(res, contentTypeFor(path));
+}
+
+/**
+ * Resolve the first hit among several candidate paths, probing them in
+ * parallel batches instead of one slow sequential request at a time.
+ * Order is preserved: the earliest candidate that exists wins.
+ */
+async function firstPlainHit(
+  paths: string[],
+  requestedPath: string,
+  supaUrl: string,
+  srk: string,
+  range: string | null,
+  concurrency = 6,
+): Promise<{ path: string; response: Response } | null> {
+  for (let i = 0; i < paths.length; i += concurrency) {
+    const batch = paths.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (path) => ({
+        path,
+        response: await fetchPlainExact(path, requestedPath, supaUrl, srk, range).catch(() => null),
+      })),
+    );
+    const hit = results.find((r) => r.response);
+    if (hit) return { path: hit.path, response: hit.response! };
+  }
+  return null;
+}
+
 async function fetchPlainObject(
   storagePath: string,
   cacheKey: string,
@@ -189,35 +258,17 @@ async function fetchPlainObject(
   const paths = cached === undefined
     ? candidatePaths
     : cached ? [cached, ...candidatePaths.filter((path) => path !== cached)] : [];
+  if (!paths.length) return null;
 
-  for (const path of paths) {
-    const headers: Record<string, string> = { Authorization: `Bearer ${srk}`, apikey: srk };
-    if (range) headers.Range = range;
-    const res = await fetch(
-      `${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
-      { headers },
-    );
-    if ((res.ok || res.status === 206) && !range && contentTypeFor(path).startsWith("image/")) {
-      const bytes = Buffer.from(await res.arrayBuffer());
-      if (!looksLikePlainMedia(bytes)) {
-        if (plainNameCache.get(cacheKey) === path) plainNameCache.delete(cacheKey);
-        continue;
-      }
-      const type = contentTypeFromBytes(bytes, contentTypeFor(path));
-      if (path !== storagePath) {
-        void uploadPlain(storagePath, bytes, type, supaUrl, srk);
-      }
-      plainNameCache.set(cacheKey, path);
-      return rangeResponse(bytes, type, null);
-    }
-    if (res.ok || res.status === 206) {
-      plainNameCache.set(cacheKey, path);
-      return upstreamMediaResponse(res, contentTypeFor(path));
-    }
+  const hit = await firstPlainHit(paths, storagePath, supaUrl, srk, range);
+  if (hit) {
+    plainNameCache.set(cacheKey, hit.path);
+    return hit.response;
   }
   if (cached === undefined) plainNameCache.set(cacheKey, null);
   return null;
 }
+
 
 async function fetchPlainUrlFromDb(
   qbankId: number, name: string, supaUrl: string, srk: string,
