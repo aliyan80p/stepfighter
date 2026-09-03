@@ -8,6 +8,9 @@
   "compatibility_date": "2025-09-01",
   // Required: node:crypto (HMAC media tokens, OTP hashing) and node:buffer.
   "compatibility_flags": ["nodejs_compat"],
+  // Preserve variables and secrets configured in the Cloudflare dashboard.
+  // They are intentionally not committed to this repository.
+  "keep_vars": true,
   "assets": {
     "directory": "dist/client",
     "binding": "ASSETS"
