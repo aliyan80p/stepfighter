@@ -19,9 +19,9 @@ export const getLibraryToc = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
   .handler(async ({ data, context }) => {
-    const rows: LibraryNode[] = [];
     const page = 1000;
-    for (let from = 0; ; from += page) {
+
+    const fetchPage = async (from: number) => {
       const { data: chunk, error } = await context.supabase
         .from("library_toc")
         .select("id,name,doc_id,section,parent_id,leaf")
@@ -29,8 +29,25 @@ export const getLibraryToc = createServerFn({ method: "GET" })
         .order("id")
         .range(from, from + page - 1);
       if (error) throw internalError(error);
-      if (!chunk?.length) break;
-      for (const r of chunk as any[]) {
+      return (chunk ?? []) as any[];
+    };
+
+    // Total first, then fetch every page in parallel: sequential paging made
+    // the table of contents take ~15s on slower/remote database regions.
+    const { count, error: countError } = await context.supabase
+      .from("library_toc")
+      .select("id", { count: "exact", head: true })
+      .eq("qbank_id", data.qbankId);
+    if (countError) throw internalError(countError);
+
+    const total = count ?? 0;
+    const offsets: number[] = [];
+    for (let from = 0; from < total; from += page) offsets.push(from);
+
+    const chunks = await Promise.all(offsets.map(fetchPage));
+    const rows: LibraryNode[] = [];
+    for (const chunk of chunks) {
+      for (const r of chunk) {
         rows.push({
           id: r.id,
           name: r.name,
@@ -40,9 +57,9 @@ export const getLibraryToc = createServerFn({ method: "GET" })
           leaf: r.leaf ?? null,
         });
       }
-      if (chunk.length < page) break;
     }
     return rows;
+
   });
 
 /** One decrypted library article. */
