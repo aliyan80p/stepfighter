@@ -20,6 +20,13 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    // Local override: when .env.local supplies VITE_SUPABASE_*, make it win over the
+    // platform-injected values so dev/preview can target a self-managed Supabase project.
+    define: Object.fromEntries(
+      ["VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PROJECT_ID"]
+        .filter((key) => serverEnv[key])
+        .map((key) => [`import.meta.env.${key}`, JSON.stringify(serverEnv[key])]),
+    ),
     // Pin entities to the hoisted v4.5.0 copy so React Email SSR works.
     resolve: {
       alias: {
