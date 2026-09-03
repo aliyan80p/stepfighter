@@ -211,7 +211,7 @@ function ImprovementsPage() {
                   {q.completedTestId ? (
                     <Button
                       variant="outline"
-                      onClick={() => navigate(resultsNav(q.completedTestId))}
+                      onClick={() => navigate(resultsNav(q.completedTestId!))}
                     >
                       Review
                     </Button>
