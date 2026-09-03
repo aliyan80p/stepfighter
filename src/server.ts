@@ -48,8 +48,21 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// Cloudflare Workers deliver vars/secrets on the per-request `env` object, not
+// on `process.env`. Copy string bindings across (never overwriting an existing
+// value) so server code can keep reading process.env on every host.
+function hydrateProcessEnv(env: unknown): void {
+  if (!env || typeof env !== "object") return;
+  const target = (globalThis as { process?: { env?: Record<string, string> } }).process?.env;
+  if (!target) return;
+  for (const [key, value] of Object.entries(env as Record<string, unknown>)) {
+    if (typeof value === "string" && !target[key]) target[key] = value;
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    hydrateProcessEnv(env);
     const { assertServerEnv } = await import("./lib/env.server");
     const missing = assertServerEnv();
     if (missing.length) {
