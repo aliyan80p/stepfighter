@@ -1,4 +1,4 @@
-# Standby deployment (Vercel + your own Supabase)
+# Standby deployment (Cloudflare Workers + your own Supabase)
 
 An independent disaster-recovery copy of StepFighter, running from this same
 GitHub repository against your own Supabase project. The live Lovable
@@ -66,7 +66,8 @@ install time.
 
 ## 4. Supabase configuration to recreate
 
-- **Auth → URL configuration**: Site URL and Redirect URLs = the Vercel domain.
+- **Auth → URL configuration**: Site URL and Redirect URLs = the Workers domain
+  (`<name>.workers.dev` at first).
 - **Auth → Providers**: email enabled, anonymous sign-ups off, confirmations on.
 - **Auth → SMTP**: your Zoho credentials.
 - **Storage**: `qbank-media-plain` and `backups`, both private (already created).
@@ -78,12 +79,17 @@ install time.
 
 ## 5. Deployment steps
 
-1. Import this repository into Vercel (a dedicated branch is recommended so the
-   Lovable project keeps deploying from `main`).
-2. Add every variable from section 1 as Vercel environment variables.
-3. Deploy to the generated preview domain first — no custom domain yet.
-4. In Supabase, set Site URL / redirect URLs to that domain and configure SMTP.
-5. Smoke test: sign in with an existing account, open a question with an image,
+1. In the Cloudflare dashboard: Workers & Pages → Create → connect this GitHub
+   repository (a dedicated branch is recommended so the Lovable project keeps
+   deploying from `main`).
+2. Build command `npm run build`, deploy command `npx wrangler deploy`.
+   Wrangler reads `wrangler.jsonc` for the entry point and assets.
+3. Add every variable from section 1 — client `VITE_*` ones as build-time
+   variables, all server-only ones as **encrypted secrets**
+   (`npx wrangler secret put NAME`, or Settings → Variables and Secrets).
+4. Deploy to the `*.workers.dev` domain first — no custom domain yet.
+5. In Supabase, set Site URL / redirect URLs to that domain and configure SMTP.
+6. Smoke test: sign in with an existing account, open a question with an image,
    submit a test, check statistics, check flashcards.
-6. Only after all of the above passes, decide whether to attach
-   `stepfighter.com`. Keep the Lovable deployment live until then.
+7. Only after all of the above passes, attach `stepfighter.com` as a Workers
+   custom domain. Keep the Lovable deployment live until then.
