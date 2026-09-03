@@ -13,16 +13,19 @@ const CRITICAL = [
   "OTP_PEPPER",
 ] as const;
 
-let checked = false;
-let missing: string[] = [];
+let ok = false;
 
 export function assertServerEnv(): string[] {
-  if (checked) return missing;
-  checked = true;
-  missing = CRITICAL.filter((name) => !process.env[name]);
+  // Only a passing result is cached. On Cloudflare Workers bindings are
+  // injected per-request, so caching a failure from an early request would
+  // wedge the Worker into a permanent 503.
+  if (ok) return [];
+  const missing = CRITICAL.filter((name) => !process.env[name]);
   if (missing.length) {
     // Names only — never the values.
     console.error(`[startup] Missing required configuration: ${missing.join(", ")}`);
+  } else {
+    ok = true;
   }
   return missing;
 }
