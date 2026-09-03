@@ -93,13 +93,18 @@ function ResetPasswordPage() {
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">SF</span>
         </Link>
         <div className="rounded-lg border border-border bg-card p-6">
-          <h1 className="text-xl font-semibold">Reset your password</h1>
-          {!ready ? (
+          <h1 className="text-xl font-semibold">
+            {status === "ready" ? "Set a new password" : "Reset your password"}
+          </h1>
+          {status === "checking" ? (
+            <p className="mt-4 text-sm text-muted-foreground">Verifying your reset link…</p>
+          ) : status === "invalid" ? (
             <p className="mt-4 text-sm text-muted-foreground">
               This link is invalid or has expired. Request a new one from the{" "}
               <Link to="/auth" className="underline hover:text-foreground">sign-in page</Link>.
             </p>
           ) : (
+
             <form onSubmit={submit} className="space-y-3 mt-4">
               <div>
                 <Label htmlFor="pw">New password</Label>
