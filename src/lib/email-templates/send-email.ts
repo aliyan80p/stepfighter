@@ -69,7 +69,12 @@ export async function sendTemplateEmail(
       ? template.subject(templateData)
       : template.subject
 
+  if (useBrevo) {
+    return await sendViaBrevo({ recipient, subject, html, text, templateName, replyTo: options.replyTo })
+  }
+
   try {
+
     await sendLovableEmail(
       {
         to: recipient,
