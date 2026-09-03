@@ -40,39 +40,57 @@ Companion docs: `docs/STANDBY-DEPLOY.md` (env + deploy details),
 
 ---
 
-## Phase 2 — Freeze and final data sync
+## Phase 2 — Freeze and final data sync — DONE (2026-09-03)
 
-Do this in one window, ideally at low traffic (early morning Karachi time).
+Run in one window, ideally at low traffic (early morning Karachi time).
 
 1. Announce a short maintenance window (30–60 min).
-2. Put the Lovable app in read-only mode *or* simply accept that writes in the
-   window are lost — the safest option is to disable sign-ups/tests briefly.
-3. Re-run the mirror of user-side tables from Lovable → your Supabase
-   (profiles, user_roles, user_entitlements, attempts, tests, bookmarks,
-   flashcards*, question_notes, feedback, qbank_resets) plus `auth.users`,
-   `auth.identities`, `auth.mfa_factors` via `export_auth_snapshot`.
-4. Re-run the media delta sync (`scripts/mirror-media-bytes.mjs`) so any files
-   added since the last mirror are copied.
-5. Verify row counts match on both sides for every table before continuing.
+2. Put the Lovable app in read-only mode *or* accept that writes in the window
+   are lost — safest is to disable sign-ups/tests briefly.
+3. `bun scripts/sync-user-data.mjs` — idempotent upsert of profiles, user_roles,
+   user_entitlements, flashcard_decks, flashcards, flashcard_reviews, tests,
+   attempts, bookmarks, question_notes, feedback, qbank_resets. Never deletes.
+   Auth rows (`auth.users`, identities, mfa_factors) are compared with
+   `export_auth_snapshot`; all 9 accounts already exist on the mirror.
+4. Bump identity sequences on the mirror afterwards:
+   `select setval(pg_get_serial_sequence('public.tests','id'), max(id))` and the
+   same for `public.attempts` (otherwise new inserts collide).
+5. `CONCURRENCY=12 bun scripts/mirror-media-bytes.mjs` for the media delta.
+6. Verify counts on both sides.
+
+Result of the final run: content parity exact (questions 16,602 / answers 87,628 /
+refs 17,516 / library_docs 1,529 / library_toc 14,646 / subjects 27 / systems 70);
+media 15,959 objects (1 delta file copied); user-side rows all present, mirror
+slightly ahead due to local test accounts. Re-run steps 3–5 immediately before
+the DNS switch to pick up anything written since.
 
 ---
 
 ## Phase 3 — Switch the domain
 
-1. Deploy the Worker and smoke test on `*.workers.dev`:
-   sign in, image-heavy question, submit a test, statistics, flashcards,
-   library PDF, password reset, OTP email.
-2. In Supabase → Auth → URL configuration, set Site URL and Redirect URLs to
+`stepfighter.com` DNS is currently managed inside Lovable, so the domain must be
+moved out first:
+
+1. Deploy the Worker and smoke test on `*.workers.dev`: sign in, image-heavy
+   question, submit a test, statistics, flashcards, library PDF, password reset,
+   OTP email.
+2. At the **registrar** where `stepfighter.com` was bought, change the
+   nameservers to the Cloudflare nameservers shown when you add the site in your
+   own Cloudflare account (Add a site → stepfighter.com → Free plan). If the
+   domain was purchased through Lovable, request the transfer/auth code first;
+   until it is in your Cloudflare zone, Lovable controls the records.
+3. In Supabase → Auth → URL configuration, set Site URL and Redirect URLs to
    `https://stepfighter.com`, `https://www.stepfighter.com` and the
    `*.workers.dev` domain.
-3. In Cloudflare → the Worker → Domains & Routes, add `stepfighter.com` and
-   `www.stepfighter.com` as custom domains. DNS records are created for you.
-4. Wait for the certificate to issue, then verify HTTPS on both hostnames.
-5. Keep the Lovable deployment alive (on `stepfighter.lovable.app`) for at
-   least 7 days as an instant rollback target — do not delete anything.
+4. In Cloudflare → the Worker → Domains & Routes, add `stepfighter.com` and
+   `www.stepfighter.com` as custom domains; DNS records are created for you.
+5. Wait for the certificate to issue, then verify HTTPS on both hostnames.
+6. Keep the Lovable deployment alive on `stepfighter.lovable.app` for at least
+   7 days as an instant rollback target — do not delete anything.
 
 **Rollback:** point the custom domain back to the Lovable deployment. Any data
 written to your Supabase during the rollback window must be re-synced back.
+
 
 ---
 
