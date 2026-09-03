@@ -59,7 +59,7 @@ function Home() {
                 </div>
                 <div className="rounded-md overflow-hidden bg-white aspect-[16/10]">
                   <img
-                    src="/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png"
+                    src="/brand/desktop_dashboard.png"
                     alt="StepFighter USMLE dashboard on laptop"
                     className="w-full h-full object-contain object-top bg-white"
                     loading="eager"
@@ -75,7 +75,7 @@ function Home() {
                 <div className="w-[110px] md:w-[150px] lg:w-[180px] rounded-[24px] bg-slate-900 p-1.5 shadow-2xl ring-1 ring-slate-800">
                   <div className="rounded-[18px] overflow-hidden bg-white aspect-[9/19]">
                     <img
-                      src="/__l5e/assets-v1/3101a121-ca59-4b1c-920d-a4c823eb2f72/iphone-exam-question.jpg"
+                      src="/brand/iphone-exam-question.jpg"
                       alt="StepFighter exam mode question on iPhone"
                       className="w-full h-full object-cover object-center"
                       loading="lazy"
@@ -120,9 +120,9 @@ function Home() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { u: "/__l5e/assets-v1/9c97374c-9f3d-4423-86ce-1440635ebd32/desktop_new_test.png", t: "Custom Quiz Builder", d: "Tutor or exam mode, timed or untimed, filtered by subject, system, topic." },
-              { u: "/__l5e/assets-v1/b9e527e7-e8a2-4666-a40d-8f4f49ec8004/desktop_performance.png", t: "Performance Analytics", d: "Score, correct, incorrect, answer changes and test count — updated in real time." },
-              { u: "/__l5e/assets-v1/53f16ac0-7b02-40f1-bae2-2ba6155ac922/desktop_dashboard.png", t: "Study Dashboard", d: "Every metric that matters, in one glance — QBank usage, accuracy, momentum." },
+              { u: "/brand/desktop_new_test.png", t: "Custom Quiz Builder", d: "Tutor or exam mode, timed or untimed, filtered by subject, system, topic." },
+              { u: "/brand/desktop_performance.png", t: "Performance Analytics", d: "Score, correct, incorrect, answer changes and test count — updated in real time." },
+              { u: "/brand/desktop_dashboard.png", t: "Study Dashboard", d: "Every metric that matters, in one glance — QBank usage, accuracy, momentum." },
             ].map((s) => (
               <div key={s.t} className="rounded-lg overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow">
                 <div className="aspect-[16/10] overflow-hidden bg-slate-100 border-b border-slate-200">
@@ -149,7 +149,7 @@ function Home() {
           <div className="grid md:grid-cols-2 gap-8">
             <div className="group">
               <div className="rounded-lg overflow-hidden border border-slate-200 shadow-lg bg-white transition-transform group-hover:-translate-y-1">
-                <img src="/__l5e/assets-v1/25717ce4-9b95-4e75-b182-9e7d7b427ce9/exam-mode-full.jpg" alt="StepFighter Exam mode with Prometric-style interface" className="w-full h-auto block" loading="lazy" />
+                <img src="/brand/exam-mode-full.jpg" alt="StepFighter Exam mode with Prometric-style interface" className="w-full h-auto block" loading="lazy" />
               </div>
               <div className="mt-5">
                 <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-1">Exam mode</div>
@@ -159,7 +159,7 @@ function Home() {
             </div>
             <div className="group">
               <div className="rounded-lg overflow-hidden border border-slate-200 shadow-lg bg-white transition-transform group-hover:-translate-y-1">
-                <img src="/__l5e/assets-v1/94199958-0d3d-4753-8865-c4c1fed6dee4/tutor-mode-full.jpg" alt="StepFighter Tutor mode with diagram and explanation" className="w-full h-auto block" loading="lazy" />
+                <img src="/brand/tutor-mode-full.jpg" alt="StepFighter Tutor mode with diagram and explanation" className="w-full h-auto block" loading="lazy" />
               </div>
               <div className="mt-5">
                 <div className="text-xs font-bold uppercase tracking-widest text-amber-500 mb-1">Tutor mode</div>
