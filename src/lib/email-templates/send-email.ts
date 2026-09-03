@@ -37,8 +37,11 @@ export async function sendTemplateEmail(
   to: string,
   options: SendTemplateEmailOptions = {}
 ): Promise<SendTemplateEmailResult> {
+  // Standby (Cloudflare/Supabase) opts into Brevo with EMAIL_PROVIDER=brevo.
+  // Live Lovable never sets it, so production keeps the managed path untouched.
+  const useBrevo = (process.env.EMAIL_PROVIDER ?? '').toLowerCase() === 'brevo'
   const apiKey = process.env.LOVABLE_API_KEY
-  if (!apiKey) {
+  if (!useBrevo && !apiKey) {
     throw new Error('LOVABLE_API_KEY is not configured')
   }
 
@@ -65,6 +68,10 @@ export async function sendTemplateEmail(
       ? template.subject(templateData)
       : template.subject
 
+  if (useBrevo) {
+    return await sendViaBrevo({ recipient, subject, html, text, templateName, replyTo: options.replyTo })
+  }
+
   try {
     await sendLovableEmail(
       {
@@ -79,13 +86,76 @@ export async function sendTemplateEmail(
         idempotency_key: options.idempotencyKey || crypto.randomUUID(),
         reply_to: options.replyTo,
       },
-      { apiKey, sendUrl: process.env.LOVABLE_SEND_URL }
+      { apiKey: apiKey!, sendUrl: process.env.LOVABLE_SEND_URL }
     )
   } catch (error) {
     if (error instanceof EmailAPIError && error.code === 'recipient_suppressed') {
       return { sent: false, reason: 'recipient_suppressed' }
     }
     throw error
+  }
+
+  return { sent: true }
+}
+
+/**
+ * Standby-only transport: Brevo's transactional API. Same contract and return
+ * type as the managed path. The API key is read from the server env and is
+ * never logged, returned, or sent to the browser.
+ */
+async function sendViaBrevo(args: {
+  recipient: string
+  subject: string
+  html: string
+  text: string
+  templateName: string
+  replyTo?: string
+}): Promise<SendTemplateEmailResult> {
+  const brevoKey = process.env.BREVO_API_KEY
+  if (!brevoKey) {
+    throw new Error('BREVO_API_KEY is not configured')
+  }
+
+  let response: Response
+  try {
+    response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'api-key': brevoKey,
+      },
+      body: JSON.stringify({
+        sender: { name: SITE_NAME, email: `noreply@${FROM_DOMAIN}` },
+        to: [{ email: args.recipient }],
+        subject: args.subject,
+        htmlContent: args.html,
+        textContent: args.text,
+        ...(args.replyTo ? { replyTo: { email: args.replyTo } } : {}),
+        tags: [args.templateName],
+      }),
+    })
+  } catch (error) {
+    console.error('[brevo] network failure', {
+      template: args.templateName,
+      message: error instanceof Error ? error.message : String(error),
+    })
+    throw new Error('Email service unreachable. Please try again.')
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '')
+    // Brevo has no dedicated suppression error code; blocked recipients come
+    // back as 400 invalid_parameter mentioning the blocked/unsubscribed contact.
+    const suppressed =
+      response.status === 400 && /blocked|unsubscrib|blacklist/i.test(body)
+    console.error('[brevo] send failed', {
+      template: args.templateName,
+      status: response.status,
+      body: body.slice(0, 500),
+    })
+    if (suppressed) return { sent: false, reason: 'recipient_suppressed' }
+    throw new Error(`Email send failed (${response.status}).`)
   }
 
   return { sent: true }
