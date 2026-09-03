@@ -489,17 +489,7 @@ Return sections:
 
 Keep it under 350 words. Be direct and specific.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Lovable-API-Key": apiKey,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3.5-flash",
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
+    const resp = await aiChat(prompt);
     if (!resp.ok) {
       const text = await resp.text().catch(() => "");
       if (resp.status === 429) throw new Error("AI rate limit reached. Please try again in a moment.");
@@ -508,6 +498,7 @@ Keep it under 350 words. Be direct and specific.`;
     }
     const json = await resp.json() as { choices?: { message?: { content?: string } }[] };
     const analysis = json.choices?.[0]?.message?.content ?? "No analysis generated.";
+
 
     return { summary, analysis };
   });
