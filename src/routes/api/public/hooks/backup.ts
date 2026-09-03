@@ -232,7 +232,7 @@ export const Route = createFileRoute("/api/public/hooks/backup")({
         try { body = (await request.json()) as typeof body; } catch { /* empty body ok */ }
         const group = body.group && GROUPS[body.group] ? body.group : "users";
         const tables = GROUPS[group];
-        const wantDrive = body.drive !== false;
+        const wantDrive = body.drive !== false && !driveDisabled;
         const stamp = today();
 
         const headers = wantDrive ? driveHeaders() : null;
