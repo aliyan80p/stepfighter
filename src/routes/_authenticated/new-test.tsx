@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ChevronUp, Search, Info, Clock, GraduationCap, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
+import { testNav } from "@/lib/active-test";
 
 export const Route = createFileRoute("/_authenticated/new-test")({
   component: NewTest,
@@ -325,7 +326,7 @@ function NewTest() {
       try {
         const r = await createCustomFn({ data: { qbankId: selectedQbankId, questionIds: ids, mode, timed } });
         if (r.skipped > 0) toast.message(`${r.skipped} ID(s) were not found and skipped`);
-        navigate({ to: "/test/$id", params: { id: String(r.id) } });
+        navigate(testNav(r.id));
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to create test";
         if (msg.includes("ACCESS_DENIED")) { navigate({ to: "/upgrade" }); return; }
@@ -338,7 +339,7 @@ function NewTest() {
     setLoading(true);
     try {
       const r = await createFn({ data: { qbankId: selectedQbankId, sources: selectedSources, subjectIds, systemIds, topicNames, count, mode, timed, scope } });
-      navigate({ to: "/test/$id", params: { id: String(r.id) } });
+      navigate(testNav(r.id));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to create test";
       if (msg.includes("ACCESS_DENIED")) { navigate({ to: "/upgrade" }); return; }
