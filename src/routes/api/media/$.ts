@@ -421,22 +421,35 @@ export const Route = createFileRoute("/api/media/$")({
 
         const range = request.headers.get("range");
 
-        // Fastest path: stream warmed media through this same route instead of
-        // redirecting the browser to a signed storage URL.  This avoids blank
-        // images on stricter browsers/devices while still using the warmed copy.
+        // Medical Library articles are shared by all qbanks, but their images
+        // were warmed under whichever namespace first requested them (root /
+        // step1 / step3). Probe the exact filename under every namespace in
+        // parallel first — this is the common case and costs one round trip,
+        // instead of dozens of sequential misses before the right prefix.
+        const altPrefixes = ["", "step1/", "step3/"].filter((p) => p !== storagePrefix);
+        const exactPaths = [`${storagePrefix}${name}`, ...altPrefixes.map((p) => `${p}${name}`)];
+        const exactHit = await firstPlainHit(
+          exactPaths, `${storagePrefix}${name}`, supaUrl, srk, range, exactPaths.length,
+        );
+        if (exactHit) {
+          plainNameCache.set(
+            exactHit.path.startsWith(storagePrefix) && exactHit.path === `${storagePrefix}${name}`
+              ? cacheKey
+              : `${exactHit.path.slice(0, exactHit.path.lastIndexOf("/") + 1)}|${name}`,
+            exactHit.path,
+          );
+          return exactHit.response;
+        }
+
+        // Fuzzy fallback: case/prefix/extension variants, per namespace.
         const plainObject = await fetchPlainObject(`${storagePrefix}${name}`, cacheKey, supaUrl, srk, range);
         if (plainObject) return plainObject;
 
-        // Cross-namespace fallback. Medical Library articles are shared by all
-        // qbanks, but their images were warmed under whichever qbank namespace
-        // first requested them (root / step1 / step3). Without this fallback a
-        // Step 2 user gets 404s for every library image warmed under step1, and
-        // vice versa — which is why "some" media loads and some never does.
-        const altPrefixes = ["", "step1/", "step3/"].filter((p) => p !== storagePrefix);
         for (const alt of altPrefixes) {
           const altObject = await fetchPlainObject(`${alt}${name}`, `${alt}|${name}`, supaUrl, srk, range);
           if (altObject) return altObject;
         }
+
 
 
         // Images must never bypass this route via old signed URLs: affected
