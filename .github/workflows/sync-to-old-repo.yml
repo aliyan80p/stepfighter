@@ -1,0 +1,22 @@
+name: Sync to old repo
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout new Lovable repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.OLD_REPO_TOKEN }}
+
+      - name: Force-push main to old repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add old https://x-access-token:${{ secrets.OLD_REPO_TOKEN }}@github.com/aliyan80p/stepfighter-5859cf60.git
+          git push old main:main --force
