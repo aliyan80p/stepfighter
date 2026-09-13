@@ -144,6 +144,24 @@ function ResetPasswordPage() {
         // A genuine exchange/verification failure is handled below.
       }
 
+      if (cancelled || settledRef.current) return;
+
+      // The auth client redeems the link itself (detectSessionInUrl), so our
+      // manual exchange can lose the race and fail on an already-used code.
+      // Only declare the link dead when no recovery session actually exists.
+      if (!isLinkUsed(linkIdRef.current)) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            markReady();
+            window.history.replaceState({}, document.title, "/reset-password");
+            return;
+          }
+        } catch {
+          /* fall through to the invalid state */
+        }
+      }
+
       if (!cancelled && !settledRef.current) {
         settledRef.current = true;
         setStatus("invalid");
