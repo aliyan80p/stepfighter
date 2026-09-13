@@ -128,7 +128,7 @@ export const Route = createFileRoute("/_authenticated")({
       .eq("id", data.user.id)
       .maybeSingle();
     const until = prof?.mfa_verified_until ? new Date(prof.mfa_verified_until).getTime() : 0;
-    if (until <= Date.now()) throw redirect({ to: "/verify-2fa" });
+    if (until <= Date.now() && !isLovablePreviewHost()) throw redirect({ to: "/verify-2fa" });
     return { user: data.user };
   },
   component: AuthedLayout,
