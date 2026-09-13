@@ -7,10 +7,11 @@ on:
 
 jobs:
   sync:
+    if: github.repository != 'aliyan80p/stepfighter-5859cf60'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout new Lovable repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           persist-credentials: false
