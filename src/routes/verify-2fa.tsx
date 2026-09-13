@@ -14,6 +14,8 @@ export const Route = createFileRoute("/verify-2fa")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
+    // Lovable test site cannot deliver the code email — go straight in.
+    if (isLovablePreviewHost()) throw redirect({ to: "/dashboard" });
   },
   head: () => ({ meta: [{ title: "Verify sign-in — StepFighter" }] }),
   component: Verify2FA,
