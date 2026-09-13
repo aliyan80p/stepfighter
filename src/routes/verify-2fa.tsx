@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ShieldCheck } from "lucide-react";
 import { requestLoginOtp, verifyLoginOtp, getMfaStatus } from "@/lib/mfa.functions";
 import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
+import { isLovablePreviewHost } from "@/lib/preview-host";
 
 export const Route = createFileRoute("/verify-2fa")({
   ssr: false,
