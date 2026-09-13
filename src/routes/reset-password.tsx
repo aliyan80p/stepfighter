@@ -82,8 +82,10 @@ function ResetPasswordPage() {
 
     // Subscribe before processing the URL so an early PASSWORD_RECOVERY event
     // cannot be missed while the auth client hydrates its session.
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event !== "PASSWORD_RECOVERY") return;
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // PKCE (?code=) emits SIGNED_IN, implicit hash emits PASSWORD_RECOVERY.
+      if (event !== "PASSWORD_RECOVERY" && !(event === "SIGNED_IN" && session)) return;
+      if (isLinkUsed(linkIdRef.current)) return;
       recoveryEventReceived = true;
       markReady();
     });
