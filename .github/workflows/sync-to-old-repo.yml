@@ -1,8 +1,6 @@
 name: Sync to old repo
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
