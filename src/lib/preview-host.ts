@@ -7,6 +7,10 @@
  */
 export function isLovablePreviewHost(): boolean {
   if (typeof window === 'undefined') return false
-  const h = window.location.hostname
+  const h = window.location.hostname.toLowerCase()
+
+  // Hard safety net: the real site can never take the bypass, whatever else changes.
+  if (h === 'stepfighter.com' || h.endsWith('.stepfighter.com')) return false
+
   return h.endsWith('.lovable.app') || h.endsWith('.lovable.dev') || h === 'localhost'
 }
