@@ -82,8 +82,10 @@ function ResetPasswordPage() {
 
     // Subscribe before processing the URL so an early PASSWORD_RECOVERY event
     // cannot be missed while the auth client hydrates its session.
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event !== "PASSWORD_RECOVERY") return;
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // PKCE (?code=) emits SIGNED_IN, implicit hash emits PASSWORD_RECOVERY.
+      if (event !== "PASSWORD_RECOVERY" && !(event === "SIGNED_IN" && session)) return;
+      if (isLinkUsed(linkIdRef.current)) return;
       recoveryEventReceived = true;
       markReady();
     });
@@ -140,6 +142,24 @@ function ResetPasswordPage() {
         }
       } catch {
         // A genuine exchange/verification failure is handled below.
+      }
+
+      if (cancelled || settledRef.current) return;
+
+      // The auth client redeems the link itself (detectSessionInUrl), so our
+      // manual exchange can lose the race and fail on an already-used code.
+      // Only declare the link dead when no recovery session actually exists.
+      if (!isLinkUsed(linkIdRef.current)) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            markReady();
+            window.history.replaceState({}, document.title, "/reset-password");
+            return;
+          }
+        } catch {
+          /* fall through to the invalid state */
+        }
       }
 
       if (!cancelled && !settledRef.current) {
