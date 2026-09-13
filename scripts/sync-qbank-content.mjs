@@ -83,7 +83,7 @@ async function upsert(table, conflict, rows) {
 }
 
 async function count(env, table, ids) {
-  const res = await fetch(`${env.u}/rest/v1/${table}?select=id${filterFor(table, ids)}`, {
+  const res = await fetch(`${env.u}/rest/v1/${table}?select=*${filterFor(table, ids)}`, {
     headers: { ...h(env.k), Prefer: 'count=exact', Range: '0-0' },
   });
   return Number((res.headers.get('content-range') || '/0').split('/')[1]) || 0;
