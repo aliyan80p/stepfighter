@@ -43,16 +43,17 @@ const QBANK_OPTIONS = [
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const checkAdmin = useServerFn(isCurrentUserAdmin);
-  const adminQ = useQuery({ queryKey: ["is-admin"], queryFn: () => checkAdmin() });
-  const isAdmin = adminQ.data?.admin;
+  const fetchAccess = useServerFn(getMyAdminAccess);
+  const accessQ = useQuery({ queryKey: ["my-admin-access"], queryFn: () => fetchAccess() });
+  const access = accessQ.data;
+  const isAdmin = access?.admin;
 
   useEffect(() => {
-    if (adminQ.isSuccess && !isAdmin) navigate({ to: "/dashboard" });
-  }, [adminQ.isSuccess, isAdmin, navigate]);
+    if (accessQ.isSuccess && !isAdmin) navigate({ to: "/dashboard" });
+  }, [accessQ.isSuccess, isAdmin, navigate]);
 
-  if (adminQ.isLoading) return <div className="p-8 text-muted-foreground text-sm">Checking access…</div>;
-  if (adminQ.isSuccess && !isAdmin) {
+  if (accessQ.isLoading) return <div className="p-8 text-muted-foreground text-sm">Checking access…</div>;
+  if (accessQ.isSuccess && !isAdmin) {
     return (
       <div className="p-8 max-w-md">
         <div className="flex items-center gap-2 text-destructive font-semibold mb-2">
@@ -62,27 +63,45 @@ function AdminDashboard() {
     );
   }
 
+  const tabs = [
+    { value: "overview", perm: "analytics" as const, icon: BarChart3, label: "Overview", node: <OverviewTab /> },
+    { value: "users", perm: "users" as const, icon: UserCog, label: "Users", node: <UsersTab /> },
+    { value: "feedback", perm: "feedback" as const, icon: MessageSquare, label: "Feedback", node: <FeedbackTab /> },
+    { value: "questions", perm: "questions" as const, icon: Pencil, label: "Questions", node: <QuestionsManager /> },
+    { value: "content", perm: "content" as const, icon: Layers, label: "Content", node: <ContentManager /> },
+    { value: "bulk", perm: "bulk" as const, icon: Upload, label: "Bulk", node: <BulkManager /> },
+    { value: "admins", perm: "admins" as const, icon: ShieldCheck, label: "Admins", node: <AdminsManager canEdit={Boolean(access?.isSuper)} /> },
+  ].filter((t) => can(access, t.perm));
+
+  if (tabs.length === 0) {
+    return (
+      <div className="p-8 max-w-md text-sm text-muted-foreground">
+        You are an admin but no areas have been assigned to you yet. Ask a main admin to grant access.
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage users, access, courses, library content, questions and feedback.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {access?.isSuper
+            ? "Main admin — full access to users, courses, library content, questions, feedback and admin permissions."
+            : "Your assigned admin areas."}
+        </p>
       </div>
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue={tabs[0]!.value} className="space-y-4">
         <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Overview</TabsTrigger>
-          <TabsTrigger value="users"><UserCog className="h-4 w-4 mr-1" />Users</TabsTrigger>
-          <TabsTrigger value="feedback"><MessageSquare className="h-4 w-4 mr-1" />Feedback</TabsTrigger>
-          <TabsTrigger value="questions"><Pencil className="h-4 w-4 mr-1" />Questions</TabsTrigger>
-          <TabsTrigger value="content"><Layers className="h-4 w-4 mr-1" />Content</TabsTrigger>
-          <TabsTrigger value="bulk"><Upload className="h-4 w-4 mr-1" />Bulk</TabsTrigger>
+          {tabs.map((t) => (
+            <TabsTrigger key={t.value} value={t.value}>
+              <t.icon className="h-4 w-4 mr-1" />{t.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent value="overview"><OverviewTab /></TabsContent>
-        <TabsContent value="users"><UsersTab /></TabsContent>
-        <TabsContent value="feedback"><FeedbackTab /></TabsContent>
-        <TabsContent value="questions"><QuestionsManager /></TabsContent>
-        <TabsContent value="content"><ContentManager /></TabsContent>
-        <TabsContent value="bulk"><BulkManager /></TabsContent>
+        {tabs.map((t) => (
+          <TabsContent key={t.value} value={t.value}>{t.node}</TabsContent>
+        ))}
       </Tabs>
 
     </div>
