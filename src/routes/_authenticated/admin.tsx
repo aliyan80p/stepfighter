@@ -84,6 +84,7 @@ function AdminDashboard() {
     { value: "topics", label: "Topics", icon: Tags, show: can("topics"), el: <TopicsTab /> },
     { value: "courses", label: "Courses", icon: GraduationCap, show: can("courses"), el: <CoursesTab /> },
     { value: "media", label: "Media", icon: ImageIcon, show: can("media"), el: <MediaTab /> },
+    { value: "publish", label: "Publish", icon: Rocket, show: can("publish"), el: <PublishTab /> },
     { value: "admins", label: "Admins", icon: ShieldCheck, show: can("admins"), el: <AdminsTab isSuper={isSuper} /> },
 
   ].filter((t) => t.show);
