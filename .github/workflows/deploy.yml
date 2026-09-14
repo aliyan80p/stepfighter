@@ -27,9 +27,16 @@ jobs:
       - name: Build for Cloudflare
         run: bun run build:cf
         env:
+          NITRO_PRESET: cloudflare_module
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+
+      - name: Verify build output
+        run: |
+          echo "--- dist ---"; ls -la dist || true
+          echo "--- dist/server ---"; ls -la dist/server || true
+          test -f dist/server/index.mjs || { echo "Build did not produce dist/server/index.mjs"; exit 1; }
 
       - name: Deploy to Cloudflare Workers
         run: bunx wrangler@4 deploy
