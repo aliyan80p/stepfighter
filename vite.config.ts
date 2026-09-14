@@ -8,10 +8,13 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { loadEnv } from "vite";
 import path from "path";
 
-// Load all env vars into process.env for server routes (no VITE_ prefix).
-// VITE_* env injection is still handled by the wrapped config for client code.
+// Load local env vars for development without overwriting values supplied by
+// the deployment environment. GitHub Actions injects the managed production
+// database values before Vite starts; those must take precedence over .env.
 const serverEnv = loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), "");
-Object.assign(process.env, serverEnv);
+for (const [key, value] of Object.entries(serverEnv)) {
+  if (process.env[key] === undefined) process.env[key] = value;
+}
 
 export default defineConfig({
   tanstackStart: {
