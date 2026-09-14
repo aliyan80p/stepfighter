@@ -20,9 +20,29 @@ jobs:
           OLD_REPO_TOKEN: ${{ secrets.OLD_REPO_TOKEN }}
         run: |
           if [ -z "$OLD_REPO_TOKEN" ]; then
-            echo "OLD_REPO_TOKEN secret is missing. Add it in Settings > Secrets and variables > Actions."
+            echo "❌ OLD_REPO_TOKEN secret is missing. Add it in Settings > Secrets and variables > Actions."
             exit 1
           fi
+
+          echo "🔑 Token present. Checking API access to aliyan80p/stepfighter-5859cf60..."
+          HTTP_STATUS=$(curl -s -o /tmp/repo_check.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${OLD_REPO_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/aliyan80p/stepfighter-5859cf60")
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Cannot access the old repo via GitHub API. HTTP status: ${HTTP_STATUS}"
+            echo "Response:"
+            cat /tmp/repo_check.json
+            echo ""
+            echo "Common fixes:"
+            echo "  1. Use a Personal Access Token (classic) with the 'repo' scope."
+            echo "  2. If using a fine-grained token, grant Contents:write on aliyan80p/stepfighter-5859cf60."
+            echo "  3. Make sure the token owner has write access to the repository."
+            exit 1
+          fi
+
+          echo "✅ API access OK. Pushing..."
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote remove old 2>/dev/null || true
