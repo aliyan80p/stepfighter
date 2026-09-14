@@ -39,9 +39,12 @@ const COLORS = ["#f59e0b","#3b82f6","#10b981","#ef4444","#8b5cf6","#ec4899","#06
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const checkAdmin = useServerFn(isCurrentUserAdmin);
-  const adminQ = useQuery({ queryKey: ["is-admin"], queryFn: () => checkAdmin() });
+  const accessFn = useServerFn(getMyAdminAccess);
+  const adminQ = useQuery({ queryKey: ["my-admin-access"], queryFn: () => accessFn() });
   const isAdmin = adminQ.data?.admin;
+  const isSuper = Boolean(adminQ.data?.isSuper);
+  const perms: AdminPermission[] = adminQ.data?.permissions ?? [];
+  const can = (p: AdminPermission) => isSuper || perms.includes(p);
 
   useEffect(() => {
     if (adminQ.isSuccess && !isAdmin) navigate({ to: "/dashboard" });
@@ -58,26 +61,48 @@ function AdminDashboard() {
     );
   }
 
+  const tabs = [
+    { value: "overview", label: "Overview", icon: BarChart3, show: can("analytics"), el: <OverviewTab /> },
+    { value: "users", label: "Users", icon: UserCog, show: can("users"), el: <UsersTab /> },
+    { value: "feedback", label: "Feedback", icon: MessageSquare, show: can("feedback"), el: <FeedbackTab /> },
+    { value: "questions", label: "Questions", icon: Pencil, show: can("questions"), el: <QuestionsTab /> },
+    { value: "library", label: "Library", icon: BookOpen, show: can("library"), el: <LibraryTab /> },
+    { value: "admins", label: "Admins", icon: ShieldCheck, show: can("admins"), el: <AdminsTab isSuper={isSuper} /> },
+  ].filter((t) => t.show);
+
+  if (!tabs.length) {
+    return (
+      <div className="p-8 max-w-md text-sm text-muted-foreground">
+        You have admin access, but no sections have been assigned to you yet.
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage users, entitlements, feedback and questions.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {isSuper
+            ? "Full access — users, subscriptions, feedback, questions, library and admins."
+            : "You can manage the sections assigned to you."}
+        </p>
       </div>
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Overview</TabsTrigger>
-          <TabsTrigger value="users"><UserCog className="h-4 w-4 mr-1" />Users</TabsTrigger>
-          <TabsTrigger value="feedback"><MessageSquare className="h-4 w-4 mr-1" />Feedback</TabsTrigger>
-          <TabsTrigger value="questions"><Pencil className="h-4 w-4 mr-1" />Questions</TabsTrigger>
+      <Tabs defaultValue={tabs[0].value} className="space-y-4">
+        <TabsList className="flex-wrap h-auto">
+          {tabs.map((t) => (
+            <TabsTrigger key={t.value} value={t.value}>
+              <t.icon className="h-4 w-4 mr-1" />{t.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent value="overview"><OverviewTab /></TabsContent>
-        <TabsContent value="users"><UsersTab /></TabsContent>
-        <TabsContent value="feedback"><FeedbackTab /></TabsContent>
-        <TabsContent value="questions"><QuestionsTab /></TabsContent>
+        {tabs.map((t) => (
+          <TabsContent key={t.value} value={t.value}>{t.el}</TabsContent>
+        ))}
       </Tabs>
     </div>
   );
+
 }
 
 // ---------------- Overview ----------------
