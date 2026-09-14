@@ -2,6 +2,8 @@ name: Deploy to Cloudflare
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [deploy]
 
 jobs:
   deploy:
@@ -20,35 +22,34 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Create production .env from secrets
+      - name: Prepare production environment variables
+        # Use repository secrets when present, otherwise use the known managed-Supabase defaults.
+        # Empty secrets are treated the same as missing secrets so the site never deploys blank.
         env:
-          # These are publishable (browser-safe) values. Repository secrets
-          # override them; the defaults keep a deploy from shipping a build
-          # with no backend configured, which breaks the whole site.
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://veqealgeqcvmqpujdlgo.supabase.co' }}
-          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID || 'veqealgeqcvmqpujdlgo' }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO' }}
+          SECRET_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SECRET_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+          SECRET_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: |
+          URL="${SECRET_URL:-https://veqealgeqcvmqpujdlgo.supabase.co}"
+          PROJECT_ID="${SECRET_PROJECT_ID:-veqealgeqcvmqpujdlgo}"
+          PUBLISHABLE_KEY="${SECRET_PUBLISHABLE_KEY:-sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO}"
+
+          if [ -z "$URL" ] || [ -z "$PROJECT_ID" ] || [ -z "$PUBLISHABLE_KEY" ]; then
+            echo "::error::One or more Supabase environment variables are empty. Add them in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          echo "VITE_SUPABASE_URL=$URL" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+
           cat > .env <<EOF
-          VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-          VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
-          VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+          VITE_SUPABASE_URL=$URL
+          VITE_SUPABASE_PROJECT_ID=$PROJECT_ID
+          VITE_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY
           EOF
-          for v in VITE_SUPABASE_URL VITE_SUPABASE_PROJECT_ID VITE_SUPABASE_PUBLISHABLE_KEY; do
-            if ! grep -q "^$v=." .env; then
-              echo "::error::$v is empty. Add it in Settings > Secrets and variables > Actions."
-              exit 1
-            fi
-          done
 
       - name: Build for Cloudflare
-        # Pass these values directly to Vite as well as writing .env above.
-        # This avoids GitHub's step-level environment boundary producing a
-        # client bundle with empty database settings.
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://veqealgeqcvmqpujdlgo.supabase.co' }}
-          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID || 'veqealgeqcvmqpujdlgo' }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO' }}
         run: npm run build:cf
 
       - name: Verify production database settings were embedded
