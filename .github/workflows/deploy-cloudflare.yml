@@ -38,10 +38,11 @@ jobs:
             *veqealgeqcvmqpujdlgo*) echo "Database address OK." ;;
             *) echo "VITE_SUPABASE_URL points at the wrong database: check the secret."; exit 1 ;;
           esac
-          [ "$VITE_SUPABASE_PROJECT_ID" = "veqealgeqcvmqpujdlgo" ] || {
-            echo "VITE_SUPABASE_PROJECT_ID points at the wrong database: check the secret."
-            exit 1
-          }
+          pid=$(printf '%s' "$VITE_SUPABASE_PROJECT_ID" | tr -d '[:space:]')
+          case "$pid" in
+            *veqealgeqcvmqpujdlgo*) echo "Project id OK." ;;
+            *) echo "VITE_SUPABASE_PROJECT_ID points at the wrong database: check the secret."; exit 1 ;;
+          esac
           case "$VITE_SUPABASE_PUBLISHABLE_KEY" in
             sb_publishable_*) echo "Publishable key format OK." ;;
             *) echo "VITE_SUPABASE_PUBLISHABLE_KEY is invalid: check the secret."; exit 1 ;;
