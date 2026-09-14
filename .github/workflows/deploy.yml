@@ -35,8 +35,12 @@ jobs:
 
       - name: Verify build output
         run: |
+          echo "--- workspace ---"; ls -la
           echo "--- dist ---"; ls -la dist || true
           echo "--- dist/server ---"; ls -la dist/server || true
+          echo "--- .output ---"; ls -la .output || true
+          echo "--- any index.mjs ---"
+          find . -path ./node_modules -prune -o -name 'index.mjs' -print || true
           if [ ! -f dist/server/index.mjs ] && [ -f .output/server/index.mjs ]; then
             echo "Build wrote .output; copying to dist"
             mkdir -p dist
