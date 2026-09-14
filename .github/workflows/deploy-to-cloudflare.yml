@@ -20,7 +20,10 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        # The app uses Zod 4 while TanStack's legacy adapter still declares a
+        # Zod 3-only peer range. The lockfile is already tested with Zod 4, so
+        # install that exact dependency tree without npm rejecting the stale range.
+        run: npm ci --legacy-peer-deps
 
       - name: Prepare production environment variables
         # Use repository secrets when present, otherwise use the known managed-Supabase defaults.
