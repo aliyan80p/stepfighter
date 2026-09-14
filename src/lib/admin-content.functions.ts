@@ -17,6 +17,10 @@ export const ADMIN_PERMISSIONS = [
   "feedback",
   "questions",
   "library",
+  "subjects",
+  "topics",
+  "courses",
+  "media",
   "admins",
 ] as const;
 
@@ -28,20 +32,46 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermission, string> = {
   feedback: "Feedback inbox",
   questions: "Question bank editing",
   library: "Medical library editing",
+  subjects: "Subjects & systems",
+  topics: "Topics",
+  courses: "Courses",
+  media: "Media library",
   admins: "Manage admins & permissions",
 };
 
 const MEDIA_BUCKET = "qbank-media-plain";
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
-async function assertPerm(supabase: any, userId: string, permission: AdminPermission) {
+/**
+ * Checks the permission and, when a course is involved, that the person is
+ * allowed to work in that course. An empty `qbank_scope` means "all courses".
+ */
+async function assertPerm(
+  supabase: any,
+  userId: string,
+  permission: AdminPermission,
+  qbankId?: number,
+) {
   const { data, error } = await supabase.rpc("has_admin_permission", {
     _user_id: userId,
     _permission: permission,
   });
   if (error) throw internalError(error);
   if (!data) throw new Error("Forbidden");
+
+  if (typeof qbankId === "number") {
+    const { data: row } = await supabase
+      .from("admin_access")
+      .select("is_super, qbank_scope")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const scope = ((row?.qbank_scope ?? []) as number[]).map(Number);
+    if (!row?.is_super && scope.length && !scope.includes(Number(qbankId))) {
+      throw new Error("You do not have access to this course");
+    }
+  }
 }
+
 
 export type MyAdminAccess = {
   admin: boolean;
