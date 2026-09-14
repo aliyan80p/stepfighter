@@ -11,6 +11,13 @@
   // Preserve variables and secrets configured in the Cloudflare dashboard.
   // They are intentionally not committed to this repository.
   "keep_vars": true,
+  // Public database connection settings required by server-side authentication.
+  // These match the VITE_* values embedded into the production browser build.
+  "vars": {
+    "SUPABASE_URL": "https://veqealgeqcvmqpujdlgo.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO",
+    "SUPABASE_PROJECT_ID": "veqealgeqcvmqpujdlgo"
+  },
   "assets": {
     "directory": "dist/client",
     "binding": "ASSETS"
