@@ -412,9 +412,14 @@ export const setAdminRole = createServerFn({ method: "POST" })
     if (data.admin) {
       const { error } = await supabaseAdmin.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
       if (error) throw internalError(error);
+      // New admins start with no areas until a main admin grants them.
+      await (supabaseAdmin as any)
+        .from("admin_access")
+        .upsert({ user_id: data.userId, is_super: false, permissions: [] }, { onConflict: "user_id", ignoreDuplicates: true });
     } else {
       const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
       if (error) throw internalError(error);
+      await (supabaseAdmin as any).from("admin_access").delete().eq("user_id", data.userId);
     }
     return { ok: true };
   });
