@@ -55,13 +55,23 @@ jobs:
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
         run: npm run build:cf
 
+      - name: Inspect build output
+        run: |
+          echo "=== dist/ ==="
+          ls -la dist/ || true
+          echo "=== dist/client/ ==="
+          ls -la dist/client/ || true
+          echo "=== dist/server/ ==="
+          ls -la dist/server/ || true
+
       - name: Verify the build points at the right database
         run: |
-          if grep -rq "nqtwatlytdewxodmbuxs" dist/client; then
+          targets="dist/client dist/server"
+          if grep -rq "nqtwatlytdewxodmbuxs" $targets 2>/dev/null; then
             echo "Build still contains the test database address. Aborting."
             exit 1
           fi
-          if ! grep -rq "veqealgeqcvmqpujdlgo" dist/client; then
+          if ! grep -rq "veqealgeqcvmqpujdlgo" $targets 2>/dev/null; then
             echo "Build does not contain the managed database address. Aborting."
             exit 1
           fi
