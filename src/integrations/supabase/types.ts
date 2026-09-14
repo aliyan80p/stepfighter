@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access: {
+        Row: {
+          created_at: string
+          is_super: boolean
+          permissions: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_super?: boolean
+          permissions?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          is_super?: boolean
+          permissions?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       answers: {
         Row: {
           answer_index: number
@@ -912,6 +936,10 @@ export type Database = {
         Args: { p_limit?: number; p_offset?: number; p_table: string }
         Returns: Json
       }
+      has_admin_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
       has_qbank_access: {
         Args: { _qbank_id: number; _user_id: string }
         Returns: boolean
@@ -923,6 +951,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       list_media_objects: {
         Args: { _bucket: string; _limit?: number }
         Returns: {
