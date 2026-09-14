@@ -9,6 +9,13 @@ jobs:
   deploy:
     if: github.repository == 'aliyan80p/stepfighter-5859cf60'
     runs-on: ubuntu-latest
+    env:
+      # This workflow is exclusive to the independent production repository.
+      # Keep its public browser configuration deterministic so stale GitHub
+      # values can never point stepfighter.com at the Lovable test database.
+      VITE_SUPABASE_URL: https://veqealgeqcvmqpujdlgo.supabase.co
+      VITE_SUPABASE_PROJECT_ID: veqealgeqcvmqpujdlgo
+      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO
     steps:
       - name: Checkout old repo
         uses: actions/checkout@v5
@@ -26,30 +33,11 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Prepare production environment variables
-        # Use repository secrets when present, otherwise use the known managed-Supabase defaults.
-        # Empty secrets are treated the same as missing secrets so the site never deploys blank.
-        env:
-          SECRET_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          SECRET_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
-          SECRET_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          URL="${SECRET_URL:-https://veqealgeqcvmqpujdlgo.supabase.co}"
-          PROJECT_ID="${SECRET_PROJECT_ID:-veqealgeqcvmqpujdlgo}"
-          PUBLISHABLE_KEY="${SECRET_PUBLISHABLE_KEY:-sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO}"
-
-          if [ -z "$URL" ] || [ -z "$PROJECT_ID" ] || [ -z "$PUBLISHABLE_KEY" ]; then
-            echo "::error::One or more Supabase environment variables are empty. Add them in Settings > Secrets and variables > Actions."
-            exit 1
-          fi
-
-          echo "VITE_SUPABASE_URL=$URL" >> "$GITHUB_ENV"
-          echo "VITE_SUPABASE_PROJECT_ID=$PROJECT_ID" >> "$GITHUB_ENV"
-          echo "VITE_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
-
-          cat > .env <<EOF
-          VITE_SUPABASE_URL=$URL
-          VITE_SUPABASE_PROJECT_ID=$PROJECT_ID
-          VITE_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY
+          cat > .env.production <<EOF
+          VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+          VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
+          VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
           EOF
 
       - name: Build for Cloudflare
@@ -57,7 +45,7 @@ jobs:
 
       - name: Verify production database settings were embedded
         run: |
-          if ! grep -Rqs 'veqealgeqcvmqpujdlgo.supabase.co' dist/client; then
+          if ! grep -Rqs --fixed-strings "$VITE_SUPABASE_URL" dist/client; then
             echo "::error::The website build is missing its database address. Deployment stopped before replacing the live site."
             exit 1
           fi
