@@ -2,6 +2,7 @@ name: Deploy to Cloudflare
 
 # Runs ONLY inside the live repo (aliyan80p/stepfighter-5859cf60).
 # The Lovable repo pushes here via "Sync to old repo", which then triggers this.
+# Revision: 2026-09-14 — forced build folders + managed-database verification.
 on:
   push:
     branches: [main]
