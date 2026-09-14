@@ -9,6 +9,31 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Forbidden");
 }
 
+/**
+ * Server-only: throws unless the caller is an admin AND either a main admin
+ * (super) or has been granted the given permission.
+ */
+export async function assertPermission(
+  supabase: any,
+  userId: string,
+  permission: AdminPermission,
+) {
+  await assertAdmin(supabase, userId);
+  const { data, error } = await supabase.rpc("has_admin_permission", {
+    _user_id: userId,
+    _permission: permission,
+  });
+  if (error) throw internalError(error);
+  if (!data) throw new Error("Forbidden");
+}
+
+async function assertSuper(supabase: any, userId: string) {
+  await assertAdmin(supabase, userId);
+  const { data, error } = await supabase.rpc("is_super_admin", { _user_id: userId });
+  if (error) throw internalError(error);
+  if (!data) throw new Error("Forbidden");
+}
+
 export const isCurrentUserAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -17,6 +42,89 @@ export const isCurrentUserAdmin = createServerFn({ method: "GET" })
       _role: "admin",
     });
     return { admin: Boolean(data) };
+  });
+
+export const getMyAdminAccess = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdminAccess> => {
+    const { data: roleData } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!roleData) return { admin: false, isSuper: false, permissions: [] };
+    const { data } = await (context.supabase as any)
+      .from("admin_access")
+      .select("is_super, permissions")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    const isSuper = Boolean(data?.is_super);
+    const granted = ((data?.permissions as string[] | null) ?? []).filter((p) =>
+      (ALL_ADMIN_PERMISSIONS as string[]).includes(p),
+    ) as AdminPermission[];
+    return {
+      admin: true,
+      isSuper,
+      permissions: isSuper ? [...ALL_ADMIN_PERMISSIONS] : granted,
+    };
+  });
+
+export type AdminAccountRow = {
+  user_id: string;
+  email: string | null;
+  is_super: boolean;
+  permissions: AdminPermission[];
+};
+
+export const listAdmins = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<AdminAccountRow[]> => {
+    await assertPermission(context.supabase, context.userId, "admins");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+    if (error) throw internalError(error);
+    const ids = (roles ?? []).map((r) => r.user_id as string);
+    if (ids.length === 0) return [];
+    const { data: access } = await (supabaseAdmin as any)
+      .from("admin_access")
+      .select("user_id, is_super, permissions")
+      .in("user_id", ids);
+    const accessMap = new Map((access ?? []).map((a: any) => [a.user_id as string, a]));
+    const rows: AdminAccountRow[] = [];
+    for (const id of ids) {
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(id);
+      const a: any = accessMap.get(id);
+      rows.push({
+        user_id: id,
+        email: u?.user?.email ?? null,
+        is_super: Boolean(a?.is_super),
+        permissions: ((a?.permissions as string[] | null) ?? []) as AdminPermission[],
+      });
+    }
+    return rows.sort((x, y) => Number(y.is_super) - Number(x.is_super));
+  });
+
+export const setAdminAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string; isSuper: boolean; permissions: string[] }) => d)
+  .handler(async ({ context, data }) => {
+    await assertSuper(context.supabase, context.userId);
+    if (data.userId === context.userId && !data.isSuper)
+      throw new Error("Cannot remove your own main-admin status");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const permissions = data.permissions.filter((p) =>
+      (ALL_ADMIN_PERMISSIONS as string[]).includes(p),
+    );
+    const { error } = await (supabaseAdmin as any)
+      .from("admin_access")
+      .upsert(
+        { user_id: data.userId, is_super: data.isSuper, permissions, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" },
+      );
+    if (error) throw internalError(error);
+    return { ok: true };
   });
 
 export type AdminAnalytics = {
