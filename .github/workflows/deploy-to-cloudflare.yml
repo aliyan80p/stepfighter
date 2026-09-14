@@ -45,21 +45,19 @@ jobs:
 
       - name: Show build output
         run: |
-          echo "--- dist ---"; ls -la dist || true
-          echo "--- dist/server ---"; ls -la dist/server || true
-          echo "--- dist/client (first entries) ---"; ls -la dist/client | head -20 || true
+          echo "--- Cloudflare server output ---"; ls -la .output/server
+          echo "--- Public website output ---"; ls -la .output/public | head -20
+          test -f .output/server/wrangler.json
 
       - name: Deploy to Cloudflare
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -f dist/server/index.mjs ]; then
-            npx wrangler deploy --config wrangler.jsonc
-          elif [ -f dist/server/wrangler.json ]; then
-            npx wrangler deploy --config dist/server/wrangler.json
-          else
-            echo "Rebuilding because the server output is missing"
-            npm run build:cf
-            npx wrangler deploy --config wrangler.jsonc
-          fi
+          npx wrangler deploy \
+            --config .output/server/wrangler.json \
+            --name stepfighter \
+            --keep-vars \
+            --var "SUPABASE_URL:$VITE_SUPABASE_URL" \
+            --var "SUPABASE_PROJECT_ID:$VITE_SUPABASE_PROJECT_ID" \
+            --var "SUPABASE_PUBLISHABLE_KEY:$VITE_SUPABASE_PUBLISHABLE_KEY"
