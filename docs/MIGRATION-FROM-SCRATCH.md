@@ -91,13 +91,13 @@ before anything can be deployed.
    `GEMINI_API_KEY`, `NBME_EXPORT_TOKEN`, `WARM_MEDIA_SECRET`.
 4. Deploy to `*.workers.dev` first. Set that URL as Supabase Site URL for now.
 
-## Step 7 — Smoke test on workers.dev
+## Step 8 — Smoke test on workers.dev
 
 Sign in · an image-heavy question · submit a test · statistics · flashcards ·
 library PDF · password reset email · login OTP email · `/api/media/*` must
 reject an unsigned request with 401.
 
-## Step 8 — Backups on your own stack
+## Step 9 — Backups on your own stack
 
 `pg_cron` + `pg_net` enabled, `internal_config.hook_secret` and
 `backup_base_url` set, `public.trigger_backup(group)` plus the six staggered
@@ -106,7 +106,7 @@ into the `backups` bucket. Verify with
 `select * from cron.job_run_details order by start_time desc limit 10;`
 and an off-site copy (R2 cron Worker or weekly download).
 
-## Step 9 — The domain switch (do last)
+## Step 10 — The domain switch (do last)
 
 1. Domain must sit in **your** Cloudflare zone and show Active. If it was bought
    through Lovable, get the transfer/auth code first.
@@ -119,7 +119,8 @@ and an off-site copy (R2 cron Worker or weekly download).
 5. Set `internal_config.backup_base_url` to `https://stepfighter.com`, redeploy.
 6. Wait for the certificate, verify HTTPS on both hostnames.
 
-## Step 10 — Decommission (after 7+ clean days)
+## Step 11 — Decommission (after 7+ clean days)
+
 
 Remove the domain from the old project, rotate every secret the old host held,
 archive a final backup, then drop the `@lovable.dev/*` packages in a separate PR.
