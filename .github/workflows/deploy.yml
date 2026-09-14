@@ -28,9 +28,11 @@ jobs:
         run: bun run build:cf
         env:
           NITRO_PRESET: cloudflare_module
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+          # Own managed backend. The publishable key is safe to commit
+          # (row-level security protects the data).
+          VITE_SUPABASE_URL: https://veqealgeqcvmqpujdlgo.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO
+          VITE_SUPABASE_PROJECT_ID: veqealgeqcvmqpujdlgo
 
       - name: Verify build output
         run: |
