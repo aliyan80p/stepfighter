@@ -2,6 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizeQbankAccess } from "@/lib/entitlements.functions";
 import { internalError } from "./errors";
+import {
+  ALL_ADMIN_PERMISSIONS,
+  type AdminAccess,
+  type AdminPermission,
+} from "@/lib/admin-permissions";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
