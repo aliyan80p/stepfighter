@@ -7,6 +7,9 @@ on:
 
 jobs:
   sync:
+    # This workflow is copied into the destination repo during a full overwrite.
+    # Run it only from the Lovable source repo to avoid a second, secret-less run.
+    if: github.repository != 'aliyan80p/stepfighter-5859cf60'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout new Lovable repo
