@@ -1,0 +1,1 @@
+ALTER TABLE public.admin_access ADD COLUMN IF NOT EXISTS qbank_scope integer[] NOT NULL DEFAULT ARRAY[]::integer[];
