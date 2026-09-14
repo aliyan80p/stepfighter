@@ -55,12 +55,34 @@ select setval(pg_get_serial_sequence('public.attempts','id'), max(id)) from publ
   `src/lib/email-templates/*`) in Auth → Email templates; keep
   `{{ .ConfirmationURL }}` as the button link and the copy at 10 minutes.
 
-## Step 6 — Deploy the Worker
+## Step 6 — Get the code into your own GitHub repository
 
-1. Cloudflare → Workers & Pages → connect this GitHub repo (own branch).
+Cloudflare deploys from GitHub, so the code must live in a repo **you** own
+before anything can be deployed.
+
+1. In the Lovable project: top-right → GitHub → **Connect to GitHub**, authorise
+   the Lovable GitHub App for your account/organisation, then **Create
+   repository**. Lovable pushes the full project and keeps pushing every later
+   change to `main`.
+   (If the repo already exists, skip to 2.)
+2. Create a separate branch for the independent deployment, e.g. `cloudflare`.
+   Lovable keeps writing to `main`; Cloudflare builds from `cloudflare`, so a
+   Lovable edit can never deploy itself to your production Worker by surprise.
+   Merge `main` → `cloudflare` whenever you want to ship changes.
+3. Confirm these files are present in the repo: `wrangler.jsonc`, `package.json`
+   with the `build:cf` script, `.env.example`. No `.env` file and no secret
+   values may be committed.
+4. Clone it locally if you want to run `npx wrangler deploy` by hand:
+   `git clone <your repo> && cd <repo> && npm install`.
+
+## Step 7 — Deploy the Worker
+
+1. Cloudflare → Workers & Pages → Create → **Import a repository** → pick your
+   repo and the `cloudflare` branch.
 2. Build command `npm run build:cf`, deploy command `npx wrangler deploy`.
    `build:cf` deletes `.wrangler/deploy/config.json`; without that removal the
    Worker serves no static assets (unstyled page, broken images).
+
 3. Variables — build-time: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`,
    `VITE_SUPABASE_PROJECT_ID`, `DISABLE_DRIVE_HOOKS=1`, `EMAIL_PROVIDER=brevo`.
    Secrets: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`,
