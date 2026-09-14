@@ -12,6 +12,7 @@ import {
   listQbanks, searchQuestions, getQuestionFull, updateQuestionFull, uploadQuestionMedia,
   type AdminQuestionFull,
 } from "@/lib/admin-content.functions";
+import { ImportExportPanel } from "./ImportExportPanel";
 
 type Choice = { id?: number; answer_index: number; answer_text: string };
 
@@ -54,7 +55,17 @@ export function QuestionsTab() {
     );
   }
 
+  const currentQbank = (qbanksQ.data?.rows ?? []).find((q) => q.id === qbankId);
+
   return (
+    <div className="space-y-4">
+    {qbankId !== null && (
+      <ImportExportPanel
+        qbankId={qbankId}
+        qbankName={currentQbank?.name ?? "questions"}
+        onChanged={() => listQ.refetch()}
+      />
+    )}
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Pencil className="h-5 w-5" /> Question bank</CardTitle>
@@ -115,6 +126,7 @@ export function QuestionsTab() {
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }
 
