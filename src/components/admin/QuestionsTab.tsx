@@ -126,6 +126,7 @@ export function QuestionsTab() {
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }
 
