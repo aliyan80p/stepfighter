@@ -277,7 +277,7 @@ export const searchQuestions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; search?: string; limit?: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<{ rows: QuestionSearchRow[] }> => {
-    await assertPerm(context.supabase, context.userId, "questions");
+    await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const limit = Math.min(Math.max(data.limit ?? 40, 1), 100);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -319,7 +319,7 @@ export const getQuestionFull = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; id: number }) => d)
   .handler(async ({ context, data }): Promise<AdminQuestionFull | null> => {
-    await assertPerm(context.supabase, context.userId, "questions");
+    await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: q, error } = await supabaseAdmin
@@ -358,7 +358,7 @@ export const updateQuestionFull = createServerFn({ method: "POST" })
     }) => d,
   )
   .handler(async ({ context, data }) => {
-    await assertPerm(context.supabase, context.userId, "questions");
+    await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { error } = await supabaseAdmin
@@ -437,7 +437,7 @@ export const uploadQuestionMedia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; filename: string; contentBase64: string }) => d)
   .handler(async ({ context, data }): Promise<{ ok: true; name: string }> => {
-    await assertPerm(context.supabase, context.userId, "questions");
+    await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
 
     const safeName = data.filename.replace(/[^\w.\-]/g, "_");
     if (!/\.[a-z0-9]{2,5}$/i.test(safeName)) throw new Error("File needs a normal image extension");
@@ -484,7 +484,7 @@ export const listLibraryDocs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; search?: string; limit?: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<{ rows: LibraryDocRow[] }> => {
-    await assertPerm(context.supabase, context.userId, "library");
+    await assertPerm(context.supabase, context.userId, "library", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const limit = Math.min(Math.max(data.limit ?? 50, 1), 200);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -547,7 +547,7 @@ export const createLibraryDoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; title: string; html: string }) => d)
   .handler(async ({ context, data }): Promise<{ ok: true; id: number }> => {
-    await assertPerm(context.supabase, context.userId, "library");
+    await assertPerm(context.supabase, context.userId, "library", data.qbank_id);
     if (!data.title.trim()) throw new Error("Title is required");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -609,7 +609,7 @@ export const exportQuestionsPage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<{ rows: ExportedQuestion[]; done: boolean; nextOffset: number }> => {
-    await assertPerm(context.supabase, context.userId, "questions");
+    await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const offset = Math.max(data.offset ?? 0, 0);
 
@@ -654,7 +654,7 @@ export const listQuestionIds = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number }) => d)
   .handler(async ({ context, data }): Promise<{ ids: number[] }> => {
-    await assertPerm(context.supabase, context.userId, "questions");
+    await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const ids: number[] = [];
     let from = 0;
@@ -700,7 +700,7 @@ export const importQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; mode: "missing" | "all"; items: ImportItem[] }) => d)
   .handler(async ({ context, data }): Promise<{ added: number; updated: number; skipped: number }> => {
-    await assertPerm(context.supabase, context.userId, "questions");
+    await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     if (!Array.isArray(data.items) || !data.items.length) return { added: 0, updated: 0, skipped: 0 };
