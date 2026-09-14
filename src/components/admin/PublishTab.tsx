@@ -11,31 +11,71 @@ import {
   publishChanges,
   discardChanges,
   publishTargetStatus,
+  listDrafts,
+  publishDrafts,
+  discardDrafts,
 } from "@/lib/publish-live.functions";
 
 const ENTITY_LABELS: Record<string, string> = {
   question: "Question",
+  question_import: "Imported questions",
   library: "Library article",
+  library_upsert: "Library article",
+  library_delete: "Library article",
   media: "Image",
+  media_delete: "Image",
   subject: "Subject",
   system: "System",
+  taxonomy_save: "Subject / system",
+  taxonomy_delete: "Subject / system",
   topic: "Topic",
+  topic_rename: "Topic",
   course: "Course",
+  course_save: "Course",
 };
 
+type Row = { id: number; entity: string; label: string | null; when: string; removed?: boolean };
+
 export function PublishTab() {
-  const listFn = useServerFn(listPendingChanges);
-  const publishFn = useServerFn(publishChanges);
-  const discardFn = useServerFn(discardChanges);
   const statusFn = useServerFn(publishTargetStatus);
+  const listChangesFn = useServerFn(listPendingChanges);
+  const publishChangesFn = useServerFn(publishChanges);
+  const discardChangesFn = useServerFn(discardChanges);
+  const listDraftsFn = useServerFn(listDrafts);
+  const publishDraftsFn = useServerFn(publishDrafts);
+  const discardDraftsFn = useServerFn(discardDrafts);
 
   const statusQ = useQuery({ queryKey: ["publish-target"], queryFn: () => statusFn() });
-  const pendingQ = useQuery({ queryKey: ["publish-pending"], queryFn: () => listFn({ data: {} }) });
+  const draftMode = statusQ.data?.draftSite ?? false;
+
+  const listQ = useQuery({
+    queryKey: ["publish-pending", draftMode],
+    queryFn: async (): Promise<Row[]> => {
+      if (draftMode) {
+        const res = await listDraftsFn({ data: {} });
+        return res.rows.map((r) => ({
+          id: r.id,
+          entity: r.entity,
+          label: r.label,
+          when: r.created_at,
+        }));
+      }
+      const res = await listChangesFn({ data: {} });
+      return res.rows.map((r) => ({
+        id: r.id,
+        entity: r.entity,
+        label: r.label,
+        when: r.changed_at,
+        removed: r.action === "delete",
+      }));
+    },
+    enabled: statusQ.isSuccess,
+  });
 
   const [selected, setSelected] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
 
-  const rows = pendingQ.data?.rows ?? [];
+  const rows = listQ.data ?? [];
   const allSelected = useMemo(
     () => rows.length > 0 && selected.length === rows.length,
     [rows, selected],
@@ -49,24 +89,33 @@ export function PublishTab() {
     setBusy(true);
     try {
       if (kind === "publish") {
-        const res = await publishFn({ data: { ids: selected } });
+        const res = draftMode
+          ? await publishDraftsFn({ data: { ids: selected } })
+          : await publishChangesFn({ data: { ids: selected } });
         if (res.failed.length) {
-          toast.error(`${res.published} sent, ${res.failed.length} failed: ${res.failed[0].message}`);
+          toast.error(
+            `${res.published} published, ${res.failed.length} failed: ${res.failed[0].message}`,
+          );
         } else {
-          toast.success(`${res.published} change${res.published === 1 ? "" : "s"} sent to the live site`);
+          toast.success(
+            `${res.published} change${res.published === 1 ? "" : "s"} are now live`,
+          );
         }
       } else {
-        await discardFn({ data: { ids: selected } });
+        if (draftMode) await discardDraftsFn({ data: { ids: selected } });
+        else await discardChangesFn({ data: { ids: selected } });
         toast.success("Removed from the list");
       }
       setSelected([]);
-      pendingQ.refetch();
+      listQ.refetch();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setBusy(false);
     }
   };
+
+  const canPublish = draftMode || statusQ.data?.configured === true;
 
   return (
     <Card>
@@ -76,15 +125,20 @@ export function PublishTab() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {statusQ.data && !statusQ.data.configured ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
-            No live site is connected yet, so changes can be reviewed here but not sent. Once the
-            live site is set up, publishing becomes available.
-          </div>
+        {draftMode ? (
+          <p className="text-sm text-muted-foreground">
+            You are on the test address, so your edits are parked here as drafts and real users do
+            not see them yet. Tick the ones you are happy with and press Publish to make them live.
+          </p>
+        ) : statusQ.data && !statusQ.data.configured ? (
+          <p className="text-sm text-muted-foreground">
+            You are on the live site, so edits you make here go out straight away. This list is a
+            history of what has changed.
+          </p>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Edits made here are listed below. Tick the ones you are happy with and send them to the
-            live site{statusQ.data?.host ? ` (${statusQ.data.host})` : ""}.
+            Tick the changes you are happy with and send them to the live site
+            {statusQ.data?.host ? ` (${statusQ.data.host})` : ""}.
           </p>
         )}
 
@@ -100,7 +154,7 @@ export function PublishTab() {
           <Button
             size="sm"
             onClick={() => run("publish")}
-            disabled={busy || !selected.length || statusQ.data?.configured === false}
+            disabled={busy || !selected.length || !canPublish}
           >
             Publish {selected.length || ""} to live
           </Button>
@@ -112,12 +166,10 @@ export function PublishTab() {
           >
             Remove from list
           </Button>
-          <span className="text-xs text-muted-foreground ml-auto">
-            {rows.length} waiting
-          </span>
+          <span className="text-xs text-muted-foreground ml-auto">{rows.length} waiting</span>
         </div>
 
-        {pendingQ.isLoading ? (
+        {listQ.isLoading ? (
           <div className="text-sm text-muted-foreground py-8 text-center">Loading…</div>
         ) : (
           <div className="divide-y border rounded-md max-h-[60vh] overflow-y-auto">
@@ -127,10 +179,10 @@ export function PublishTab() {
                 <span className="text-sm flex-1">
                   <span className="font-medium">{ENTITY_LABELS[r.entity] ?? r.entity}</span>
                   {r.label ? ` — ${r.label}` : ""}
-                  {r.action === "delete" ? " (removed)" : ""}
+                  {r.removed ? " (removed)" : ""}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(r.changed_at).toLocaleString()}
+                  {new Date(r.when).toLocaleString()}
                 </span>
               </label>
             ))}
