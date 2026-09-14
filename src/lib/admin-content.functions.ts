@@ -38,6 +38,7 @@ export const ADMIN_PERMISSION_LABELS: Record<AdminPermission, string> = {
   topics: "Topics",
   courses: "Courses",
   media: "Media library",
+  publish: "Publish to live site",
   admins: "Manage admins & permissions",
 };
 
