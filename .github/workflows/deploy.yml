@@ -41,12 +41,21 @@ jobs:
           echo "--- .output ---"; ls -la .output || true
           echo "--- any index.mjs ---"
           find . -path ./node_modules -prune -o -name 'index.mjs' -print || true
+          mkdir -p dist
           if [ ! -f dist/server/index.mjs ] && [ -f .output/server/index.mjs ]; then
-            echo "Build wrote .output; copying to dist"
-            mkdir -p dist
+            echo "Copying .output/server -> dist/server"
             cp -r .output/server dist/server
-            cp -r .output/client dist/client 2>/dev/null || true
           fi
+          if [ ! -d dist/client ] && [ -d .output/public ]; then
+            echo "Copying .output/public -> dist/client"
+            cp -r .output/public dist/client
+          fi
+          if [ ! -d dist/client ] && [ -d .output/client ]; then
+            echo "Copying .output/client -> dist/client"
+            cp -r .output/client dist/client
+          fi
+          echo "--- dist/client ---"; ls -la dist/client || true
+          test -d dist/client || { echo "Build did not produce a client folder"; exit 1; }
           test -f dist/server/index.mjs || { echo "Build did not produce dist/server/index.mjs"; exit 1; }
 
       - name: Deploy to Cloudflare Workers
