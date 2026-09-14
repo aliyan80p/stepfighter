@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.ensure_admin_access() FROM PUBLIC, anon, authenticated;
