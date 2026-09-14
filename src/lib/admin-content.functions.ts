@@ -819,3 +819,307 @@ export const importQuestions = createServerFn({ method: "POST" })
     const added = toWrite.filter((i) => !existing.has(Number(i.id))).length;
     return { added, updated: toWrite.length - added, skipped };
   });
+
+// ============================================================================
+// Subjects & systems
+// ============================================================================
+
+export type TaxonomyRow = { id: number; name: string; count: number | null };
+type TaxonomyKind = "subjects" | "systems";
+
+function taxTable(kind: string): TaxonomyKind {
+  if (kind !== "subjects" && kind !== "systems") throw new Error("Unknown list");
+  return kind;
+}
+
+export const listTaxonomy = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; kind: string }) => d)
+  .handler(async ({ context, data }): Promise<{ rows: TaxonomyRow[] }> => {
+    await assertPerm(context.supabase, context.userId, "subjects", data.qbank_id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from(taxTable(data.kind))
+      .select("id, name, count")
+      .eq("qbank_id", data.qbank_id)
+      .order("name");
+    if (error) throw internalError(error);
+    return { rows: (rows ?? []) as TaxonomyRow[] };
+  });
+
+export const saveTaxonomy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; kind: string; id?: number; name: string }) => d)
+  .handler(async ({ context, data }): Promise<{ ok: true; id: number }> => {
+    await assertPerm(context.supabase, context.userId, "subjects", data.qbank_id);
+    const name = data.name.trim();
+    if (!name) throw new Error("Name is required");
+    const table = taxTable(data.kind);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (typeof data.id === "number") {
+      const { error } = await supabaseAdmin
+        .from(table)
+        .update({ name })
+        .eq("qbank_id", data.qbank_id)
+        .eq("id", data.id);
+      if (error) throw internalError(error);
+      return { ok: true, id: data.id };
+    }
+
+    const { data: maxRow } = await supabaseAdmin
+      .from(table)
+      .select("id")
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const id = ((maxRow?.id as number) ?? 0) + 1;
+    const { error } = await supabaseAdmin
+      .from(table)
+      .insert({ id, name, qbank_id: data.qbank_id, count: 0 });
+    if (error) throw internalError(error);
+    return { ok: true, id };
+  });
+
+export const deleteTaxonomy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; kind: string; id: number }) => d)
+  .handler(async ({ context, data }): Promise<{ ok: true; inUse: number }> => {
+    await assertPerm(context.supabase, context.userId, "subjects", data.qbank_id);
+    const table = taxTable(data.kind);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const column = table === "subjects" ? "subject_id" : "system_id";
+    const { count } = await supabaseAdmin
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("qbank_id", data.qbank_id)
+      .eq(column, data.id);
+    if ((count ?? 0) > 0) {
+      throw new Error(`${count} questions still use this — move them first`);
+    }
+
+    const { error } = await supabaseAdmin
+      .from(table)
+      .delete()
+      .eq("qbank_id", data.qbank_id)
+      .eq("id", data.id);
+    if (error) throw internalError(error);
+    return { ok: true, inUse: 0 };
+  });
+
+// ============================================================================
+// Topics (the title on each question)
+// ============================================================================
+
+export type TopicRow = { name: string; count: number };
+
+export const listTopics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; search?: string }) => d)
+  .handler(async ({ context, data }): Promise<{ rows: TopicRow[] }> => {
+    await assertPerm(context.supabase, context.userId, "topics", data.qbank_id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const term = (data.search ?? "").trim().replace(/[%_,()]/g, " ");
+    const counts = new Map<string, number>();
+    for (let from = 0; from < 40000; from += 1000) {
+      let q = supabaseAdmin
+        .from("questions")
+        .select("title")
+        .eq("qbank_id", data.qbank_id)
+        .range(from, from + 999);
+      if (term) q = q.ilike("title", `%${term}%`);
+      const { data: page, error } = await q;
+      if (error) throw internalError(error);
+      for (const r of page ?? []) {
+        const t = (r.title as string | null)?.trim();
+        if (!t) continue;
+        counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+      if (!page || page.length < 1000) break;
+    }
+
+    const rows = Array.from(counts, ([name, count]) => ({ name, count })).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
+    return { rows };
+  });
+
+export const renameTopic = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; from: string; to: string }) => d)
+  .handler(async ({ context, data }): Promise<{ ok: true }> => {
+    await assertPerm(context.supabase, context.userId, "topics", data.qbank_id);
+    const to = data.to.trim();
+    if (!to) throw new Error("New name is required");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("questions")
+      .update({ title: to })
+      .eq("qbank_id", data.qbank_id)
+      .eq("title", data.from);
+    if (error) throw internalError(error);
+    return { ok: true };
+  });
+
+// ============================================================================
+// Courses
+// ============================================================================
+
+export type CourseRow = {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  questions: number;
+};
+
+export const listCourses = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ rows: CourseRow[] }> => {
+    await assertPerm(context.supabase, context.userId, "courses");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("qbanks")
+      .select("id, slug, name, description")
+      .order("id");
+    if (error) throw internalError(error);
+
+    const rows: CourseRow[] = [];
+    for (const c of data ?? []) {
+      const { count } = await supabaseAdmin
+        .from("questions")
+        .select("id", { count: "exact", head: true })
+        .eq("qbank_id", c.id as number);
+      rows.push({ ...(c as any), questions: count ?? 0 });
+    }
+    return { rows };
+  });
+
+export const saveCourse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id?: number; slug: string; name: string; description: string | null }) => d)
+  .handler(async ({ context, data }): Promise<{ ok: true; id: number }> => {
+    await assertPerm(context.supabase, context.userId, "courses");
+    const name = data.name.trim();
+    const slug = data.slug.trim().toLowerCase();
+    if (!name) throw new Error("Name is required");
+    if (!/^[a-z0-9][a-z0-9-]{1,30}$/.test(slug)) {
+      throw new Error("Short code must be lowercase letters, numbers or dashes");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (typeof data.id === "number") {
+      const { error } = await supabaseAdmin
+        .from("qbanks")
+        .update({ slug, name, description: data.description })
+        .eq("id", data.id);
+      if (error) throw internalError(error);
+      return { ok: true, id: data.id };
+    }
+
+    const { data: maxRow } = await supabaseAdmin
+      .from("qbanks")
+      .select("id")
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const id = ((maxRow?.id as number) ?? 0) + 1;
+    const { error } = await supabaseAdmin
+      .from("qbanks")
+      .insert({ id, slug, name, description: data.description });
+    if (error) throw internalError(error);
+    return { ok: true, id };
+  });
+
+// ============================================================================
+// Media library
+// ============================================================================
+
+export type MediaRow = { name: string; size_bytes: number | null };
+
+export const listMedia = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; search?: string; limit?: number }) => d)
+  .handler(async ({ context, data }): Promise<{ rows: MediaRow[]; total: number }> => {
+    await assertPerm(context.supabase, context.userId, "media", data.qbank_id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const limit = Math.min(Math.max(data.limit ?? 60, 1), 200);
+    const term = (data.search ?? "").trim().replace(/[%_,()]/g, " ");
+
+    let query = supabaseAdmin
+      .from("qbank_media")
+      .select("name, size_bytes", { count: "exact" })
+      .eq("qbank_id", data.qbank_id);
+    if (term) query = query.ilike("name", `%${term}%`);
+
+    const { data: rows, error, count } = await query.order("name").range(0, limit - 1);
+    if (error) throw internalError(error);
+    return { rows: (rows ?? []) as MediaRow[], total: count ?? 0 };
+  });
+
+export const deleteMedia = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; name: string }) => d)
+  .handler(async ({ context, data }): Promise<{ ok: true; usedBy: number }> => {
+    await assertPerm(context.supabase, context.userId, "media", data.qbank_id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { count } = await supabaseAdmin
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("qbank_id", data.qbank_id)
+      .eq("media_name", data.name);
+    if ((count ?? 0) > 0) throw new Error(`${count} questions still use this image`);
+
+    await supabaseAdmin.storage.from(MEDIA_BUCKET).remove([data.name]);
+    const { error } = await supabaseAdmin
+      .from("qbank_media")
+      .delete()
+      .eq("qbank_id", data.qbank_id)
+      .eq("name", data.name);
+    if (error) throw internalError(error);
+    return { ok: true, usedBy: 0 };
+  });
+
+export type MissingMediaRow = { question_id: number; name: string };
+
+export const findMissingMedia = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number }) => d)
+  .handler(async ({ context, data }): Promise<{ rows: MissingMediaRow[] }> => {
+    await assertPerm(context.supabase, context.userId, "media", data.qbank_id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const known = new Set<string>();
+    for (let from = 0; from < 60000; from += 1000) {
+      const { data: page, error } = await supabaseAdmin
+        .from("qbank_media")
+        .select("name")
+        .eq("qbank_id", data.qbank_id)
+        .range(from, from + 999);
+      if (error) throw internalError(error);
+      for (const r of page ?? []) known.add((r.name as string).toLowerCase());
+      if (!page || page.length < 1000) break;
+    }
+
+    const rows: MissingMediaRow[] = [];
+    for (let from = 0; from < 40000 && rows.length < 500; from += 1000) {
+      const { data: page, error } = await supabaseAdmin
+        .from("questions")
+        .select("id, media_name")
+        .eq("qbank_id", data.qbank_id)
+        .not("media_name", "is", null)
+        .range(from, from + 999);
+      if (error) throw internalError(error);
+      for (const r of page ?? []) {
+        const name = (r.media_name as string | null)?.trim();
+        if (name && !known.has(name.toLowerCase())) {
+          rows.push({ question_id: r.id as number, name });
+        }
+      }
+      if (!page || page.length < 1000) break;
+    }
+    return { rows };
+  });
