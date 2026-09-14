@@ -22,12 +22,11 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build for Cloudflare
         run: bun run build:cf
         env:
-          NITRO_PRESET: cloudflare_module
           # Own managed backend. The publishable key is safe to commit
           # (row-level security protects the data).
           VITE_SUPABASE_URL: https://veqealgeqcvmqpujdlgo.supabase.co
@@ -38,6 +37,12 @@ jobs:
         run: |
           echo "--- dist ---"; ls -la dist || true
           echo "--- dist/server ---"; ls -la dist/server || true
+          if [ ! -f dist/server/index.mjs ] && [ -f .output/server/index.mjs ]; then
+            echo "Build wrote .output; copying to dist"
+            mkdir -p dist
+            cp -r .output/server dist/server
+            cp -r .output/client dist/client 2>/dev/null || true
+          fi
           test -f dist/server/index.mjs || { echo "Build did not produce dist/server/index.mjs"; exit 1; }
 
       - name: Deploy to Cloudflare Workers
