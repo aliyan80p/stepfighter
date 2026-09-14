@@ -469,6 +469,13 @@ export const updateQuestionFull = createServerFn({ method: "POST" })
       if (upErr) throw internalError(upErr);
     }
 
+    await recordChange(supabaseAdmin, {
+      entity: "question",
+      qbank_id: data.qbank_id,
+      ref_id: data.id,
+      label: `Question ${data.id}`,
+      changed_by: context.userId,
+    });
 
     return { ok: true };
   });
@@ -514,6 +521,14 @@ export const uploadQuestionMedia = createServerFn({ method: "POST" })
       },
       { onConflict: "qbank_id,name" },
     );
+
+    await recordChange(supabaseAdmin, {
+      entity: "media",
+      qbank_id: data.qbank_id,
+      ref_key: safeName,
+      label: safeName,
+      changed_by: context.userId,
+    });
 
     return { ok: true, name: safeName };
   });
@@ -584,6 +599,12 @@ export const updateLibraryDoc = createServerFn({ method: "POST" })
       .update({ title: data.title, html: data.html, plain: htmlToPlain(data.html) })
       .eq("id", data.id);
     if (error) throw internalError(error);
+    await recordChange(supabaseAdmin, {
+      entity: "library",
+      ref_id: data.id,
+      label: data.title,
+      changed_by: context.userId,
+    });
     return { ok: true };
   });
 
@@ -612,6 +633,13 @@ export const createLibraryDoc = createServerFn({ method: "POST" })
       path: null,
     });
     if (error) throw internalError(error);
+    await recordChange(supabaseAdmin, {
+      entity: "library",
+      qbank_id: data.qbank_id,
+      ref_id: id,
+      label: data.title,
+      changed_by: context.userId,
+    });
     return { ok: true, id };
   });
 
@@ -624,6 +652,13 @@ export const deleteLibraryDoc = createServerFn({ method: "POST" })
     await supabaseAdmin.from("library_toc").update({ doc_id: null }).eq("doc_id", data.id);
     const { error } = await supabaseAdmin.from("library_docs").delete().eq("id", data.id);
     if (error) throw internalError(error);
+    await recordChange(supabaseAdmin, {
+      entity: "library",
+      ref_id: data.id,
+      action: "delete",
+      label: `Article ${data.id}`,
+      changed_by: context.userId,
+    });
     return { ok: true };
   });
 
@@ -819,6 +854,18 @@ export const importQuestions = createServerFn({ method: "POST" })
       if (aErr) throw internalError(aErr);
     }
 
+    const { recordChanges } = await import("./content-changes.server");
+    await recordChanges(
+      supabaseAdmin,
+      toWrite.map((i) => ({
+        entity: "question" as const,
+        qbank_id: data.qbank_id,
+        ref_id: Number(i.id),
+        label: `Question ${i.id}`,
+        changed_by: context.userId,
+      })),
+    );
+
     const added = toWrite.filter((i) => !existing.has(Number(i.id))).length;
     return { added, updated: toWrite.length - added, skipped };
   });
@@ -867,6 +914,13 @@ export const saveTaxonomy = createServerFn({ method: "POST" })
         .eq("qbank_id", data.qbank_id)
         .eq("id", data.id);
       if (error) throw internalError(error);
+      await recordChange(supabaseAdmin, {
+        entity: table === "subjects" ? "subject" : "system",
+        qbank_id: data.qbank_id,
+        ref_id: data.id,
+        label: name,
+        changed_by: context.userId,
+      });
       return { ok: true, id: data.id };
     }
 
@@ -881,6 +935,13 @@ export const saveTaxonomy = createServerFn({ method: "POST" })
       .from(table)
       .insert({ id, name, qbank_id: data.qbank_id, count: 0 });
     if (error) throw internalError(error);
+    await recordChange(supabaseAdmin, {
+      entity: table === "subjects" ? "subject" : "system",
+      qbank_id: data.qbank_id,
+      ref_id: id,
+      label: name,
+      changed_by: context.userId,
+    });
     return { ok: true, id };
   });
 
@@ -908,6 +969,14 @@ export const deleteTaxonomy = createServerFn({ method: "POST" })
       .eq("qbank_id", data.qbank_id)
       .eq("id", data.id);
     if (error) throw internalError(error);
+    await recordChange(supabaseAdmin, {
+      entity: table === "subjects" ? "subject" : "system",
+      qbank_id: data.qbank_id,
+      ref_id: data.id,
+      action: "delete",
+      label: `${data.kind} ${data.id}`,
+      changed_by: context.userId,
+    });
     return { ok: true, inUse: 0 };
   });
 
@@ -963,6 +1032,13 @@ export const renameTopic = createServerFn({ method: "POST" })
       .eq("qbank_id", data.qbank_id)
       .eq("title", data.from);
     if (error) throw internalError(error);
+    await recordChange(supabaseAdmin, {
+      entity: "topic",
+      qbank_id: data.qbank_id,
+      ref_key: `${data.from}\u0000${to}`,
+      label: `${data.from} \u2192 ${to}`,
+      changed_by: context.userId,
+    });
     return { ok: true };
   });
 
@@ -1019,6 +1095,12 @@ export const saveCourse = createServerFn({ method: "POST" })
         .update({ slug, name, description: data.description })
         .eq("id", data.id);
       if (error) throw internalError(error);
+      await recordChange(supabaseAdmin, {
+        entity: "course",
+        ref_id: data.id,
+        label: name,
+        changed_by: context.userId,
+      });
       return { ok: true, id: data.id };
     }
 
@@ -1033,6 +1115,12 @@ export const saveCourse = createServerFn({ method: "POST" })
       .from("qbanks")
       .insert({ id, slug, name, description: data.description });
     if (error) throw internalError(error);
+    await recordChange(supabaseAdmin, {
+      entity: "course",
+      ref_id: id,
+      label: name,
+      changed_by: context.userId,
+    });
     return { ok: true, id };
   });
 
@@ -1083,6 +1171,14 @@ export const deleteMedia = createServerFn({ method: "POST" })
       .eq("qbank_id", data.qbank_id)
       .eq("name", data.name);
     if (error) throw internalError(error);
+    await recordChange(supabaseAdmin, {
+      entity: "media",
+      qbank_id: data.qbank_id,
+      ref_key: data.name,
+      action: "delete",
+      label: data.name,
+      changed_by: context.userId,
+    });
     return { ok: true, usedBy: 0 };
   });
 
