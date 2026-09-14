@@ -63,20 +63,25 @@ function AdminDashboard() {
     <div className="p-4 md:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage users, entitlements, feedback and questions.</p>
+        <p className="text-sm text-muted-foreground mt-1">Manage users, access, courses, library content, questions and feedback.</p>
       </div>
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Overview</TabsTrigger>
           <TabsTrigger value="users"><UserCog className="h-4 w-4 mr-1" />Users</TabsTrigger>
           <TabsTrigger value="feedback"><MessageSquare className="h-4 w-4 mr-1" />Feedback</TabsTrigger>
           <TabsTrigger value="questions"><Pencil className="h-4 w-4 mr-1" />Questions</TabsTrigger>
+          <TabsTrigger value="content"><Layers className="h-4 w-4 mr-1" />Content</TabsTrigger>
+          <TabsTrigger value="bulk"><Upload className="h-4 w-4 mr-1" />Bulk</TabsTrigger>
         </TabsList>
         <TabsContent value="overview"><OverviewTab /></TabsContent>
         <TabsContent value="users"><UsersTab /></TabsContent>
         <TabsContent value="feedback"><FeedbackTab /></TabsContent>
-        <TabsContent value="questions"><QuestionsTab /></TabsContent>
+        <TabsContent value="questions"><QuestionsManager /></TabsContent>
+        <TabsContent value="content"><ContentManager /></TabsContent>
+        <TabsContent value="bulk"><BulkManager /></TabsContent>
       </Tabs>
+
     </div>
   );
 }
