@@ -41,16 +41,23 @@ jobs:
       - name: Locate build output
         id: out
         run: |
+          config=""
+          client=""
           for dir in .output dist; do
             if [ -f "$dir/server/wrangler.json" ]; then
-              echo "config=$dir/server/wrangler.json" >> "$GITHUB_OUTPUT"
-              echo "client=$dir/client" >> "$GITHUB_OUTPUT"
-              [ -d "$dir/public" ] && echo "client=$dir/public" >> "$GITHUB_OUTPUT"
-              echo "Using $dir"
+              config="$dir/server/wrangler.json"
+              if [ -d "$dir/public" ]; then client="$dir/public"; else client="$dir/client"; fi
               break
             fi
           done
-          test -n "$(grep -h '^config=' "$GITHUB_OUTPUT")"
+          if [ -z "$config" ]; then
+            echo "::error::The build produced no Cloudflare configuration file."
+            ls -la . || true
+            exit 1
+          fi
+          echo "Using $config with public files in $client"
+          echo "config=$config" >> "$GITHUB_OUTPUT"
+          echo "client=$client" >> "$GITHUB_OUTPUT"
 
       - name: Confirm the database address is embedded
         run: |
