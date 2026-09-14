@@ -75,7 +75,7 @@ jobs:
         run: |
           npx wrangler deploy \
             --config "${{ steps.out.outputs.config }}" \
-            --name stepfighter \
+            --name stepfighter-5859cf60 \
             --keep-vars \
             --var "SUPABASE_URL:$VITE_SUPABASE_URL" \
             --var "SUPABASE_PROJECT_ID:$VITE_SUPABASE_PROJECT_ID" \
