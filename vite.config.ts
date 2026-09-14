@@ -8,51 +8,18 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { loadEnv } from "vite";
 import path from "path";
 
-// Load local env vars for development without overwriting values supplied by
-// the deployment environment. GitHub Actions injects the managed production
-// database values before Vite starts; those must take precedence over .env.
+// Load all env vars into process.env for server routes (no VITE_ prefix).
+// VITE_* env injection is still handled by the wrapped config for client code.
 const serverEnv = loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), "");
-for (const [key, value] of Object.entries(serverEnv)) {
-  if (process.env[key] === undefined) process.env[key] = value;
-}
-
-// The Lovable config normally reloads VITE_* from .env into `define`, which
-// would overwrite values injected by GitHub Actions. Build the definitions
-// explicitly so deployment environment variables always win, while local
-// development can still use .env.
-const clientEnv = {
-  VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? serverEnv.VITE_SUPABASE_URL,
-  VITE_SUPABASE_PUBLISHABLE_KEY:
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serverEnv.VITE_SUPABASE_PUBLISHABLE_KEY,
-  VITE_SUPABASE_PROJECT_ID:
-    process.env.VITE_SUPABASE_PROJECT_ID ?? serverEnv.VITE_SUPABASE_PROJECT_ID,
-};
-
-const clientEnvDefine = Object.fromEntries(
-  Object.entries(clientEnv)
-    .filter((entry): entry is [string, string] => typeof entry[1] === "string")
-    .map(([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)]),
-);
+Object.assign(process.env, serverEnv);
 
 export default defineConfig({
-  envDefine: false,
-  // Pin the self-hosted build target instead of allowing GitHub/Cloudflare
-  // environment variables to auto-select a different Nitro output layout.
-  nitro: {
-    preset: "cloudflare-module",
-    output: {
-      dir: "dist",
-      publicDir: "dist/client",
-      serverDir: "dist/server",
-    },
-  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
   },
   vite: {
-    define: clientEnvDefine,
     // Pin entities to the hoisted v4.5.0 copy so React Email SSR works.
     resolve: {
       alias: {

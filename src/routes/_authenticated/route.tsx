@@ -43,7 +43,6 @@ import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { QBANKS, useActiveQbankId, setActiveQbankId } from "@/lib/active-qbank";
 import { PageLoader } from "@/components/loader";
-import { isLovablePreviewHost } from "@/lib/preview-host";
 
 
 
@@ -129,7 +128,7 @@ export const Route = createFileRoute("/_authenticated")({
       .eq("id", data.user.id)
       .maybeSingle();
     const until = prof?.mfa_verified_until ? new Date(prof.mfa_verified_until).getTime() : 0;
-    if (until <= Date.now() && !isLovablePreviewHost()) throw redirect({ to: "/verify-2fa" });
+    if (until <= Date.now()) throw redirect({ to: "/verify-2fa" });
     return { user: data.user };
   },
   component: AuthedLayout,

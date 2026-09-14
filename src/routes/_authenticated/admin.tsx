@@ -16,21 +16,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
-  getAdminAnalytics, getMyAdminAccess,
+  getAdminAnalytics, isCurrentUserAdmin,
   listUsers, deleteUser, updateEntitlement, setAdminRole,
   listFeedback, deleteFeedback,
+  getQuestionForAdmin, updateQuestion,
   type AdminUserRow,
 } from "@/lib/admin.functions";
-import { can } from "@/lib/admin-permissions";
-import { QuestionsManager } from "@/components/admin/QuestionsManager";
-import { ContentManager } from "@/components/admin/ContentManager";
-import { BulkManager } from "@/components/admin/BulkManager";
-import { AdminsManager } from "@/components/admin/AdminsManager";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
-  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, Layers, Upload, ShieldCheck,
+  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog,
 } from "lucide-react";
-
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminDashboard,
@@ -45,17 +40,16 @@ const QBANK_OPTIONS = [
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const fetchAccess = useServerFn(getMyAdminAccess);
-  const accessQ = useQuery({ queryKey: ["my-admin-access"], queryFn: () => fetchAccess() });
-  const access = accessQ.data;
-  const isAdmin = access?.admin;
+  const checkAdmin = useServerFn(isCurrentUserAdmin);
+  const adminQ = useQuery({ queryKey: ["is-admin"], queryFn: () => checkAdmin() });
+  const isAdmin = adminQ.data?.admin;
 
   useEffect(() => {
-    if (accessQ.isSuccess && !isAdmin) navigate({ to: "/dashboard" });
-  }, [accessQ.isSuccess, isAdmin, navigate]);
+    if (adminQ.isSuccess && !isAdmin) navigate({ to: "/dashboard" });
+  }, [adminQ.isSuccess, isAdmin, navigate]);
 
-  if (accessQ.isLoading) return <div className="p-8 text-muted-foreground text-sm">Checking access…</div>;
-  if (accessQ.isSuccess && !isAdmin) {
+  if (adminQ.isLoading) return <div className="p-8 text-muted-foreground text-sm">Checking access…</div>;
+  if (adminQ.isSuccess && !isAdmin) {
     return (
       <div className="p-8 max-w-md">
         <div className="flex items-center gap-2 text-destructive font-semibold mb-2">
@@ -65,47 +59,24 @@ function AdminDashboard() {
     );
   }
 
-  const tabs = [
-    { value: "overview", perm: "analytics" as const, icon: BarChart3, label: "Overview", node: <OverviewTab /> },
-    { value: "users", perm: "users" as const, icon: UserCog, label: "Users", node: <UsersTab /> },
-    { value: "feedback", perm: "feedback" as const, icon: MessageSquare, label: "Feedback", node: <FeedbackTab /> },
-    { value: "questions", perm: "questions" as const, icon: Pencil, label: "Questions", node: <QuestionsManager /> },
-    { value: "content", perm: "content" as const, icon: Layers, label: "Content", node: <ContentManager /> },
-    { value: "bulk", perm: "bulk" as const, icon: Upload, label: "Bulk", node: <BulkManager /> },
-    { value: "admins", perm: "admins" as const, icon: ShieldCheck, label: "Admins", node: <AdminsManager canEdit={Boolean(access?.isSuper)} /> },
-  ].filter((t) => can(access, t.perm));
-
-  if (tabs.length === 0) {
-    return (
-      <div className="p-8 max-w-md text-sm text-muted-foreground">
-        You are an admin but no areas have been assigned to you yet. Ask a main admin to grant access.
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {access?.isSuper
-            ? "Main admin — full access to users, courses, library content, questions, feedback and admin permissions."
-            : "Your assigned admin areas."}
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">Manage users, entitlements, feedback and questions.</p>
       </div>
-      <Tabs defaultValue={tabs[0]!.value} className="space-y-4">
-        <TabsList className="flex-wrap h-auto">
-          {tabs.map((t) => (
-            <TabsTrigger key={t.value} value={t.value}>
-              <t.icon className="h-4 w-4 mr-1" />{t.label}
-            </TabsTrigger>
-          ))}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Overview</TabsTrigger>
+          <TabsTrigger value="users"><UserCog className="h-4 w-4 mr-1" />Users</TabsTrigger>
+          <TabsTrigger value="feedback"><MessageSquare className="h-4 w-4 mr-1" />Feedback</TabsTrigger>
+          <TabsTrigger value="questions"><Pencil className="h-4 w-4 mr-1" />Questions</TabsTrigger>
         </TabsList>
-        {tabs.map((t) => (
-          <TabsContent key={t.value} value={t.value}>{t.node}</TabsContent>
-        ))}
+        <TabsContent value="overview"><OverviewTab /></TabsContent>
+        <TabsContent value="users"><UsersTab /></TabsContent>
+        <TabsContent value="feedback"><FeedbackTab /></TabsContent>
+        <TabsContent value="questions"><QuestionsTab /></TabsContent>
       </Tabs>
-
     </div>
   );
 }
@@ -376,6 +347,72 @@ function FeedbackTab() {
 }
 
 // ---------------- Questions ----------------
+function QuestionsTab() {
+  const getFn = useServerFn(getQuestionForAdmin);
+  const updFn = useServerFn(updateQuestion);
+  const [qbankId, setQbankId] = useState("1");
+  const [qid, setQid] = useState("");
+  const [loaded, setLoaded] = useState<any>(null);
+  const [title, setTitle] = useState("");
+  const [question, setQuestion] = useState("");
+  const [explanation, setExplanation] = useState("");
+  const [correct, setCorrect] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    if (!qid) return;
+    try {
+      const q = await getFn({ data: { qbank_id: Number(qbankId), id: Number(qid) } });
+      if (!q) { toast.error("Question not found"); setLoaded(null); return; }
+      setLoaded(q); setTitle(q.title ?? ""); setQuestion(q.question); setExplanation(q.explanation ?? "");
+      setCorrect(q.correct_answer?.toString() ?? "");
+    } catch (e) { toast.error((e as Error).message); }
+  };
+
+  const save = async () => {
+    if (!loaded) return;
+    setSaving(true);
+    try {
+      await updFn({ data: {
+        qbank_id: loaded.qbank_id, id: loaded.id,
+        title, question, explanation,
+        correct_answer: correct === "" ? null : Number(correct),
+      }});
+      toast.success("Question updated");
+    } catch (e) { toast.error((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="flex items-center gap-2"><Pencil className="h-5 w-5" /> Edit Question</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2 items-end flex-wrap">
+          <div>
+            <Label className="text-xs">QBank</Label>
+            <select value={qbankId} onChange={(e)=>setQbankId(e.target.value)} className="border rounded h-9 px-2 text-sm block">
+              {QBANK_OPTIONS.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Question ID</Label>
+            <Input value={qid} onChange={(e)=>setQid(e.target.value)} className="w-32" placeholder="e.g. 10670" />
+          </div>
+          <Button onClick={load}>Load</Button>
+        </div>
+        {loaded && (
+          <div className="space-y-3 border-t pt-4">
+            <div><Label>Title</Label><Input value={title} onChange={(e)=>setTitle(e.target.value)} /></div>
+            <div><Label>Question</Label><Textarea value={question} onChange={(e)=>setQuestion(e.target.value)} rows={8} /></div>
+            <div><Label>Explanation</Label><Textarea value={explanation} onChange={(e)=>setExplanation(e.target.value)} rows={8} /></div>
+            <div className="max-w-xs"><Label>Correct answer index</Label><Input type="number" value={correct} onChange={(e)=>setCorrect(e.target.value)} /></div>
+            <Button onClick={save} disabled={saving}>{saving?"Saving…":"Save changes"}</Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ---------------- misc ----------------
 function Kpi({ icon: Icon, label, value, sub, tone }: {
   icon: React.ComponentType<{ className?: string }>;

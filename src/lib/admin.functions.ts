@@ -2,44 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizeQbankAccess } from "@/lib/entitlements.functions";
 import { internalError } from "./errors";
-import {
-  ALL_ADMIN_PERMISSIONS,
-  type AdminAccess,
-  type AdminPermission,
-} from "@/lib/admin-permissions";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error) throw internalError(error);
-  if (!data) throw new Error("Forbidden");
-}
-
-/** Any admin account (used for shared read-only lookups). */
-export async function assertAnyAdmin(supabase: any, userId: string) {
-  await assertAdmin(supabase, userId);
-}
-
-/**
- * Server-only: throws unless the caller is an admin AND either a main admin
- * (super) or has been granted the given permission.
- */
-export async function assertPermission(
-  supabase: any,
-  userId: string,
-  permission: AdminPermission,
-) {
-  await assertAdmin(supabase, userId);
-  const { data, error } = await supabase.rpc("has_admin_permission", {
-    _user_id: userId,
-    _permission: permission,
-  });
-  if (error) throw internalError(error);
-  if (!data) throw new Error("Forbidden");
-}
-
-async function assertSuper(supabase: any, userId: string) {
-  await assertAdmin(supabase, userId);
-  const { data, error } = await supabase.rpc("is_super_admin", { _user_id: userId });
   if (error) throw internalError(error);
   if (!data) throw new Error("Forbidden");
 }
@@ -52,89 +17,6 @@ export const isCurrentUserAdmin = createServerFn({ method: "GET" })
       _role: "admin",
     });
     return { admin: Boolean(data) };
-  });
-
-export const getMyAdminAccess = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<AdminAccess> => {
-    const { data: roleData } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!roleData) return { admin: false, isSuper: false, permissions: [] };
-    const { data } = await (context.supabase as any)
-      .from("admin_access")
-      .select("is_super, permissions")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    const isSuper = Boolean(data?.is_super);
-    const granted = ((data?.permissions as string[] | null) ?? []).filter((p) =>
-      (ALL_ADMIN_PERMISSIONS as string[]).includes(p),
-    ) as AdminPermission[];
-    return {
-      admin: true,
-      isSuper,
-      permissions: isSuper ? [...ALL_ADMIN_PERMISSIONS] : granted,
-    };
-  });
-
-export type AdminAccountRow = {
-  user_id: string;
-  email: string | null;
-  is_super: boolean;
-  permissions: AdminPermission[];
-};
-
-export const listAdmins = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<AdminAccountRow[]> => {
-    await assertPermission(context.supabase, context.userId, "admins");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: roles, error } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "admin");
-    if (error) throw internalError(error);
-    const ids = (roles ?? []).map((r) => r.user_id as string);
-    if (ids.length === 0) return [];
-    const { data: access } = await (supabaseAdmin as any)
-      .from("admin_access")
-      .select("user_id, is_super, permissions")
-      .in("user_id", ids);
-    const accessMap = new Map((access ?? []).map((a: any) => [a.user_id as string, a]));
-    const rows: AdminAccountRow[] = [];
-    for (const id of ids) {
-      const { data: u } = await supabaseAdmin.auth.admin.getUserById(id);
-      const a: any = accessMap.get(id);
-      rows.push({
-        user_id: id,
-        email: u?.user?.email ?? null,
-        is_super: Boolean(a?.is_super),
-        permissions: ((a?.permissions as string[] | null) ?? []) as AdminPermission[],
-      });
-    }
-    return rows.sort((x, y) => Number(y.is_super) - Number(x.is_super));
-  });
-
-export const setAdminAccess = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string; isSuper: boolean; permissions: string[] }) => d)
-  .handler(async ({ context, data }) => {
-    await assertSuper(context.supabase, context.userId);
-    if (data.userId === context.userId && !data.isSuper)
-      throw new Error("Cannot remove your own main-admin status");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const permissions = data.permissions.filter((p) =>
-      (ALL_ADMIN_PERMISSIONS as string[]).includes(p),
-    );
-    const { error } = await (supabaseAdmin as any)
-      .from("admin_access")
-      .upsert(
-        { user_id: data.userId, is_super: data.isSuper, permissions, updated_at: new Date().toISOString() },
-        { onConflict: "user_id" },
-      );
-    if (error) throw internalError(error);
-    return { ok: true };
   });
 
 export type AdminAnalytics = {
@@ -159,7 +41,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminAnalytics> => {
     const { supabase, userId } = context;
-    await assertPermission(supabase, userId, "analytics");
+    await assertAdmin(supabase, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const now = Date.now();
@@ -315,7 +197,7 @@ export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { search?: string; limit?: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<{ rows: AdminUserRow[]; total: number }> => {
-    await assertPermission(context.supabase, context.userId, "users");
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const limit = Math.min(Math.max(data.limit ?? 50, 1), 200);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -371,7 +253,7 @@ export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId: string }) => d)
   .handler(async ({ context, data }) => {
-    await assertPermission(context.supabase, context.userId, "users");
+    await assertAdmin(context.supabase, context.userId);
     if (data.userId === context.userId) throw new Error("Cannot delete yourself");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
@@ -389,7 +271,7 @@ export const updateEntitlement = createServerFn({ method: "POST" })
     qbank_access?: string[];
   }) => d)
   .handler(async ({ context, data }) => {
-    await assertPermission(context.supabase, context.userId, "users");
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch: Record<string, unknown> = { plan: data.plan };
     if (data.trial_ends_at !== undefined) patch.trial_ends_at = data.trial_ends_at;
@@ -406,20 +288,15 @@ export const setAdminRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId: string; admin: boolean }) => d)
   .handler(async ({ context, data }) => {
-    await assertPermission(context.supabase, context.userId, "admins");
+    await assertAdmin(context.supabase, context.userId);
     if (data.userId === context.userId && !data.admin) throw new Error("Cannot demote yourself");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.admin) {
       const { error } = await supabaseAdmin.from("user_roles").upsert({ user_id: data.userId, role: "admin" }, { onConflict: "user_id,role" });
       if (error) throw internalError(error);
-      // New admins start with no areas until a main admin grants them.
-      await (supabaseAdmin as any)
-        .from("admin_access")
-        .upsert({ user_id: data.userId, is_super: false, permissions: [] }, { onConflict: "user_id", ignoreDuplicates: true });
     } else {
       const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId).eq("role", "admin");
       if (error) throw internalError(error);
-      await (supabaseAdmin as any).from("admin_access").delete().eq("user_id", data.userId);
     }
     return { ok: true };
   });
@@ -443,7 +320,7 @@ export const listFeedback = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { limit?: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<{ rows: AdminFeedbackRow[] }> => {
-    await assertPermission(context.supabase, context.userId, "feedback");
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const limit = Math.min(Math.max(data.limit ?? 100, 1), 500);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -477,7 +354,7 @@ export const deleteFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ context, data }) => {
-    await assertPermission(context.supabase, context.userId, "feedback");
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("feedback").delete().eq("id", data.id);
     if (error) throw internalError(error);
@@ -501,7 +378,7 @@ export const getQuestionForAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; id: number }) => d)
   .handler(async ({ context, data }): Promise<AdminQuestion | null> => {
-    await assertPermission(context.supabase, context.userId, "questions");
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: q, error } = await supabaseAdmin
       .from("questions")
@@ -524,7 +401,7 @@ export const updateQuestion = createServerFn({ method: "POST" })
     correct_answer?: number | null;
   }) => d)
   .handler(async ({ context, data }) => {
-    await assertPermission(context.supabase, context.userId, "questions");
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch: {
       title?: string | null;
