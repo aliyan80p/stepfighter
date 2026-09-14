@@ -14,6 +14,17 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Strip Lovable .env so production keeps its own config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+            git rm --cached .env -q
+            grep -qxF '.env' .gitignore || printf '\n# Never sync Lovable Cloud env to production\n.env\n' >> .gitignore
+            git add .gitignore
+            git commit -m "sync: exclude Lovable .env (production supplies its own)"
+          fi
+
       - name: Force-push to old repo
         env:
           OLD_REPO_TOKEN: ${{ secrets.OLD_REPO_TOKEN }}
