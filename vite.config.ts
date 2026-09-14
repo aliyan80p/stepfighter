@@ -36,6 +36,16 @@ const clientEnvDefine = Object.fromEntries(
 
 export default defineConfig({
   envDefine: false,
+  // Pin the self-hosted build target instead of allowing GitHub/Cloudflare
+  // environment variables to auto-select a different Nitro output layout.
+  nitro: {
+    preset: "cloudflare-module",
+    output: {
+      dir: "dist",
+      publicDir: "dist/client",
+      serverDir: "dist/server",
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this

@@ -46,7 +46,10 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-        run: npm run build:cf
+          NITRO_PRESET: cloudflare-module
+        run: |
+          rm -rf dist
+          npm run build:cf
 
       - name: Inspect build output
         run: |
@@ -59,8 +62,8 @@ jobs:
 
       - name: Verify the build points at the right database
         run: |
-          if [ ! -d dist/client ] || [ ! -d dist/server ]; then
-            echo "Expected Cloudflare build folders were not created. Aborting."
+          if [ ! -d dist/client ] || [ ! -f dist/server/index.mjs ]; then
+            echo "Cloudflare build is incomplete: dist/client or dist/server/index.mjs is missing. Aborting."
             exit 1
           fi
           if grep -rq "nqtwatlytdewxodmbuxs" dist/client dist/server; then
