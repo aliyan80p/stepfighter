@@ -549,3 +549,199 @@ export const deleteLibraryDoc = createServerFn({ method: "POST" })
     if (error) throw internalError(error);
     return { ok: true };
   });
+
+// ============================================================================
+// Bulk export / import / compare
+// ============================================================================
+
+export type ExportedQuestion = {
+  id: number;
+  qbank_id: number;
+  title: string | null;
+  question: string;
+  explanation: string | null;
+  correct_answer: number | null;
+  media_name: string | null;
+  other_medias: string | null;
+  source: string;
+  subject_id: number | null;
+  system_id: number | null;
+  answers: { answer_index: number; answer_text: string }[];
+};
+
+const EXPORT_PAGE = 200;
+
+/** One page of a full question export (questions + their answer choices). */
+export const exportQuestionsPage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; offset?: number }) => d)
+  .handler(async ({ context, data }): Promise<{ rows: ExportedQuestion[]; done: boolean; nextOffset: number }> => {
+    await assertPerm(context.supabase, context.userId, "questions");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const offset = Math.max(data.offset ?? 0, 0);
+
+    const { data: qs, error } = await supabaseAdmin
+      .from("questions")
+      .select("id, qbank_id, title, question, explanation, correct_answer, media_name, other_medias, source, subject_id, system_id")
+      .eq("qbank_id", data.qbank_id)
+      .order("id")
+      .range(offset, offset + EXPORT_PAGE - 1);
+    if (error) throw internalError(error);
+
+    const ids = (qs ?? []).map((q) => q.id as number);
+    let answers: any[] = [];
+    if (ids.length) {
+      const { data: ans, error: aErr } = await supabaseAdmin
+        .from("answers")
+        .select("question_id, answer_index, answer_text")
+        .eq("qbank_id", data.qbank_id)
+        .in("question_id", ids)
+        .order("answer_index");
+      if (aErr) throw internalError(aErr);
+      answers = ans ?? [];
+    }
+
+    const byQuestion = new Map<number, { answer_index: number; answer_text: string }[]>();
+    for (const a of answers) {
+      const list = byQuestion.get(a.question_id) ?? [];
+      list.push({ answer_index: a.answer_index, answer_text: a.answer_text });
+      byQuestion.set(a.question_id, list);
+    }
+
+    const rows = (qs ?? []).map((q) => ({ ...(q as any), answers: byQuestion.get(q.id as number) ?? [] }));
+    return {
+      rows: rows as ExportedQuestion[],
+      done: rows.length < EXPORT_PAGE,
+      nextOffset: offset + rows.length,
+    };
+  });
+
+/** Every question number currently stored for a course — used to spot gaps. */
+export const listQuestionIds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number }) => d)
+  .handler(async ({ context, data }): Promise<{ ids: number[] }> => {
+    await assertPerm(context.supabase, context.userId, "questions");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const ids: number[] = [];
+    let from = 0;
+    const step = 1000;
+    for (;;) {
+      const { data: rows, error } = await supabaseAdmin
+        .from("questions")
+        .select("id")
+        .eq("qbank_id", data.qbank_id)
+        .order("id")
+        .range(from, from + step - 1);
+      if (error) throw internalError(error);
+      const batch = (rows ?? []).map((r) => r.id as number);
+      ids.push(...batch);
+      if (batch.length < step) break;
+      from += step;
+    }
+    return { ids };
+  });
+
+export type ImportItem = {
+  id: number;
+  title?: string | null;
+  question: string;
+  explanation?: string | null;
+  correct_answer?: number | null;
+  media_name?: string | null;
+  other_medias?: string | null;
+  source?: string | null;
+  subject_id?: number | null;
+  system_id?: number | null;
+  answers?: { answer_index: number; answer_text: string }[];
+};
+
+const MAX_IMPORT_CHUNK = 200;
+
+/**
+ * Bulk add/update questions for one course.
+ *  - mode "missing": only question numbers that do not exist yet are written
+ *  - mode "all":     existing ones are overwritten too
+ */
+export const importQuestions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { qbank_id: number; mode: "missing" | "all"; items: ImportItem[] }) => d)
+  .handler(async ({ context, data }): Promise<{ added: number; updated: number; skipped: number }> => {
+    await assertPerm(context.supabase, context.userId, "questions");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (!Array.isArray(data.items) || !data.items.length) return { added: 0, updated: 0, skipped: 0 };
+    if (data.items.length > MAX_IMPORT_CHUNK) throw new Error("Too many questions in one batch");
+
+    const ids = data.items.map((i) => Number(i.id)).filter((n) => Number.isFinite(n));
+    if (ids.length !== data.items.length) throw new Error("Every question needs a numeric question number");
+
+    const { data: existingRows, error: exErr } = await supabaseAdmin
+      .from("questions")
+      .select("id")
+      .eq("qbank_id", data.qbank_id)
+      .in("id", ids);
+    if (exErr) throw internalError(exErr);
+    const existing = new Set((existingRows ?? []).map((r) => r.id as number));
+
+    const toWrite = data.items.filter((i) => data.mode === "all" || !existing.has(Number(i.id)));
+    const skipped = data.items.length - toWrite.length;
+    if (!toWrite.length) return { added: 0, updated: 0, skipped };
+
+    const payload = toWrite.map((i) => ({
+      id: Number(i.id),
+      qbank_id: data.qbank_id,
+      title: i.title ?? null,
+      question: String(i.question ?? ""),
+      explanation: i.explanation ?? null,
+      correct_answer: i.correct_answer ?? null,
+      media_name: i.media_name ?? null,
+      other_medias: i.other_medias ?? null,
+      source: i.source ?? "main",
+      subject_id: i.subject_id ?? null,
+      system_id: i.system_id ?? null,
+    }));
+
+    const { error: upErr } = await supabaseAdmin
+      .from("questions")
+      .upsert(payload, { onConflict: "qbank_id,id" });
+    if (upErr) throw internalError(upErr);
+
+    // Answer choices: replace the set for every question we just wrote.
+    const withAnswers = toWrite.filter((i) => (i.answers ?? []).length);
+    if (withAnswers.length) {
+      const writeIds = withAnswers.map((i) => Number(i.id));
+      const { error: delErr } = await supabaseAdmin
+        .from("answers")
+        .delete()
+        .eq("qbank_id", data.qbank_id)
+        .in("question_id", writeIds);
+      if (delErr) throw internalError(delErr);
+
+      const { data: maxRow } = await supabaseAdmin
+        .from("answers")
+        .select("id")
+        .eq("qbank_id", data.qbank_id)
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      let nextId = ((maxRow?.id as number) ?? 0) + 1;
+
+      const answerRows = withAnswers.flatMap((i) =>
+        (i.answers ?? []).map((a, idx) => ({
+          id: nextId++,
+          qbank_id: data.qbank_id,
+          question_id: Number(i.id),
+          answer_index: typeof a.answer_index === "number" ? a.answer_index : idx,
+          answer_text: String(a.answer_text ?? ""),
+        })),
+      );
+      const { error: aErr } = await supabaseAdmin
+        .from("answers")
+        .upsert(answerRows, { onConflict: "qbank_id,id" });
+      if (aErr) throw internalError(aErr);
+    }
+
+    const added = toWrite.filter((i) => !existing.has(Number(i.id))).length;
+    return { added, updated: toWrite.length - added, skipped };
+  });
