@@ -322,7 +322,7 @@ export const deleteQuestion = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const db = await admin();
     for (const t of ["attempts", "bookmarks", "answers", "refs"]) {
-      const { error } = await db.from(t).delete().eq("question_id", data.id);
+      const { error } = await (db as any).from(t).delete().eq("question_id", data.id);
       if (error) throw internalError(error);
     }
     const { error } = await db.from("questions").delete().eq("id", data.id);
