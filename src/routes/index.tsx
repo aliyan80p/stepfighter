@@ -93,9 +93,6 @@ function Home() {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
               StepFighter — where every question builds your score.
             </h1>
-            <div className="inline-flex items-center mt-4 px-4 py-2 rounded-full bg-amber-400 text-slate-900 font-semibold text-sm">
-              PIPELINE TEST — Lovable → GitHub → Cloudflare
-            </div>
             <p className="mt-5 text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
               Board-style questions for Step 1, Step 2 CK and Step 3.
             </p>
