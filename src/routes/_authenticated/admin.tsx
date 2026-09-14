@@ -25,9 +25,15 @@ import { getMyAdminAccess, type AdminPermission } from "@/lib/admin-content.func
 import { QuestionsTab } from "@/components/admin/QuestionsTab";
 import { LibraryTab } from "@/components/admin/LibraryTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
+import { TaxonomyTab } from "@/components/admin/TaxonomyTab";
+import { TopicsTab } from "@/components/admin/TopicsTab";
+import { CoursesTab } from "@/components/admin/CoursesTab";
+import { MediaTab } from "@/components/admin/MediaTab";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
   Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, BookOpen, ShieldCheck,
+  Layers, Tags, GraduationCap, Image as ImageIcon,
+
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
