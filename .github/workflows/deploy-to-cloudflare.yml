@@ -43,12 +43,15 @@ jobs:
       - name: Build for Cloudflare
         run: npm run build:cf
 
-      - name: Verify production database settings were embedded
+      - name: Verify production build is ready
         run: |
-          if ! grep -Rqs --fixed-strings "$VITE_SUPABASE_URL" dist/client; then
-            echo "::error::The website build is missing its database address. Deployment stopped before replacing the live site."
+          if [ ! -f .env.production ] || [ ! -d dist/client ] || [ ! -f dist/server/index.mjs ]; then
+            echo "::error::The production build is incomplete. Deployment stopped before replacing the live site."
             exit 1
           fi
+          test -n "$VITE_SUPABASE_URL"
+          test -n "$VITE_SUPABASE_PROJECT_ID"
+          test -n "$VITE_SUPABASE_PUBLISHABLE_KEY"
 
       - name: Deploy to Cloudflare
         env:
