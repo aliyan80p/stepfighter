@@ -16,17 +16,19 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
-  getAdminAnalytics, isCurrentUserAdmin,
+  getAdminAnalytics, getMyAdminAccess,
   listUsers, deleteUser, updateEntitlement, setAdminRole,
   listFeedback, deleteFeedback,
   type AdminUserRow,
 } from "@/lib/admin.functions";
+import { can } from "@/lib/admin-permissions";
 import { QuestionsManager } from "@/components/admin/QuestionsManager";
 import { ContentManager } from "@/components/admin/ContentManager";
 import { BulkManager } from "@/components/admin/BulkManager";
+import { AdminsManager } from "@/components/admin/AdminsManager";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
-  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, Layers, Upload,
+  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, Layers, Upload, ShieldCheck,
 } from "lucide-react";
 
 
