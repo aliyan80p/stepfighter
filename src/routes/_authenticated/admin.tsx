@@ -29,10 +29,11 @@ import { TaxonomyTab } from "@/components/admin/TaxonomyTab";
 import { TopicsTab } from "@/components/admin/TopicsTab";
 import { CoursesTab } from "@/components/admin/CoursesTab";
 import { MediaTab } from "@/components/admin/MediaTab";
+import { PublishTab } from "@/components/admin/PublishTab";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
   Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, BookOpen, ShieldCheck,
-  Layers, Tags, GraduationCap, Image as ImageIcon,
+  Layers, Tags, GraduationCap, Image as ImageIcon, Rocket,
 
 } from "lucide-react";
 
