@@ -6,10 +6,16 @@ import { internalError } from "./errors";
 /* helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error) throw internalError(error);
-  if (!data) throw new Error("Forbidden");
+import { assertPermission, assertAnyAdmin } from "@/lib/admin.functions";
+import type { AdminPermission } from "@/lib/admin-permissions";
+
+async function assertAdmin(supabase: any, userId: string, permission: AdminPermission) {
+  await assertPermission(supabase, userId, permission);
+}
+
+/** Read-only lookups (courses, subjects, systems, sources) any admin may load. */
+async function assertLookup(supabase: any, userId: string) {
+  await assertAnyAdmin(supabase, userId);
 }
 
 async function admin() {
@@ -38,7 +44,7 @@ export type AdminQbank = {
 export const listQbanksAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminQbank[]> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertLookup(context.supabase, context.userId);
     const db = await admin();
     const { data, error } = await db.from("qbanks").select("id, slug, name, description").order("id");
     if (error) throw internalError(error);
@@ -63,7 +69,7 @@ export const saveQbank = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id?: number; slug: string; name: string; description?: string | null }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "content");
     const db = await admin();
     const slug = data.slug.trim().toLowerCase();
     if (!slug || !data.name.trim()) throw new Error("Slug and name are required");
@@ -85,7 +91,7 @@ export const listTaxonomy = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number }) => d)
   .handler(async ({ context, data }): Promise<{ subjects: Taxon[]; systems: Taxon[] }> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertLookup(context.supabase, context.userId);
     const db = await admin();
     const [s, y] = await Promise.all([
       db.from("subjects").select("id, name, count, qbank_id").eq("qbank_id", data.qbank_id).order("name"),
@@ -100,7 +106,7 @@ export const saveTaxon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { kind: "subjects" | "systems"; id?: number; qbank_id: number; name: string }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "content");
     const db = await admin();
     if (!data.name.trim()) throw new Error("Name is required");
     const id = data.id ?? (await nextId(db, data.kind));
@@ -115,7 +121,7 @@ export const deleteTaxon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { kind: "subjects" | "systems"; id: number }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "content");
     const db = await admin();
     const col = data.kind === "subjects" ? "subject_id" : "system_id";
     const { count } = await db.from("questions").select("id", { count: "exact", head: true }).eq(col, data.id);
@@ -151,7 +157,7 @@ export const searchQuestions = createServerFn({ method: "GET" })
     offset?: number;
   }) => d)
   .handler(async ({ context, data }): Promise<{ rows: QuestionListRow[]; total: number }> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "questions");
     const db = await admin();
     const limit = Math.min(Math.max(data.limit ?? 25, 1), 100);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -182,7 +188,7 @@ export const listSources = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number }) => d)
   .handler(async ({ context, data }): Promise<string[]> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertLookup(context.supabase, context.userId);
     const db = await admin();
     const { data: rows, error } = await db
       .from("questions")
@@ -213,7 +219,7 @@ export const getFullQuestion = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: number }) => d)
   .handler(async ({ context, data }): Promise<FullQuestion | null> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "questions");
     const db = await admin();
     const { data: q, error } = await db
       .from("questions")
@@ -309,7 +315,7 @@ export const saveFullQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: QuestionInput) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "questions");
     const db = await admin();
     const id = await writeQuestion(db, data);
     return { ok: true, id };
@@ -319,7 +325,7 @@ export const deleteQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: number }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "questions");
     const db = await admin();
     for (const t of ["attempts", "bookmarks", "answers", "refs"]) {
       const { error } = await (db as any).from(t).delete().eq("question_id", data.id);
@@ -338,7 +344,7 @@ export const bulkImportQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; items: QuestionInput[]; dryRun?: boolean }) => d)
   .handler(async ({ context, data }): Promise<{ imported: number; errors: string[] }> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "bulk");
     const db = await admin();
     const errors: string[] = [];
     if (!Array.isArray(data.items)) throw new Error("File must contain a list of questions");
@@ -364,7 +370,7 @@ export const exportQuestions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; limit?: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<QuestionInput[]> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "bulk");
     const db = await admin();
     const limit = Math.min(Math.max(data.limit ?? 500, 1), 2000);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -412,7 +418,7 @@ export const listLibraryDocs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; search?: string; limit?: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<{ rows: LibraryDocRow[]; total: number }> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "content");
     const db = await admin();
     const limit = Math.min(Math.max(data.limit ?? 25, 1), 100);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -428,7 +434,7 @@ export const getLibraryDoc = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: number }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "content");
     const db = await admin();
     const { data: doc, error } = await db
       .from("library_docs")
@@ -443,7 +449,7 @@ export const saveLibraryDoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id?: number; qbank_id: number; title: string; path?: string | null; html: string }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "content");
     const db = await admin();
     if (!data.title.trim()) throw new Error("Title is required");
     const id = data.id ?? (await nextId(db, "library_docs"));
@@ -466,7 +472,7 @@ export const deleteLibraryDoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: number }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.supabase, context.userId, "content");
     const db = await admin();
     await db.from("library_toc").delete().eq("doc_id", data.id);
     const { error } = await db.from("library_docs").delete().eq("id", data.id);
