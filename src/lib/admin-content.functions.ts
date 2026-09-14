@@ -135,14 +135,18 @@ export const listAdmins = createServerFn({ method: "GET" })
 
     const { data: access, error: accessErr } = await supabaseAdmin
       .from("admin_access")
-      .select("user_id, is_super, permissions")
+      .select("user_id, is_super, permissions, qbank_scope")
       .in("user_id", ids);
     if (accessErr) throw internalError(accessErr);
 
     const accessMap = new Map(
       (access ?? []).map((a) => [
         a.user_id as string,
-        { is_super: Boolean(a.is_super), permissions: (a.permissions ?? []) as string[] },
+        {
+          is_super: Boolean(a.is_super),
+          permissions: (a.permissions ?? []) as string[],
+          qbank_scope: ((a.qbank_scope ?? []) as number[]).map(Number),
+        },
       ]),
     );
 
@@ -154,11 +158,13 @@ export const listAdmins = createServerFn({ method: "GET" })
         user_id: id,
         email: u?.user?.email ?? null,
         is_super: a?.is_super ?? false,
+        qbank_scope: a?.qbank_scope ?? [],
         permissions: ((a?.permissions ?? []) as string[]).filter((p): p is AdminPermission =>
           (ADMIN_PERMISSIONS as readonly string[]).includes(p),
         ),
       });
     }
+
     rows.sort((a, b) => (a.email ?? "").localeCompare(b.email ?? ""));
     return { rows };
   });
