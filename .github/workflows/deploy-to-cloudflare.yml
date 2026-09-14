@@ -41,9 +41,22 @@ jobs:
             fi
           done
 
-
       - name: Build for Cloudflare
+        # Pass these values directly to Vite as well as writing .env above.
+        # This avoids GitHub's step-level environment boundary producing a
+        # client bundle with empty database settings.
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://veqealgeqcvmqpujdlgo.supabase.co' }}
+          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID || 'veqealgeqcvmqpujdlgo' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO' }}
         run: npm run build:cf
+
+      - name: Verify production database settings were embedded
+        run: |
+          if ! grep -Rqs 'veqealgeqcvmqpujdlgo.supabase.co' dist/client; then
+            echo "::error::The website build is missing its database address. Deployment stopped before replacing the live site."
+            exit 1
+          fi
 
       - name: Deploy to Cloudflare
         env:
