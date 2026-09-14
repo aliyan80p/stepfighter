@@ -44,7 +44,7 @@ export type AdminQbank = {
 export const listQbanksAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminQbank[]> => {
-    await assertAdmin(context.supabase, context.userId, "content");
+    await assertLookup(context.supabase, context.userId);
     const db = await admin();
     const { data, error } = await db.from("qbanks").select("id, slug, name, description").order("id");
     if (error) throw internalError(error);
@@ -91,7 +91,7 @@ export const listTaxonomy = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number }) => d)
   .handler(async ({ context, data }): Promise<{ subjects: Taxon[]; systems: Taxon[] }> => {
-    await assertAdmin(context.supabase, context.userId, "content");
+    await assertLookup(context.supabase, context.userId);
     const db = await admin();
     const [s, y] = await Promise.all([
       db.from("subjects").select("id, name, count, qbank_id").eq("qbank_id", data.qbank_id).order("name"),
@@ -188,7 +188,7 @@ export const listSources = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number }) => d)
   .handler(async ({ context, data }): Promise<string[]> => {
-    await assertAdmin(context.supabase, context.userId, "questions");
+    await assertLookup(context.supabase, context.userId);
     const db = await admin();
     const { data: rows, error } = await db
       .from("questions")
