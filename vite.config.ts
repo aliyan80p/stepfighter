@@ -10,8 +10,20 @@ import path from "path";
 
 // Load all env vars into process.env for server routes (no VITE_ prefix).
 // VITE_* env injection is still handled by the wrapped config for client code.
-const serverEnv = loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), "");
-Object.assign(process.env, serverEnv);
+// The mode comes from the CLI (e.g. `vite build --mode cfprod`) so the
+// Cloudflare production build reads .env.cfprod instead of the local .env.
+const modeArgIndex = process.argv.indexOf("--mode");
+const mode =
+  modeArgIndex !== -1 && process.argv[modeArgIndex + 1]
+    ? process.argv[modeArgIndex + 1]
+    : (process.env.NODE_ENV ?? "development");
+const serverEnv = loadEnv(mode, process.cwd(), "");
+// Mode-specific files must win over the generic .env, so overwrite here —
+// but never clobber a value the hosting platform already injected.
+const injected = new Set(Object.keys(process.env));
+for (const [key, value] of Object.entries(serverEnv)) {
+  if (!injected.has(key)) process.env[key] = value;
+}
 
 export default defineConfig({
   tanstackStart: {
