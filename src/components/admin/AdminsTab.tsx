@@ -10,17 +10,24 @@ import { toast } from "sonner";
 import { ShieldCheck, Trash2, UserPlus } from "lucide-react";
 import {
   ADMIN_PERMISSIONS, ADMIN_PERMISSION_LABELS, listAdmins, grantAdminAccess, revokeAdminAccess,
-  type AdminPermission, type AdminAccessRow,
+  listQbanks, type AdminPermission, type AdminAccessRow,
 } from "@/lib/admin-content.functions";
+
+type Course = { id: number; name: string };
 
 export function AdminsTab({ isSuper }: { isSuper: boolean }) {
   const listFn = useServerFn(listAdmins);
   const grantFn = useServerFn(grantAdminAccess);
   const revokeFn = useServerFn(revokeAdminAccess);
+  const qbanksFn = useServerFn(listQbanks);
 
   const q = useQuery({ queryKey: ["admin-admins"], queryFn: () => listFn() });
+  const coursesQ = useQuery({ queryKey: ["admin-qbanks"], queryFn: () => qbanksFn() });
+  const courses: Course[] = coursesQ.data?.rows ?? [];
+
   const [email, setEmail] = useState("");
   const [newPerms, setNewPerms] = useState<AdminPermission[]>(["analytics"]);
+  const [newScope, setNewScope] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
 
   const toggle = (list: AdminPermission[], p: AdminPermission) =>
@@ -29,7 +36,7 @@ export function AdminsTab({ isSuper }: { isSuper: boolean }) {
   const add = async () => {
     setBusy(true);
     try {
-      await grantFn({ data: { email, isSuper: false, permissions: newPerms } });
+      await grantFn({ data: { email, isSuper: false, permissions: newPerms, qbankScope: newScope } });
       toast.success("Sub-admin added");
       setEmail("");
       q.refetch();
@@ -37,9 +44,11 @@ export function AdminsTab({ isSuper }: { isSuper: boolean }) {
     finally { setBusy(false); }
   };
 
-  const savePerms = async (row: AdminAccessRow, perms: AdminPermission[]) => {
+  const savePerms = async (row: AdminAccessRow, perms: AdminPermission[], scope: number[]) => {
     try {
-      await grantFn({ data: { userId: row.user_id, isSuper: row.is_super, permissions: perms } });
+      await grantFn({
+        data: { userId: row.user_id, isSuper: row.is_super, permissions: perms, qbankScope: scope },
+      });
       toast.success("Access updated");
       q.refetch();
     } catch (e) { toast.error((e as Error).message); }
@@ -81,6 +90,29 @@ export function AdminsTab({ isSuper }: { isSuper: boolean }) {
               </label>
             ))}
           </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Courses they may work on</Label>
+            <div className="flex flex-wrap gap-3">
+              {courses.map((c) => (
+                <label key={c.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={newScope.includes(c.id)}
+                    onCheckedChange={() =>
+                      setNewScope((cur) =>
+                        cur.includes(c.id) ? cur.filter((x) => x !== c.id) : [...cur, c.id],
+                      )
+                    }
+                  />
+                  {c.name}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Leave all unticked to allow every course.
+            </p>
+          </div>
+
           <p className="text-xs text-muted-foreground">
             The person must already have an account. They only see the sections you tick.
           </p>
@@ -97,6 +129,7 @@ export function AdminsTab({ isSuper }: { isSuper: boolean }) {
             <AdminRow
               key={row.user_id}
               row={row}
+              courses={courses}
               canEdit={isSuper || !row.is_super}
               onSave={savePerms}
               onRemove={remove}
@@ -112,15 +145,19 @@ export function AdminsTab({ isSuper }: { isSuper: boolean }) {
 }
 
 function AdminRow({
-  row, canEdit, onSave, onRemove,
+  row, courses, canEdit, onSave, onRemove,
 }: {
   row: AdminAccessRow;
+  courses: Course[];
   canEdit: boolean;
-  onSave: (row: AdminAccessRow, perms: AdminPermission[]) => void;
+  onSave: (row: AdminAccessRow, perms: AdminPermission[], scope: number[]) => void;
   onRemove: (row: AdminAccessRow) => void;
 }) {
   const [perms, setPerms] = useState<AdminPermission[]>(row.permissions);
-  const dirty = JSON.stringify([...perms].sort()) !== JSON.stringify([...row.permissions].sort());
+  const [scope, setScope] = useState<number[]>(row.qbank_scope ?? []);
+  const sorted = (a: (string | number)[]) => JSON.stringify([...a].sort());
+  const dirty =
+    sorted(perms) !== sorted(row.permissions) || sorted(scope) !== sorted(row.qbank_scope ?? []);
 
   return (
     <div className="border rounded-md p-3 space-y-2">
@@ -154,8 +191,29 @@ function AdminRow({
               </label>
             ))}
           </div>
+
+          <div className="flex flex-wrap gap-3 pt-1">
+            {courses.map((c) => (
+              <label key={c.id} className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  disabled={!canEdit}
+                  checked={scope.includes(c.id)}
+                  onCheckedChange={() =>
+                    setScope((cur) =>
+                      cur.includes(c.id) ? cur.filter((x) => x !== c.id) : [...cur, c.id],
+                    )
+                  }
+                />
+                {c.name}
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {scope.length ? "Limited to the ticked courses." : "Every course."}
+          </p>
+
           {dirty && canEdit && (
-            <Button size="sm" onClick={() => onSave(row, perms)}>Save access</Button>
+            <Button size="sm" onClick={() => onSave(row, perms, scope)}>Save access</Button>
           )}
         </>
       )}

@@ -25,9 +25,15 @@ import { getMyAdminAccess, type AdminPermission } from "@/lib/admin-content.func
 import { QuestionsTab } from "@/components/admin/QuestionsTab";
 import { LibraryTab } from "@/components/admin/LibraryTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
+import { TaxonomyTab } from "@/components/admin/TaxonomyTab";
+import { TopicsTab } from "@/components/admin/TopicsTab";
+import { CoursesTab } from "@/components/admin/CoursesTab";
+import { MediaTab } from "@/components/admin/MediaTab";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
   Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, BookOpen, ShieldCheck,
+  Layers, Tags, GraduationCap, Image as ImageIcon,
+
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -73,7 +79,12 @@ function AdminDashboard() {
     { value: "feedback", label: "Feedback", icon: MessageSquare, show: can("feedback"), el: <FeedbackTab /> },
     { value: "questions", label: "Questions", icon: Pencil, show: can("questions"), el: <QuestionsTab /> },
     { value: "library", label: "Library", icon: BookOpen, show: can("library"), el: <LibraryTab /> },
+    { value: "subjects", label: "Subjects", icon: Layers, show: can("subjects"), el: <TaxonomyTab /> },
+    { value: "topics", label: "Topics", icon: Tags, show: can("topics"), el: <TopicsTab /> },
+    { value: "courses", label: "Courses", icon: GraduationCap, show: can("courses"), el: <CoursesTab /> },
+    { value: "media", label: "Media", icon: ImageIcon, show: can("media"), el: <MediaTab /> },
     { value: "admins", label: "Admins", icon: ShieldCheck, show: can("admins"), el: <AdminsTab isSuper={isSuper} /> },
+
   ].filter((t) => t.show);
 
   if (!tabs.length) {
