@@ -73,7 +73,12 @@ function AdminDashboard() {
     { value: "feedback", label: "Feedback", icon: MessageSquare, show: can("feedback"), el: <FeedbackTab /> },
     { value: "questions", label: "Questions", icon: Pencil, show: can("questions"), el: <QuestionsTab /> },
     { value: "library", label: "Library", icon: BookOpen, show: can("library"), el: <LibraryTab /> },
+    { value: "subjects", label: "Subjects", icon: Layers, show: can("subjects"), el: <TaxonomyTab /> },
+    { value: "topics", label: "Topics", icon: Tags, show: can("topics"), el: <TopicsTab /> },
+    { value: "courses", label: "Courses", icon: GraduationCap, show: can("courses"), el: <CoursesTab /> },
+    { value: "media", label: "Media", icon: ImageIcon, show: can("media"), el: <MediaTab /> },
     { value: "admins", label: "Admins", icon: ShieldCheck, show: can("admins"), el: <AdminsTab isSuper={isSuper} /> },
+
   ].filter((t) => t.show);
 
   if (!tabs.length) {
