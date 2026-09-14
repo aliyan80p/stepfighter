@@ -6,11 +6,16 @@ import { internalError } from "./errors";
 /* helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-import { assertPermission } from "@/lib/admin.functions";
+import { assertPermission, assertAnyAdmin } from "@/lib/admin.functions";
 import type { AdminPermission } from "@/lib/admin-permissions";
 
 async function assertAdmin(supabase: any, userId: string, permission: AdminPermission) {
   await assertPermission(supabase, userId, permission);
+}
+
+/** Read-only lookups (courses, subjects, systems, sources) any admin may load. */
+async function assertLookup(supabase: any, userId: string) {
+  await assertAnyAdmin(supabase, userId);
 }
 
 async function admin() {
