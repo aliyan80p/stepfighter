@@ -47,7 +47,8 @@ export function LibraryTab() {
     if (qbankId === null) return;
     try {
       const res = await createFn({ data: { qbank_id: qbankId, title: "Untitled article", html: "<p></p>" } });
-      await open(res.id);
+      if (res.id !== null) await open(res.id);
+      else toast.success("Saved as a draft — publish it to make it live");
       listQ.refetch();
     } catch (e) { toast.error((e as Error).message); }
   };

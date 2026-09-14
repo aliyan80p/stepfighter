@@ -52,18 +52,25 @@ async function liveClient() {
 
 export const publishTargetStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ configured: boolean; host: string | null }> => {
-    await assertPublisher(context.supabase, context.userId);
-    const cfg = liveConfig();
-    if (!cfg) return { configured: false, host: null };
-    let host: string | null = null;
-    try {
-      host = new URL(cfg.url).host;
-    } catch {
-      host = null;
-    }
-    return { configured: true, host };
-  });
+  .handler(
+    async ({
+      context,
+    }): Promise<{ configured: boolean; host: string | null; draftSite: boolean }> => {
+      await assertPublisher(context.supabase, context.userId);
+      const { isDraftSite } = await import("./content-drafts.server");
+      const draftSite = isDraftSite();
+      const cfg = liveConfig();
+      if (!cfg) return { configured: false, host: null, draftSite };
+      let h: string | null = null;
+      try {
+        h = new URL(cfg.url).host;
+      } catch {
+        h = null;
+      }
+      return { configured: true, host: h, draftSite };
+    },
+  );
+
 
 export const listPendingChanges = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -263,6 +270,104 @@ export const publishChanges = createServerFn({ method: "POST" })
         await supabaseAdmin
           .from("content_changes")
           .update({ published_at: new Date().toISOString(), published_by: context.userId })
+          .in("id", done);
+      }
+
+      return { published: done.length, failed };
+    },
+  );
+
+// ============================================================================
+// Draft mode — edits made on the test site, waiting to go live in this database
+// ============================================================================
+
+export type DraftRow = {
+  id: number;
+  entity: string;
+  qbank_id: number | null;
+  label: string | null;
+  created_at: string;
+};
+
+export const listDrafts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { limit?: number } | undefined) => d ?? {})
+  .handler(async ({ context, data }): Promise<{ rows: DraftRow[] }> => {
+    await assertPublisher(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("content_drafts")
+      .select("id, entity, qbank_id, label, created_at")
+      .is("applied_at", null)
+      .is("discarded_at", null)
+      .order("created_at", { ascending: false })
+      .limit(Math.min(Math.max(data.limit ?? 300, 1), 1000));
+    if (error) throw internalError(error);
+    return { rows: (rows ?? []) as DraftRow[] };
+  });
+
+export const discardDrafts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { ids: number[] }) => d)
+  .handler(async ({ context, data }): Promise<{ ok: true }> => {
+    await assertPublisher(context.supabase, context.userId);
+    if (!data.ids.length) return { ok: true };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("content_drafts")
+      .update({ discarded_at: new Date().toISOString() })
+      .in("id", data.ids);
+    if (error) throw internalError(error);
+    return { ok: true };
+  });
+
+export const publishDrafts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { ids: number[] }) => d)
+  .handler(
+    async ({
+      context,
+      data,
+    }): Promise<{ published: number; failed: { id: number; message: string }[] }> => {
+      await assertPublisher(context.supabase, context.userId);
+      if (!data.ids.length) return { published: 0, failed: [] };
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { applyChange: applyDraft } = await import("./content-apply.server");
+      const { recordChange } = await import("./content-changes.server");
+
+      const { data: rows, error } = await supabaseAdmin
+        .from("content_drafts")
+        .select("id, entity, qbank_id, ref_id, ref_key, label, payload")
+        .in("id", data.ids)
+        .is("applied_at", null)
+        .is("discarded_at", null)
+        .order("created_at", { ascending: true });
+      if (error) throw internalError(error);
+
+      const failed: { id: number; message: string }[] = [];
+      const done: number[] = [];
+
+      for (const row of (rows ?? []) as any[]) {
+        try {
+          await applyDraft(supabaseAdmin, row.entity, row.payload);
+          await recordChange(supabaseAdmin, {
+            entity: row.entity,
+            qbank_id: row.qbank_id,
+            ref_id: row.ref_id,
+            ref_key: row.ref_key,
+            label: row.label,
+            changed_by: context.userId,
+          });
+          done.push(row.id);
+        } catch (e: any) {
+          failed.push({ id: row.id, message: String(e?.message ?? e) });
+        }
+      }
+
+      if (done.length) {
+        await supabaseAdmin
+          .from("content_drafts")
+          .update({ applied_at: new Date().toISOString(), applied_by: context.userId })
           .in("id", done);
       }
 
