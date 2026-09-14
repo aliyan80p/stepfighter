@@ -14,6 +14,11 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("Forbidden");
 }
 
+/** Any admin account (used for shared read-only lookups). */
+export async function assertAnyAdmin(supabase: any, userId: string) {
+  await assertAdmin(supabase, userId);
+}
+
 /**
  * Server-only: throws unless the caller is an admin AND either a main admin
  * (super) or has been granted the given permission.
