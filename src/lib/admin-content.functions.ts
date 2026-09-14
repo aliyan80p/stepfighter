@@ -215,6 +215,9 @@ export const grantAdminAccess = createServerFn({ method: "POST" })
     const permissions = data.permissions.filter((p) =>
       (ADMIN_PERMISSIONS as readonly string[]).includes(p),
     );
+    const qbankScope = Array.from(
+      new Set((data.qbankScope ?? []).map(Number).filter((n) => Number.isFinite(n))),
+    );
 
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
@@ -224,9 +227,16 @@ export const grantAdminAccess = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("admin_access")
       .upsert(
-        { user_id: userId, is_super: data.isSuper, permissions, updated_at: new Date().toISOString() },
+        {
+          user_id: userId,
+          is_super: data.isSuper,
+          permissions,
+          qbank_scope: data.isSuper ? [] : qbankScope,
+          updated_at: new Date().toISOString(),
+        },
         { onConflict: "user_id" },
       );
+
     if (error) throw internalError(error);
     return { ok: true, userId };
   });
