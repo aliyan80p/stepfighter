@@ -9,120 +9,61 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as FaqRouteImport } from './routes/faq'
-import { Route as FeaturesRouteImport } from './routes/features'
-import { Route as PricingRouteImport } from './routes/pricing'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as QbankRouteImport } from './routes/qbank'
-import { Route as RefundRouteImport } from './routes/refund'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedBookmarksRouteImport } from './routes/_authenticated/bookmarks'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedMedicalLibraryRouteImport } from './routes/_authenticated/medical-library'
-import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticated/new-test'
-import { Route as AuthenticatedSubscribeRenewRouteImport } from './routes/_authenticated/subscribe-renew'
-import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/tests'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RefundRouteImport } from './routes/refund'
+import { Route as QbankRouteImport } from './routes/qbank'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
-import { Route as AuthenticatedAccountResetRouteImport } from './routes/_authenticated/account.reset'
-import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account.settings'
-import { Route as AuthenticatedCoursesMyCoursesRouteImport } from './routes/_authenticated/courses.my-courses'
-import { Route as AuthenticatedFlashcardsMyDecksRouteImport } from './routes/_authenticated/flashcards.my-decks'
+import { Route as AuthenticatedTestsRouteImport } from './routes/_authenticated/tests'
+import { Route as AuthenticatedSubscribeRenewRouteImport } from './routes/_authenticated/subscribe-renew'
+import { Route as AuthenticatedNewTestRouteImport } from './routes/_authenticated/new-test'
+import { Route as AuthenticatedMedicalLibraryRouteImport } from './routes/_authenticated/medical-library'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBookmarksRouteImport } from './routes/_authenticated/bookmarks'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedNotesIndexRouteImport } from './routes/_authenticated/notes.index'
-import { Route as AuthenticatedPerformanceAiTestAnalysisRouteImport } from './routes/_authenticated/performance.ai-test-analysis'
-import { Route as AuthenticatedPerformanceGraphsRouteImport } from './routes/_authenticated/performance.graphs'
-import { Route as AuthenticatedPerformanceImprovementsRouteImport } from './routes/_authenticated/performance.improvements'
-import { Route as AuthenticatedPerformanceOverallRouteImport } from './routes/_authenticated/performance.overall'
-import { Route as AuthenticatedPerformancePeerRankingRouteImport } from './routes/_authenticated/performance.peer-ranking'
-import { Route as AuthenticatedPerformanceScoreCalculatorRouteImport } from './routes/_authenticated/performance.score-calculator'
-import { Route as AuthenticatedQbanksSearchRouteImport } from './routes/_authenticated/qbanks.search'
-import { Route as AuthenticatedSelfAssessmentsAssessmentsRouteImport } from './routes/_authenticated/self-assessments.assessments'
-import { Route as AuthenticatedSelfAssessmentsNbmeLibraryRouteImport } from './routes/_authenticated/self-assessments.nbme-library'
-import { Route as AuthenticatedSelfAssessmentsReportRouteImport } from './routes/_authenticated/self-assessments.report'
-import { Route as AuthenticatedSelfAssessmentsScorePredictorRouteImport } from './routes/_authenticated/self-assessments.score-predictor'
-import { Route as AuthenticatedTestResultsIdRouteImport } from './routes/_authenticated/test-results.$id'
-import { Route as AuthenticatedTestIdRouteImport } from './routes/_authenticated/test.$id'
-import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
-import { Route as ApiPublicNbmeExportRouteImport } from './routes/api/public/nbme-export'
 import { Route as ApiPublicWarmMediaRouteImport } from './routes/api/public/warm-media'
-import { Route as AuthenticatedTestIdResultsRouteImport } from './routes/_authenticated/test.$id.results'
-import { Route as ApiPublicHooksBackupRouteImport } from './routes/api/public/hooks/backup'
-import { Route as ApiPublicHooksDriveDedupRouteImport } from './routes/api/public/hooks/drive-dedup'
-import { Route as ApiPublicHooksMediaBackupRouteImport } from './routes/api/public/hooks/media-backup'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as ApiPublicNbmeExportRouteImport } from './routes/api/public/nbme-export'
+import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
+import { Route as AuthenticatedTestIdRouteImport } from './routes/_authenticated/test.$id'
+import { Route as AuthenticatedTestResultsIdRouteImport } from './routes/_authenticated/test-results.$id'
+import { Route as AuthenticatedSelfAssessmentsScorePredictorRouteImport } from './routes/_authenticated/self-assessments.score-predictor'
+import { Route as AuthenticatedSelfAssessmentsReportRouteImport } from './routes/_authenticated/self-assessments.report'
+import { Route as AuthenticatedSelfAssessmentsNbmeLibraryRouteImport } from './routes/_authenticated/self-assessments.nbme-library'
+import { Route as AuthenticatedSelfAssessmentsAssessmentsRouteImport } from './routes/_authenticated/self-assessments.assessments'
+import { Route as AuthenticatedQbanksSearchRouteImport } from './routes/_authenticated/qbanks.search'
+import { Route as AuthenticatedPerformanceScoreCalculatorRouteImport } from './routes/_authenticated/performance.score-calculator'
+import { Route as AuthenticatedPerformancePeerRankingRouteImport } from './routes/_authenticated/performance.peer-ranking'
+import { Route as AuthenticatedPerformanceOverallRouteImport } from './routes/_authenticated/performance.overall'
+import { Route as AuthenticatedPerformanceImprovementsRouteImport } from './routes/_authenticated/performance.improvements'
+import { Route as AuthenticatedPerformanceGraphsRouteImport } from './routes/_authenticated/performance.graphs'
+import { Route as AuthenticatedPerformanceAiTestAnalysisRouteImport } from './routes/_authenticated/performance.ai-test-analysis'
+import { Route as AuthenticatedFlashcardsMyDecksRouteImport } from './routes/_authenticated/flashcards.my-decks'
+import { Route as AuthenticatedCoursesMyCoursesRouteImport } from './routes/_authenticated/courses.my-courses'
+import { Route as AuthenticatedAccountSettingsRouteImport } from './routes/_authenticated/account.settings'
+import { Route as AuthenticatedAccountResetRouteImport } from './routes/_authenticated/account.reset'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksMediaBackupRouteImport } from './routes/api/public/hooks/media-backup'
+import { Route as ApiPublicHooksDriveDedupRouteImport } from './routes/api/public/hooks/drive-dedup'
+import { Route as ApiPublicHooksBackupRouteImport } from './routes/api/public/hooks/backup'
+import { Route as AuthenticatedTestIdResultsRouteImport } from './routes/_authenticated/test.$id.results'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FeaturesRoute = FeaturesRouteImport.update({
-  id: '/features',
-  path: '/features',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const QbankRoute = QbankRouteImport.update({
-  id: '/qbank',
-  path: '/qbank',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RefundRoute = RefundRouteImport.update({
-  id: '/refund',
-  path: '/refund',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const Verify2faRoute = Verify2faRouteImport.update({
+  id: '/verify-2fa',
+  path: '/verify-2fa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -130,35 +71,78 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Verify2faRoute = Verify2faRouteImport.update({
-  id: '/verify-2fa',
-  path: '/verify-2fa',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QbankRoute = QbankRouteImport.update({
+  id: '/qbank',
+  path: '/qbank',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedUpgradeRoute = AuthenticatedUpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBookmarksRoute = AuthenticatedBookmarksRouteImport.update({
-  id: '/bookmarks',
-  path: '/bookmarks',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMedicalLibraryRoute =
-  AuthenticatedMedicalLibraryRouteImport.update({
-    id: '/medical-library',
-    path: '/medical-library',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedNewTestRoute = AuthenticatedNewTestRouteImport.update({
-  id: '/new-test',
-  path: '/new-test',
+const AuthenticatedTestsRoute = AuthenticatedTestsRouteImport.update({
+  id: '/tests',
+  path: '/tests',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSubscribeRenewRoute =
@@ -167,103 +151,61 @@ const AuthenticatedSubscribeRenewRoute =
     path: '/subscribe-renew',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedTestsRoute = AuthenticatedTestsRouteImport.update({
-  id: '/tests',
-  path: '/tests',
+const AuthenticatedNewTestRoute = AuthenticatedNewTestRouteImport.update({
+  id: '/new-test',
+  path: '/new-test',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedUpgradeRoute = AuthenticatedUpgradeRouteImport.update({
-  id: '/upgrade',
-  path: '/upgrade',
+const AuthenticatedMedicalLibraryRoute =
+  AuthenticatedMedicalLibraryRouteImport.update({
+    id: '/medical-library',
+    path: '/medical-library',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAccountResetRoute =
-  AuthenticatedAccountResetRouteImport.update({
-    id: '/account/reset',
-    path: '/account/reset',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAccountSettingsRoute =
-  AuthenticatedAccountSettingsRouteImport.update({
-    id: '/account/settings',
-    path: '/account/settings',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedCoursesMyCoursesRoute =
-  AuthenticatedCoursesMyCoursesRouteImport.update({
-    id: '/courses/my-courses',
-    path: '/courses/my-courses',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFlashcardsMyDecksRoute =
-  AuthenticatedFlashcardsMyDecksRouteImport.update({
-    id: '/flashcards/my-decks',
-    path: '/flashcards/my-decks',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const AuthenticatedBookmarksRoute = AuthenticatedBookmarksRouteImport.update({
+  id: '/bookmarks',
+  path: '/bookmarks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedNotesIndexRoute = AuthenticatedNotesIndexRouteImport.update({
   id: '/notes/',
   path: '/notes/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPerformanceAiTestAnalysisRoute =
-  AuthenticatedPerformanceAiTestAnalysisRouteImport.update({
-    id: '/performance/ai-test-analysis',
-    path: '/performance/ai-test-analysis',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPerformanceGraphsRoute =
-  AuthenticatedPerformanceGraphsRouteImport.update({
-    id: '/performance/graphs',
-    path: '/performance/graphs',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPerformanceImprovementsRoute =
-  AuthenticatedPerformanceImprovementsRouteImport.update({
-    id: '/performance/improvements',
-    path: '/performance/improvements',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPerformanceOverallRoute =
-  AuthenticatedPerformanceOverallRouteImport.update({
-    id: '/performance/overall',
-    path: '/performance/overall',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPerformancePeerRankingRoute =
-  AuthenticatedPerformancePeerRankingRouteImport.update({
-    id: '/performance/peer-ranking',
-    path: '/performance/peer-ranking',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPerformanceScoreCalculatorRoute =
-  AuthenticatedPerformanceScoreCalculatorRouteImport.update({
-    id: '/performance/score-calculator',
-    path: '/performance/score-calculator',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedQbanksSearchRoute =
-  AuthenticatedQbanksSearchRouteImport.update({
-    id: '/qbanks/search',
-    path: '/qbanks/search',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSelfAssessmentsAssessmentsRoute =
-  AuthenticatedSelfAssessmentsAssessmentsRouteImport.update({
-    id: '/self-assessments/assessments',
-    path: '/self-assessments/assessments',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSelfAssessmentsNbmeLibraryRoute =
-  AuthenticatedSelfAssessmentsNbmeLibraryRouteImport.update({
-    id: '/self-assessments/nbme-library',
-    path: '/self-assessments/nbme-library',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSelfAssessmentsReportRoute =
-  AuthenticatedSelfAssessmentsReportRouteImport.update({
-    id: '/self-assessments/report',
-    path: '/self-assessments/report',
+const ApiPublicWarmMediaRoute = ApiPublicWarmMediaRouteImport.update({
+  id: '/api/public/warm-media',
+  path: '/api/public/warm-media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNbmeExportRoute = ApiPublicNbmeExportRouteImport.update({
+  id: '/api/public/nbme-export',
+  path: '/api/public/nbme-export',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMediaSplatRoute = ApiMediaSplatRouteImport.update({
+  id: '/api/media/$',
+  path: '/api/media/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTestIdRoute = AuthenticatedTestIdRouteImport.update({
+  id: '/test/$id',
+  path: '/test/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTestResultsIdRoute =
+  AuthenticatedTestResultsIdRouteImport.update({
+    id: '/test-results/$id',
+    path: '/test-results/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSelfAssessmentsScorePredictorRoute =
@@ -272,30 +214,121 @@ const AuthenticatedSelfAssessmentsScorePredictorRoute =
     path: '/self-assessments/score-predictor',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedTestResultsIdRoute =
-  AuthenticatedTestResultsIdRouteImport.update({
-    id: '/test-results/$id',
-    path: '/test-results/$id',
+const AuthenticatedSelfAssessmentsReportRoute =
+  AuthenticatedSelfAssessmentsReportRouteImport.update({
+    id: '/self-assessments/report',
+    path: '/self-assessments/report',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedTestIdRoute = AuthenticatedTestIdRouteImport.update({
-  id: '/test/$id',
-  path: '/test/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const ApiMediaSplatRoute = ApiMediaSplatRouteImport.update({
-  id: '/api/media/$',
-  path: '/api/media/$',
+const AuthenticatedSelfAssessmentsNbmeLibraryRoute =
+  AuthenticatedSelfAssessmentsNbmeLibraryRouteImport.update({
+    id: '/self-assessments/nbme-library',
+    path: '/self-assessments/nbme-library',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSelfAssessmentsAssessmentsRoute =
+  AuthenticatedSelfAssessmentsAssessmentsRouteImport.update({
+    id: '/self-assessments/assessments',
+    path: '/self-assessments/assessments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedQbanksSearchRoute =
+  AuthenticatedQbanksSearchRouteImport.update({
+    id: '/qbanks/search',
+    path: '/qbanks/search',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceScoreCalculatorRoute =
+  AuthenticatedPerformanceScoreCalculatorRouteImport.update({
+    id: '/performance/score-calculator',
+    path: '/performance/score-calculator',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformancePeerRankingRoute =
+  AuthenticatedPerformancePeerRankingRouteImport.update({
+    id: '/performance/peer-ranking',
+    path: '/performance/peer-ranking',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceOverallRoute =
+  AuthenticatedPerformanceOverallRouteImport.update({
+    id: '/performance/overall',
+    path: '/performance/overall',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceImprovementsRoute =
+  AuthenticatedPerformanceImprovementsRouteImport.update({
+    id: '/performance/improvements',
+    path: '/performance/improvements',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceGraphsRoute =
+  AuthenticatedPerformanceGraphsRouteImport.update({
+    id: '/performance/graphs',
+    path: '/performance/graphs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPerformanceAiTestAnalysisRoute =
+  AuthenticatedPerformanceAiTestAnalysisRouteImport.update({
+    id: '/performance/ai-test-analysis',
+    path: '/performance/ai-test-analysis',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFlashcardsMyDecksRoute =
+  AuthenticatedFlashcardsMyDecksRouteImport.update({
+    id: '/flashcards/my-decks',
+    path: '/flashcards/my-decks',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCoursesMyCoursesRoute =
+  AuthenticatedCoursesMyCoursesRouteImport.update({
+    id: '/courses/my-courses',
+    path: '/courses/my-courses',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountSettingsRoute =
+  AuthenticatedAccountSettingsRouteImport.update({
+    id: '/account/settings',
+    path: '/account/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountResetRoute =
+  AuthenticatedAccountResetRouteImport.update({
+    id: '/account/reset',
+    path: '/account/reset',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicNbmeExportRoute = ApiPublicNbmeExportRouteImport.update({
-  id: '/api/public/nbme-export',
-  path: '/api/public/nbme-export',
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicWarmMediaRoute = ApiPublicWarmMediaRouteImport.update({
-  id: '/api/public/warm-media',
-  path: '/api/public/warm-media',
+const ApiPublicHooksMediaBackupRoute =
+  ApiPublicHooksMediaBackupRouteImport.update({
+    id: '/api/public/hooks/media-backup',
+    path: '/api/public/hooks/media-backup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksDriveDedupRoute =
+  ApiPublicHooksDriveDedupRouteImport.update({
+    id: '/api/public/hooks/drive-dedup',
+    path: '/api/public/hooks/drive-dedup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBackupRoute = ApiPublicHooksBackupRouteImport.update({
+  id: '/api/public/hooks/backup',
+  path: '/api/public/hooks/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTestIdResultsRoute =
@@ -303,39 +336,6 @@ const AuthenticatedTestIdResultsRoute =
     id: '/results',
     path: '/results',
     getParentRoute: () => AuthenticatedTestIdRoute,
-  } as any)
-const ApiPublicHooksBackupRoute = ApiPublicHooksBackupRouteImport.update({
-  id: '/api/public/hooks/backup',
-  path: '/api/public/hooks/backup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksDriveDedupRoute =
-  ApiPublicHooksDriveDedupRouteImport.update({
-    id: '/api/public/hooks/drive-dedup',
-    path: '/api/public/hooks/drive-dedup',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksMediaBackupRoute =
-  ApiPublicHooksMediaBackupRouteImport.update({
-    id: '/api/public/hooks/media-backup',
-    path: '/api/public/hooks/media-backup',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -685,95 +685,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/features': {
-      id: '/features'
-      path: '/features'
-      fullPath: '/features'
-      preLoaderRoute: typeof FeaturesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/qbank': {
-      id: '/qbank'
-      path: '/qbank'
-      fullPath: '/qbank'
-      preLoaderRoute: typeof QbankRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refund': {
-      id: '/refund'
-      path: '/refund'
-      fullPath: '/refund'
-      preLoaderRoute: typeof RefundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/verify-2fa': {
+      id: '/verify-2fa'
+      path: '/verify-2fa'
+      fullPath: '/verify-2fa'
+      preLoaderRoute: typeof Verify2faRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -783,53 +699,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/verify-2fa': {
-      id: '/verify-2fa'
-      path: '/verify-2fa'
-      fullPath: '/verify-2fa'
-      preLoaderRoute: typeof Verify2faRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/bookmarks': {
-      id: '/_authenticated/bookmarks'
-      path: '/bookmarks'
-      fullPath: '/bookmarks'
-      preLoaderRoute: typeof AuthenticatedBookmarksRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/qbank': {
+      id: '/qbank'
+      path: '/qbank'
+      fullPath: '/qbank'
+      preLoaderRoute: typeof QbankRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/medical-library': {
-      id: '/_authenticated/medical-library'
-      path: '/medical-library'
-      fullPath: '/medical-library'
-      preLoaderRoute: typeof AuthenticatedMedicalLibraryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/new-test': {
-      id: '/_authenticated/new-test'
-      path: '/new-test'
-      fullPath: '/new-test'
-      preLoaderRoute: typeof AuthenticatedNewTestRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/subscribe-renew': {
-      id: '/_authenticated/subscribe-renew'
-      path: '/subscribe-renew'
-      fullPath: '/subscribe-renew'
-      preLoaderRoute: typeof AuthenticatedSubscribeRenewRouteImport
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/upgrade': {
+      id: '/_authenticated/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof AuthenticatedUpgradeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tests': {
@@ -839,39 +804,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/upgrade': {
-      id: '/_authenticated/upgrade'
-      path: '/upgrade'
-      fullPath: '/upgrade'
-      preLoaderRoute: typeof AuthenticatedUpgradeRouteImport
+    '/_authenticated/subscribe-renew': {
+      id: '/_authenticated/subscribe-renew'
+      path: '/subscribe-renew'
+      fullPath: '/subscribe-renew'
+      preLoaderRoute: typeof AuthenticatedSubscribeRenewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/account/reset': {
-      id: '/_authenticated/account/reset'
-      path: '/account/reset'
-      fullPath: '/account/reset'
-      preLoaderRoute: typeof AuthenticatedAccountResetRouteImport
+    '/_authenticated/new-test': {
+      id: '/_authenticated/new-test'
+      path: '/new-test'
+      fullPath: '/new-test'
+      preLoaderRoute: typeof AuthenticatedNewTestRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/account/settings': {
-      id: '/_authenticated/account/settings'
-      path: '/account/settings'
-      fullPath: '/account/settings'
-      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
+    '/_authenticated/medical-library': {
+      id: '/_authenticated/medical-library'
+      path: '/medical-library'
+      fullPath: '/medical-library'
+      preLoaderRoute: typeof AuthenticatedMedicalLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/courses/my-courses': {
-      id: '/_authenticated/courses/my-courses'
-      path: '/courses/my-courses'
-      fullPath: '/courses/my-courses'
-      preLoaderRoute: typeof AuthenticatedCoursesMyCoursesRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/flashcards/my-decks': {
-      id: '/_authenticated/flashcards/my-decks'
-      path: '/flashcards/my-decks'
-      fullPath: '/flashcards/my-decks'
-      preLoaderRoute: typeof AuthenticatedFlashcardsMyDecksRouteImport
+    '/_authenticated/bookmarks': {
+      id: '/_authenticated/bookmarks'
+      path: '/bookmarks'
+      fullPath: '/bookmarks'
+      preLoaderRoute: typeof AuthenticatedBookmarksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notes/': {
@@ -881,102 +853,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/performance/ai-test-analysis': {
-      id: '/_authenticated/performance/ai-test-analysis'
-      path: '/performance/ai-test-analysis'
-      fullPath: '/performance/ai-test-analysis'
-      preLoaderRoute: typeof AuthenticatedPerformanceAiTestAnalysisRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/performance/graphs': {
-      id: '/_authenticated/performance/graphs'
-      path: '/performance/graphs'
-      fullPath: '/performance/graphs'
-      preLoaderRoute: typeof AuthenticatedPerformanceGraphsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/performance/improvements': {
-      id: '/_authenticated/performance/improvements'
-      path: '/performance/improvements'
-      fullPath: '/performance/improvements'
-      preLoaderRoute: typeof AuthenticatedPerformanceImprovementsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/performance/overall': {
-      id: '/_authenticated/performance/overall'
-      path: '/performance/overall'
-      fullPath: '/performance/overall'
-      preLoaderRoute: typeof AuthenticatedPerformanceOverallRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/performance/peer-ranking': {
-      id: '/_authenticated/performance/peer-ranking'
-      path: '/performance/peer-ranking'
-      fullPath: '/performance/peer-ranking'
-      preLoaderRoute: typeof AuthenticatedPerformancePeerRankingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/performance/score-calculator': {
-      id: '/_authenticated/performance/score-calculator'
-      path: '/performance/score-calculator'
-      fullPath: '/performance/score-calculator'
-      preLoaderRoute: typeof AuthenticatedPerformanceScoreCalculatorRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/qbanks/search': {
-      id: '/_authenticated/qbanks/search'
-      path: '/qbanks/search'
-      fullPath: '/qbanks/search'
-      preLoaderRoute: typeof AuthenticatedQbanksSearchRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/self-assessments/assessments': {
-      id: '/_authenticated/self-assessments/assessments'
-      path: '/self-assessments/assessments'
-      fullPath: '/self-assessments/assessments'
-      preLoaderRoute: typeof AuthenticatedSelfAssessmentsAssessmentsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/self-assessments/nbme-library': {
-      id: '/_authenticated/self-assessments/nbme-library'
-      path: '/self-assessments/nbme-library'
-      fullPath: '/self-assessments/nbme-library'
-      preLoaderRoute: typeof AuthenticatedSelfAssessmentsNbmeLibraryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/self-assessments/report': {
-      id: '/_authenticated/self-assessments/report'
-      path: '/self-assessments/report'
-      fullPath: '/self-assessments/report'
-      preLoaderRoute: typeof AuthenticatedSelfAssessmentsReportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/self-assessments/score-predictor': {
-      id: '/_authenticated/self-assessments/score-predictor'
-      path: '/self-assessments/score-predictor'
-      fullPath: '/self-assessments/score-predictor'
-      preLoaderRoute: typeof AuthenticatedSelfAssessmentsScorePredictorRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/test-results/$id': {
-      id: '/_authenticated/test-results/$id'
-      path: '/test-results/$id'
-      fullPath: '/test-results/$id'
-      preLoaderRoute: typeof AuthenticatedTestResultsIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/test/$id': {
-      id: '/_authenticated/test/$id'
-      path: '/test/$id'
-      fullPath: '/test/$id'
-      preLoaderRoute: typeof AuthenticatedTestIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/media/$': {
-      id: '/api/media/$'
-      path: '/api/media/$'
-      fullPath: '/api/media/$'
-      preLoaderRoute: typeof ApiMediaSplatRouteImport
+    '/api/public/warm-media': {
+      id: '/api/public/warm-media'
+      path: '/api/public/warm-media'
+      fullPath: '/api/public/warm-media'
+      preLoaderRoute: typeof ApiPublicWarmMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/nbme-export': {
@@ -986,46 +867,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNbmeExportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/warm-media': {
-      id: '/api/public/warm-media'
-      path: '/api/public/warm-media'
-      fullPath: '/api/public/warm-media'
-      preLoaderRoute: typeof ApiPublicWarmMediaRouteImport
+    '/api/media/$': {
+      id: '/api/media/$'
+      path: '/api/media/$'
+      fullPath: '/api/media/$'
+      preLoaderRoute: typeof ApiMediaSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/test/$id/results': {
-      id: '/_authenticated/test/$id/results'
-      path: '/results'
-      fullPath: '/test/$id/results'
-      preLoaderRoute: typeof AuthenticatedTestIdResultsRouteImport
-      parentRoute: typeof AuthenticatedTestIdRoute
+    '/_authenticated/test/$id': {
+      id: '/_authenticated/test/$id'
+      path: '/test/$id'
+      fullPath: '/test/$id'
+      preLoaderRoute: typeof AuthenticatedTestIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/hooks/backup': {
-      id: '/api/public/hooks/backup'
-      path: '/api/public/hooks/backup'
-      fullPath: '/api/public/hooks/backup'
-      preLoaderRoute: typeof ApiPublicHooksBackupRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/test-results/$id': {
+      id: '/_authenticated/test-results/$id'
+      path: '/test-results/$id'
+      fullPath: '/test-results/$id'
+      preLoaderRoute: typeof AuthenticatedTestResultsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/hooks/drive-dedup': {
-      id: '/api/public/hooks/drive-dedup'
-      path: '/api/public/hooks/drive-dedup'
-      fullPath: '/api/public/hooks/drive-dedup'
-      preLoaderRoute: typeof ApiPublicHooksDriveDedupRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/self-assessments/score-predictor': {
+      id: '/_authenticated/self-assessments/score-predictor'
+      path: '/self-assessments/score-predictor'
+      fullPath: '/self-assessments/score-predictor'
+      preLoaderRoute: typeof AuthenticatedSelfAssessmentsScorePredictorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/hooks/media-backup': {
-      id: '/api/public/hooks/media-backup'
-      path: '/api/public/hooks/media-backup'
-      fullPath: '/api/public/hooks/media-backup'
-      preLoaderRoute: typeof ApiPublicHooksMediaBackupRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/self-assessments/report': {
+      id: '/_authenticated/self-assessments/report'
+      path: '/self-assessments/report'
+      fullPath: '/self-assessments/report'
+      preLoaderRoute: typeof AuthenticatedSelfAssessmentsReportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/_authenticated/self-assessments/nbme-library': {
+      id: '/_authenticated/self-assessments/nbme-library'
+      path: '/self-assessments/nbme-library'
+      fullPath: '/self-assessments/nbme-library'
+      preLoaderRoute: typeof AuthenticatedSelfAssessmentsNbmeLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/self-assessments/assessments': {
+      id: '/_authenticated/self-assessments/assessments'
+      path: '/self-assessments/assessments'
+      fullPath: '/self-assessments/assessments'
+      preLoaderRoute: typeof AuthenticatedSelfAssessmentsAssessmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qbanks/search': {
+      id: '/_authenticated/qbanks/search'
+      path: '/qbanks/search'
+      fullPath: '/qbanks/search'
+      preLoaderRoute: typeof AuthenticatedQbanksSearchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/score-calculator': {
+      id: '/_authenticated/performance/score-calculator'
+      path: '/performance/score-calculator'
+      fullPath: '/performance/score-calculator'
+      preLoaderRoute: typeof AuthenticatedPerformanceScoreCalculatorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/peer-ranking': {
+      id: '/_authenticated/performance/peer-ranking'
+      path: '/performance/peer-ranking'
+      fullPath: '/performance/peer-ranking'
+      preLoaderRoute: typeof AuthenticatedPerformancePeerRankingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/overall': {
+      id: '/_authenticated/performance/overall'
+      path: '/performance/overall'
+      fullPath: '/performance/overall'
+      preLoaderRoute: typeof AuthenticatedPerformanceOverallRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/improvements': {
+      id: '/_authenticated/performance/improvements'
+      path: '/performance/improvements'
+      fullPath: '/performance/improvements'
+      preLoaderRoute: typeof AuthenticatedPerformanceImprovementsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/graphs': {
+      id: '/_authenticated/performance/graphs'
+      path: '/performance/graphs'
+      fullPath: '/performance/graphs'
+      preLoaderRoute: typeof AuthenticatedPerformanceGraphsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/performance/ai-test-analysis': {
+      id: '/_authenticated/performance/ai-test-analysis'
+      path: '/performance/ai-test-analysis'
+      fullPath: '/performance/ai-test-analysis'
+      preLoaderRoute: typeof AuthenticatedPerformanceAiTestAnalysisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/flashcards/my-decks': {
+      id: '/_authenticated/flashcards/my-decks'
+      path: '/flashcards/my-decks'
+      fullPath: '/flashcards/my-decks'
+      preLoaderRoute: typeof AuthenticatedFlashcardsMyDecksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/courses/my-courses': {
+      id: '/_authenticated/courses/my-courses'
+      path: '/courses/my-courses'
+      fullPath: '/courses/my-courses'
+      preLoaderRoute: typeof AuthenticatedCoursesMyCoursesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/settings': {
+      id: '/_authenticated/account/settings'
+      path: '/account/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AuthenticatedAccountSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account/reset': {
+      id: '/_authenticated/account/reset'
+      path: '/account/reset'
+      fullPath: '/account/reset'
+      preLoaderRoute: typeof AuthenticatedAccountResetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/webhook': {
@@ -1035,12 +1007,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/media-backup': {
+      id: '/api/public/hooks/media-backup'
+      path: '/api/public/hooks/media-backup'
+      fullPath: '/api/public/hooks/media-backup'
+      preLoaderRoute: typeof ApiPublicHooksMediaBackupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/drive-dedup': {
+      id: '/api/public/hooks/drive-dedup'
+      path: '/api/public/hooks/drive-dedup'
+      fullPath: '/api/public/hooks/drive-dedup'
+      preLoaderRoute: typeof ApiPublicHooksDriveDedupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/backup': {
+      id: '/api/public/hooks/backup'
+      path: '/api/public/hooks/backup'
+      fullPath: '/api/public/hooks/backup'
+      preLoaderRoute: typeof ApiPublicHooksBackupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/test/$id/results': {
+      id: '/_authenticated/test/$id/results'
+      path: '/results'
+      fullPath: '/test/$id/results'
+      preLoaderRoute: typeof AuthenticatedTestIdResultsRouteImport
+      parentRoute: typeof AuthenticatedTestIdRoute
     }
   }
 }
