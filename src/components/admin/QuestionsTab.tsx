@@ -12,6 +12,7 @@ import {
   listQbanks, searchQuestions, getQuestionFull, updateQuestionFull, uploadQuestionMedia,
   type AdminQuestionFull,
 } from "@/lib/admin-content.functions";
+import { ImportExportPanel } from "./ImportExportPanel";
 
 type Choice = { id?: number; answer_index: number; answer_text: string };
 
