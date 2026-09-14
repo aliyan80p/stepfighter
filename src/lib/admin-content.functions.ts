@@ -255,15 +255,31 @@ export type QbankOption = { id: number; slug: string; name: string };
 export const listQbanks = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ rows: QbankOption[] }> => {
-    await assertPerm(context.supabase, context.userId, "questions");
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+    const { data: me } = await context.supabase
+      .from("admin_access")
+      .select("is_super, qbank_scope")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    const scope = ((me?.qbank_scope ?? []) as number[]).map(Number);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("qbanks")
       .select("id, slug, name")
       .order("id");
     if (error) throw internalError(error);
-    return { rows: (data ?? []) as QbankOption[] };
+    const rows = (data ?? []) as QbankOption[];
+    if (!me?.is_super && scope.length) {
+      return { rows: rows.filter((r) => scope.includes(Number(r.id))) };
+    }
+    return { rows };
   });
+
 
 export type QuestionSearchRow = {
   id: number;
