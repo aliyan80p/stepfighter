@@ -77,6 +77,7 @@ export type MyAdminAccess = {
   admin: boolean;
   isSuper: boolean;
   permissions: AdminPermission[];
+  qbankScope: number[];
 };
 
 export const getMyAdminAccess = createServerFn({ method: "GET" })
@@ -84,20 +85,22 @@ export const getMyAdminAccess = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<MyAdminAccess> => {
     const { supabase, userId } = context;
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-    if (!isAdmin) return { admin: false, isSuper: false, permissions: [] };
+    if (!isAdmin) return { admin: false, isSuper: false, permissions: [], qbankScope: [] };
     const { data: row } = await supabase
       .from("admin_access")
-      .select("is_super, permissions")
+      .select("is_super, permissions, qbank_scope")
       .eq("user_id", userId)
       .maybeSingle();
     const isSuper = Boolean(row?.is_super);
     return {
       admin: true,
       isSuper,
+      qbankScope: isSuper ? [] : ((row?.qbank_scope ?? []) as number[]).map(Number),
       permissions: isSuper
         ? [...ADMIN_PERMISSIONS]
         : ((row?.permissions ?? []) as string[]).filter((p): p is AdminPermission =>
             (ADMIN_PERMISSIONS as readonly string[]).includes(p),
+
           ),
     };
   });
