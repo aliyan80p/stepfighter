@@ -21,12 +21,26 @@ jobs:
         run: npm install
 
       - name: Create production .env from secrets
+        env:
+          # These are publishable (browser-safe) values. Repository secrets
+          # override them; the defaults keep a deploy from shipping a build
+          # with no backend configured, which breaks the whole site.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://veqealgeqcvmqpujdlgo.supabase.co' }}
+          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID || 'veqealgeqcvmqpujdlgo' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_0aAKDWmANScZwVuLGHS6rA_yu9iFpPO' }}
         run: |
           cat > .env <<EOF
-          VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PROJECT_ID=${{ secrets.VITE_SUPABASE_PROJECT_ID }}
-          VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+          VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
+          VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
           EOF
+          for v in VITE_SUPABASE_URL VITE_SUPABASE_PROJECT_ID VITE_SUPABASE_PUBLISHABLE_KEY; do
+            if ! grep -q "^$v=." .env; then
+              echo "::error::$v is empty. Add it in Settings > Secrets and variables > Actions."
+              exit 1
+            fi
+          done
+
 
       - name: Build for Cloudflare
         run: npm run build:cf
