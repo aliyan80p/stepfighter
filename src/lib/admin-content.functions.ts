@@ -114,7 +114,9 @@ export type AdminAccessRow = {
   email: string | null;
   is_super: boolean;
   permissions: AdminPermission[];
+  qbank_scope: number[];
 };
+
 
 export const listAdmins = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
