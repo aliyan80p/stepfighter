@@ -154,7 +154,7 @@ export const getAdminAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminAnalytics> => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertPermission(supabase, userId, "analytics");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const now = Date.now();
@@ -310,7 +310,7 @@ export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { search?: string; limit?: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<{ rows: AdminUserRow[]; total: number }> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "users");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const limit = Math.min(Math.max(data.limit ?? 50, 1), 200);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -366,7 +366,7 @@ export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId: string }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "users");
     if (data.userId === context.userId) throw new Error("Cannot delete yourself");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
@@ -384,7 +384,7 @@ export const updateEntitlement = createServerFn({ method: "POST" })
     qbank_access?: string[];
   }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "users");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch: Record<string, unknown> = { plan: data.plan };
     if (data.trial_ends_at !== undefined) patch.trial_ends_at = data.trial_ends_at;
@@ -401,7 +401,7 @@ export const setAdminRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { userId: string; admin: boolean }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "admins");
     if (data.userId === context.userId && !data.admin) throw new Error("Cannot demote yourself");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.admin) {
@@ -433,7 +433,7 @@ export const listFeedback = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { limit?: number; offset?: number }) => d)
   .handler(async ({ context, data }): Promise<{ rows: AdminFeedbackRow[] }> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "feedback");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const limit = Math.min(Math.max(data.limit ?? 100, 1), 500);
     const offset = Math.max(data.offset ?? 0, 0);
@@ -467,7 +467,7 @@ export const deleteFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "feedback");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("feedback").delete().eq("id", data.id);
     if (error) throw internalError(error);
@@ -491,7 +491,7 @@ export const getQuestionForAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; id: number }) => d)
   .handler(async ({ context, data }): Promise<AdminQuestion | null> => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "questions");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: q, error } = await supabaseAdmin
       .from("questions")
@@ -514,7 +514,7 @@ export const updateQuestion = createServerFn({ method: "POST" })
     correct_answer?: number | null;
   }) => d)
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertPermission(context.supabase, context.userId, "questions");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch: {
       title?: string | null;
