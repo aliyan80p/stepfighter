@@ -172,7 +172,14 @@ export const listAdmins = createServerFn({ method: "GET" })
 export const grantAdminAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { email?: string; userId?: string; isSuper: boolean; permissions: string[] }) => d,
+    (d: {
+      email?: string;
+      userId?: string;
+      isSuper: boolean;
+      permissions: string[];
+      qbankScope?: number[];
+    }) => d,
+
   )
   .handler(async ({ context, data }) => {
     await assertPerm(context.supabase, context.userId, "admins");
