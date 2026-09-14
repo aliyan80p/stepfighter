@@ -170,6 +170,48 @@ export type Database = {
           },
         ]
       }
+      content_changes: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          entity: string
+          id: number
+          label: string | null
+          published_at: string | null
+          published_by: string | null
+          qbank_id: number | null
+          ref_id: number | null
+          ref_key: string | null
+        }
+        Insert: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          entity: string
+          id?: number
+          label?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          qbank_id?: number | null
+          ref_id?: number | null
+          ref_key?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          entity?: string
+          id?: number
+          label?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          qbank_id?: number | null
+          ref_id?: number | null
+          ref_key?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string

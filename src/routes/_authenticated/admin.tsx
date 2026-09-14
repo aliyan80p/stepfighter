@@ -29,10 +29,11 @@ import { TaxonomyTab } from "@/components/admin/TaxonomyTab";
 import { TopicsTab } from "@/components/admin/TopicsTab";
 import { CoursesTab } from "@/components/admin/CoursesTab";
 import { MediaTab } from "@/components/admin/MediaTab";
+import { PublishTab } from "@/components/admin/PublishTab";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
   Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, BookOpen, ShieldCheck,
-  Layers, Tags, GraduationCap, Image as ImageIcon,
+  Layers, Tags, GraduationCap, Image as ImageIcon, Rocket,
 
 } from "lucide-react";
 
@@ -83,6 +84,7 @@ function AdminDashboard() {
     { value: "topics", label: "Topics", icon: Tags, show: can("topics"), el: <TopicsTab /> },
     { value: "courses", label: "Courses", icon: GraduationCap, show: can("courses"), el: <CoursesTab /> },
     { value: "media", label: "Media", icon: ImageIcon, show: can("media"), el: <MediaTab /> },
+    { value: "publish", label: "Publish", icon: Rocket, show: can("publish"), el: <PublishTab /> },
     { value: "admins", label: "Admins", icon: ShieldCheck, show: can("admins"), el: <AdminsTab isSuper={isSuper} /> },
 
   ].filter((t) => t.show);
