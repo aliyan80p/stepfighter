@@ -16,15 +16,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
-  getAdminAnalytics, isCurrentUserAdmin,
+  getAdminAnalytics,
   listUsers, deleteUser, updateEntitlement, setAdminRole,
   listFeedback, deleteFeedback,
-  getQuestionForAdmin, updateQuestion,
   type AdminUserRow,
 } from "@/lib/admin.functions";
+import { getMyAdminAccess, type AdminPermission } from "@/lib/admin-content.functions";
+import { QuestionsTab } from "@/components/admin/QuestionsTab";
+import { LibraryTab } from "@/components/admin/LibraryTab";
+import { AdminsTab } from "@/components/admin/AdminsTab";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
-  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog,
+  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, BookOpen, ShieldCheck,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -32,11 +35,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const COLORS = ["#f59e0b","#3b82f6","#10b981","#ef4444","#8b5cf6","#ec4899","#06b6d4","#84cc16","#f97316","#a3a3a3"];
-const QBANK_OPTIONS = [
-  { id: "step2", label: "Step 2 CK" },
-  { id: "step1", label: "Step 1" },
-  { id: "step3", label: "Step 3" },
-];
+
 
 function AdminDashboard() {
   const navigate = useNavigate();
