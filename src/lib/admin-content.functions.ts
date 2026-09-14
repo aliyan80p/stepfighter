@@ -355,7 +355,12 @@ export const updateQuestionFull = createServerFn({ method: "POST" })
       .map((r) => r.id as number)
       .filter((id) => !keepIds.includes(id));
     if (toDelete.length) {
-      const { error: delErr } = await supabaseAdmin.from("answers").delete().in("id", toDelete);
+      const { error: delErr } = await supabaseAdmin
+        .from("answers")
+        .delete()
+        .eq("qbank_id", data.qbank_id)
+        .eq("question_id", data.id)
+        .in("id", toDelete);
       if (delErr) throw internalError(delErr);
     }
 
@@ -365,6 +370,7 @@ export const updateQuestionFull = createServerFn({ method: "POST" })
       const { data: maxRow } = await supabaseAdmin
         .from("answers")
         .select("id")
+        .eq("qbank_id", data.qbank_id)
         .order("id", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -382,9 +388,10 @@ export const updateQuestionFull = createServerFn({ method: "POST" })
     if (payload.length) {
       const { error: upErr } = await supabaseAdmin
         .from("answers")
-        .upsert(payload, { onConflict: "id" });
+        .upsert(payload, { onConflict: "qbank_id,id" });
       if (upErr) throw internalError(upErr);
     }
+
 
     return { ok: true };
   });
