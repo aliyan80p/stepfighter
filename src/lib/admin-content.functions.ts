@@ -22,6 +22,7 @@ export const ADMIN_PERMISSIONS = [
   "topics",
   "courses",
   "media",
+  "publish",
   "admins",
 ] as const;
 
