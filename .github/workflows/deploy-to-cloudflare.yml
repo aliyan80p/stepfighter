@@ -32,22 +32,34 @@ jobs:
         # install that exact dependency tree without npm rejecting the stale range.
         run: npm ci --legacy-peer-deps
 
-      - name: Prepare production environment variables
-        run: |
-          cat > .env.production <<EOF
-          VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-          VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
-          VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
-          EOF
-
       - name: Build for Cloudflare
-        run: npm run build:cf
+        # `--mode cfprod` loads the committed .env.cfprod file, so the browser
+        # bundle always embeds the independent production database settings
+        # even if GitHub secrets are missing or stale.
+        run: npx vite build --mode cfprod
 
-      - name: Show build output
+      - name: Locate build output
+        id: out
         run: |
-          echo "--- Cloudflare server output ---"; ls -la .output/server
-          echo "--- Public website output ---"; ls -la .output/public | head -20
-          test -f .output/server/wrangler.json
+          for dir in .output dist; do
+            if [ -f "$dir/server/wrangler.json" ]; then
+              echo "config=$dir/server/wrangler.json" >> "$GITHUB_OUTPUT"
+              echo "client=$dir/client" >> "$GITHUB_OUTPUT"
+              [ -d "$dir/public" ] && echo "client=$dir/public" >> "$GITHUB_OUTPUT"
+              echo "Using $dir"
+              break
+            fi
+          done
+          test -n "$(grep -h '^config=' "$GITHUB_OUTPUT")"
+
+      - name: Confirm the database address is embedded
+        run: |
+          if grep -Rqs --fixed-strings "veqealgeqcvmqpujdlgo.supabase.co" "${{ steps.out.outputs.client }}"; then
+            echo "Production database address embedded."
+          else
+            echo "::error::The browser build has no database address. Stopping before replacing the live site."
+            exit 1
+          fi
 
       - name: Deploy to Cloudflare
         env:
@@ -55,7 +67,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           npx wrangler deploy \
-            --config .output/server/wrangler.json \
+            --config "${{ steps.out.outputs.config }}" \
             --name stepfighter \
             --keep-vars \
             --var "SUPABASE_URL:$VITE_SUPABASE_URL" \
