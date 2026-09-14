@@ -19,13 +19,16 @@ import {
   getAdminAnalytics, isCurrentUserAdmin,
   listUsers, deleteUser, updateEntitlement, setAdminRole,
   listFeedback, deleteFeedback,
-  getQuestionForAdmin, updateQuestion,
   type AdminUserRow,
 } from "@/lib/admin.functions";
+import { QuestionsManager } from "@/components/admin/QuestionsManager";
+import { ContentManager } from "@/components/admin/ContentManager";
+import { BulkManager } from "@/components/admin/BulkManager";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
-  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog,
+  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, Layers, Upload,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminDashboard,
@@ -63,20 +66,25 @@ function AdminDashboard() {
     <div className="p-4 md:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage users, entitlements, feedback and questions.</p>
+        <p className="text-sm text-muted-foreground mt-1">Manage users, access, courses, library content, questions and feedback.</p>
       </div>
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Overview</TabsTrigger>
           <TabsTrigger value="users"><UserCog className="h-4 w-4 mr-1" />Users</TabsTrigger>
           <TabsTrigger value="feedback"><MessageSquare className="h-4 w-4 mr-1" />Feedback</TabsTrigger>
           <TabsTrigger value="questions"><Pencil className="h-4 w-4 mr-1" />Questions</TabsTrigger>
+          <TabsTrigger value="content"><Layers className="h-4 w-4 mr-1" />Content</TabsTrigger>
+          <TabsTrigger value="bulk"><Upload className="h-4 w-4 mr-1" />Bulk</TabsTrigger>
         </TabsList>
         <TabsContent value="overview"><OverviewTab /></TabsContent>
         <TabsContent value="users"><UsersTab /></TabsContent>
         <TabsContent value="feedback"><FeedbackTab /></TabsContent>
-        <TabsContent value="questions"><QuestionsTab /></TabsContent>
+        <TabsContent value="questions"><QuestionsManager /></TabsContent>
+        <TabsContent value="content"><ContentManager /></TabsContent>
+        <TabsContent value="bulk"><BulkManager /></TabsContent>
       </Tabs>
+
     </div>
   );
 }
@@ -347,72 +355,6 @@ function FeedbackTab() {
 }
 
 // ---------------- Questions ----------------
-function QuestionsTab() {
-  const getFn = useServerFn(getQuestionForAdmin);
-  const updFn = useServerFn(updateQuestion);
-  const [qbankId, setQbankId] = useState("1");
-  const [qid, setQid] = useState("");
-  const [loaded, setLoaded] = useState<any>(null);
-  const [title, setTitle] = useState("");
-  const [question, setQuestion] = useState("");
-  const [explanation, setExplanation] = useState("");
-  const [correct, setCorrect] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const load = async () => {
-    if (!qid) return;
-    try {
-      const q = await getFn({ data: { qbank_id: Number(qbankId), id: Number(qid) } });
-      if (!q) { toast.error("Question not found"); setLoaded(null); return; }
-      setLoaded(q); setTitle(q.title ?? ""); setQuestion(q.question); setExplanation(q.explanation ?? "");
-      setCorrect(q.correct_answer?.toString() ?? "");
-    } catch (e) { toast.error((e as Error).message); }
-  };
-
-  const save = async () => {
-    if (!loaded) return;
-    setSaving(true);
-    try {
-      await updFn({ data: {
-        qbank_id: loaded.qbank_id, id: loaded.id,
-        title, question, explanation,
-        correct_answer: correct === "" ? null : Number(correct),
-      }});
-      toast.success("Question updated");
-    } catch (e) { toast.error((e as Error).message); } finally { setSaving(false); }
-  };
-
-  return (
-    <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2"><Pencil className="h-5 w-5" /> Edit Question</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-2 items-end flex-wrap">
-          <div>
-            <Label className="text-xs">QBank</Label>
-            <select value={qbankId} onChange={(e)=>setQbankId(e.target.value)} className="border rounded h-9 px-2 text-sm block">
-              {QBANK_OPTIONS.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <Label className="text-xs">Question ID</Label>
-            <Input value={qid} onChange={(e)=>setQid(e.target.value)} className="w-32" placeholder="e.g. 10670" />
-          </div>
-          <Button onClick={load}>Load</Button>
-        </div>
-        {loaded && (
-          <div className="space-y-3 border-t pt-4">
-            <div><Label>Title</Label><Input value={title} onChange={(e)=>setTitle(e.target.value)} /></div>
-            <div><Label>Question</Label><Textarea value={question} onChange={(e)=>setQuestion(e.target.value)} rows={8} /></div>
-            <div><Label>Explanation</Label><Textarea value={explanation} onChange={(e)=>setExplanation(e.target.value)} rows={8} /></div>
-            <div className="max-w-xs"><Label>Correct answer index</Label><Input type="number" value={correct} onChange={(e)=>setCorrect(e.target.value)} /></div>
-            <Button onClick={save} disabled={saving}>{saving?"Saving…":"Save changes"}</Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 // ---------------- misc ----------------
 function Kpi({ icon: Icon, label, value, sub, tone }: {
   icon: React.ComponentType<{ className?: string }>;
