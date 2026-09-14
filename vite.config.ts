@@ -16,13 +16,33 @@ for (const [key, value] of Object.entries(serverEnv)) {
   if (process.env[key] === undefined) process.env[key] = value;
 }
 
+// The Lovable config normally reloads VITE_* from .env into `define`, which
+// would overwrite values injected by GitHub Actions. Build the definitions
+// explicitly so deployment environment variables always win, while local
+// development can still use .env.
+const clientEnv = {
+  VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? serverEnv.VITE_SUPABASE_URL,
+  VITE_SUPABASE_PUBLISHABLE_KEY:
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? serverEnv.VITE_SUPABASE_PUBLISHABLE_KEY,
+  VITE_SUPABASE_PROJECT_ID:
+    process.env.VITE_SUPABASE_PROJECT_ID ?? serverEnv.VITE_SUPABASE_PROJECT_ID,
+};
+
+const clientEnvDefine = Object.fromEntries(
+  Object.entries(clientEnv)
+    .filter((entry): entry is [string, string] => typeof entry[1] === "string")
+    .map(([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)]),
+);
+
 export default defineConfig({
+  envDefine: false,
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
   },
   vite: {
+    define: clientEnvDefine,
     // Pin entities to the hoisted v4.5.0 copy so React Email SSR works.
     resolve: {
       alias: {
