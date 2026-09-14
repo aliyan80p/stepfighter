@@ -19,13 +19,16 @@ import {
   getAdminAnalytics, isCurrentUserAdmin,
   listUsers, deleteUser, updateEntitlement, setAdminRole,
   listFeedback, deleteFeedback,
-  getQuestionForAdmin, updateQuestion,
   type AdminUserRow,
 } from "@/lib/admin.functions";
+import { QuestionsManager } from "@/components/admin/QuestionsManager";
+import { ContentManager } from "@/components/admin/ContentManager";
+import { BulkManager } from "@/components/admin/BulkManager";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
-  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog,
+  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, Layers, Upload,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminDashboard,
