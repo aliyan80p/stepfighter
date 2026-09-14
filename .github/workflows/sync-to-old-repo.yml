@@ -2,12 +2,6 @@ name: Sync to old repo
 
 on:
   workflow_dispatch:
-    inputs:
-      also_deploy:
-        description: 'Also trigger Deploy to Cloudflare in the old repo after syncing'
-        required: true
-        default: false
-        type: boolean
 
 jobs:
   sync:
@@ -19,17 +13,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Strip Lovable .env so production keeps its own config
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
-            git rm --cached .env -q
-            grep -qxF '.env' .gitignore || printf '\n# Never sync Lovable Cloud env to production\n.env\n' >> .gitignore
-            git add .gitignore
-            git commit -m "sync: exclude Lovable .env (production supplies its own)"
-          fi
 
       - name: Force-push to old repo
         env:
@@ -44,17 +27,3 @@ jobs:
           git remote remove old 2>/dev/null || true
           git remote add old "https://x-access-token:${OLD_REPO_TOKEN}@github.com/aliyan80p/stepfighter-5859cf60.git"
           git push old "HEAD:refs/heads/main" --force
-
-      - name: Trigger Deploy to Cloudflare in old repo
-        if: github.event.inputs.also_deploy == 'true'
-        env:
-          OLD_REPO_TOKEN: ${{ secrets.OLD_REPO_TOKEN }}
-        run: |
-          echo "Triggering deploy in aliyan80p/stepfighter-5859cf60 ..."
-          curl -f -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token ${OLD_REPO_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -d '{"event_type":"deploy","client_payload":{}}' \
-            https://api.github.com/repos/aliyan80p/stepfighter-5859cf60/dispatches
-          echo "Deploy triggered. Go to Actions > Deploy to Cloudflare in the old repo to watch it."
