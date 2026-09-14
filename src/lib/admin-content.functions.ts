@@ -6,10 +6,11 @@ import { internalError } from "./errors";
 /* helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error) throw internalError(error);
-  if (!data) throw new Error("Forbidden");
+import { assertPermission } from "@/lib/admin.functions";
+import type { AdminPermission } from "@/lib/admin-permissions";
+
+async function assertAdmin(supabase: any, userId: string, permission: AdminPermission) {
+  await assertPermission(supabase, userId, permission);
 }
 
 async function admin() {
