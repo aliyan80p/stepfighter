@@ -75,6 +75,32 @@ async function assertPerm(
   }
 }
 
+/**
+ * On the live site an edit is written straight away. On the test site it is
+ * parked as a draft and only written when someone presses "Publish to live".
+ */
+async function draftOrApply(
+  admin: any,
+  userId: string,
+  spec: {
+    entity: import("./content-apply.server").DraftEntity;
+    qbank_id?: number | null;
+    ref_id?: number | null;
+    ref_key?: string | null;
+    label: string;
+    payload: any;
+  },
+): Promise<{ draft: boolean; result: any }> {
+  const { isDraftSite, saveDraft } = await import("./content-drafts.server");
+  if (isDraftSite()) {
+    await saveDraft(admin, { ...spec, created_by: userId });
+    return { draft: true, result: null };
+  }
+  const { applyChange } = await import("./content-apply.server");
+  const result = await applyChange(admin, spec.entity, spec.payload);
+  return { draft: false, result };
+}
+
 
 export type MyAdminAccess = {
   admin: boolean;
@@ -401,73 +427,25 @@ export const updateQuestionFull = createServerFn({ method: "POST" })
       answers: { id?: number; answer_index: number; answer_text: string }[];
     }) => d,
   )
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }): Promise<{ ok: true; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { isDraftSite, saveDraft } = await import("./content-drafts.server");
 
-    const { error } = await supabaseAdmin
-      .from("questions")
-      .update({
-        title: data.title,
-        question: data.question,
-        explanation: data.explanation,
-        correct_answer: data.correct_answer,
-        media_name: data.media_name,
-        other_medias: data.other_medias,
-      })
-      .eq("qbank_id", data.qbank_id)
-      .eq("id", data.id);
-    if (error) throw internalError(error);
-
-    // Answer choices: replace the whole set so reordering and removals work.
-    const { data: existing, error: exErr } = await supabaseAdmin
-      .from("answers")
-      .select("id")
-      .eq("qbank_id", data.qbank_id)
-      .eq("question_id", data.id);
-    if (exErr) throw internalError(exErr);
-
-    const keepIds = data.answers.map((a) => a.id).filter((v): v is number => typeof v === "number");
-    const toDelete = (existing ?? [])
-      .map((r) => r.id as number)
-      .filter((id) => !keepIds.includes(id));
-    if (toDelete.length) {
-      const { error: delErr } = await supabaseAdmin
-        .from("answers")
-        .delete()
-        .eq("qbank_id", data.qbank_id)
-        .eq("question_id", data.id)
-        .in("id", toDelete);
-      if (delErr) throw internalError(delErr);
+    if (isDraftSite()) {
+      await saveDraft(supabaseAdmin, {
+        entity: "question",
+        qbank_id: data.qbank_id,
+        ref_id: data.id,
+        label: `Question ${data.id}`,
+        payload: data,
+        created_by: context.userId,
+      });
+      return { ok: true, draft: true };
     }
 
-    let nextId: number | null = null;
-    const newOnes = data.answers.filter((a) => typeof a.id !== "number");
-    if (newOnes.length) {
-      const { data: maxRow } = await supabaseAdmin
-        .from("answers")
-        .select("id")
-        .eq("qbank_id", data.qbank_id)
-        .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      nextId = ((maxRow?.id as number) ?? 0) + 1;
-    }
-
-    const payload = data.answers.map((a) => ({
-      id: typeof a.id === "number" ? a.id : (nextId = (nextId ?? 1) + 1) - 1,
-      question_id: data.id,
-      qbank_id: data.qbank_id,
-      answer_index: a.answer_index,
-      answer_text: a.answer_text,
-    }));
-
-    if (payload.length) {
-      const { error: upErr } = await supabaseAdmin
-        .from("answers")
-        .upsert(payload, { onConflict: "qbank_id,id" });
-      if (upErr) throw internalError(upErr);
-    }
+    const { applyChange } = await import("./content-apply.server");
+    await applyChange(supabaseAdmin, "question", data);
 
     await recordChange(supabaseAdmin, {
       entity: "question",
@@ -477,7 +455,7 @@ export const updateQuestionFull = createServerFn({ method: "POST" })
       changed_by: context.userId,
     });
 
-    return { ok: true };
+    return { ok: true, draft: false };
   });
 
 // ============================================================================
@@ -577,89 +555,77 @@ export const getLibraryDoc = createServerFn({ method: "GET" })
     return (doc as LibraryDocFull) ?? null;
   });
 
-function htmlToPlain(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 export const updateLibraryDoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: number; title: string; html: string }) => d)
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }): Promise<{ ok: true; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "library");
     if (!data.title.trim()) throw new Error("Title is required");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("library_docs")
-      .update({ title: data.title, html: data.html, plain: htmlToPlain(data.html) })
-      .eq("id", data.id);
-    if (error) throw internalError(error);
-    await recordChange(supabaseAdmin, {
-      entity: "library",
+    const { draft } = await draftOrApply(supabaseAdmin, context.userId, {
+      entity: "library_upsert",
       ref_id: data.id,
       label: data.title,
-      changed_by: context.userId,
+      payload: data,
     });
-    return { ok: true };
+    if (!draft) {
+      await recordChange(supabaseAdmin, {
+        entity: "library",
+        ref_id: data.id,
+        label: data.title,
+        changed_by: context.userId,
+      });
+    }
+    return { ok: true, draft };
   });
 
 export const createLibraryDoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; title: string; html: string }) => d)
-  .handler(async ({ context, data }): Promise<{ ok: true; id: number }> => {
+  .handler(async ({ context, data }): Promise<{ ok: true; id: number | null; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "library", data.qbank_id);
     if (!data.title.trim()) throw new Error("Title is required");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: maxRow } = await supabaseAdmin
-      .from("library_docs")
-      .select("id")
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const id = ((maxRow?.id as number) ?? 0) + 1;
-
-    const { error } = await supabaseAdmin.from("library_docs").insert({
-      id,
+    const { draft, result } = await draftOrApply(supabaseAdmin, context.userId, {
+      entity: "library_upsert",
       qbank_id: data.qbank_id,
-      title: data.title,
-      html: data.html,
-      plain: htmlToPlain(data.html),
-      path: null,
-    });
-    if (error) throw internalError(error);
-    await recordChange(supabaseAdmin, {
-      entity: "library",
-      qbank_id: data.qbank_id,
-      ref_id: id,
       label: data.title,
-      changed_by: context.userId,
+      payload: data,
     });
-    return { ok: true, id };
+    if (!draft) {
+      await recordChange(supabaseAdmin, {
+        entity: "library",
+        qbank_id: data.qbank_id,
+        ref_id: result?.id ?? null,
+        label: data.title,
+        changed_by: context.userId,
+      });
+    }
+    return { ok: true, id: result?.id ?? null, draft };
   });
 
 export const deleteLibraryDoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: number }) => d)
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }): Promise<{ ok: true; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "library");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("library_toc").update({ doc_id: null }).eq("doc_id", data.id);
-    const { error } = await supabaseAdmin.from("library_docs").delete().eq("id", data.id);
-    if (error) throw internalError(error);
-    await recordChange(supabaseAdmin, {
-      entity: "library",
+    const { draft } = await draftOrApply(supabaseAdmin, context.userId, {
+      entity: "library_delete",
       ref_id: data.id,
-      action: "delete",
-      label: `Article ${data.id}`,
-      changed_by: context.userId,
+      label: `Delete article ${data.id}`,
+      payload: data,
     });
-    return { ok: true };
+    if (!draft) {
+      await recordChange(supabaseAdmin, {
+        entity: "library",
+        ref_id: data.id,
+        action: "delete",
+        label: `Article ${data.id}`,
+        changed_by: context.userId,
+      });
+    }
+    return { ok: true, draft };
   });
 
 // ============================================================================
@@ -778,97 +744,48 @@ const MAX_IMPORT_CHUNK = 200;
 export const importQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; mode: "missing" | "all"; items: ImportItem[] }) => d)
-  .handler(async ({ context, data }): Promise<{ added: number; updated: number; skipped: number }> => {
-    await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  .handler(
+    async ({
+      context,
+      data,
+    }): Promise<{ added: number; updated: number; skipped: number; draft: boolean; queued: number }> => {
+      await assertPerm(context.supabase, context.userId, "questions", data.qbank_id);
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    if (!Array.isArray(data.items) || !data.items.length) return { added: 0, updated: 0, skipped: 0 };
-    if (data.items.length > MAX_IMPORT_CHUNK) throw new Error("Too many questions in one batch");
+      if (!Array.isArray(data.items) || !data.items.length)
+        return { added: 0, updated: 0, skipped: 0, draft: false, queued: 0 };
+      if (data.items.length > MAX_IMPORT_CHUNK) throw new Error("Too many questions in one batch");
 
-    const ids = data.items.map((i) => Number(i.id)).filter((n) => Number.isFinite(n));
-    if (ids.length !== data.items.length) throw new Error("Every question needs a numeric question number");
+      const ids = data.items.map((i) => Number(i.id)).filter((n) => Number.isFinite(n));
+      if (ids.length !== data.items.length)
+        throw new Error("Every question needs a numeric question number");
 
-    const { data: existingRows, error: exErr } = await supabaseAdmin
-      .from("questions")
-      .select("id")
-      .eq("qbank_id", data.qbank_id)
-      .in("id", ids);
-    if (exErr) throw internalError(exErr);
-    const existing = new Set((existingRows ?? []).map((r) => r.id as number));
+      const { draft, result } = await draftOrApply(supabaseAdmin, context.userId, {
+        entity: "question_import",
+        qbank_id: data.qbank_id,
+        label: `${data.items.length} imported questions`,
+        payload: data,
+      });
 
-    const toWrite = data.items.filter((i) => data.mode === "all" || !existing.has(Number(i.id)));
-    const skipped = data.items.length - toWrite.length;
-    if (!toWrite.length) return { added: 0, updated: 0, skipped };
+      if (draft) {
+        return { added: 0, updated: 0, skipped: 0, draft: true, queued: data.items.length };
+      }
 
-    const payload = toWrite.map((i) => ({
-      id: Number(i.id),
-      qbank_id: data.qbank_id,
-      title: i.title ?? null,
-      question: String(i.question ?? ""),
-      explanation: i.explanation ?? null,
-      correct_answer: i.correct_answer ?? null,
-      media_name: i.media_name ?? null,
-      other_medias: i.other_medias ?? null,
-      source: i.source ?? "main",
-      subject_id: i.subject_id ?? null,
-      system_id: i.system_id ?? null,
-    }));
-
-    const { error: upErr } = await supabaseAdmin
-      .from("questions")
-      .upsert(payload, { onConflict: "qbank_id,id" });
-    if (upErr) throw internalError(upErr);
-
-    // Answer choices: replace the set for every question we just wrote.
-    const withAnswers = toWrite.filter((i) => (i.answers ?? []).length);
-    if (withAnswers.length) {
-      const writeIds = withAnswers.map((i) => Number(i.id));
-      const { error: delErr } = await supabaseAdmin
-        .from("answers")
-        .delete()
-        .eq("qbank_id", data.qbank_id)
-        .in("question_id", writeIds);
-      if (delErr) throw internalError(delErr);
-
-      const { data: maxRow } = await supabaseAdmin
-        .from("answers")
-        .select("id")
-        .eq("qbank_id", data.qbank_id)
-        .order("id", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      let nextId = ((maxRow?.id as number) ?? 0) + 1;
-
-      const answerRows = withAnswers.flatMap((i) =>
-        (i.answers ?? []).map((a, idx) => ({
-          id: nextId++,
+      const { recordChanges } = await import("./content-changes.server");
+      await recordChanges(
+        supabaseAdmin,
+        data.items.map((i) => ({
+          entity: "question" as const,
           qbank_id: data.qbank_id,
-          question_id: Number(i.id),
-          answer_index: typeof a.answer_index === "number" ? a.answer_index : idx,
-          answer_text: String(a.answer_text ?? ""),
+          ref_id: Number(i.id),
+          label: `Question ${i.id}`,
+          changed_by: context.userId,
         })),
       );
-      const { error: aErr } = await supabaseAdmin
-        .from("answers")
-        .upsert(answerRows, { onConflict: "qbank_id,id" });
-      if (aErr) throw internalError(aErr);
-    }
 
-    const { recordChanges } = await import("./content-changes.server");
-    await recordChanges(
-      supabaseAdmin,
-      toWrite.map((i) => ({
-        entity: "question" as const,
-        qbank_id: data.qbank_id,
-        ref_id: Number(i.id),
-        label: `Question ${i.id}`,
-        changed_by: context.userId,
-      })),
-    );
-
-    const added = toWrite.filter((i) => !existing.has(Number(i.id))).length;
-    return { added, updated: toWrite.length - added, skipped };
-  });
+      return { ...result, draft: false, queued: 0 };
+    },
+  );
 
 // ============================================================================
 // Subjects & systems
@@ -900,55 +817,36 @@ export const listTaxonomy = createServerFn({ method: "GET" })
 export const saveTaxonomy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; kind: string; id?: number; name: string }) => d)
-  .handler(async ({ context, data }): Promise<{ ok: true; id: number }> => {
+  .handler(async ({ context, data }): Promise<{ ok: true; id: number | null; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "subjects", data.qbank_id);
     const name = data.name.trim();
     if (!name) throw new Error("Name is required");
     const table = taxTable(data.kind);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    if (typeof data.id === "number") {
-      const { error } = await supabaseAdmin
-        .from(table)
-        .update({ name })
-        .eq("qbank_id", data.qbank_id)
-        .eq("id", data.id);
-      if (error) throw internalError(error);
+    const { draft, result } = await draftOrApply(supabaseAdmin, context.userId, {
+      entity: "taxonomy_save",
+      qbank_id: data.qbank_id,
+      ref_id: data.id ?? null,
+      label: `${table === "subjects" ? "Subject" : "System"}: ${name}`,
+      payload: { ...data, name },
+    });
+    if (!draft) {
       await recordChange(supabaseAdmin, {
         entity: table === "subjects" ? "subject" : "system",
         qbank_id: data.qbank_id,
-        ref_id: data.id,
+        ref_id: result?.id ?? data.id ?? null,
         label: name,
         changed_by: context.userId,
       });
-      return { ok: true, id: data.id };
     }
-
-    const { data: maxRow } = await supabaseAdmin
-      .from(table)
-      .select("id")
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const id = ((maxRow?.id as number) ?? 0) + 1;
-    const { error } = await supabaseAdmin
-      .from(table)
-      .insert({ id, name, qbank_id: data.qbank_id, count: 0 });
-    if (error) throw internalError(error);
-    await recordChange(supabaseAdmin, {
-      entity: table === "subjects" ? "subject" : "system",
-      qbank_id: data.qbank_id,
-      ref_id: id,
-      label: name,
-      changed_by: context.userId,
-    });
-    return { ok: true, id };
+    return { ok: true, id: result?.id ?? data.id ?? null, draft };
   });
 
 export const deleteTaxonomy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; kind: string; id: number }) => d)
-  .handler(async ({ context, data }): Promise<{ ok: true; inUse: number }> => {
+  .handler(async ({ context, data }): Promise<{ ok: true; inUse: number; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "subjects", data.qbank_id);
     const table = taxTable(data.kind);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -963,21 +861,24 @@ export const deleteTaxonomy = createServerFn({ method: "POST" })
       throw new Error(`${count} questions still use this — move them first`);
     }
 
-    const { error } = await supabaseAdmin
-      .from(table)
-      .delete()
-      .eq("qbank_id", data.qbank_id)
-      .eq("id", data.id);
-    if (error) throw internalError(error);
-    await recordChange(supabaseAdmin, {
-      entity: table === "subjects" ? "subject" : "system",
+    const { draft } = await draftOrApply(supabaseAdmin, context.userId, {
+      entity: "taxonomy_delete",
       qbank_id: data.qbank_id,
       ref_id: data.id,
-      action: "delete",
-      label: `${data.kind} ${data.id}`,
-      changed_by: context.userId,
+      label: `Delete ${data.kind} ${data.id}`,
+      payload: data,
     });
-    return { ok: true, inUse: 0 };
+    if (!draft) {
+      await recordChange(supabaseAdmin, {
+        entity: table === "subjects" ? "subject" : "system",
+        qbank_id: data.qbank_id,
+        ref_id: data.id,
+        action: "delete",
+        label: `${data.kind} ${data.id}`,
+        changed_by: context.userId,
+      });
+    }
+    return { ok: true, inUse: 0, draft };
   });
 
 // ============================================================================
@@ -1021,25 +922,28 @@ export const listTopics = createServerFn({ method: "GET" })
 export const renameTopic = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; from: string; to: string }) => d)
-  .handler(async ({ context, data }): Promise<{ ok: true }> => {
+  .handler(async ({ context, data }): Promise<{ ok: true; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "topics", data.qbank_id);
     const to = data.to.trim();
     if (!to) throw new Error("New name is required");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("questions")
-      .update({ title: to })
-      .eq("qbank_id", data.qbank_id)
-      .eq("title", data.from);
-    if (error) throw internalError(error);
-    await recordChange(supabaseAdmin, {
-      entity: "topic",
+    const { draft } = await draftOrApply(supabaseAdmin, context.userId, {
+      entity: "topic_rename",
       qbank_id: data.qbank_id,
       ref_key: `${data.from}\u0000${to}`,
       label: `${data.from} \u2192 ${to}`,
-      changed_by: context.userId,
+      payload: { ...data, to },
     });
-    return { ok: true };
+    if (!draft) {
+      await recordChange(supabaseAdmin, {
+        entity: "topic",
+        qbank_id: data.qbank_id,
+        ref_key: `${data.from}\u0000${to}`,
+        label: `${data.from} \u2192 ${to}`,
+        changed_by: context.userId,
+      });
+    }
+    return { ok: true, draft };
   });
 
 // ============================================================================
@@ -1079,7 +983,7 @@ export const listCourses = createServerFn({ method: "GET" })
 export const saveCourse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id?: number; slug: string; name: string; description: string | null }) => d)
-  .handler(async ({ context, data }): Promise<{ ok: true; id: number }> => {
+  .handler(async ({ context, data }): Promise<{ ok: true; id: number | null; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "courses");
     const name = data.name.trim();
     const slug = data.slug.trim().toLowerCase();
@@ -1088,40 +992,21 @@ export const saveCourse = createServerFn({ method: "POST" })
       throw new Error("Short code must be lowercase letters, numbers or dashes");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    if (typeof data.id === "number") {
-      const { error } = await supabaseAdmin
-        .from("qbanks")
-        .update({ slug, name, description: data.description })
-        .eq("id", data.id);
-      if (error) throw internalError(error);
+    const { draft, result } = await draftOrApply(supabaseAdmin, context.userId, {
+      entity: "course_save",
+      ref_id: data.id ?? null,
+      label: `Course: ${name}`,
+      payload: { ...data, name, slug },
+    });
+    if (!draft) {
       await recordChange(supabaseAdmin, {
         entity: "course",
-        ref_id: data.id,
+        ref_id: result?.id ?? data.id ?? null,
         label: name,
         changed_by: context.userId,
       });
-      return { ok: true, id: data.id };
     }
-
-    const { data: maxRow } = await supabaseAdmin
-      .from("qbanks")
-      .select("id")
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const id = ((maxRow?.id as number) ?? 0) + 1;
-    const { error } = await supabaseAdmin
-      .from("qbanks")
-      .insert({ id, slug, name, description: data.description });
-    if (error) throw internalError(error);
-    await recordChange(supabaseAdmin, {
-      entity: "course",
-      ref_id: id,
-      label: name,
-      changed_by: context.userId,
-    });
-    return { ok: true, id };
+    return { ok: true, id: result?.id ?? data.id ?? null, draft };
   });
 
 // ============================================================================
@@ -1153,7 +1038,7 @@ export const listMedia = createServerFn({ method: "GET" })
 export const deleteMedia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { qbank_id: number; name: string }) => d)
-  .handler(async ({ context, data }): Promise<{ ok: true; usedBy: number }> => {
+  .handler(async ({ context, data }): Promise<{ ok: true; usedBy: number; draft: boolean }> => {
     await assertPerm(context.supabase, context.userId, "media", data.qbank_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -1164,22 +1049,24 @@ export const deleteMedia = createServerFn({ method: "POST" })
       .eq("media_name", data.name);
     if ((count ?? 0) > 0) throw new Error(`${count} questions still use this image`);
 
-    await supabaseAdmin.storage.from(MEDIA_BUCKET).remove([data.name]);
-    const { error } = await supabaseAdmin
-      .from("qbank_media")
-      .delete()
-      .eq("qbank_id", data.qbank_id)
-      .eq("name", data.name);
-    if (error) throw internalError(error);
-    await recordChange(supabaseAdmin, {
-      entity: "media",
+    const { draft } = await draftOrApply(supabaseAdmin, context.userId, {
+      entity: "media_delete",
       qbank_id: data.qbank_id,
       ref_key: data.name,
-      action: "delete",
-      label: data.name,
-      changed_by: context.userId,
+      label: `Delete image ${data.name}`,
+      payload: data,
     });
-    return { ok: true, usedBy: 0 };
+    if (!draft) {
+      await recordChange(supabaseAdmin, {
+        entity: "media",
+        qbank_id: data.qbank_id,
+        ref_key: data.name,
+        action: "delete",
+        label: data.name,
+        changed_by: context.userId,
+      });
+    }
+    return { ok: true, usedBy: 0, draft };
   });
 
 export type MissingMediaRow = { question_id: number; name: string };

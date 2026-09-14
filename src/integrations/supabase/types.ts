@@ -212,6 +212,51 @@ export type Database = {
         }
         Relationships: []
       }
+      content_drafts: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          created_at: string
+          created_by: string | null
+          discarded_at: string | null
+          entity: string
+          id: number
+          label: string | null
+          payload: Json
+          qbank_id: number | null
+          ref_id: number | null
+          ref_key: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          discarded_at?: string | null
+          entity: string
+          id?: number
+          label?: string | null
+          payload: Json
+          qbank_id?: number | null
+          ref_id?: number | null
+          ref_key?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          discarded_at?: string | null
+          entity?: string
+          id?: number
+          label?: string | null
+          payload?: Json
+          qbank_id?: number | null
+          ref_id?: number | null
+          ref_key?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string
