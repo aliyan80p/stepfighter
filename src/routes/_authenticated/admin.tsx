@@ -16,15 +16,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
-  getAdminAnalytics, isCurrentUserAdmin,
+  getAdminAnalytics,
   listUsers, deleteUser, updateEntitlement, setAdminRole,
   listFeedback, deleteFeedback,
-  getQuestionForAdmin, updateQuestion,
   type AdminUserRow,
 } from "@/lib/admin.functions";
+import { getMyAdminAccess, type AdminPermission } from "@/lib/admin-content.functions";
+import { QuestionsTab } from "@/components/admin/QuestionsTab";
+import { LibraryTab } from "@/components/admin/LibraryTab";
+import { AdminsTab } from "@/components/admin/AdminsTab";
 import {
   Users, TrendingUp, CreditCard, Clock, ShieldAlert, Activity,
-  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog,
+  Search, Trash2, Pencil, MessageSquare, BarChart3, UserCog, BookOpen, ShieldCheck,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -32,17 +35,22 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 const COLORS = ["#f59e0b","#3b82f6","#10b981","#ef4444","#8b5cf6","#ec4899","#06b6d4","#84cc16","#f97316","#a3a3a3"];
-const QBANK_OPTIONS = [
+const QBANK_OPTIONS: { id: string; label: string }[] = [
   { id: "step2", label: "Step 2 CK" },
   { id: "step1", label: "Step 1" },
   { id: "step3", label: "Step 3" },
 ];
 
+
+
 function AdminDashboard() {
   const navigate = useNavigate();
-  const checkAdmin = useServerFn(isCurrentUserAdmin);
-  const adminQ = useQuery({ queryKey: ["is-admin"], queryFn: () => checkAdmin() });
+  const accessFn = useServerFn(getMyAdminAccess);
+  const adminQ = useQuery({ queryKey: ["my-admin-access"], queryFn: () => accessFn() });
   const isAdmin = adminQ.data?.admin;
+  const isSuper = Boolean(adminQ.data?.isSuper);
+  const perms: AdminPermission[] = adminQ.data?.permissions ?? [];
+  const can = (p: AdminPermission) => isSuper || perms.includes(p);
 
   useEffect(() => {
     if (adminQ.isSuccess && !isAdmin) navigate({ to: "/dashboard" });
@@ -59,26 +67,48 @@ function AdminDashboard() {
     );
   }
 
+  const tabs = [
+    { value: "overview", label: "Overview", icon: BarChart3, show: can("analytics"), el: <OverviewTab /> },
+    { value: "users", label: "Users", icon: UserCog, show: can("users"), el: <UsersTab /> },
+    { value: "feedback", label: "Feedback", icon: MessageSquare, show: can("feedback"), el: <FeedbackTab /> },
+    { value: "questions", label: "Questions", icon: Pencil, show: can("questions"), el: <QuestionsTab /> },
+    { value: "library", label: "Library", icon: BookOpen, show: can("library"), el: <LibraryTab /> },
+    { value: "admins", label: "Admins", icon: ShieldCheck, show: can("admins"), el: <AdminsTab isSuper={isSuper} /> },
+  ].filter((t) => t.show);
+
+  if (!tabs.length) {
+    return (
+      <div className="p-8 max-w-md text-sm text-muted-foreground">
+        You have admin access, but no sections have been assigned to you yet.
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Admin</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage users, entitlements, feedback and questions.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {isSuper
+            ? "Full access — users, subscriptions, feedback, questions, library and admins."
+            : "You can manage the sections assigned to you."}
+        </p>
       </div>
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Overview</TabsTrigger>
-          <TabsTrigger value="users"><UserCog className="h-4 w-4 mr-1" />Users</TabsTrigger>
-          <TabsTrigger value="feedback"><MessageSquare className="h-4 w-4 mr-1" />Feedback</TabsTrigger>
-          <TabsTrigger value="questions"><Pencil className="h-4 w-4 mr-1" />Questions</TabsTrigger>
+      <Tabs defaultValue={tabs[0].value} className="space-y-4">
+        <TabsList className="flex-wrap h-auto">
+          {tabs.map((t) => (
+            <TabsTrigger key={t.value} value={t.value}>
+              <t.icon className="h-4 w-4 mr-1" />{t.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent value="overview"><OverviewTab /></TabsContent>
-        <TabsContent value="users"><UsersTab /></TabsContent>
-        <TabsContent value="feedback"><FeedbackTab /></TabsContent>
-        <TabsContent value="questions"><QuestionsTab /></TabsContent>
+        {tabs.map((t) => (
+          <TabsContent key={t.value} value={t.value}>{t.el}</TabsContent>
+        ))}
       </Tabs>
     </div>
   );
+
 }
 
 // ---------------- Overview ----------------
@@ -346,72 +376,8 @@ function FeedbackTab() {
   );
 }
 
-// ---------------- Questions ----------------
-function QuestionsTab() {
-  const getFn = useServerFn(getQuestionForAdmin);
-  const updFn = useServerFn(updateQuestion);
-  const [qbankId, setQbankId] = useState("1");
-  const [qid, setQid] = useState("");
-  const [loaded, setLoaded] = useState<any>(null);
-  const [title, setTitle] = useState("");
-  const [question, setQuestion] = useState("");
-  const [explanation, setExplanation] = useState("");
-  const [correct, setCorrect] = useState("");
-  const [saving, setSaving] = useState(false);
 
-  const load = async () => {
-    if (!qid) return;
-    try {
-      const q = await getFn({ data: { qbank_id: Number(qbankId), id: Number(qid) } });
-      if (!q) { toast.error("Question not found"); setLoaded(null); return; }
-      setLoaded(q); setTitle(q.title ?? ""); setQuestion(q.question); setExplanation(q.explanation ?? "");
-      setCorrect(q.correct_answer?.toString() ?? "");
-    } catch (e) { toast.error((e as Error).message); }
-  };
 
-  const save = async () => {
-    if (!loaded) return;
-    setSaving(true);
-    try {
-      await updFn({ data: {
-        qbank_id: loaded.qbank_id, id: loaded.id,
-        title, question, explanation,
-        correct_answer: correct === "" ? null : Number(correct),
-      }});
-      toast.success("Question updated");
-    } catch (e) { toast.error((e as Error).message); } finally { setSaving(false); }
-  };
-
-  return (
-    <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2"><Pencil className="h-5 w-5" /> Edit Question</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-2 items-end flex-wrap">
-          <div>
-            <Label className="text-xs">QBank</Label>
-            <select value={qbankId} onChange={(e)=>setQbankId(e.target.value)} className="border rounded h-9 px-2 text-sm block">
-              {QBANK_OPTIONS.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <Label className="text-xs">Question ID</Label>
-            <Input value={qid} onChange={(e)=>setQid(e.target.value)} className="w-32" placeholder="e.g. 10670" />
-          </div>
-          <Button onClick={load}>Load</Button>
-        </div>
-        {loaded && (
-          <div className="space-y-3 border-t pt-4">
-            <div><Label>Title</Label><Input value={title} onChange={(e)=>setTitle(e.target.value)} /></div>
-            <div><Label>Question</Label><Textarea value={question} onChange={(e)=>setQuestion(e.target.value)} rows={8} /></div>
-            <div><Label>Explanation</Label><Textarea value={explanation} onChange={(e)=>setExplanation(e.target.value)} rows={8} /></div>
-            <div className="max-w-xs"><Label>Correct answer index</Label><Input type="number" value={correct} onChange={(e)=>setCorrect(e.target.value)} /></div>
-            <Button onClick={save} disabled={saving}>{saving?"Saving…":"Save changes"}</Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 // ---------------- misc ----------------
 function Kpi({ icon: Icon, label, value, sub, tone }: {
