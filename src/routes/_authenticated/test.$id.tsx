@@ -1215,18 +1215,24 @@ function TestRunner() {
             title="Hover to show question list"
           />
         )}
-        {/* Left navigator */}
-        {sidebarOpen && (
+        {/* Left navigator — smoothly glides open/closed with GPU transitions */}
         <aside
+          aria-hidden={!sidebarOpen}
           onMouseLeave={() => {
             if (userSettings.hoverEdgeSidebar && !userSettings.saveSpaceForSidebar) {
               setSidebarOpen(false);
             }
           }}
-          className={`w-14 md:w-24 shrink-0 overflow-auto border-r transition-all duration-200 ${
+          className={`shrink-0 overflow-auto border-r transition-[width,transform,opacity] duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
             userSettings.saveSpaceForSidebar === false
               ? "absolute inset-y-0 left-0 z-30 shadow-2xl"
               : "relative"
+          } ${
+            sidebarOpen
+              ? "w-14 md:w-24 translate-x-0 opacity-100"
+              : userSettings.saveSpaceForSidebar === false
+                ? "w-14 md:w-24 -translate-x-full opacity-0 pointer-events-none"
+                : "w-0 -translate-x-full opacity-0 border-r-0 overflow-hidden pointer-events-none"
           }`}
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
@@ -1279,7 +1285,6 @@ function TestRunner() {
             );
           })}
         </aside>
-        )}
 
 
         {/* Content */}
@@ -1544,7 +1549,7 @@ function TestRunner() {
             )}
 
             {showAnswers && question.explanation && (
-              <div className="mt-4 qbank-split-expl">
+              <div className="mt-4 qbank-split-expl sf-reveal-up">
               <div className="border-b flex items-center justify-between gap-2" style={{ borderColor: themeStyles.border }}>
                   <div
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"

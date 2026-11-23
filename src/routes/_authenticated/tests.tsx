@@ -20,7 +20,7 @@ import {
   FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy, PlayCircle, Rocket, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Loader } from "@/components/loader";
+import { TableSkeleton } from "@/components/loader";
 
 
 export const Route = createFileRoute("/_authenticated/tests")({
@@ -175,7 +175,7 @@ function TestsList() {
           <div className="text-muted-foreground">Actions</div>
         </div>
         <div className="divide-y divide-border">
-          {isLoading && <Loader label="Loading tests…" />}
+          {isLoading && <div className="p-4"><TableSkeleton rows={5} /></div>}
           {!isLoading && filtered.length === 0 && (
             <div className="p-6 text-muted-foreground">
               No tests match. <Link to="/new-test" className="text-primary underline">Start a new test</Link>.

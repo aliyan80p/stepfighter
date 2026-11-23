@@ -292,9 +292,13 @@ function AuthedLayout() {
           if (!sidebarPinned) setSidebarOpen(false);
         }}
         className={cn(
-          "border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-40 shrink-0",
+          "border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground transition-[width,transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform z-40 shrink-0",
           sidebarPinned ? "fixed inset-y-0 left-0 md:static" : "fixed inset-y-0 left-0 shadow-2xl",
-          sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:w-0 overflow-hidden border-r-0",
+          sidebarOpen
+            ? "w-64 translate-x-0 opacity-100"
+            : sidebarPinned
+              ? "w-0 -translate-x-full md:w-0 opacity-0 overflow-hidden border-r-0 pointer-events-none"
+              : "w-64 -translate-x-full opacity-0 pointer-events-none",
         )}
       >
 
@@ -396,26 +400,28 @@ function AuthedLayout() {
                   </span>
                   <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
                 </button>
-                {isOpen && (
-                  <div className="mt-1 ml-5 pl-3 border-l border-sidebar-border space-y-0.5">
-                    {g.items.map((i) => (
-                      <Link
-                        key={i.to}
-                        to={i.to}
-                        onClick={closeAfterNav}
-                        className={cn(
-                          "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
-                          isActive(i.to)
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-                        )}
-                      >
-                        <i.icon className="h-3.5 w-3.5 shrink-0 opacity-85" />
-                        {i.label}
-                      </Link>
-                    ))}
+                <div className="sf-accordion" data-open={isOpen ? "true" : "false"}>
+                  <div>
+                    <div className="mt-1 ml-5 pl-3 border-l border-sidebar-border space-y-0.5 py-0.5">
+                      {g.items.map((i) => (
+                        <Link
+                          key={i.to}
+                          to={i.to}
+                          onClick={closeAfterNav}
+                          className={cn(
+                            "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-150",
+                            isActive(i.to)
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+                          )}
+                        >
+                          <i.icon className="h-3.5 w-3.5 shrink-0 opacity-85" />
+                          {i.label}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             );
           })}

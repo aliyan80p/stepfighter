@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDashboardStats } from "@/lib/qbank.functions";
 import { useActiveQbankId } from "@/lib/active-qbank";
 import { Button } from "@/components/ui/button";
+import { DashboardSkeleton } from "@/components/loader";
 import { BookOpen, CheckCircle2, XCircle, MinusCircle, HelpCircle, User, Percent, BarChart3, Flag, ArrowRightLeft, RefreshCw, Repeat, FilePlus2, FileCheck2, PauseCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -39,11 +40,9 @@ function Dashboard() {
 
         {/* Top stat row */}
         {isLoading || !data ? (
-          <div className="grid gap-4 md:grid-cols-4">
-            {[0,1,2,3].map((i) => <div key={i} className="h-24 rounded-2xl border border-border animate-pulse bg-card" />)}
-          </div>
+          <DashboardSkeleton />
         ) : (
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="sf-stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <MiniStat icon={BookOpen} tone="blue" label="Total Questions" value={data.totalQuestions.toLocaleString()} />
             <MiniStat icon={CheckCircle2} tone="green" label="Total Correct" value={data.correctAttempts.toLocaleString()} />
             <MiniStat icon={Percent} tone="amber" label="Correct" value={`${data.correctPct}%`} />
@@ -57,9 +56,9 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground mb-4">Track your question bank progress and score</p>
 
           {data && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="sf-stagger grid gap-4 md:grid-cols-2">
               {/* Usage donut */}
-              <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
+              <div className="sf-card-interactive rounded-2xl bg-card border border-border p-5 shadow-sm">
                 <div className="font-semibold">QBank Usage</div>
                 <div className="text-xs text-muted-foreground mb-4">Counts each unique question ID once, even if repeated</div>
                 <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">

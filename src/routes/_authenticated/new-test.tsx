@@ -128,6 +128,7 @@ function NewTest() {
 
 
   const [openTab, setOpenTab] = useState<Tab>("courses");
+  const [selectionOpen, setSelectionOpen] = useState(true);
   const [courseIds, setCourseIds] = useState<string[]>([]);
   const [qbankIds, setQbankIds] = useState<string[]>([]);
   const [subjectIds, setSubjectIds] = useState<number[]>([]);
@@ -496,101 +497,112 @@ function NewTest() {
             );
           })}
           <div className="ml-auto shrink-0 pl-2">
-            <button className="rounded-md border border-border p-1.5 text-muted-foreground hover:text-foreground">
-              <ChevronUp className="h-4 w-4" />
+            <button
+              type="button"
+              onClick={() => setSelectionOpen((v) => !v)}
+              aria-label={selectionOpen ? "Collapse selection panel" : "Expand selection panel"}
+              className="rounded-md border border-border p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+            >
+              <ChevronUp className={cn("h-4 w-4 transition-transform duration-200", !selectionOpen && "rotate-180")} />
             </button>
           </div>
         </div>
 
 
-        {openTab === "courses" && (
-          <SelectionList
-            items={entitledCourses.map((c) => ({ id: c.id, label: c.name, count: COURSE_TOTALS[c.qbankId] ?? 0 }))}
-            selected={courseIds}
-            onToggle={(id) => {
-              const c = COURSES.find((x) => x.id === id);
-              if (!c) return;
-              setCourseIds([c.id]);
-              // Do not auto-select a QBank; let the user pick in the QBank tab.
-              setQbankIds([]);
-              setSubjectIds([]); setSystemIds([]); setTopicNames([]);
-              if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
-              setOpenTab("qbank");
-            }}
+        <div className="sf-accordion" data-open={selectionOpen ? "true" : "false"}>
+          <div>
+            <div key={openTab} className="sf-tab-enter">
+              {openTab === "courses" && (
+                <SelectionList
+                  items={entitledCourses.map((c) => ({ id: c.id, label: c.name, count: COURSE_TOTALS[c.qbankId] ?? 0 }))}
+                  selected={courseIds}
+                  onToggle={(id) => {
+                    const c = COURSES.find((x) => x.id === id);
+                    if (!c) return;
+                    setCourseIds([c.id]);
+                    // Do not auto-select a QBank; let the user pick in the QBank tab.
+                    setQbankIds([]);
+                    setSubjectIds([]); setSystemIds([]); setTopicNames([]);
+                    if (c.qbankId !== qbankId) setActiveQbankId(c.qbankId);
+                    setOpenTab("qbank");
+                  }}
 
-            columns={3}
-            radio
-          />
-        )}
-        {openTab === "qbank" && (
-          <SelectionList
-            items={QBANK_OPTIONS.filter((q) => courseIds.some((cid) => q.qbankId === COURSES.find((c) => c.id === cid)?.qbankId)).map((q) => ({ id: q.id, label: q.name, count: q.count }))}
-            selected={qbankIds}
-            onToggle={(id) => setQbankIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-            columns={3}
-          />
-        )}
+                  columns={3}
+                  radio
+                />
+              )}
+              {openTab === "qbank" && (
+                <SelectionList
+                  items={QBANK_OPTIONS.filter((q) => courseIds.some((cid) => q.qbankId === COURSES.find((c) => c.id === cid)?.qbankId)).map((q) => ({ id: q.id, label: q.name, count: q.count }))}
+                  selected={qbankIds}
+                  onToggle={(id) => setQbankIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+                  columns={3}
+                />
+              )}
 
-        {openTab === "subjects" && cmsMode && (() => {
-          const formItems = cmsSelectedOptions.flatMap((o) =>
-            o.cmsForms!.map((f) => ({
-              id: f.source,
-              label: cmsSelectedOptions.length > 1
-                ? `${o.cmsSpecialty} — Form ${f.formNumber}`
-                : `Form ${f.formNumber}`,
-              count: f.count,
-            })),
-          );
-          return (
-            <SelectionList
-              items={formItems}
-              selected={cmsFormSources}
-              onToggle={(id) => setCmsFormSources((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-              search={subjectSearch}
-              onSearch={setSubjectSearch}
-              selectAll={() => setCmsFormSources(formItems.map((i) => i.id))}
-              clearAll={() => setCmsFormSources([])}
-              columns={3}
-            />
-          );
-        })()}
-        {openTab === "subjects" && !cmsMode && (
-          <SelectionList
-            items={subjectItems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
-            selected={subjectIds}
-            onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
-            search={subjectSearch}
-            onSearch={setSubjectSearch}
-            selectAll={() => setSubjectIds((data?.subjects ?? []).map((s) => s.id))}
-            clearAll={() => setSubjectIds([])}
-            columns={3}
-          />
-        )}
-        {openTab === "systems" && (
-          <SelectionList
-            items={filteredSystems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
-            selected={systemIds}
-            onToggle={(id) => setSystemIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
-            search={systemSearch}
-            onSearch={setSystemSearch}
-            selectAll={() => setSystemIds(filteredSystems.map((s) => s.id))}
-            clearAll={() => setSystemIds([])}
-            columns={3}
-          />
-        )}
-        {openTab === "topics" && (
-          <SelectionList
-            items={filteredTopics.map((t) => ({ id: t.name, label: t.name, count: t.count }))}
-            selected={topicNames}
-            onToggle={(id) => setTopicNames((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-            search={topicSearch}
-            onSearch={setTopicSearch}
-            selectAll={() => setTopicNames(filteredTopics.map((t) => t.name))}
-            clearAll={() => setTopicNames([])}
-            columns={3}
-            scrollable
-          />
-        )}
+              {openTab === "subjects" && cmsMode && (() => {
+                const formItems = cmsSelectedOptions.flatMap((o) =>
+                  o.cmsForms!.map((f) => ({
+                    id: f.source,
+                    label: cmsSelectedOptions.length > 1
+                      ? `${o.cmsSpecialty} — Form ${f.formNumber}`
+                      : `Form ${f.formNumber}`,
+                    count: f.count,
+                  })),
+                );
+                return (
+                  <SelectionList
+                    items={formItems}
+                    selected={cmsFormSources}
+                    onToggle={(id) => setCmsFormSources((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+                    search={subjectSearch}
+                    onSearch={setSubjectSearch}
+                    selectAll={() => setCmsFormSources(formItems.map((i) => i.id))}
+                    clearAll={() => setCmsFormSources([])}
+                    columns={3}
+                  />
+                );
+              })()}
+              {openTab === "subjects" && !cmsMode && (
+                <SelectionList
+                  items={subjectItems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+                  selected={subjectIds}
+                  onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
+                  search={subjectSearch}
+                  onSearch={setSubjectSearch}
+                  selectAll={() => setSubjectIds((data?.subjects ?? []).map((s) => s.id))}
+                  clearAll={() => setSubjectIds([])}
+                  columns={3}
+                />
+              )}
+              {openTab === "systems" && (
+                <SelectionList
+                  items={filteredSystems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
+                  selected={systemIds}
+                  onToggle={(id) => setSystemIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
+                  search={systemSearch}
+                  onSearch={setSystemSearch}
+                  selectAll={() => setSystemIds(filteredSystems.map((s) => s.id))}
+                  clearAll={() => setSystemIds([])}
+                  columns={3}
+                />
+              )}
+              {openTab === "topics" && (
+                <SelectionList
+                  items={filteredTopics.map((t) => ({ id: t.name, label: t.name, count: t.count }))}
+                  selected={topicNames}
+                  onToggle={(id) => setTopicNames((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
+                  search={topicSearch}
+                  onSearch={setTopicSearch}
+                  selectAll={() => setTopicNames(filteredTopics.map((t) => t.name))}
+                  clearAll={() => setTopicNames([])}
+                  columns={3}
+                  scrollable
+                />
+              )}
+            </div>
+          </div>
+        </div>
       </Card>
 
       {/* Question types + Difficulty */}
