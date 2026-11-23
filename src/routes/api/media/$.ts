@@ -14,7 +14,7 @@ const driveIdCache = new Map<string, string | null>();
 const QBANK_SLUGS: Record<string, number> = { step1: 2, step2: 1, step3: 3 };
 
 function stripPrefix(name: string): string {
-  return name.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
+  return name.replace(/^(highresdefault_|maxresdefault_|highres_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
 }
 
 function contentTypeFor(name: string): string {
@@ -32,9 +32,48 @@ const HIGHRES_PREFIXES = ["highresdefault_", "hqdefault_", "sddefault_", "mqdefa
 
 function normalizeMediaLeafCase(name: string): string {
   return name.replace(
-    /^((?:highresdefault_|hqdefault_|sddefault_|mqdefault_|default_)?)([ul])(\d)/i,
+    /^((?:highresdefault_|maxresdefault_|highres_|hqdefault_|mqdefault_|sddefault_|default_)?)([ul])(\d)/i,
     (_match, prefix: string, letter: string, digit: string) => `${prefix}${letter.toUpperCase()}${digit}`,
   );
+}
+
+/**
+ * Compact, high-priority candidate list for HTTP storage probing.
+ * Stays small (<= 8 entries) so we NEVER exceed Cloudflare Workers' 50-subrequest limit
+ * when probing highresdefault_* / prefix variants across storage namespaces.
+ */
+function compactProbeNames(name: string): string[] {
+  const set = new Set<string>();
+  const normalized = normalizeMediaLeafCase(name);
+  const stripped = stripPrefix(normalized);
+  const dot = stripped.lastIndexOf(".");
+  const base = dot > 0 ? stripped.slice(0, dot) : stripped;
+  const ext = dot > 0 ? stripped.slice(dot + 1).toLowerCase() : "";
+
+  const add = (v: string) => { if (v) set.add(v); };
+  add(name);
+  add(normalized);
+  add(stripped);
+  if (stripped !== name) {
+    add(`highresdefault_${stripped}`);
+  } else {
+    add(`highresdefault_${normalized}`);
+  }
+  // Common extension swaps (jpg <-> png <-> jpeg) for both prefixed & stripped
+  if (ext === "jpg" || ext === "jpeg") {
+    add(`${base}.png`);
+    add(`highresdefault_${base}.png`);
+    add(`${base}.${ext === "jpg" ? "jpeg" : "jpg"}`);
+  } else if (ext === "png") {
+    add(`${base}.jpg`);
+    add(`highresdefault_${base}.jpg`);
+  }
+  // Upper/lower first letter of stripped leaf (e.g. L123 vs l123, U123 vs u123)
+  if (/^[A-Za-z]/.test(stripped)) {
+    const flipped = (stripped[0] === stripped[0].toUpperCase() ? stripped[0].toLowerCase() : stripped[0].toUpperCase()) + stripped.slice(1);
+    add(flipped);
+  }
+  return Array.from(set).slice(0, 8);
 }
 
 function extensionVariants(name: string): string[] {
@@ -86,13 +125,12 @@ async function resolveEncryptedFromBucket(
   name: string, supaUrl: string, srk: string,
 ): Promise<Response | null> {
   const cached = nameCache.get(name);
-  const tryNames = cached === undefined ? candidateNames(name) : cached ? [cached] : [];
+  const tryNames = cached === undefined ? compactProbeNames(name) : cached ? [cached] : [];
   for (const n of tryNames) {
     const url = `${supaUrl}/storage/v1/object/${BUCKET}/${encodeURIComponent(n)}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${srk}`, apikey: srk } });
     if (res.ok) { nameCache.set(name, n); return res; }
   }
-  if (cached === undefined) nameCache.set(name, null);
   return null;
 }
 
@@ -261,18 +299,20 @@ async function fetchPlainObject(
   const cached = plainNameCache.get(cacheKey);
   const dir = storagePath.includes("/") ? storagePath.slice(0, storagePath.lastIndexOf("/") + 1) : "";
   const leaf = storagePath.slice(dir.length);
-  const candidatePaths = Array.from(new Set([storagePath, ...candidateNames(leaf).map((candidate) => dir + candidate)]));
-  const paths = cached === undefined
-    ? candidatePaths
-    : cached ? [cached, ...candidatePaths.filter((path) => path !== cached)] : [];
+  // Skip the exact storagePath (already probed by exactHit) and keep probe count tiny
+  const candidatePaths = Array.from(
+    new Set(compactProbeNames(leaf).map((candidate) => dir + candidate)),
+  ).filter((p) => p !== storagePath);
+  const paths = cached
+    ? [cached, ...candidatePaths.filter((path) => path !== cached)]
+    : candidatePaths;
   if (!paths.length) return null;
 
-  const hit = await firstPlainHit(paths, storagePath, supaUrl, srk, range);
+  const hit = await firstPlainHit(paths, storagePath, supaUrl, srk, range, 6);
   if (hit) {
     plainNameCache.set(cacheKey, hit.path);
     return hit.response;
   }
-  if (cached === undefined) plainNameCache.set(cacheKey, null);
   return null;
 }
 
@@ -448,13 +488,24 @@ export const Route = createFileRoute("/api/media/$")({
           return exactHit.response;
         }
 
-        // Fuzzy fallback: case/prefix/extension variants, per namespace.
+        // Fuzzy fallback: compact prefix/extension/case variants under active namespace first,
+        // then only the stripped high-probability path across alternate namespaces so we
+        // stay comfortably below Cloudflare Workers' 50-subrequest limit.
         const plainObject = await fetchPlainObject(`${storagePrefix}${name}`, cacheKey, supaUrl, srk, range);
         if (plainObject) return plainObject;
 
-        for (const alt of altPrefixes) {
-          const altObject = await fetchPlainObject(`${alt}${name}`, `${alt}|${name}`, supaUrl, srk, range);
-          if (altObject) return altObject;
+        const strippedLeaf = stripPrefix(normalizeMediaLeafCase(name));
+        const altQuickPaths = Array.from(
+          new Set(
+            altPrefixes.flatMap((alt) => [
+              `${alt}${strippedLeaf}`,
+              `${alt}highresdefault_${strippedLeaf}`,
+            ]),
+          ),
+        ).filter((p) => !exactPaths.includes(p));
+        if (altQuickPaths.length) {
+          const altHit = await firstPlainHit(altQuickPaths, `${storagePrefix}${name}`, supaUrl, srk, range, altQuickPaths.length);
+          if (altHit) return altHit.response;
         }
 
 
