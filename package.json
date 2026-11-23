@@ -7,7 +7,6 @@
     "dev": "vite dev",
     "build": "vite build",
     "build:cf": "vite build && rm -f .wrangler/deploy/config.json",
-
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -76,7 +75,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "2.13.1",
+    "@lovable.dev/vite-tanstack-config": "2.27.1",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
