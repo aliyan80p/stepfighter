@@ -57,7 +57,7 @@ export type ExhibitStyle = "button" | "link" | "plain";
 export type ExhibitViewerSize = "default" | "small" | "medium" | "large";
 export type ExplanationAlign = "left" | "justify" | "center";
 export type ImageAlign = "left" | "center";
-export type QuizInterfaceStyle = "default" | "uworld-classic" | "uworld-modern";
+export type QuizInterfaceStyle = "default" | "nbme-official" | "uworld-classic" | "uworld-modern";
 
 export const QUIZ_INTERFACE_STYLES: {
   id: QuizInterfaceStyle;
@@ -70,6 +70,12 @@ export const QUIZ_INTERFACE_STYLES: {
     label: "StepFighter Default",
     description: "Your current StepFighter layout with full theme & accent sync",
     preview: { nav: "#1a4b7c", side: "#eef1f5", sideAlt: "#e2e8f0", page: "#f5f7fa", expl: "#ffffff", active: "#ffffff" },
+  },
+  {
+    id: "nbme-official",
+    label: "NBME Official (FRED)",
+    description: "Exact USMLE / NBME exam layout: FRED blue-slate bars, Mark checkbox, Arial stem & Reverse Color",
+    preview: { nav: "#2c4a70", side: "#e8edf3", sideAlt: "#ffffff", page: "#ffffff", expl: "#f8fafc", active: "#2c4a70" },
   },
   {
     id: "uworld-classic",

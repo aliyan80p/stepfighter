@@ -612,7 +612,7 @@ function SettingsPage() {
           >
             <div className="pb-3 border-b border-border space-y-2.5">
               <div className="font-semibold text-sm">Quiz Interface Appearance (Tutor & Exam Mode)</div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 {QUIZ_INTERFACE_STYLES.map((st) => {
                   const active = (s.quizInterfaceStyle ?? "default") === st.id;
                   return (

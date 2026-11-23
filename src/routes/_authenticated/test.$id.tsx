@@ -435,28 +435,37 @@ function TestRunner() {
   }, []);
 
   const iface: QuizInterfaceStyle = userSettings.quizInterfaceStyle ?? "default";
+  const isNbmeOfficial = iface === "nbme-official";
 
   const navBg =
-    iface === "uworld-classic"
-      ? "#0b4f71"
-      : iface === "uworld-modern"
-        ? "#38506b"
-        : userSettings.useAccentInQuizNav
-          ? darkenHex(userSettings.accentColor, 0.78)
-          : NAV_BG;
+    isNbmeOfficial
+      ? "#2c4a70"
+      : iface === "uworld-classic"
+        ? "#0b4f71"
+        : iface === "uworld-modern"
+          ? "#38506b"
+          : userSettings.useAccentInQuizNav
+            ? darkenHex(userSettings.accentColor, 0.78)
+            : NAV_BG;
 
   const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
   const themeStyles =
-    !baseThemeStyles.isDark && theme === "light" && iface === "uworld-classic"
-      ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", border: "#cbd5e1" }
-      : !baseThemeStyles.isDark && theme === "light" && iface === "uworld-modern"
-        ? { ...baseThemeStyles, pageBg: "#f1f5fa", sideBg: "#eef2f7", cardBg: "#f7f9fc", border: "#cbd5e1" }
-        : baseThemeStyles;
+    isNbmeOfficial && baseThemeStyles.isDark
+      ? { ...baseThemeStyles, pageBg: "#000000", sideBg: "#0d131c", cardBg: "#000000", text: "#ffffff", border: "#334155" }
+      : isNbmeOfficial && !baseThemeStyles.isDark && theme === "light"
+        ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#e8edf3", cardBg: "#ffffff", text: "#111827", border: "#cbd5e1" }
+        : !baseThemeStyles.isDark && theme === "light" && iface === "uworld-classic"
+          ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", border: "#cbd5e1" }
+          : !baseThemeStyles.isDark && theme === "light" && iface === "uworld-modern"
+            ? { ...baseThemeStyles, pageBg: "#f1f5fa", sideBg: "#eef2f7", cardBg: "#f7f9fc", border: "#cbd5e1" }
+            : baseThemeStyles;
 
   const effectiveReadingFont =
-    userSettings.fontFamily === "system" && iface === "uworld-modern"
-      ? 'Georgia, "Times New Roman", Times, serif'
-      : getFontStack(userSettings.fontFamily);
+    userSettings.fontFamily === "system" && isNbmeOfficial
+      ? "Arial, Helvetica, sans-serif"
+      : userSettings.fontFamily === "system" && iface === "uworld-modern"
+        ? 'Georgia, "Times New Roman", Times, serif'
+        : getFontStack(userSettings.fontFamily);
 
   const question = data?.questions[idx];
   const mediaToken = useMediaToken(data?.qbankId);
@@ -1217,8 +1226,8 @@ function TestRunner() {
           {false && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
           
           <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
-          {isRealExam && !isReview && (
+          {(isNbmeOfficial || (isRealExam && !isReview)) && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
+          {(isNbmeOfficial || (isRealExam && !isReview)) && (
             <TopBtn imgSrc={textZoomIcon.url} imgClass="h-10 w-10 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
           )}
           <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
@@ -1280,23 +1289,29 @@ function TestRunner() {
             const active = i === idx;
             const isUnsubmitted = active && selected !== null && !submitted && userSettings.showUnsubmittedIndicator !== false;
             const zebraBg =
-              iface === "uworld-classic"
+              isNbmeOfficial
                 ? i % 2 === 1
-                  ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e5e7eb")
+                  ? (themeStyles.isDark ? "rgba(255,255,255,0.05)" : "#ffffff")
                   : "transparent"
-                : iface === "uworld-modern"
+                : iface === "uworld-classic"
                   ? i % 2 === 1
-                    ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e3eaf3")
+                    ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e5e7eb")
                     : "transparent"
-                  : "transparent";
+                  : iface === "uworld-modern"
+                    ? i % 2 === 1
+                      ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e3eaf3")
+                      : "transparent"
+                    : "transparent";
             const activeBg =
-              iface === "uworld-classic"
-                ? "#0b4f71"
-                : iface === "uworld-modern"
-                  ? "#4a6a8c"
-                  : themeStyles.cardBg;
+              isNbmeOfficial
+                ? "#2c4a70"
+                : iface === "uworld-classic"
+                  ? "#0b4f71"
+                  : iface === "uworld-modern"
+                    ? "#4a6a8c"
+                    : themeStyles.cardBg;
             const activeColor =
-              iface === "uworld-classic" || iface === "uworld-modern"
+              isNbmeOfficial || iface === "uworld-classic" || iface === "uworld-modern"
                 ? "#ffffff"
                 : themeStyles.text;
             return (
@@ -1428,14 +1443,16 @@ function TestRunner() {
               className={`mt-3 inline-block rounded border px-4 py-2 ${iface === "uworld-classic" ? "shadow-sm" : ""}`}
               style={{
                 borderColor:
-                  iface === "uworld-classic"
-                    ? (themeStyles.isDark ? "#475569" : "#0b4f71")
-                    : iface === "uworld-modern"
-                      ? (themeStyles.isDark ? "#475569" : "#4a6a8c")
-                      : (isRealExam && !isReview && !showAnswers)
-                        ? (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9")
-                        : (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : userSettings.accentColor),
-                borderWidth: (isRealExam && !isReview && !showAnswers && iface === "default") ? 1 : 2,
+                  isNbmeOfficial
+                    ? (themeStyles.isDark ? "#475569" : "#cbd5e1")
+                    : iface === "uworld-classic"
+                      ? (themeStyles.isDark ? "#475569" : "#0b4f71")
+                      : iface === "uworld-modern"
+                        ? (themeStyles.isDark ? "#475569" : "#4a6a8c")
+                        : (isRealExam && !isReview && !showAnswers)
+                          ? (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9")
+                          : (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : userSettings.accentColor),
+                borderWidth: isNbmeOfficial || (isRealExam && !isReview && !showAnswers && iface === "default") ? 1 : 2,
                 background: themeStyles.cardBg,
                 color: themeStyles.text,
               }}
@@ -2247,7 +2264,7 @@ export function SettingsPanel(props: any) {
       <div className="p-4 border-b border-border">
         <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Appearance & Typography</div>
         <Row label="Interface Style">
-          <div className="flex gap-1">
+          <div className="flex flex-wrap justify-end gap-1">
             {QUIZ_INTERFACE_STYLES.map((st) => (
               <button
                 key={st.id}
@@ -2258,7 +2275,13 @@ export function SettingsPanel(props: any) {
                     : "bg-card border-border text-muted-foreground hover:bg-muted"
                 }`}
               >
-                {st.id === "default" ? "Default" : st.id === "uworld-classic" ? "Classic" : "Modern"}
+                {st.id === "default"
+                  ? "Default"
+                  : st.id === "nbme-official"
+                    ? "NBME"
+                    : st.id === "uworld-classic"
+                      ? "Classic"
+                      : "Modern"}
               </button>
             ))}
           </div>

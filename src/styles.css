@@ -815,7 +815,42 @@ body { overscroll-behavior-y: none; }
 .sf-fade-up { animation: sf-fade-up 0.9s ease-out both; }
 .sf-glow-pulse { animation: sf-glow-pulse 5s ease-in-out infinite; }
 .sf-phone-rotate { animation: sf-phone-rotate 8s ease-in-out infinite; transform-style: preserve-3d; backface-visibility: visible; }
-/* Quiz Interface Styles: Classic UWorld & Modern Slate */
+/* Quiz Interface Styles: NBME Official (FRED), Classic UWorld & Modern Slate */
+.qbank-iface-nbme-official {
+  max-width: 880px;
+}
+.qbank-iface-nbme-official.qbank-split-mode {
+  max-width: 100%;
+}
+.qbank-iface-nbme-official .qbank-html table {
+  border-radius: 0;
+  border: 1px solid #94a3b8;
+  background: #ffffff;
+  margin-left: 0;
+}
+.qbank-iface-nbme-official .qbank-html table th {
+  background: #e8edf3;
+  font-weight: 700;
+  text-align: left;
+}
+.qbank-iface-nbme-official .qbank-html table td,
+.qbank-iface-nbme-official .qbank-html table th {
+  border-color: #94a3b8;
+  padding: 0.45rem 0.75rem;
+}
+.qbank-iface-nbme-official .qbank-html table td:first-child {
+  background: #f8fafc;
+}
+.qbank-iface-nbme-official .qbank-split-expl {
+  background: #f8fafc;
+  padding: 0.75rem 1.25rem;
+  border-left: 1px solid #cbd5e1;
+}
+.qbank-theme-dark .qbank-iface-nbme-official .qbank-split-expl,
+.qbank-theme-forest .qbank-iface-nbme-official .qbank-split-expl {
+  background: #000000;
+  border-left-color: #334155;
+}
 .qbank-iface-uworld-classic .qbank-html table {
   border-radius: 0;
   border: 1px solid #cbd5e1;
@@ -1018,7 +1053,42 @@ body { overscroll-behavior-y: none; }
   gap: 0.85rem;
 }
 
-/* Quiz Interface Styles: Classic UWorld & Modern Slate */
+/* Quiz Interface Styles: NBME Official (FRED), Classic UWorld & Modern Slate */
+.qbank-iface-nbme-official {
+  max-width: 880px;
+}
+.qbank-iface-nbme-official.qbank-split-mode {
+  max-width: 100%;
+}
+.qbank-iface-nbme-official .qbank-html table {
+  border-radius: 0;
+  border: 1px solid #94a3b8;
+  background: #ffffff;
+  margin-left: 0;
+}
+.qbank-iface-nbme-official .qbank-html table th {
+  background: #e8edf3;
+  font-weight: 700;
+  text-align: left;
+}
+.qbank-iface-nbme-official .qbank-html table td,
+.qbank-iface-nbme-official .qbank-html table th {
+  border-color: #94a3b8;
+  padding: 0.45rem 0.75rem;
+}
+.qbank-iface-nbme-official .qbank-html table td:first-child {
+  background: #f8fafc;
+}
+.qbank-iface-nbme-official .qbank-split-expl {
+  background: #f8fafc;
+  padding: 0.75rem 1.25rem;
+  border-left: 1px solid #cbd5e1;
+}
+.qbank-theme-dark .qbank-iface-nbme-official .qbank-split-expl,
+.qbank-theme-forest .qbank-iface-nbme-official .qbank-split-expl {
+  background: #000000;
+  border-left-color: #334155;
+}
 .qbank-iface-uworld-classic .qbank-html table {
   border-radius: 0;
   border: 1px solid #cbd5e1;
