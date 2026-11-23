@@ -449,6 +449,31 @@ function TestRunner() {
   const isReview = !!data?.test.done;
   const total = data?.questions.length ?? 0;
 
+  // Preload next question's images in the background so switching questions feels instant.
+  useEffect(() => {
+    if (!mediaToken || !data?.questions?.length) return;
+    const nextQ = data.questions[idx + 1];
+    if (!nextQ) return;
+    const urls = new Set<string>();
+    for (const item of getQuestionMedia(nextQ, data.qbankId ?? 1)) {
+      if (item.kind === "image") urls.add(withMediaToken(item.url, mediaToken));
+    }
+    const rewritten = rewriteMedia(nextQ.question ?? "", { qbankId: data.qbankId ?? 1, mediaToken });
+    for (const m of rewritten.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) {
+      if (m[1]) urls.add(m[1]);
+    }
+    const preloaded: HTMLImageElement[] = [];
+    for (const u of urls) {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = u;
+      preloaded.push(img);
+    }
+    return () => {
+      preloaded.length = 0;
+    };
+  }, [idx, data?.questions, data?.qbankId, mediaToken]);
+
   // Clamp restored idx once data loads (in case it exceeds range)
   useEffect(() => {
     if (total > 0 && idx > total - 1) setIdx(total - 1);
@@ -1881,10 +1906,8 @@ function TestRunner() {
 
 
       {exhibitSrc && (
-        <ExhibitModal
-          src={exhibitSrc}
-          zoom={exhibitZoom}
-          setZoom={setExhibitZoom}
+        <MediaExhibitModal
+          content={{ kind: "image", src: exhibitSrc, alt: "Exhibit" }}
           onClose={() => setExhibitSrc(null)}
         />
       )}

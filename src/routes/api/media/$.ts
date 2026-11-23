@@ -498,11 +498,20 @@ export const Route = createFileRoute("/api/media/$")({
 
         // Medical Library articles are shared by all qbanks, but their images
         // were warmed under whichever namespace first requested them (root /
-        // step1 / step3). Probe the exact filename under every namespace in
-        // parallel first — this is the common case and costs one round trip,
-        // instead of dozens of sequential misses before the right prefix.
+        // step1 / step3). For images, also probe `highresdefault_<name>` in the
+        // same parallel batch FIRST so users automatically receive the sharper
+        // high-resolution version whenever it exists (zero extra round trips).
         const altPrefixes = ["", "step1/", "step3/"].filter((p) => p !== storagePrefix);
-        const exactPaths = [`${storagePrefix}${name}`, ...altPrefixes.map((p) => `${p}${name}`)];
+        const normName = normalizeMediaLeafCase(name);
+        const alreadyHighres = /^highresdefault_/i.test(normName);
+        const highresName = alreadyHighres ? null : `highresdefault_${stripPrefix(normName)}`;
+        const exactPaths = Array.from(
+          new Set([
+            ...(isImage && highresName ? [`${storagePrefix}${highresName}`] : []),
+            `${storagePrefix}${name}`,
+            ...altPrefixes.map((p) => `${p}${name}`),
+          ]),
+        );
         const exactHit = await firstPlainHit(
           exactPaths, `${storagePrefix}${name}`, supaUrl, srk, range, exactPaths.length,
         );
