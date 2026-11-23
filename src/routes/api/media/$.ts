@@ -53,12 +53,14 @@ function compactProbeNames(name: string): string[] {
   const add = (v: string) => { if (v) set.add(v); };
   add(name);
   add(normalized);
-  add(stripped);
-  if (stripped !== name) {
-    add(`highresdefault_${stripped}`);
-  } else {
-    add(`highresdefault_${normalized}`);
+  // Always try lowercase extension early (350+ question refs use .JPG/.PNG while storage uses .jpg/.png)
+  if (ext) {
+    const normDot = normalized.lastIndexOf(".");
+    if (normDot > 0) add(`${normalized.slice(0, normDot)}.${ext}`);
+    add(`${base}.${ext}`);
+    add(`highresdefault_${base}.${ext}`);
   }
+  add(stripped);
   // Common extension swaps (jpg <-> png <-> jpeg) for both prefixed & stripped
   if (ext === "jpg" || ext === "jpeg") {
     add(`${base}.png`);
