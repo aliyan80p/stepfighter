@@ -33,6 +33,7 @@ import {
   TOOLBAR_ITEMS,
   FONT_FAMILIES,
   ACCENT_PRESETS,
+  QUIZ_INTERFACE_STYLES,
   CONTENT_WIDTH_PX,
   getFontStack,
   resolveQuizTheme,
@@ -45,6 +46,7 @@ import {
   type ExhibitViewerSize,
   type ExplanationAlign,
   type ImageAlign,
+  type QuizInterfaceStyle,
 } from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { MedicalLibraryModal } from "@/components/medical-library-modal";
@@ -432,11 +434,29 @@ function TestRunner() {
     };
   }, []);
 
-  const navBg = userSettings.useAccentInQuizNav
-    ? darkenHex(userSettings.accentColor, 0.78)
-    : NAV_BG;
+  const iface: QuizInterfaceStyle = userSettings.quizInterfaceStyle ?? "default";
 
-  const themeStyles = getQuizPalette(theme, userSettings.customTheme);
+  const navBg =
+    iface === "uworld-classic"
+      ? "#0b4f71"
+      : iface === "uworld-modern"
+        ? "#38506b"
+        : userSettings.useAccentInQuizNav
+          ? darkenHex(userSettings.accentColor, 0.78)
+          : NAV_BG;
+
+  const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
+  const themeStyles =
+    !baseThemeStyles.isDark && theme === "light" && iface === "uworld-classic"
+      ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", border: "#cbd5e1" }
+      : !baseThemeStyles.isDark && theme === "light" && iface === "uworld-modern"
+        ? { ...baseThemeStyles, pageBg: "#f1f5fa", sideBg: "#eef2f7", cardBg: "#f7f9fc", border: "#cbd5e1" }
+        : baseThemeStyles;
+
+  const effectiveReadingFont =
+    userSettings.fontFamily === "system" && iface === "uworld-modern"
+      ? 'Georgia, "Times New Roman", Times, serif'
+      : getFontStack(userSettings.fontFamily);
 
   const question = data?.questions[idx];
   const mediaToken = useMediaToken(data?.qbankId);
@@ -1201,7 +1221,7 @@ function TestRunner() {
           {isRealExam && !isReview && (
             <TopBtn imgSrc={textZoomIcon.url} imgClass="h-10 w-10 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
           )}
-          {(!isRealExam || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
+          <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
         </div>
       </div>
 
@@ -1236,6 +1256,20 @@ function TestRunner() {
           }`}
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
+          {(iface === "uworld-classic" || iface === "uworld-modern") && (
+            <div
+              className="px-2 py-2 text-[10px] font-bold text-center leading-tight border-b sticky top-0 z-20"
+              style={{
+                background: themeStyles.isDark ? themeStyles.cardBg : "#ffffff",
+                borderColor: themeStyles.border,
+                color: themeStyles.text,
+              }}
+            >
+              Question
+              <br />
+              Status
+            </div>
+          )}
 
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
@@ -1245,6 +1279,26 @@ function TestRunner() {
               : "none";
             const active = i === idx;
             const isUnsubmitted = active && selected !== null && !submitted && userSettings.showUnsubmittedIndicator !== false;
+            const zebraBg =
+              iface === "uworld-classic"
+                ? i % 2 === 1
+                  ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e5e7eb")
+                  : "transparent"
+                : iface === "uworld-modern"
+                  ? i % 2 === 1
+                    ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e3eaf3")
+                    : "transparent"
+                  : "transparent";
+            const activeBg =
+              iface === "uworld-classic"
+                ? "#0b4f71"
+                : iface === "uworld-modern"
+                  ? "#4a6a8c"
+                  : themeStyles.cardBg;
+            const activeColor =
+              iface === "uworld-classic" || iface === "uworld-modern"
+                ? "#ffffff"
+                : themeStyles.text;
             return (
               <button
                 type="button"
@@ -1266,8 +1320,12 @@ function TestRunner() {
                 }}
                 onMouseUp={(e) => e.stopPropagation()}
                 aria-label={`Go to question ${i + 1}`}
-                className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:bg-black/10 ${active ? "font-semibold" : ""}`}
-                style={{ borderColor: themeStyles.border, color: themeStyles.text, background: active ? themeStyles.cardBg : "transparent" }}
+                className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:brightness-95 ${active ? "font-semibold" : ""}`}
+                style={{
+                  borderColor: themeStyles.border,
+                  color: active ? activeColor : themeStyles.text,
+                  background: active ? activeBg : zebraBg,
+                }}
               >
                 {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
                 {status === "wrong" && <span className="text-red-600 font-bold">✕</span>}
@@ -1291,11 +1349,11 @@ function TestRunner() {
         <div className="sf-main-canvas flex-1 overflow-auto" ref={contentRef}>
           <div
             ref={splitGridRef}
-            className={`w-full mx-0 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
+            className={`w-full mx-0 py-3 qbank-theme-${theme} qbank-iface-${iface} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
             style={{
               fontSize,
               fontWeight,
-              fontFamily: getFontStack(userSettings.fontFamily),
+              fontFamily: effectiveReadingFont,
               lineHeight: userSettings.lineHeight,
               color: themeStyles.text,
               paddingInline: "clamp(0.75rem, calc(1rem + var(--sf-content-padding, 0px)), 4rem)",
@@ -1366,7 +1424,22 @@ function TestRunner() {
               </div>
             )}
 
-            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (isRealExam && !isReview && !showAnswers) ? (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9") : (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : userSettings.accentColor), borderWidth: (isRealExam && !isReview && !showAnswers) ? 1 : 2, background: themeStyles.cardBg, color: themeStyles.text }}>
+            <div
+              className={`mt-3 inline-block rounded border px-4 py-2 ${iface === "uworld-classic" ? "shadow-sm" : ""}`}
+              style={{
+                borderColor:
+                  iface === "uworld-classic"
+                    ? (themeStyles.isDark ? "#475569" : "#0b4f71")
+                    : iface === "uworld-modern"
+                      ? (themeStyles.isDark ? "#475569" : "#4a6a8c")
+                      : (isRealExam && !isReview && !showAnswers)
+                        ? (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9")
+                        : (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : userSettings.accentColor),
+                borderWidth: (isRealExam && !isReview && !showAnswers && iface === "default") ? 1 : 2,
+                background: themeStyles.cardBg,
+                color: themeStyles.text,
+              }}
+            >
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
@@ -1410,19 +1483,47 @@ function TestRunner() {
                       if (isReview || (submitted && showAnswers)) return;
                       toggleStruck();
                     }}
-                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 text-[15px] ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
-                    style={{ color: themeStyles.text }}
+                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 px-2 -mx-2 rounded transition-colors text-[15px] ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
+                    style={{
+                      color: themeStyles.text,
+                      background:
+                        iface === "uworld-modern"
+                          ? isThisWrong
+                            ? "rgba(239, 68, 68, 0.14)"
+                            : isThisCorrect
+                              ? "rgba(34, 197, 94, 0.15)"
+                              : "transparent"
+                          : "transparent",
+                    }}
                   >
-                    <span className="w-4 flex justify-center shrink-0">
-                      {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
-                      {isThisWrong && <span className="text-red-600 font-bold text-base leading-none">✕</span>}
-                    </span>
+                    {iface !== "uworld-modern" && (
+                      <span className="w-4 flex justify-center shrink-0">
+                        {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
+                        {isThisWrong && <span className="text-red-600 font-bold text-base leading-none">✕</span>}
+                      </span>
+                    )}
                     <span
-                      className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
-                        isSelected ? "border-gray-600" : "border-gray-400"
+                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        iface === "uworld-modern" && isThisWrong
+                          ? "border-red-600"
+                          : iface === "uworld-modern" && isThisCorrect
+                            ? "border-green-600"
+                            : isSelected
+                              ? "border-gray-600"
+                              : "border-gray-400"
                       }`}
                     >
-                      {isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />}
+                      {isSelected && (
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            iface === "uworld-modern" && isThisWrong
+                              ? "bg-red-600"
+                              : iface === "uworld-modern" && isThisCorrect
+                                ? "bg-green-600"
+                                : "bg-gray-700"
+                          }`}
+                        />
+                      )}
                     </span>
                     <span className="flex-1 min-w-0">
                       <span
@@ -2145,6 +2246,23 @@ export function SettingsPanel(props: any) {
 
       <div className="p-4 border-b border-border">
         <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Appearance & Typography</div>
+        <Row label="Interface Style">
+          <div className="flex gap-1">
+            {QUIZ_INTERFACE_STYLES.map((st) => (
+              <button
+                key={st.id}
+                onClick={() => setUserSettings({ quizInterfaceStyle: st.id })}
+                className={`px-2 py-0.5 text-[11px] rounded border transition ${
+                  (us.quizInterfaceStyle ?? "default") === st.id
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {st.id === "default" ? "Default" : st.id === "uworld-classic" ? "Classic" : "Modern"}
+              </button>
+            ))}
+          </div>
+        </Row>
         <Row label="Font Family">
           <select
             value={us.fontFamily ?? "system"}

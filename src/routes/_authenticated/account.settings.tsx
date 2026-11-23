@@ -30,6 +30,7 @@ import {
   TOOLBAR_ITEMS,
   APP_THEMES,
   QUIZ_THEME_OPTIONS,
+  QUIZ_INTERFACE_STYLES,
   ACCENT_PRESETS,
   FONT_FAMILIES,
   getFontStack,
@@ -607,8 +608,55 @@ function SettingsPage() {
             icon={<Sparkles className="h-4 w-4" />}
             iconBg="bg-purple-600 text-white"
             title="Quiz Defaults"
-            subtitle="Applied automatically every time a quiz opens."
+            subtitle="Applied automatically in both Tutor Mode and Exam Mode."
           >
+            <div className="pb-3 border-b border-border space-y-2.5">
+              <div className="font-semibold text-sm">Quiz Interface Appearance (Tutor & Exam Mode)</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {QUIZ_INTERFACE_STYLES.map((st) => {
+                  const active = (s.quizInterfaceStyle ?? "default") === st.id;
+                  return (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => set({ quizInterfaceStyle: st.id })}
+                      className={`rounded-xl border-2 p-2.5 text-left transition-all ${
+                        active
+                          ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                          : "border-border bg-card hover:border-primary/40"
+                      }`}
+                    >
+                      {/* Mini quiz interface thumbnail */}
+                      <div className="h-14 w-full rounded-md overflow-hidden border border-border flex flex-col mb-2">
+                        <div className="h-2.5 w-full shrink-0" style={{ background: st.preview.nav }} />
+                        <div className="flex-1 flex min-h-0">
+                          <div className="w-4 h-full flex flex-col shrink-0 border-r border-black/10" style={{ background: st.preview.side }}>
+                            <span className="h-2 w-full" style={{ background: st.preview.active }} />
+                            <span className="h-2 w-full" style={{ background: st.preview.sideAlt }} />
+                            <span className="h-2 w-full" style={{ background: st.preview.side }} />
+                          </div>
+                          <div className="flex-1 p-1" style={{ background: st.preview.page }}>
+                            <div className="h-1 w-3/4 rounded bg-slate-400/50 mb-1" />
+                            <div className="h-1 w-1/2 rounded bg-slate-400/40" />
+                          </div>
+                          <div className="w-1/2 p-1 border-l border-black/10" style={{ background: st.preview.expl }}>
+                            <div className="h-1 w-2/3 rounded bg-slate-400/50 mb-1" />
+                            <div className="h-1 w-4/5 rounded bg-slate-400/35" />
+                          </div>
+                        </div>
+                        <div className="h-2 w-full shrink-0" style={{ background: st.preview.nav }} />
+                      </div>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-semibold text-xs truncate">{st.label}</span>
+                        {active && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">{st.description}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="pb-3 border-b border-border space-y-2">
               <div className="font-semibold text-sm">Default Quiz Canvas Theme</div>
               <div className="flex flex-wrap gap-2">

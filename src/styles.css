@@ -815,6 +815,50 @@ body { overscroll-behavior-y: none; }
 .sf-fade-up { animation: sf-fade-up 0.9s ease-out both; }
 .sf-glow-pulse { animation: sf-glow-pulse 5s ease-in-out infinite; }
 .sf-phone-rotate { animation: sf-phone-rotate 8s ease-in-out infinite; transform-style: preserve-3d; backface-visibility: visible; }
+/* Quiz Interface Styles: Classic UWorld & Modern Slate */
+.qbank-iface-uworld-classic .qbank-html table {
+  border-radius: 0;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+.qbank-iface-uworld-classic .qbank-html table th {
+  background: #e2e8f0;
+  font-weight: 700;
+}
+.qbank-iface-uworld-classic .qbank-html table td:first-child {
+  background: #f8fafc;
+}
+.qbank-iface-uworld-modern .qbank-html table {
+  border-radius: 2px;
+  border: 1px solid #b8c6d8;
+  background: #f7f9fc;
+}
+.qbank-iface-uworld-modern .qbank-html table th {
+  background: #e1e8f2;
+  font-weight: 700;
+}
+.qbank-iface-uworld-modern .qbank-html table td:first-child {
+  background: #edf2f8;
+}
+.qbank-iface-uworld-classic .qbank-split-expl {
+  background: #f3f4f6;
+  padding: 0.75rem 1.25rem;
+  border-left: 1px solid #d1d5db;
+}
+.qbank-theme-dark .qbank-iface-uworld-classic .qbank-split-expl,
+.qbank-theme-forest .qbank-iface-uworld-classic .qbank-split-expl {
+  background: transparent;
+  border-left-color: #334155;
+}
+.qbank-iface-uworld-modern .qbank-split-expl {
+  padding: 0.75rem 1.25rem;
+  border-left: 1px solid #cbd5e1;
+}
+.qbank-theme-dark .qbank-iface-uworld-modern .qbank-split-expl,
+.qbank-theme-forest .qbank-iface-uworld-modern .qbank-split-expl {
+  border-left-color: #334155;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sf-float-slow, .sf-float-slower, .sf-glow-pulse, .sf-phone-rotate { animation: none; }
 }
@@ -972,6 +1016,50 @@ body { overscroll-behavior-y: none; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 0.85rem;
+}
+
+/* Quiz Interface Styles: Classic UWorld & Modern Slate */
+.qbank-iface-uworld-classic .qbank-html table {
+  border-radius: 0;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+.qbank-iface-uworld-classic .qbank-html table th {
+  background: #e2e8f0;
+  font-weight: 700;
+}
+.qbank-iface-uworld-classic .qbank-html table td:first-child {
+  background: #f8fafc;
+}
+.qbank-iface-uworld-modern .qbank-html table {
+  border-radius: 2px;
+  border: 1px solid #b8c6d8;
+  background: #f7f9fc;
+}
+.qbank-iface-uworld-modern .qbank-html table th {
+  background: #e1e8f2;
+  font-weight: 700;
+}
+.qbank-iface-uworld-modern .qbank-html table td:first-child {
+  background: #edf2f8;
+}
+.qbank-iface-uworld-classic .qbank-split-expl {
+  background: #f3f4f6;
+  padding: 0.75rem 1.25rem;
+  border-left: 1px solid #d1d5db;
+}
+.qbank-theme-dark .qbank-iface-uworld-classic .qbank-split-expl,
+.qbank-theme-forest .qbank-iface-uworld-classic .qbank-split-expl {
+  background: transparent;
+  border-left-color: #334155;
+}
+.qbank-iface-uworld-modern .qbank-split-expl {
+  padding: 0.75rem 1.25rem;
+  border-left: 1px solid #cbd5e1;
+}
+.qbank-theme-dark .qbank-iface-uworld-modern .qbank-split-expl,
+.qbank-theme-forest .qbank-iface-uworld-modern .qbank-split-expl {
+  border-left-color: #334155;
 }
 
 @media (prefers-reduced-motion: reduce) {

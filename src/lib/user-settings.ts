@@ -57,6 +57,33 @@ export type ExhibitStyle = "button" | "link" | "plain";
 export type ExhibitViewerSize = "default" | "small" | "medium" | "large";
 export type ExplanationAlign = "left" | "justify" | "center";
 export type ImageAlign = "left" | "center";
+export type QuizInterfaceStyle = "default" | "uworld-classic" | "uworld-modern";
+
+export const QUIZ_INTERFACE_STYLES: {
+  id: QuizInterfaceStyle;
+  label: string;
+  description: string;
+  preview: { nav: string; side: string; sideAlt: string; page: string; expl: string; active: string };
+}[] = [
+  {
+    id: "default",
+    label: "StepFighter Default",
+    description: "Your current StepFighter layout with full theme & accent sync",
+    preview: { nav: "#1a4b7c", side: "#eef1f5", sideAlt: "#e2e8f0", page: "#f5f7fa", expl: "#ffffff", active: "#ffffff" },
+  },
+  {
+    id: "uworld-classic",
+    label: "Classic UWorld",
+    description: "Deep teal-navy bars, zebra Question Status list, crisp white stem & gray explanation",
+    preview: { nav: "#0b4f71", side: "#ffffff", sideAlt: "#e2e5ea", page: "#ffffff", expl: "#f3f4f6", active: "#0b4f71" },
+  },
+  {
+    id: "uworld-modern",
+    label: "Modern Slate",
+    description: "Refined slate-blue bars, clean outline controls, soft ice-slate canvas & tinted answer rows",
+    preview: { nav: "#38506b", side: "#eef2f7", sideAlt: "#e3eaf3", page: "#f1f5fa", expl: "#f1f5fa", active: "#4a6a8c" },
+  },
+];
 
 export type UserSettings = {
   // Account & Global Appearance
@@ -70,6 +97,7 @@ export type UserSettings = {
   hideNameOnLeaderboard: boolean;
 
   // Quiz defaults
+  quizInterfaceStyle: QuizInterfaceStyle;
   defaultTheme: QuizTheme;
   splitExplanations: boolean;
   splitRatio: number; // 28 - 72 (% width of question column in split screen)
@@ -334,6 +362,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   imagesAutoZoom: false,
   hideNameOnLeaderboard: false,
 
+  quizInterfaceStyle: "default",
   defaultTheme: "default",
   splitExplanations: false,
   splitRatio: 50,
@@ -699,6 +728,7 @@ export function resetAppearanceSettings() {
     accentColor: DEFAULT_SETTINGS.accentColor,
     useAccentInQuizNav: DEFAULT_SETTINGS.useAccentInQuizNav,
     uiRadius: DEFAULT_SETTINGS.uiRadius,
+    quizInterfaceStyle: DEFAULT_SETTINGS.quizInterfaceStyle,
     defaultTheme: DEFAULT_SETTINGS.defaultTheme,
     fontFamily: DEFAULT_SETTINGS.fontFamily,
     applyFontGlobally: DEFAULT_SETTINGS.applyFontGlobally,
