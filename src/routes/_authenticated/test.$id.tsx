@@ -9,6 +9,7 @@ import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
   ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon, Lock as LockIcon,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -314,6 +315,7 @@ function TestRunner() {
   const [showSettings, setShowSettings] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryTarget, setLibraryTarget] = useState<{ docId: number | null; search?: string | null } | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -1507,6 +1509,83 @@ function TestRunner() {
                     className="qbank-html qbank-light qbank-explanation"
                     html={htmlFor("e", question.explanation, true)}
                   />
+
+                  {(() => {
+                    const qRefs = (data?.refsByQ?.[question.id] ?? []) as Array<{
+                      id: number;
+                      ref_title: string | null;
+                      ref_link: string | null;
+                      ref_type: number | null;
+                      library_doc_id: number | null;
+                    }>;
+                    const libraryRefs = qRefs.filter((r) => r.ref_type === 18 && r.ref_title);
+                    const externalRefs = qRefs.filter((r) => r.ref_type !== 18 && (r.ref_title || r.ref_link));
+                    if (libraryRefs.length === 0 && externalRefs.length === 0) return null;
+                    return (
+                      <div className="mt-6 pt-4 border-t space-y-4 text-sm" style={{ borderColor: themeStyles.border }}>
+                        {libraryRefs.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-2 opacity-80">
+                              <BookOpen className="h-3.5 w-3.5 text-primary" />
+                              Related Medical Library Articles
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {libraryRefs.map((ref) => (
+                                <button
+                                  key={ref.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setLibraryTarget({
+                                      docId: ref.library_doc_id,
+                                      search: ref.library_doc_id ? null : ref.ref_title,
+                                    });
+                                    setShowLibrary(true);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+                                  style={{
+                                    borderColor: userSettings.accentColor,
+                                    color: themeStyles.isDark ? "#93c5fd" : userSettings.accentColor,
+                                    background: themeStyles.isDark ? "rgba(59,130,246,0.12)" : "rgba(37,99,235,0.07)",
+                                  }}
+                                >
+                                  <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                                  <span>{ref.ref_title}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {externalRefs.length > 0 && (
+                          <div>
+                            <div className="text-xs font-bold uppercase tracking-wider mb-2 opacity-80">
+                              References
+                            </div>
+                            <ol className="list-decimal pl-5 space-y-1.5 text-xs leading-relaxed">
+                              {externalRefs.map((ref) => (
+                                <li key={ref.id}>
+                                  {ref.ref_link ? (
+                                    <a
+                                      href={ref.ref_link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-baseline gap-1 underline underline-offset-2 hover:opacity-80"
+                                      style={{ color: themeStyles.isDark ? "#93c5fd" : userSettings.accentColor }}
+                                    >
+                                      <span>{ref.ref_title || ref.ref_link}</span>
+                                      <ExternalLink className="h-3 w-3 inline shrink-0 translate-y-[1px]" />
+                                    </a>
+                                  ) : (
+                                    <span>{ref.ref_title}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
               </div>
@@ -1684,7 +1763,15 @@ function TestRunner() {
 
 
       {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
-      <MedicalLibraryModal open={showLibrary} onClose={() => setShowLibrary(false)} />
+      <MedicalLibraryModal
+        open={showLibrary}
+        onClose={() => {
+          setShowLibrary(false);
+          setLibraryTarget(null);
+        }}
+        initialDocId={libraryTarget?.docId ?? null}
+        initialSearch={libraryTarget?.search ?? null}
+      />
       <FlashcardsModal
         open={showFlashcards}
         onClose={() => setShowFlashcards(false)}
