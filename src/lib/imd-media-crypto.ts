@@ -25,6 +25,19 @@ function tryLegacyDecrypt(data: Buffer, name: string): Buffer | null {
   }
 }
 
+function looksLikeMp3(b: Buffer): boolean {
+  if (b.subarray(0, 3).toString("ascii") === "ID3") return true;
+  if (b.length < 4) return false;
+  const header = b.readUInt32BE(0);
+  return (
+    ((header & 0xffe00000) >>> 0) === 0xffe00000 &&
+    ((header >>> 19) & 3) !== 1 &&
+    ((header >>> 17) & 3) !== 0 &&
+    ((header >>> 12) & 15) !== 15 &&
+    ((header >>> 10) & 3) !== 3
+  );
+}
+
 export function looksLikePlainMedia(data: Uint8Array): boolean {
   if (data.length < 12) return false;
   const b = Buffer.from(data.subarray(0, 32));
@@ -35,6 +48,9 @@ export function looksLikePlainMedia(data: Uint8Array): boolean {
     b.subarray(0, 6).toString("ascii") === "GIF89a" ||
     (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WEBP") ||
     b.subarray(4, 8).toString("ascii") === "ftyp" ||
+    looksLikeMp3(b) ||
+    b.subarray(0, 4).toString("ascii") === "OggS" ||
+    (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE") ||
     b.subarray(0, 5).toString("utf8").toLowerCase() === "<?xml" ||
     b.subarray(0, 4).toString("utf8").toLowerCase() === "<svg"
   );
@@ -68,5 +84,8 @@ export function contentTypeFromBytes(data: Uint8Array, fallback: string): string
   if (b.subarray(0, 6).toString("ascii") === "GIF87a" || b.subarray(0, 6).toString("ascii") === "GIF89a") return "image/gif";
   if (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WEBP") return "image/webp";
   if (b.subarray(4, 8).toString("ascii") === "ftyp") return "video/mp4";
+  if (looksLikeMp3(b)) return "audio/mpeg";
+  if (b.subarray(0, 4).toString("ascii") === "OggS") return "audio/ogg";
+  if (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE") return "audio/wav";
   return fallback;
 }

@@ -10,7 +10,7 @@
  * the network untouched.
  */
 
-const CACHE_NAME = "sf-media-v2";
+const CACHE_NAME = "sf-media-v3";
 const MEDIA_PREFIX = "/api/media/";
 
 self.addEventListener("install", (event) => {

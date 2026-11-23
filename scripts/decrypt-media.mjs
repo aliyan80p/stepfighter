@@ -25,6 +25,19 @@ if (!PASSWORD) {
 }
 const IV = Buffer.from([17, 115, 105, 102, 103, 104, 111, 107, 108, 122, 120, 119, 118, 98, 110, 109]);
 
+const isMp3 = (b) => {
+  if (b.subarray(0, 3).toString("ascii") === "ID3") return true;
+  if (b.length < 4) return false;
+  const header = b.readUInt32BE(0);
+  return (
+    ((header & 0xffe00000) >>> 0) === 0xffe00000 &&
+    ((header >>> 19) & 3) !== 1 &&
+    ((header >>> 17) & 3) !== 0 &&
+    ((header >>> 12) & 15) !== 15 &&
+    ((header >>> 10) & 3) !== 3
+  );
+};
+
 const isPlain = (b) =>
   b.length > 12 &&
   (b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ||
@@ -32,7 +45,9 @@ const isPlain = (b) =>
     b.subarray(0, 6).toString("ascii").startsWith("GIF8") ||
     (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WEBP") ||
     b.subarray(4, 8).toString("ascii") === "ftyp" ||
-    b.subarray(0, 3).toString("ascii") === "ID3");
+    isMp3(b) ||
+    b.subarray(0, 4).toString("ascii") === "OggS" ||
+    (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE"));
 
 function tryDecrypt(data, name) {
   let padded = name;
