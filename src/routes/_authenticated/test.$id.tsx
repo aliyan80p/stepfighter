@@ -9,7 +9,7 @@ import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
   ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon, Lock as LockIcon,
-  ExternalLink, PauseCircle, XCircle,
+  ExternalLink, PauseCircle, XCircle, BarChart2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -33,7 +33,6 @@ import {
   TOOLBAR_ITEMS,
   FONT_FAMILIES,
   ACCENT_PRESETS,
-  QUIZ_INTERFACE_STYLES,
   CONTENT_WIDTH_PX,
   getFontStack,
   resolveQuizTheme,
@@ -46,7 +45,6 @@ import {
   type ExhibitViewerSize,
   type ExplanationAlign,
   type ImageAlign,
-  type QuizInterfaceStyle,
 } from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { MedicalLibraryModal } from "@/components/medical-library-modal";
@@ -160,12 +158,12 @@ function HighlightableHtml({
 }
 
 
-// USMLE-Fighter palette
-const NAV_BG = "#1a4b7c";       // USMLE Fighter navy top/bottom bars
-const NAV_ACCENT = "#2a4ba0";
-const PAGE_BG = "#f5f7fa";
-const SIDE_BG = "#eef1f5";
-const TEXT = "#1f2937";
+// Official UWorld ocean-navy palette
+const NAV_BG = "#004a77";
+const NAV_ACCENT = "#005f99";
+const PAGE_BG = "#ffffff";
+const SIDE_BG = "#ffffff";
+const TEXT = "#1e293b";
 
 type MediaKind = "image" | "video" | "audio";
 type MediaItem = { name: string; url: string; kind: MediaKind };
@@ -226,61 +224,26 @@ function isEmbeddedMedia(item: MediaItem, embeddedKeys: Set<string>) {
 }
 
 function TopBtn({
-  icon: Icon, imgSrc, imgFlip, imgClass, label, onClick, variant = "default", iconTileClass,
+  icon: Icon, imgSrc, imgFlip, imgClass, label, onClick, tileClass,
 }: {
-  icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void;
-  variant?: "default" | "uworld-classic" | "uworld-modern"; iconTileClass?: string;
+  icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void; tileClass?: string;
 }) {
-  if (variant === "uworld-modern") {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        title={label}
-        aria-label={label}
-        className="shrink-0 flex items-center justify-center p-2 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors"
-      >
-        {Icon ? (
-          <Icon className="h-[18px] w-[18px] stroke-[1.75]" />
-        ) : imgSrc ? (
-          <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
-        ) : null}
-      </button>
-    );
-  }
-  if (variant === "uworld-classic") {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        title={label}
-        aria-label={label}
-        className="shrink-0 flex flex-col items-center justify-center px-1.5 sm:px-2 py-0.5 text-white/95 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[38px] sm:min-w-[56px] leading-tight"
-      >
-        <span className={`flex items-center justify-center h-6 w-6 rounded bg-white text-[#0b4c77] shadow-xs ${iconTileClass ?? ""}`}>
-          {Icon ? (
-            <Icon className="h-4 w-4 stroke-[2.2]" />
-          ) : imgSrc ? (
-            <img src={imgSrc} alt="" className={imgClass ?? "h-4 w-4 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
-          ) : null}
-        </span>
-        <span className="hidden sm:block text-[10px] font-medium mt-0.5 whitespace-nowrap">{label}</span>
-      </button>
-    );
-  }
   return (
     <button
+      type="button"
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="shrink-0 flex flex-col items-center justify-center px-1 sm:px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[36px] sm:min-w-[64px] leading-tight"
+      className="shrink-0 flex flex-col items-center justify-center px-1.5 sm:px-2 py-0.5 text-white/95 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[38px] sm:min-w-[58px] leading-tight"
     >
-      {imgSrc ? (
-        <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
-      ) : Icon ? (
-        <Icon className="h-5 w-5" />
-      ) : null}
-      <span className="hidden sm:block text-[11px] mt-0.5">{label}</span>
+      <span className={`flex items-center justify-center h-6 w-6 rounded-[4px] bg-white text-[#004a77] shadow-xs ${tileClass ?? ""}`}>
+        {Icon ? (
+          <Icon className="h-4 w-4 stroke-[2.15]" />
+        ) : imgSrc ? (
+          <img src={imgSrc} alt="" className={imgClass ?? "h-4 w-4 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+        ) : null}
+      </span>
+      <span className="hidden sm:block text-[10px] font-medium mt-0.5 whitespace-nowrap">{label}</span>
     </button>
   );
 }
@@ -476,41 +439,15 @@ function TestRunner() {
     };
   }, []);
 
-  const iface: QuizInterfaceStyle = userSettings.quizInterfaceStyle ?? "default";
-  const isNbmeOfficial = iface === "nbme-official";
-  const isUwClassic = iface === "uworld-classic";
-  const isUwModern = iface === "uworld-modern";
-  const topBtnVariant = isUwClassic ? "uworld-classic" : isUwModern ? "uworld-modern" : "default";
-
-  const navBg =
-    isNbmeOfficial
-      ? "#2c4a70"
-      : isUwClassic
-        ? "#0b4c77"
-        : isUwModern
-          ? "#324a67"
-          : userSettings.useAccentInQuizNav
-            ? darkenHex(userSettings.accentColor, 0.78)
-            : NAV_BG;
+  const navBg = userSettings.useAccentInQuizNav
+    ? darkenHex(userSettings.accentColor, 0.78)
+    : NAV_BG;
 
   const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
   const themeStyles =
-    isNbmeOfficial && baseThemeStyles.isDark
-      ? { ...baseThemeStyles, pageBg: "#000000", sideBg: "#0d131c", cardBg: "#000000", text: "#ffffff", border: "#334155" }
-      : isNbmeOfficial && !baseThemeStyles.isDark && theme === "light"
-        ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#e8edf3", cardBg: "#ffffff", text: "#111827", border: "#cbd5e1" }
-        : !baseThemeStyles.isDark && theme === "light" && iface === "uworld-classic"
-          ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", border: "#cbd5e1" }
-          : !baseThemeStyles.isDark && theme === "light" && iface === "uworld-modern"
-            ? { ...baseThemeStyles, pageBg: "#f1f5fa", sideBg: "#eef2f7", cardBg: "#f7f9fc", border: "#cbd5e1" }
-            : baseThemeStyles;
-
-  const effectiveReadingFont =
-    userSettings.fontFamily === "system" && (isNbmeOfficial || isUwClassic)
-      ? "Arial, Helvetica, sans-serif"
-      : userSettings.fontFamily === "system" && isUwModern
-        ? 'Georgia, "Times New Roman", Times, serif'
-        : getFontStack(userSettings.fontFamily);
+    !baseThemeStyles.isDark && theme === "light"
+      ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
+      : baseThemeStyles;
 
   const question = data?.questions[idx];
   const mediaToken = useMediaToken(data?.qbankId);
@@ -1220,136 +1157,70 @@ function TestRunner() {
           </button>
         </div>
       )}
-      {/* Top nav */}
-      <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: navBg }}>
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      {/* Top nav — Official UWorld ocean-navy bar */}
+      <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-1.5 text-white" style={{ background: navBg }}>
+        <div className="flex items-center gap-2 shrink-0">
           {!(isRealExam && !isReview) && (
             <button
               type="button"
-              className={
-                isUwClassic
-                  ? "flex flex-col items-center justify-center h-7 w-7 rounded bg-white text-[#0b4c77] hover:bg-white/90 shadow-xs shrink-0"
-                  : "p-1 hover:bg-white/10 rounded shrink-0"
-              }
+              className="flex flex-col items-center justify-center h-7 w-7 rounded-[4px] bg-white text-[#004a77] hover:bg-white/90 shadow-xs shrink-0"
               onClick={() => setSidebarOpen(v => !v)}
               title={sidebarOpen ? "Hide question list" : "Show question list"}
             >
-              <span className={`block w-4 h-0.5 mb-1 ${isUwClassic ? "bg-[#0b4c77]" : "bg-white"}`} />
-              <span className={`block w-4 h-0.5 mb-1 ${isUwClassic ? "bg-[#0b4c77]" : "bg-white"}`} />
-              <span className={`block w-4 h-0.5 ${isUwClassic ? "bg-[#0b4c77]" : "bg-white"}`} />
+              <span className="block w-4 h-0.5 bg-[#004a77] mb-1" />
+              <span className="block w-4 h-0.5 bg-[#004a77] mb-1" />
+              <span className="block w-4 h-0.5 bg-[#004a77]" />
             </button>
           )}
-          <div
-            className={`text-[11px] sm:text-[12px] leading-tight shrink-0 ${
-              isUwClassic ? "border border-white/55 rounded px-2.5 py-0.5 text-center" : ""
-            }`}
-          >
-            <div>
-              <span className={isUwClassic ? "text-white font-medium" : "text-white/75"}>Item</span>{" "}
-              <span className="font-semibold">{idx + 1} of {total}</span>
-            </div>
+          <div className="border border-white/55 rounded-[2px] px-2.5 py-0.5 text-[11px] sm:text-[12px] leading-tight shrink-0">
+            <div className="font-semibold">Item: {idx + 1} of {total}</div>
             {(isRealExam && !isReview)
-              ? <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
-              : <div className="hidden sm:block text-[10.5px] text-white/80">Question Id: {question.id}</div>}
+              ? <div className="text-[10.5px] text-white/85">Block: 1 of 1</div>
+              : <div className="hidden sm:block text-[10.5px] text-white/85">Question Id: {question.id}</div>}
           </div>
-          {!isUwClassic && (
-            <button
-              type="button"
-              onClick={bookmark}
-              className="inline-flex items-center gap-1.5 p-1.5 rounded hover:bg-white/10 shrink-0"
-              title={isBookmarked ? "Remove flag" : "Flag question"}
-            >
-              {(isRealExam && !isReview) && (
-                <span className={`inline-flex items-center justify-center w-2.5 h-2.5 border border-white/80 ${isBookmarked ? "bg-red-600" : "bg-transparent"}`}>
-                  {isBookmarked && (
-                    <svg viewBox="0 0 16 16" className="w-2 h-2 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 8.5 6.5 12 13 4.5" />
-                    </svg>
-                  )}
-                </span>
-              )}
-              {isUwModern ? (
-                <Flag className={`h-4 w-4 ${isBookmarked ? "fill-red-500 text-red-400" : "text-white/85"}`} />
-              ) : (
-                <>
-                  <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
-                  <span className="hidden sm:inline text-[11px] font-semibold text-white">Mark</span>
-                </>
-              )}
-            </button>
-          )}
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {isUwModern ? (
-            <>
-              <button
-                type="button"
-                onClick={() => goToQuestion(idx - 1)}
-                disabled={idx <= 0}
-                title="Previous"
-                aria-label="Previous"
-                className="h-7 w-7 rounded-full border border-white/70 flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 transition-colors"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => goToQuestion(idx + 1)}
-                disabled={idx >= total - 1}
-                title="Next"
-                aria-label="Next"
-                className="h-7 w-7 rounded-full border border-white/70 flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 transition-colors"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </>
-          ) : isUwClassic ? (
-            <>
-              <button
-                type="button"
-                onClick={() => goToQuestion(idx - 1)}
-                disabled={idx <= 0}
-                title="Previous"
-                className="flex flex-col items-center justify-center px-1.5 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
-              >
-                <span className="h-6 w-6 rounded-full bg-white text-[#0b4c77] flex items-center justify-center shadow-xs">
-                  <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
-                </span>
-                <span className="hidden sm:block text-[10px] mt-0.5">Previous</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => goToQuestion(idx + 1)}
-                disabled={idx >= total - 1}
-                title="Next"
-                className="flex flex-col items-center justify-center px-1.5 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
-              >
-                <span className="h-6 w-6 rounded-full bg-white text-[#0b4c77] flex items-center justify-center shadow-xs">
-                  <ChevronRight className="h-4 w-4 stroke-[2.5]" />
-                </span>
-                <span className="hidden sm:block text-[10px] mt-0.5">Next</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
-              <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => goToQuestion(idx - 1)}
+            disabled={idx <= 0}
+            title="Previous"
+            className="flex flex-col items-center justify-center px-1 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
+          >
+            <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
+              <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
+            </span>
+            <span className="hidden sm:block text-[10px] font-medium mt-0.5">Previous</span>
+          </button>
+          <span className="text-[12px] font-medium tabular-nums text-white/95 px-1">
+            {idx + 1} / {total}
+          </span>
+          <button
+            type="button"
+            onClick={() => goToQuestion(idx + 1)}
+            disabled={idx >= total - 1}
+            title="Next"
+            className="flex flex-col items-center justify-center px-1 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
+          >
+            <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
+              <ChevronRight className="h-4 w-4 stroke-[2.5]" />
+            </span>
+            <span className="hidden sm:block text-[10px] font-medium mt-0.5">Next</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-          {(!isRealExam || isReview) && <TopBtn variant={topBtnVariant} icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
-          {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn variant={topBtnVariant} icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
-          <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? FlaskConical : undefined} imgSrc={isUwClassic || isUwModern ? undefined : labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
-          <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? StickyNote : undefined} imgSrc={isUwClassic || isUwModern ? undefined : notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
-          <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? Calculator : undefined} imgSrc={isUwClassic || isUwModern ? undefined : calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          {(isNbmeOfficial || (isRealExam && !isReview)) && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
-          {(isNbmeOfficial || (isRealExam && !isReview)) && (
-            <TopBtn imgSrc={textZoomIcon.url} imgClass="h-10 w-10 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
+          {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
+          {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
+          <TopBtn icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
+          <TopBtn icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
+          <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+          {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
+          {isRealExam && !isReview && (
+            <TopBtn imgSrc={textZoomIcon.url} imgClass="h-5 w-5 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
           )}
-          <TopBtn variant={topBtnVariant} icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
+          <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
         </div>
       </div>
 
@@ -1384,20 +1255,19 @@ function TestRunner() {
           }`}
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
-          {(iface === "uworld-classic" || iface === "uworld-modern") && (
-            <div
-              className="px-2 py-2 text-[10px] font-bold text-center leading-tight border-b sticky top-0 z-20"
-              style={{
-                background: themeStyles.isDark ? themeStyles.cardBg : "#ffffff",
-                borderColor: themeStyles.border,
-                color: themeStyles.text,
-              }}
-            >
-              Question
-              <br />
-              Status
-            </div>
-          )}
+
+          <div
+            className="px-2 py-2 text-[10px] font-bold text-center leading-tight border-b sticky top-0 z-20"
+            style={{
+              background: themeStyles.isDark ? themeStyles.cardBg : "#ffffff",
+              borderColor: themeStyles.border,
+              color: themeStyles.text,
+            }}
+          >
+            Question
+            <br />
+            Status
+          </div>
 
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
@@ -1408,31 +1278,9 @@ function TestRunner() {
             const active = i === idx;
             const isUnsubmitted = active && selected !== null && !submitted && userSettings.showUnsubmittedIndicator !== false;
             const zebraBg =
-              isNbmeOfficial
-                ? i % 2 === 1
-                  ? (themeStyles.isDark ? "rgba(255,255,255,0.05)" : "#ffffff")
-                  : "transparent"
-                : iface === "uworld-classic"
-                  ? i % 2 === 1
-                    ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e5e7eb")
-                    : "transparent"
-                  : iface === "uworld-modern"
-                    ? i % 2 === 1
-                      ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e3eaf3")
-                      : "transparent"
-                    : "transparent";
-            const activeBg =
-              isNbmeOfficial
-                ? "#2c4a70"
-                : iface === "uworld-classic"
-                  ? "#0b4f71"
-                  : iface === "uworld-modern"
-                    ? "#4a6a8c"
-                    : themeStyles.cardBg;
-            const activeColor =
-              isNbmeOfficial || iface === "uworld-classic" || iface === "uworld-modern"
-                ? "#ffffff"
-                : themeStyles.text;
+              i % 2 === 1
+                ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e9edf2")
+                : "transparent";
             return (
               <button
                 type="button"
@@ -1457,22 +1305,22 @@ function TestRunner() {
                 className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:brightness-95 ${active ? "font-semibold" : ""}`}
                 style={{
                   borderColor: themeStyles.border,
-                  color: active ? activeColor : themeStyles.text,
-                  background: active ? activeBg : zebraBg,
+                  color: active ? "#ffffff" : themeStyles.text,
+                  background: active ? navBg : zebraBg,
                 }}
               >
-                {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
-                {status === "wrong" && <span className="text-red-600 font-bold">✕</span>}
+                {status === "correct" && <CheckCircle2 className={`h-3.5 w-3.5 ${active ? "text-emerald-300" : "text-green-600"}`} />}
+                {status === "wrong" && <span className={`font-bold ${active ? "text-red-300" : "text-red-600"}`}>✕</span>}
                 {status === "attempted" && <span className="w-3.5" />}
                 {status === "none" && (
                   isUnsubmitted ? (
-                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" title="Selected, not yet submitted" />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse" title="Selected, not yet submitted" />
                   ) : (
-                    <span className="inline-block h-2 w-2 rounded-full bg-slate-700/60 scale-[0.7]" />
+                    <span className={`inline-block h-2 w-2 rounded-full scale-[0.7] ${active ? "bg-white/80" : "bg-slate-700/60"}`} />
                   )
                 )}
                 <span>{i + 1}</span>
-                {data.bookmarkedIds.has(q.id) && <img src={markFlagIcon.url} alt="Flagged" className="h-3.5 w-3.5 ml-auto object-contain" />}
+                {data.bookmarkedIds.has(q.id) && <Flag className={`h-3 w-3 ml-auto ${active ? "fill-red-300 text-red-300" : "fill-red-600 text-red-600"}`} />}
               </button>
             );
           })}
@@ -1483,11 +1331,11 @@ function TestRunner() {
         <div className="sf-main-canvas flex-1 overflow-auto" ref={contentRef}>
           <div
             ref={splitGridRef}
-            className={`w-full mx-0 py-3 qbank-theme-${theme} qbank-iface-${iface} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
+            className={`w-full mx-0 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
             style={{
               fontSize,
               fontWeight,
-              fontFamily: effectiveReadingFont,
+              fontFamily: getFontStack(userSettings.fontFamily),
               lineHeight: userSettings.lineHeight,
               color: themeStyles.text,
               paddingInline: "clamp(0.75rem, calc(1rem + var(--sf-content-padding, 0px)), 4rem)",
@@ -1497,38 +1345,38 @@ function TestRunner() {
                 : undefined,
             }}
           >
-            {selected !== null && !submitted && !isReview && userSettings.showUnsubmittedIndicator !== false && (
-              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Answer selected — not submitted yet
-              </div>
-            )}
-            
-            {isUwClassic && (
-              <div className="mb-3">
-                <button
-                  type="button"
-                  onClick={bookmark}
-                  className="inline-flex items-center gap-2 text-xs font-medium hover:opacity-80 transition-opacity"
-                  style={{ color: themeStyles.text }}
+            {/* Official UWorld Mark Question bar */}
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={bookmark}
+                className="inline-flex items-center gap-2 text-[13px] font-medium hover:opacity-80 transition-opacity"
+                style={{ color: themeStyles.isDark ? themeStyles.text : "#475569" }}
+              >
+                <span
+                  className={`inline-flex items-center justify-center h-4 w-4 rounded-[2px] border transition-colors ${
+                    isBookmarked
+                      ? "bg-[#004a77] border-[#004a77] text-white"
+                      : "border-slate-400 bg-transparent"
+                  }`}
                 >
-                  <span
-                    className={`inline-flex items-center justify-center h-3.5 w-3.5 rounded-[2px] border ${
-                      isBookmarked ? "bg-[#0b4c77] border-[#0b4c77] text-white" : "border-slate-400 bg-white"
-                    }`}
-                  >
-                    {isBookmarked && (
-                      <svg viewBox="0 0 16 16" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 8.5 6.5 12 13 4.5" />
-                      </svg>
-                    )}
-                  </span>
-                  <Flag className={`h-3.5 w-3.5 ${isBookmarked ? "fill-red-600 text-red-600" : "text-slate-600"}`} />
-                  <span>Mark Question</span>
-                </button>
-              </div>
-            )}
-
+                  {isBookmarked && (
+                    <svg viewBox="0 0 16 16" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 8.5 6.5 12 13 4.5" />
+                    </svg>
+                  )}
+                </span>
+                <Flag className={`h-3.5 w-3.5 ${isBookmarked ? "fill-red-600 text-red-600" : "text-slate-500"}`} />
+                <span>Mark Question</span>
+              </button>
+              {selected !== null && !submitted && !isReview && userSettings.showUnsubmittedIndicator !== false && (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Answer selected — not submitted yet
+                </div>
+              )}
+            </div>
+            
             <HighlightableHtml seedKey={`q-${question.id}`} mediaToken={mediaToken} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
 
             {mediaItems.length > 0 && mediaToken && (
@@ -1584,20 +1432,11 @@ function TestRunner() {
             )}
 
             <div
-              className={`mt-3 inline-block rounded border px-4 py-2 ${iface === "uworld-classic" ? "shadow-sm" : ""}`}
+              className="mt-4 w-full max-w-[560px] rounded-[2px] border px-3.5 py-2.5"
               style={{
-                borderColor:
-                  isNbmeOfficial
-                    ? (themeStyles.isDark ? "#475569" : "#cbd5e1")
-                    : iface === "uworld-classic"
-                      ? (themeStyles.isDark ? "#475569" : "#0b4f71")
-                      : iface === "uworld-modern"
-                        ? (themeStyles.isDark ? "#475569" : "#4a6a8c")
-                        : (isRealExam && !isReview && !showAnswers)
-                          ? (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9")
-                          : (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : userSettings.accentColor),
-                borderWidth: isNbmeOfficial || (isRealExam && !isReview && !showAnswers && iface === "default") ? 1 : 2,
-                background: themeStyles.cardBg,
+                borderColor: themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#004a77",
+                borderWidth: "1px 1px 2.5px 1px",
+                background: themeStyles.isDark ? themeStyles.cardBg : "#f7f9fc",
                 color: themeStyles.text,
               }}
             >
@@ -1644,47 +1483,19 @@ function TestRunner() {
                       if (isReview || (submitted && showAnswers)) return;
                       toggleStruck();
                     }}
-                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 px-2 -mx-2 rounded transition-colors text-[15px] ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
-                    style={{
-                      color: themeStyles.text,
-                      background:
-                        iface === "uworld-modern"
-                          ? isThisWrong
-                            ? "rgba(239, 68, 68, 0.14)"
-                            : isThisCorrect
-                              ? "rgba(34, 197, 94, 0.15)"
-                              : "transparent"
-                          : "transparent",
-                    }}
+                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 text-[15px] ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
+                    style={{ color: themeStyles.text }}
                   >
-                    {iface !== "uworld-modern" && (
-                      <span className="w-4 flex justify-center shrink-0">
-                        {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
-                        {isThisWrong && <span className="text-red-600 font-bold text-base leading-none">✕</span>}
-                      </span>
-                    )}
+                    <span className="w-4 flex justify-center shrink-0">
+                      {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
+                      {isThisWrong && <span className="text-red-600 font-bold text-base leading-none">✕</span>}
+                    </span>
                     <span
-                      className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        iface === "uworld-modern" && isThisWrong
-                          ? "border-red-600"
-                          : iface === "uworld-modern" && isThisCorrect
-                            ? "border-green-600"
-                            : isSelected
-                              ? "border-gray-600"
-                              : "border-gray-400"
+                      className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
+                        isSelected ? "border-[#005f99]" : "border-slate-400"
                       }`}
                     >
-                      {isSelected && (
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            iface === "uworld-modern" && isThisWrong
-                              ? "bg-red-600"
-                              : iface === "uworld-modern" && isThisCorrect
-                                ? "bg-green-600"
-                                : "bg-gray-700"
-                          }`}
-                        />
-                      )}
+                      {isSelected && <span className="h-2 w-2 rounded-full bg-[#005f99]" />}
                     </span>
                     <span className="flex-1 min-w-0 flex items-center justify-between gap-3">
                       <span>
@@ -1694,25 +1505,23 @@ function TestRunner() {
                           style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
                           dangerouslySetInnerHTML={{ __html: answerHtmlFor(`a${i}`, letter, a.answer_text) }}
                         />
-                        {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
+                        {submitted && pct != null && !userSettings.hidePercentages && <span className="text-slate-500 ml-1">({pct}%)</span>}
                       </span>
-                      {(isUwClassic || isUwModern) && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (isReview || (submitted && showAnswers)) return;
-                            toggleStruck();
-                          }}
-                          title={isStruck ? "Remove strikethrough" : "Cross out choice"}
-                          className={`shrink-0 text-[11px] px-1 rounded hover:bg-black/5 transition-opacity ${
-                            isStruck ? "opacity-90 font-semibold text-red-600" : "opacity-45 hover:opacity-80"
-                          }`}
-                          style={{ textDecoration: "line-through" }}
-                        >
-                          ab
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isReview || (submitted && showAnswers)) return;
+                          toggleStruck();
+                        }}
+                        title={isStruck ? "Remove strikethrough" : "Cross out choice"}
+                        className={`shrink-0 text-[11px] px-1 rounded hover:bg-black/5 transition-opacity ${
+                          isStruck ? "opacity-90 font-semibold text-red-600" : "opacity-45 hover:opacity-80"
+                        }`}
+                        style={{ textDecoration: "line-through" }}
+                      >
+                        ab
+                      </button>
                     </span>
                   </div>
                 );
@@ -1744,52 +1553,53 @@ function TestRunner() {
 
 
 
-            {/* Answered banner — placed just above the explanation */}
+            {/* Answered result banner — Official UWorld horizontal status card */}
             {submitted && showAnswers && (
               <div
-                className={`mt-4 rounded-md border-l-4 p-3 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500" : "border-red-500"}`}
+                className="mt-4 w-full max-w-[560px] rounded-[2px] border px-4 py-3 flex flex-wrap items-center justify-between gap-4"
                 style={{
-                  background: theme === "dark"
-                    ? (isCorrect ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)")
-                    : (isCorrect ? "#f0fdf4" : "#fef2f2"),
+                  borderColor: themeStyles.border,
+                  borderLeftWidth: 4,
+                  borderLeftColor: isCorrect ? "#22c55e" : "#ef4444",
+                  background: themeStyles.isDark
+                    ? (isCorrect ? "rgba(34,197,94,0.10)" : "rgba(239,68,68,0.10)")
+                    : "#f4f6f8",
                   color: themeStyles.text,
                 }}
               >
-                <div>
-                  <div className={`font-semibold ${isCorrect ? "text-green-500" : "text-red-500"}`}>
-                    {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
+                <div className="min-w-[110px]">
+                  <div className={`text-sm font-bold ${isCorrect ? "text-green-600" : "text-red-600"}`}>
+                    {isCorrect ? "Correct" : "Incorrect"}
                   </div>
-                  <div className="text-xs mt-1 opacity-70">The correct answer is:</div>
-                  <div className="font-semibold mt-1" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1, mediaToken })}` }} />
-                </div>
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: theme === "dark" ? "rgba(59,130,246,0.2)" : "#dbeafe" }}>
-                      <Clock className="h-4 w-4" style={{ color: theme === "dark" ? "#60a5fa" : "#1d4ed8" }} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">{(() => {
-                        const t = (priorAttempt as any)?.time_seconds;
-                        const s = typeof t === "number" ? t : (submittedSecs ?? elapsed);
-                        return `${Math.floor(s / 60)}min: ${s % 60}sec`;
-                      })()}</div>
-                      <div className="text-[11px] opacity-60">Time Taken</div>
-                    </div>
-                  </div>
-                  {!userSettings.hidePercentages && (
-                    <div className="flex items-center gap-2">
-                      <div className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: theme === "dark" ? "rgba(34,197,94,0.2)" : "#dcfce7" }}>
-                        <CheckCircle2 className="h-4 w-4" style={{ color: theme === "dark" ? "#4ade80" : "#15803d" }} />
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold">{peerPct}%</div>
-                        <div className="text-[11px] opacity-60">Answered Correctly</div>
-                      </div>
+                  {!isCorrect && (
+                    <div className="text-xs mt-0.5 opacity-80">
+                      Correct answer: <span className="font-semibold">{correctLetter}</span>
                     </div>
                   )}
                 </div>
-              </div>
 
+                {!userSettings.hidePercentages && (
+                  <div className="flex items-center gap-2">
+                    <BarChart2 className="h-4 w-4 opacity-55 shrink-0" />
+                    <div className="leading-tight">
+                      <div className="text-xs font-bold">{peerPct}%</div>
+                      <div className="text-[11px] opacity-65">Answered correctly</div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 opacity-55 shrink-0" />
+                  <div className="leading-tight">
+                    <div className="text-xs font-bold tabular-nums">{(() => {
+                      const t = (priorAttempt as any)?.time_seconds;
+                      const s = typeof t === "number" ? t : (submittedSecs ?? elapsed);
+                      return s >= 60 ? `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s` : `${String(s).padStart(2, "0")} secs`;
+                    })()}</div>
+                    <div className="text-[11px] opacity-65">Time Spent</div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {showAnswers && question.explanation && userSettings.splitExplanations && (
@@ -1831,30 +1641,23 @@ function TestRunner() {
 
             {showAnswers && question.explanation && (
               <div className="mt-4 qbank-split-expl sf-reveal-up">
-              <div className="border-b flex items-center justify-between gap-2" style={{ borderColor: themeStyles.border }}>
-                  {(isUwClassic || isUwModern) ? (
-                    <div
-                      className="inline-flex items-center px-4 py-2 rounded-t-sm font-medium text-sm relative -mb-px border-t border-x"
-                      style={{
-                        background: themeStyles.isDark ? themeStyles.cardBg : "#ffffff",
-                        borderColor: themeStyles.border,
-                        color: themeStyles.text,
-                      }}
-                    >
-                      Explanation:
-                    </div>
-                  ) : (
-                    <div
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
-                      style={{
-                        background: themeStyles.cardBg,
-                        color: themeStyles.isDark ? "#93c5fd" : userSettings.accentColor,
-                        boxShadow: `inset 0 -3px 0 ${themeStyles.isDark ? "#93c5fd" : userSettings.accentColor}`,
-                      }}
-                    >
-                      <FileText className="h-4 w-4" /> Explanation
-                    </div>
-                  )}
+              <div
+                className="border-b flex items-center justify-between gap-2 pt-1.5 px-2"
+                style={{
+                  borderColor: themeStyles.border,
+                  background: themeStyles.isDark ? "transparent" : "#f4f6f9",
+                }}
+              >
+                  <div
+                    className="inline-flex items-center px-4 py-2 rounded-t-[2px] font-semibold text-[13px] relative -mb-px border-t border-x"
+                    style={{
+                      background: themeStyles.cardBg,
+                      borderColor: themeStyles.border,
+                      color: themeStyles.text,
+                    }}
+                  >
+                    Explanation
+                  </div>
                   {userSettings.splitExplanations && (
                     <div className="hidden lg:inline-flex items-center gap-1 pb-1 text-[11px]">
                       {[
@@ -2072,25 +1875,15 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: navBg }}>
-            <div className="shrink-0 font-semibold tracking-wide tabular-nums leading-tight">
-              {isUwModern && !isReview && (
-                <div className="text-[11px] font-semibold text-white/95">Test ID: {id}</div>
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 sm:px-3 py-1.5 text-white text-xs leading-tight" style={{ background: navBg }}>
+            <div className="shrink-0">
+              {!isReview && userSettings.showTimer && (
+                <div className="border border-white/55 rounded-[2px] px-2.5 py-1 text-[11px] font-semibold tracking-wide tabular-nums">
+                  {timedMode ? `Block Time Remaining: ${bh}:${bm}:${bs}` : `Block Time Elapsed: ${bh}:${bm}:${bs}`}
+                </div>
               )}
-              <div className={isUwModern ? "text-[11px] font-normal text-white/85" : ""}>
-                {isReview || !userSettings.showTimer
-                  ? ""
-                  : isUwClassic || isUwModern
-                    ? `${timedMode ? "Block Time Remaining" : "Block Time Elapsed"}: ${bh}:${bm}:${bs}`
-                    : `Block Time: ${bh}:${bm}:${bs}`}
-              </div>
             </div>
-            {!isUwClassic && !isUwModern && (
-              <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
-                <span>StepFighter</span>
-              </div>
-            )}
-            <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-2 gap-y-1">
+            <div className="flex flex-wrap items-center gap-x-1 sm:gap-x-1.5 gap-y-1">
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={handleToggleTimed} />
@@ -2099,15 +1892,17 @@ function TestRunner() {
                 </>
               )}
 
-              <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? BookOpen : undefined} imgSrc={isUwClassic || isUwModern ? undefined : medicalLibraryIcon.url} label="Medical Library" onClick={() => setShowLibrary(true)} />
-              <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? Zap : undefined} imgSrc={isUwClassic || isUwModern ? undefined : flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
-              <TopBtn variant={topBtnVariant} icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
+              <TopBtn icon={BookOpen} label="Medical Library" onClick={() => setShowLibrary(true)} />
+              <TopBtn icon={Zap} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+              <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
-                <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? ArrowLeft : undefined} imgSrc={isUwClassic || isUwModern ? undefined : goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
-              ) : isUwModern ? (
+                <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+              ) : (
                 <>
-                  <button
-                    type="button"
+                  <TopBtn
+                    icon={PauseCircle}
+                    tileClass="rounded-full"
+                    label="Suspend"
                     onClick={async () => {
                       const ok = await confirm({
                         title: "Suspend this test?",
@@ -2117,13 +1912,11 @@ function TestRunner() {
                       });
                       if (ok) nav({ to: "/tests" });
                     }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-white/10 text-white text-xs font-medium transition-colors"
-                  >
-                    <PauseCircle className="h-4 w-4 text-rose-300" />
-                    <span>Suspend</span>
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <TopBtn
+                    icon={XCircle}
+                    tileClass="rounded-full !bg-red-600 !text-white ring-1 ring-white/80"
+                    label="End Block"
                     onClick={async () => {
                       const ok = await confirm({
                         title: "End this block?",
@@ -2133,32 +1926,7 @@ function TestRunner() {
                       });
                       if (ok) finish();
                     }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-white/10 text-white text-xs font-medium transition-colors"
-                  >
-                    <XCircle className="h-4 w-4 text-white/90" />
-                    <span>End Block</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <TopBtn variant={topBtnVariant} icon={isUwClassic ? PauseCircle : undefined} imgSrc={isUwClassic ? undefined : suspendIcon.url} label={isUwClassic ? "Pause" : "Suspend"} onClick={async () => {
-                    const ok = await confirm({
-                      title: "Suspend this test?",
-                      description: "Your progress is saved and you can resume the test later from the Tests page.",
-                      confirmLabel: "Suspend",
-                      tone: "warning",
-                    });
-                    if (ok) nav({ to: "/tests" });
-                  }} />
-                  <TopBtn variant={topBtnVariant} icon={isUwClassic ? XCircle : undefined} iconTileClass={isUwClassic ? "text-red-600" : undefined} imgSrc={isUwClassic ? undefined : endBlockIcon.url} label="End Block" onClick={async () => {
-                    const ok = await confirm({
-                      title: "End this block?",
-                      description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
-                      confirmLabel: "End Block",
-                      tone: "danger",
-                    });
-                    if (ok) finish();
-                  }} />
+                  />
                 </>
               )}
             </div>
@@ -2380,7 +2148,7 @@ function ExhibitModal({
         className={`sf-scale-enter bg-card text-card-foreground border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col ${expanded ? "w-[95vw] h-[95vh]" : `${sizeClass} max-w-[95vw] max-h-[92vh]`}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: "var(--sf-nav-bg, #1a4b7c)" }}>
+        <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
           <span className="text-sm font-semibold">Exhibit Display</span>
           <div className="flex items-center gap-1">
             <button
@@ -2483,29 +2251,6 @@ export function SettingsPanel(props: any) {
 
       <div className="p-4 border-b border-border">
         <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Appearance & Typography</div>
-        <Row label="Interface Style">
-          <div className="flex flex-wrap justify-end gap-1">
-            {QUIZ_INTERFACE_STYLES.map((st) => (
-              <button
-                key={st.id}
-                onClick={() => setUserSettings({ quizInterfaceStyle: st.id })}
-                className={`px-2 py-0.5 text-[11px] rounded border transition ${
-                  (us.quizInterfaceStyle ?? "default") === st.id
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card border-border text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                {st.id === "default"
-                  ? "Default"
-                  : st.id === "nbme-official"
-                    ? "NBME"
-                    : st.id === "uworld-classic"
-                      ? "Classic"
-                      : "Modern"}
-              </button>
-            ))}
-          </div>
-        </Row>
         <Row label="Font Family">
           <select
             value={us.fontFamily ?? "system"}

@@ -57,39 +57,6 @@ export type ExhibitStyle = "button" | "link" | "plain";
 export type ExhibitViewerSize = "default" | "small" | "medium" | "large";
 export type ExplanationAlign = "left" | "justify" | "center";
 export type ImageAlign = "left" | "center";
-export type QuizInterfaceStyle = "default" | "nbme-official" | "uworld-classic" | "uworld-modern";
-
-export const QUIZ_INTERFACE_STYLES: {
-  id: QuizInterfaceStyle;
-  label: string;
-  description: string;
-  preview: { nav: string; side: string; sideAlt: string; page: string; expl: string; active: string };
-}[] = [
-  {
-    id: "default",
-    label: "StepFighter Default",
-    description: "Your current StepFighter layout with full theme & accent sync",
-    preview: { nav: "#1a4b7c", side: "#eef1f5", sideAlt: "#e2e8f0", page: "#f5f7fa", expl: "#ffffff", active: "#ffffff" },
-  },
-  {
-    id: "nbme-official",
-    label: "NBME Official (FRED)",
-    description: "Exact USMLE / NBME exam layout: FRED blue-slate bars, Mark checkbox, Arial stem & Reverse Color",
-    preview: { nav: "#2c4a70", side: "#e8edf3", sideAlt: "#ffffff", page: "#ffffff", expl: "#f8fafc", active: "#2c4a70" },
-  },
-  {
-    id: "uworld-classic",
-    label: "Classic UWorld (NBME)",
-    description: "Deep navy bars, white icon tiles, bordered Item box, in-pane Mark Question & crisp Arial stem",
-    preview: { nav: "#0b4c77", side: "#ffffff", sideAlt: "#dcdcdc", page: "#ffffff", expl: "#f3f4f6", active: "#0b4c77" },
-  },
-  {
-    id: "uworld-modern",
-    label: "Modern UWorld",
-    description: "Slate-blue bars, clean line-art icons, Georgia serif stem, full-row tinted answers & inline Suspend/End",
-    preview: { nav: "#324a67", side: "#eef2f7", sideAlt: "#e8eef5", page: "#f1f5fa", expl: "#f1f5fa", active: "#43648a" },
-  },
-];
 
 export type UserSettings = {
   // Account & Global Appearance
@@ -103,7 +70,6 @@ export type UserSettings = {
   hideNameOnLeaderboard: boolean;
 
   // Quiz defaults
-  quizInterfaceStyle: QuizInterfaceStyle;
   defaultTheme: QuizTheme;
   splitExplanations: boolean;
   splitRatio: number; // 28 - 72 (% width of question column in split screen)
@@ -368,7 +334,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
   imagesAutoZoom: false,
   hideNameOnLeaderboard: false,
 
-  quizInterfaceStyle: "default",
   defaultTheme: "default",
   splitExplanations: false,
   splitRatio: 50,
@@ -734,7 +699,6 @@ export function resetAppearanceSettings() {
     accentColor: DEFAULT_SETTINGS.accentColor,
     useAccentInQuizNav: DEFAULT_SETTINGS.useAccentInQuizNav,
     uiRadius: DEFAULT_SETTINGS.uiRadius,
-    quizInterfaceStyle: DEFAULT_SETTINGS.quizInterfaceStyle,
     defaultTheme: DEFAULT_SETTINGS.defaultTheme,
     fontFamily: DEFAULT_SETTINGS.fontFamily,
     applyFontGlobally: DEFAULT_SETTINGS.applyFontGlobally,
