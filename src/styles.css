@@ -105,6 +105,54 @@
   --sf-nav-bg: #1a4b7c;
 }
 
+[data-theme="ocean"] {
+  --background: oklch(0.955 0.018 238);
+  --foreground: oklch(0.22 0.04 242);
+  --card: oklch(0.99 0.008 238);
+  --card-foreground: oklch(0.2 0.04 242);
+  --popover: oklch(0.99 0.008 238);
+  --popover-foreground: oklch(0.2 0.04 242);
+  --secondary: oklch(0.91 0.025 238);
+  --secondary-foreground: oklch(0.22 0.045 242);
+  --muted: oklch(0.92 0.02 238);
+  --muted-foreground: oklch(0.45 0.035 242);
+  --accent: oklch(0.89 0.035 238);
+  --accent-foreground: oklch(0.2 0.05 242);
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.99 0.004 238);
+  --border: oklch(0.85 0.028 238);
+  --input: oklch(0.88 0.024 238);
+  --sidebar: oklch(0.23 0.05 244);
+  --sidebar-foreground: oklch(0.95 0.012 238);
+  --sidebar-accent: oklch(0.32 0.06 244);
+  --sidebar-accent-foreground: oklch(0.98 0.01 238);
+  --sidebar-border: oklch(1 0 0 / 12%);
+}
+
+[data-theme="mint"] {
+  --background: oklch(0.958 0.018 164);
+  --foreground: oklch(0.22 0.038 166);
+  --card: oklch(0.992 0.008 164);
+  --card-foreground: oklch(0.2 0.038 166);
+  --popover: oklch(0.992 0.008 164);
+  --popover-foreground: oklch(0.2 0.038 166);
+  --secondary: oklch(0.915 0.026 164);
+  --secondary-foreground: oklch(0.22 0.04 166);
+  --muted: oklch(0.925 0.022 164);
+  --muted-foreground: oklch(0.44 0.035 166);
+  --accent: oklch(0.895 0.034 164);
+  --accent-foreground: oklch(0.2 0.045 166);
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.99 0.005 164);
+  --border: oklch(0.85 0.03 164);
+  --input: oklch(0.88 0.025 164);
+  --sidebar: oklch(0.23 0.042 166);
+  --sidebar-foreground: oklch(0.95 0.014 164);
+  --sidebar-accent: oklch(0.31 0.052 166);
+  --sidebar-accent-foreground: oklch(0.98 0.01 164);
+  --sidebar-border: oklch(1 0 0 / 12%);
+}
+
 .dark,
 [data-theme="dark"] {
   --background: oklch(0.16 0.025 255);
@@ -130,30 +178,6 @@
   --sidebar-border: oklch(1 0 0 / 12%);
 }
 
-[data-theme="oled"] {
-  --background: oklch(0 0 0);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.12 0.005 260);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.13 0.005 260);
-  --popover-foreground: oklch(0.97 0 0);
-  --secondary: oklch(0.18 0.005 260);
-  --secondary-foreground: oklch(0.96 0 0);
-  --muted: oklch(0.16 0.005 260);
-  --muted-foreground: oklch(0.7 0.01 260);
-  --accent: oklch(0.22 0.01 260);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.62 0.22 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.25 0.008 260);
-  --input: oklch(0.22 0.008 260);
-  --sidebar: oklch(0.06 0.004 260);
-  --sidebar-foreground: oklch(0.96 0 0);
-  --sidebar-accent: oklch(0.18 0.01 260);
-  --sidebar-accent-foreground: oklch(0.99 0 0);
-  --sidebar-border: oklch(1 0 0 / 14%);
-}
-
 [data-theme="sepia"] {
   --background: oklch(0.94 0.026 84);
   --foreground: oklch(0.26 0.035 65);
@@ -175,30 +199,6 @@
   --sidebar-foreground: oklch(0.95 0.02 85);
   --sidebar-accent: oklch(0.32 0.045 68);
   --sidebar-accent-foreground: oklch(0.98 0.015 85);
-  --sidebar-border: oklch(1 0 0 / 12%);
-}
-
-[data-theme="slate"] {
-  --background: oklch(0.25 0.022 250);
-  --foreground: oklch(0.94 0.012 245);
-  --card: oklch(0.3 0.024 250);
-  --card-foreground: oklch(0.94 0.012 245);
-  --popover: oklch(0.3 0.024 250);
-  --popover-foreground: oklch(0.94 0.012 245);
-  --secondary: oklch(0.35 0.026 250);
-  --secondary-foreground: oklch(0.94 0.012 245);
-  --muted: oklch(0.33 0.024 250);
-  --muted-foreground: oklch(0.75 0.02 245);
-  --accent: oklch(0.37 0.03 250);
-  --accent-foreground: oklch(0.97 0.01 245);
-  --destructive: oklch(0.62 0.21 25);
-  --destructive-foreground: oklch(0.99 0.003 250);
-  --border: oklch(0.41 0.026 250);
-  --input: oklch(0.38 0.026 250);
-  --sidebar: oklch(0.21 0.022 250);
-  --sidebar-foreground: oklch(0.94 0.012 245);
-  --sidebar-accent: oklch(0.32 0.03 250);
-  --sidebar-accent-foreground: oklch(0.98 0.01 245);
   --sidebar-border: oklch(1 0 0 / 12%);
 }
 
@@ -321,19 +321,37 @@
 .qbank-theme-sepia .qbank-html table td:first-child { background: #eee1c2 !important; color: #2a2010 !important; }
 .qbank-theme-sepia .qbank-html [style*="background"], .qbank-theme-sepia .qbank-html [style*="BACKGROUND"] { background-color: transparent !important; }
 
-.qbank-theme-oled, .qbank-theme-oled .qbank-html, .qbank-theme-oled .qbank-explanation,
-.qbank-theme-oled .qbank-explanation p, .qbank-theme-oled .qbank-explanation li,
-.qbank-theme-oled .qbank-html p, .qbank-theme-oled .qbank-html li,
-.qbank-theme-oled .qbank-html td, .qbank-theme-oled .qbank-html th { color: #f4f4f5 !important; }
-.qbank-theme-oled .qbank-explanation strong, .qbank-theme-oled .qbank-explanation b,
-.qbank-theme-oled .qbank-html strong, .qbank-theme-oled .qbank-html b { color: #ffffff !important; }
-.qbank-theme-oled .qbank-html a { color: #60a5fa !important; }
-.qbank-theme-oled .qbank-html table { border-color: #27272a !important; background: #09090b !important; }
-.qbank-theme-oled .qbank-html table td, .qbank-theme-oled .qbank-html table th { border-color: #27272a !important; background: #09090b !important; color: #f4f4f5 !important; }
-.qbank-theme-oled .qbank-html table th { background: #18181b !important; color: #ffffff !important; }
-.qbank-theme-oled .qbank-html table td:first-child { background: #121215 !important; color: #ffffff !important; }
-.qbank-theme-oled .qbank-html [style*="color"], .qbank-theme-oled .qbank-html [style*="COLOR"] { color: #f4f4f5 !important; }
-.qbank-theme-oled .qbank-html [style*="background"], .qbank-theme-oled .qbank-html [style*="BACKGROUND"] { background-color: transparent !important; }
+.qbank-theme-forest, .qbank-theme-forest .qbank-html, .qbank-theme-forest .qbank-explanation,
+.qbank-theme-forest .qbank-explanation p, .qbank-theme-forest .qbank-explanation li,
+.qbank-theme-forest .qbank-html p, .qbank-theme-forest .qbank-html li,
+.qbank-theme-forest .qbank-html td, .qbank-theme-forest .qbank-html th { color: #e6f5ef !important; }
+.qbank-theme-forest .qbank-explanation strong, .qbank-theme-forest .qbank-explanation b,
+.qbank-theme-forest .qbank-html strong, .qbank-theme-forest .qbank-html b { color: #ffffff !important; }
+.qbank-theme-forest .qbank-html a { color: #6ee7b7 !important; }
+.qbank-theme-forest .qbank-html table { border-color: #1f3d34 !important; background: #0b1714 !important; }
+.qbank-theme-forest .qbank-html table td, .qbank-theme-forest .qbank-html table th { border-color: #1f3d34 !important; background: #0b1714 !important; color: #e6f5ef !important; }
+.qbank-theme-forest .qbank-html table th { background: #12241f !important; color: #ffffff !important; }
+.qbank-theme-forest .qbank-html table td:first-child { background: #0f1f1a !important; color: #ffffff !important; }
+.qbank-theme-forest .qbank-html [style*="color"], .qbank-theme-forest .qbank-html [style*="COLOR"] { color: #e6f5ef !important; }
+.qbank-theme-forest .qbank-html [style*="background"], .qbank-theme-forest .qbank-html [style*="BACKGROUND"] { background-color: transparent !important; }
+
+.qbank-theme-ocean, .qbank-theme-ocean .qbank-html, .qbank-theme-ocean .qbank-explanation,
+.qbank-theme-ocean .qbank-explanation p, .qbank-theme-ocean .qbank-explanation li,
+.qbank-theme-ocean .qbank-html p, .qbank-theme-ocean .qbank-html li,
+.qbank-theme-ocean .qbank-html td, .qbank-theme-ocean .qbank-html th { color: #0c2238 !important; }
+.qbank-theme-ocean .qbank-html table { border-color: #c5dcf0 !important; background: #edf5fc !important; }
+.qbank-theme-ocean .qbank-html table th { background: #d9eaf8 !important; }
+
+.qbank-theme-mint, .qbank-theme-mint .qbank-html, .qbank-theme-mint .qbank-explanation,
+.qbank-theme-mint .qbank-explanation p, .qbank-theme-mint .qbank-explanation li,
+.qbank-theme-mint .qbank-html p, .qbank-theme-mint .qbank-html li,
+.qbank-theme-mint .qbank-html td, .qbank-theme-mint .qbank-html th { color: #102a22 !important; }
+.qbank-theme-mint .qbank-html table { border-color: #c4e2d6 !important; background: #eef7f3 !important; }
+.qbank-theme-mint .qbank-html table th { background: #d9efe6 !important; }
+
+.qbank-theme-custom .qbank-html, .qbank-theme-custom .qbank-explanation,
+.qbank-theme-custom .qbank-explanation p, .qbank-theme-custom .qbank-html p { color: inherit !important; }
+.qbank-theme-custom .qbank-html [style*="background"], .qbank-theme-custom .qbank-html [style*="BACKGROUND"] { background-color: transparent !important; }
 
 .qbank-theme-high-contrast, .qbank-theme-high-contrast .qbank-html, .qbank-theme-high-contrast .qbank-explanation,
 .qbank-theme-high-contrast .qbank-explanation p, .qbank-theme-high-contrast .qbank-explanation li,
@@ -344,14 +362,15 @@
 .qbank-theme-high-contrast .qbank-html table th { background: #e5e7eb !important; color: #000000 !important; }
 
 
-/* ---------- Highlight marks (data-color + --hl-color driven, cross-device) ---------- */
+/* ---------- Theme-optimized Highlight marks (--hl-color driven, cross-device) ---------- */
 mark.qbank-hl {
   color: #111827 !important;
-  background-color: var(--hl-color, #ffeb3b);
+  background-color: color-mix(in srgb, var(--hl-color, #ffeb3b) 88%, #ffffff);
   border-radius: 3px;
   padding: 0 2px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 mark.qbank-hl * { color: inherit !important; }
 /* Fallback for legacy saved marks without inline --hl-color */
@@ -362,14 +381,42 @@ mark.qbank-hl[data-color="#f472b6"] { --hl-color: #f472b6; }
 mark.qbank-hl[data-color="#fb923c"] { --hl-color: #fb923c; }
 mark.qbank-hl[data-color="#c084fc"] { --hl-color: #c084fc; }
 
+/* Sepia theme: warm paper-blended highlights with deep espresso ink (no neon glare) */
+.qbank-theme-sepia mark.qbank-hl:not([data-strike]) {
+  background-color: color-mix(in srgb, var(--hl-color, #ffeb3b) 68%, #f4ecd8) !important;
+  color: #231a0e !important;
+}
+
+/* Dark / Forest / Dark-Custom themes: luminous translucent glow with crisp white text (zero eye glare) */
+.qbank-theme-dark mark.qbank-hl:not([data-strike]),
+.qbank-theme-forest mark.qbank-hl:not([data-strike]),
+.dark .qbank-theme-custom mark.qbank-hl:not([data-strike]) {
+  background-color: color-mix(in srgb, var(--hl-color, #ffeb3b) 36%, transparent) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--hl-color, #ffeb3b) 82%, transparent);
+}
+
 /* Highlight style variants */
 [data-hl-style="pastel"] mark.qbank-hl:not([data-strike]) {
-  background-color: color-mix(in srgb, var(--hl-color, #ffeb3b) 38%, transparent) !important;
-  color: inherit !important;
+  background-color: color-mix(in srgb, var(--hl-color, #ffeb3b) 34%, transparent) !important;
+  color: #111827 !important;
+  box-shadow: none;
+}
+[data-hl-style="pastel"] .qbank-theme-sepia mark.qbank-hl:not([data-strike]) {
+  background-color: color-mix(in srgb, var(--hl-color, #ffeb3b) 30%, transparent) !important;
+  color: #2a2010 !important;
+}
+[data-hl-style="pastel"] .qbank-theme-dark mark.qbank-hl:not([data-strike]),
+[data-hl-style="pastel"] .qbank-theme-forest mark.qbank-hl:not([data-strike]),
+[data-hl-style="pastel"].dark .qbank-theme-custom mark.qbank-hl:not([data-strike]) {
+  background-color: color-mix(in srgb, var(--hl-color, #ffeb3b) 22%, transparent) !important;
+  color: #f8fafc !important;
+  box-shadow: none;
 }
 [data-hl-style="underline"] mark.qbank-hl:not([data-strike]) {
   background-color: transparent !important;
   color: inherit !important;
+  box-shadow: none !important;
   border-bottom: 2.5px solid var(--hl-color, #ffeb3b);
   border-radius: 0;
   padding: 0;
@@ -378,13 +425,17 @@ mark.qbank-hl[data-color="#c084fc"] { --hl-color: #c084fc; }
 mark.qbank-hl[data-strike] {
   background-color: transparent !important;
   color: inherit !important;
+  box-shadow: none !important;
   text-decoration: line-through !important;
   text-decoration-color: var(--sf-strike-color, #ef4444) !important;
   text-decoration-thickness: 2px;
 }
 .qbank-theme-dark mark.qbank-hl[data-strike],
-.qbank-theme-oled mark.qbank-hl[data-strike],
+.qbank-theme-forest mark.qbank-hl[data-strike],
+.qbank-theme-ocean mark.qbank-hl[data-strike],
+.qbank-theme-mint mark.qbank-hl[data-strike],
 .qbank-theme-sepia mark.qbank-hl[data-strike],
+.qbank-theme-custom mark.qbank-hl[data-strike],
 .qbank-theme-high-contrast mark.qbank-hl[data-strike] { color: inherit !important; }
 
 /* Selection surface: enable text selection, hide native iOS callout so our

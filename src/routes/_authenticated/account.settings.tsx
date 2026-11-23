@@ -34,7 +34,9 @@ import {
   FONT_FAMILIES,
   getFontStack,
   resolveQuizTheme,
+  getQuizPalette,
   type UserSettings,
+  type CustomThemeColors,
   type HighlightStyle,
   type ContentWidth,
   type UiRadius,
@@ -105,6 +107,16 @@ function SettingsPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {APP_THEMES.map((theme) => {
                 const active = s.appTheme === theme.id;
+                const preview =
+                  theme.id === "custom"
+                    ? {
+                        bg: s.customTheme.background,
+                        card: s.customTheme.card,
+                        sidebar: s.customTheme.sidebar,
+                        text: s.customTheme.text,
+                        border: s.accentColor,
+                      }
+                    : theme.preview;
                 return (
                   <button
                     key={theme.id}
@@ -119,9 +131,9 @@ function SettingsPage() {
                     {/* Mini app preview */}
                     <div
                       className="h-14 w-full rounded-lg overflow-hidden border flex mb-2.5 shadow-inner"
-                      style={{ background: theme.preview.bg, borderColor: theme.preview.border }}
+                      style={{ background: preview.bg, borderColor: preview.border }}
                     >
-                      <div className="w-5 h-full shrink-0 p-1 flex flex-col gap-1" style={{ background: theme.preview.sidebar }}>
+                      <div className="w-5 h-full shrink-0 p-1 flex flex-col gap-1" style={{ background: preview.sidebar }}>
                         <span className="h-1.5 w-full rounded-full" style={{ background: s.accentColor }} />
                         <span className="h-1 w-2.5 rounded-full bg-white/30" />
                         <span className="h-1 w-2 rounded-full bg-white/20" />
@@ -129,12 +141,12 @@ function SettingsPage() {
                       <div className="flex-1 p-1.5 flex flex-col justify-between">
                         <div
                           className="h-5 rounded border px-1.5 flex items-center gap-1"
-                          style={{ background: theme.preview.card, borderColor: theme.preview.border }}
+                          style={{ background: preview.card, borderColor: preview.border }}
                         >
-                          <span className="h-1.5 w-8 rounded-full opacity-70" style={{ background: theme.preview.text }} />
+                          <span className="h-1.5 w-8 rounded-full opacity-70" style={{ background: preview.text }} />
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="h-1.5 w-10 rounded-full opacity-40" style={{ background: theme.preview.text }} />
+                          <span className="h-1.5 w-10 rounded-full opacity-40" style={{ background: preview.text }} />
                           <span className="h-2.5 w-6 rounded-sm" style={{ background: s.accentColor }} />
                         </div>
                       </div>
@@ -153,6 +165,13 @@ function SettingsPage() {
                 );
               })}
             </div>
+
+            {s.appTheme === "custom" && (
+              <CustomThemeBuilder
+                customTheme={s.customTheme}
+                onChange={(next) => set({ customTheme: next })}
+              />
+            )}
           </div>
 
           <div className="pt-4 border-t border-border space-y-3">
@@ -620,16 +639,8 @@ function SettingsPage() {
 
 function LivePreviewCard({ settings }: { settings: UserSettings }) {
   const quizTheme = resolveQuizTheme(settings);
-  const palette =
-    quizTheme === "oled"
-      ? { bg: "#000000", card: "#0d0d10", text: "#f4f4f5", border: "#27272a" }
-      : quizTheme === "dark"
-        ? { bg: "#0f172a", card: "#1e293b", text: "#e5e7eb", border: "#334155" }
-        : quizTheme === "sepia"
-          ? { bg: "#f4ecd8", card: "#faf3e0", text: "#3b2f1e", border: "#d6c9a8" }
-          : quizTheme === "high-contrast"
-            ? { bg: "#ffffff", card: "#ffffff", text: "#000000", border: "#000000" }
-            : { bg: "#f5f7fa", card: "#ffffff", text: "#1f2937", border: "#d1d5db" };
+  const p = getQuizPalette(quizTheme, settings.customTheme);
+  const palette = { bg: p.pageBg, card: p.cardBg, text: p.text, border: p.border };
 
   const activeHighlights = [
     ...Object.keys(DEFAULT_HIGHLIGHTS).filter((c) => settings.enabledHighlights[c]),
@@ -711,6 +722,70 @@ function LivePreviewCard({ settings }: { settings: UserSettings }) {
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+const CUSTOM_THEME_PRESETS: { label: string; colors: CustomThemeColors }[] = [
+  { label: "Lavender Mist", colors: { background: "#f5f3ff", card: "#ffffff", sidebar: "#2e1065", text: "#1e1b4b" } },
+  { label: "Warm Latte", colors: { background: "#f7f1e8", card: "#fffcf7", sidebar: "#3b281c", text: "#2c1d13" } },
+  { label: "Deep Navy", colors: { background: "#0a1628", card: "#112240", sidebar: "#060e1a", text: "#e6f1ff" } },
+  { label: "Obsidian Plum", colors: { background: "#14101d", card: "#1e182b", sidebar: "#0c0912", text: "#f3e8ff" } },
+];
+
+function CustomThemeBuilder({
+  customTheme,
+  onChange,
+}: {
+  customTheme: CustomThemeColors;
+  onChange: (next: CustomThemeColors) => void;
+}) {
+  const fields: { key: keyof CustomThemeColors; label: string }[] = [
+    { key: "background", label: "Page Background" },
+    { key: "card", label: "Card Surface" },
+    { key: "sidebar", label: "Sidebar" },
+    { key: "text", label: "Text Color" },
+  ];
+  return (
+    <div className="sf-scale-enter mt-4 rounded-xl border border-primary/30 bg-muted/30 p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-sm font-semibold">Customize Your Theme Colors</div>
+          <div className="text-xs text-muted-foreground">Pick any colors below or start from a palette.</div>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {CUSTOM_THEME_PRESETS.map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              onClick={() => onChange(p.colors)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border border-border bg-card hover:bg-muted transition"
+            >
+              <span className="h-3 w-3 rounded-full border border-black/15" style={{ background: p.colors.background }} />
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {fields.map((f) => (
+          <label
+            key={f.key}
+            className="flex items-center gap-2.5 rounded-lg border border-border bg-card p-2.5 cursor-pointer hover:border-primary/50 transition"
+          >
+            <input
+              type="color"
+              value={customTheme[f.key]}
+              onChange={(e) => onChange({ ...customTheme, [f.key]: e.target.value })}
+              className="h-8 w-8 rounded border border-border cursor-pointer bg-transparent p-0 shrink-0"
+            />
+            <div className="min-w-0">
+              <div className="text-xs font-semibold truncate">{f.label}</div>
+              <div className="text-[11px] font-mono text-muted-foreground uppercase">{customTheme[f.key]}</div>
+            </div>
+          </label>
+        ))}
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { ExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
 import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
-import { useHydratedSettings, getFontStack, resolveQuizTheme, type ResolvedQuizTheme } from "@/lib/user-settings";
+import { useHydratedSettings, getFontStack, resolveQuizTheme, getQuizPalette, type ResolvedQuizTheme } from "@/lib/user-settings";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
@@ -372,16 +372,7 @@ function QuestionModal({
   const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
   const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>(userSettings.enabledHighlights);
 
-  const themeStyles =
-    theme === "oled"
-      ? { pageBg: "#000000", sideBg: "#09090b", text: "#f4f4f5", cardBg: "#121215", border: "#27272a" }
-      : theme === "dark"
-      ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
-      : theme === "sepia"
-      ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
-      : theme === "high-contrast"
-      ? { pageBg: "#ffffff", sideBg: "#f3f4f6", text: "#000000", cardBg: "#ffffff", border: "#000000" }
-      : { pageBg: "#f5f7fa", sideBg: "#eef1f5", text: "#1f2937", cardBg: "#ffffff", border: "#d1d5db" };
+  const themeStyles = getQuizPalette(theme, userSettings.customTheme);
 
   const goFullscreen = () => {
     if (!document.fullscreenElement) rootRef.current?.requestFullscreen?.();

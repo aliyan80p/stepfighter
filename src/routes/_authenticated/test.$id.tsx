@@ -35,6 +35,7 @@ import {
   CONTENT_WIDTH_PX,
   getFontStack,
   resolveQuizTheme,
+  getQuizPalette,
   darkenHex,
   type ResolvedQuizTheme,
   type HighlightStyle,
@@ -373,15 +374,7 @@ function TestRunner() {
     ? darkenHex(userSettings.accentColor, 0.78)
     : NAV_BG;
 
-  const themeStyles = theme === "oled"
-    ? { pageBg: "#000000", sideBg: "#09090b", text: "#f4f4f5", cardBg: "#121215", border: "#27272a" }
-    : theme === "dark"
-    ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
-    : theme === "sepia"
-    ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
-    : theme === "high-contrast"
-    ? { pageBg: "#ffffff", sideBg: "#f3f4f6", text: "#000000", cardBg: "#ffffff", border: "#000000" }
-    : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
+  const themeStyles = getQuizPalette(theme, userSettings.customTheme);
 
   const question = data?.questions[idx];
   const mediaToken = useMediaToken(data?.qbankId);
@@ -1239,7 +1232,7 @@ function TestRunner() {
               </div>
             )}
 
-            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (isRealExam && !isReview && !showAnswers) ? (theme === "dark" || theme === "oled" ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9") : (theme === "dark" || theme === "oled" ? "#475569" : theme === "high-contrast" ? "#000000" : userSettings.accentColor), borderWidth: (isRealExam && !isReview && !showAnswers) ? 1 : 2, background: themeStyles.cardBg, color: themeStyles.text }}>
+            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (isRealExam && !isReview && !showAnswers) ? (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9") : (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : userSettings.accentColor), borderWidth: (isRealExam && !isReview && !showAnswers) ? 1 : 2, background: themeStyles.cardBg, color: themeStyles.text }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
@@ -1912,13 +1905,15 @@ export function SettingsPanel(props: any) {
           />
         </Row>
         <Row label="Canvas Theme">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
             {[
-              { k: "light", title: "Light", bg: "#ffffff", border: "#cbd5e1" },
-              { k: "sepia", title: "Sepia", bg: "#f4ecd8", border: "#c9b58a" },
-              { k: "dark", title: "Dark", bg: "#0f172a", border: "#475569" },
-              { k: "oled", title: "OLED Black", bg: "#000000", border: "#52525b" },
-              { k: "high-contrast", title: "High Contrast", bg: "#ffffff", border: "#000000" },
+              { k: "light", title: "Crisp White", bg: "#ffffff", border: "#cbd5e1" },
+              { k: "ocean", title: "Clinical Ocean", bg: "#edf5fc", border: "#93c5fd" },
+              { k: "mint", title: "Fresh Mint", bg: "#eef7f3", border: "#6ee7b7" },
+              { k: "sepia", title: "Warm Paper", bg: "#f4ecd8", border: "#c9b58a" },
+              { k: "dark", title: "Midnight Dark", bg: "#0d1321", border: "#475569" },
+              { k: "forest", title: "Deep Emerald", bg: "#0b1714", border: "#1f3d34" },
+              { k: "custom", title: "Custom Theme", bg: "conic-gradient(#38bdf8, #a855f7, #f472b6, #facc15, #38bdf8)", border: "#94a3b8" },
             ].map(t => (
               <button
                 key={t.k}
