@@ -25,7 +25,21 @@ import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
 import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
 import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 import textZoomIcon from "@/assets/icons/text-zoom.png.asset.json";
-import { DEFAULT_SETTINGS, useHydratedSettings, setUserSettings, TOOLBAR_ITEMS } from "@/lib/user-settings";
+import {
+  DEFAULT_SETTINGS,
+  useHydratedSettings,
+  setUserSettings,
+  TOOLBAR_ITEMS,
+  FONT_FAMILIES,
+  ACCENT_PRESETS,
+  CONTENT_WIDTH_PX,
+  getFontStack,
+  resolveQuizTheme,
+  darkenHex,
+  type ResolvedQuizTheme,
+  type HighlightStyle,
+  type FontFamilyId,
+} from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
@@ -276,7 +290,7 @@ function TestRunner() {
   const userSettings = useHydratedSettings();
   const [fontSize, setFontSize] = useState(DEFAULT_SETTINGS.fontSize + 1);
   const [fontWeight, setFontWeight] = useState(400);
-  const [theme, setTheme] = useState<"light" | "dark" | "sepia">("light");
+  const [theme, setTheme] = useState<ResolvedQuizTheme>("light");
   const [transparentExpl, setTransparentExpl] = useState(DEFAULT_SETTINGS.transparentExplanations);
   const [largeImages, setLargeImages] = useState(DEFAULT_SETTINGS.largeImages);
   const [highlightOnly, setHighlightOnly] = useState(DEFAULT_SETTINGS.highlightOnly);
@@ -290,7 +304,7 @@ function TestRunner() {
     if (settingsApplied) return;
     setFontSize(Math.max(10, userSettings.fontSize + 1));
     setFontWeight(400 + userSettings.fontWeight * 100);
-    setTheme(userSettings.defaultTheme === "dark" ? "dark" : "light");
+    setTheme(resolveQuizTheme(userSettings));
     setTransparentExpl(userSettings.transparentExplanations);
     setLargeImages(userSettings.largeImages);
     setHighlightOnly(userSettings.highlightOnly);
@@ -355,10 +369,18 @@ function TestRunner() {
     };
   }, []);
 
-  const themeStyles = theme === "dark"
+  const navBg = userSettings.useAccentInQuizNav
+    ? darkenHex(userSettings.accentColor, 0.78)
+    : NAV_BG;
+
+  const themeStyles = theme === "oled"
+    ? { pageBg: "#000000", sideBg: "#09090b", text: "#f4f4f5", cardBg: "#121215", border: "#27272a" }
+    : theme === "dark"
     ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
     : theme === "sepia"
     ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
+    : theme === "high-contrast"
+    ? { pageBg: "#ffffff", sideBg: "#f3f4f6", text: "#000000", cardBg: "#ffffff", border: "#000000" }
     : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
 
   const question = data?.questions[idx];
@@ -1006,7 +1028,7 @@ function TestRunner() {
           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onTouchStart={(e) => { e.stopPropagation(); }}
         >
-          {(multicolor ? HL_COLORS.filter(c => enabledHighlights[c]) : [HL_COLORS[0]]).map(c => (
+          {(multicolor ? HL_COLORS.filter(c => enabledHighlights[c]) : [activeHighlight || HL_COLORS[0]]).map(c => (
             <button
               key={c}
               type="button"
@@ -1045,7 +1067,7 @@ function TestRunner() {
         </div>
       )}
       {/* Top nav */}
-      <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: NAV_BG }}>
+      <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: navBg }}>
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {!(isRealExam && !isReview) && (
             <button className="p-1 hover:bg-white/10 rounded shrink-0" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
@@ -1155,7 +1177,19 @@ function TestRunner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
+          <div
+            className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
+            style={{
+              fontSize,
+              fontWeight,
+              fontFamily: getFontStack(userSettings.fontFamily),
+              lineHeight: userSettings.lineHeight,
+              color: themeStyles.text,
+              maxWidth: (!isRealExam || isReview) && !(userSettings.splitExplanations && showAnswers && !!question.explanation)
+                ? CONTENT_WIDTH_PX[userSettings.contentWidth]
+                : undefined,
+            }}
+          >
             {(() => null)()}
             {(() => null)()}
 
@@ -1205,7 +1239,7 @@ function TestRunner() {
               </div>
             )}
 
-            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (isRealExam && !isReview && !showAnswers) ? (theme === "dark" ? "#475569" : "#c9c9c9") : (theme === "dark" ? "#475569" : "#5b8fc9"), borderWidth: (isRealExam && !isReview && !showAnswers) ? 1 : 2, background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
+            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (isRealExam && !isReview && !showAnswers) ? (theme === "dark" || theme === "oled" ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9") : (theme === "dark" || theme === "oled" ? "#475569" : theme === "high-contrast" ? "#000000" : userSettings.accentColor), borderWidth: (isRealExam && !isReview && !showAnswers) ? 1 : 2, background: themeStyles.cardBg, color: themeStyles.text }}>
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
@@ -1436,7 +1470,7 @@ function TestRunner() {
         const examUI = isRealExam && !isReview;
         if (examUI) {
           return (
-            <div className="flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: navBg }}>
               <div className="font-semibold tracking-wide tabular-nums">
                 {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
               </div>
@@ -1471,7 +1505,7 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: navBg }}>
             <div className="shrink-0 font-semibold tracking-wide tabular-nums">
               {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
             </div>
@@ -1779,8 +1813,8 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between py-2">
-      <span className="text-sm text-gray-700">{label}</span>
+    <div className="flex items-center justify-between gap-2 py-2">
+      <span className="text-sm text-popover-foreground">{label}</span>
       {children}
     </div>
   );
@@ -1796,7 +1830,13 @@ export function SettingsPanel(props: any) {
   } = props;
   const us = userSettings ?? DEFAULT_SETTINGS;
   const customColors: string[] = us.customHighlights ?? [];
-  const allHL = [...HIGHLIGHTS, ...customColors.map((c: string, i: number) => ({ color: c, label: `Custom ${i + 1}` }))];
+  const allHL = [
+    ...HIGHLIGHTS,
+    ...customColors.map((c: string, i: number) => ({
+      color: c,
+      label: us.customHighlightLabels?.[c] || `Custom ${i + 1}`,
+    })),
+  ];
 
   const hourStr = (h: number) => {
     const hr = ((h + 11) % 12) + 1;
@@ -1805,64 +1845,172 @@ export function SettingsPanel(props: any) {
   };
 
   return (
-    <div className="fixed top-16 right-4 w-80 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 text-gray-800 max-h-[80vh] overflow-auto">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gray-100 sticky top-0">
-        <span className="font-semibold">Settings</span>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-800">✕</button>
+    <div className="fixed top-16 right-4 w-84 max-w-[calc(100vw-2rem)] bg-popover border border-border rounded-xl shadow-2xl z-50 text-popover-foreground max-h-[82vh] overflow-auto">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/60 backdrop-blur sticky top-0 z-10">
+        <span className="font-semibold">Quiz Appearance & Settings</span>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">✕</button>
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Appearance</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Appearance & Typography</div>
+        <Row label="Font Family">
+          <select
+            value={us.fontFamily ?? "system"}
+            onChange={(e) => setUserSettings({ fontFamily: e.target.value as FontFamilyId })}
+            className="text-xs border border-border rounded px-2 py-1 bg-card text-foreground max-w-[155px]"
+          >
+            {FONT_FAMILIES.map((f) => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </select>
+        </Row>
         <Row label="Font Size">
           <div className="flex items-center gap-2">
-            <button onClick={() => setFontSize(Math.max(12, fontSize - 1))} className="h-7 w-7 rounded border hover:bg-gray-50">−</button>
-            <span className="w-6 text-center font-semibold">A</span>
-            <button onClick={() => setFontSize(Math.min(28, fontSize + 1))} className="h-7 w-7 rounded border hover:bg-gray-50">+</button>
+            <button
+              onClick={() => {
+                const next = Math.max(12, fontSize - 1);
+                setFontSize(next);
+                setUserSettings({ fontSize: Math.max(10, next - 1) });
+              }}
+              className="h-7 w-7 rounded border border-border bg-muted hover:bg-muted/70"
+            >−</button>
+            <span className="w-8 text-center text-xs font-semibold">{fontSize}px</span>
+            <button
+              onClick={() => {
+                const next = Math.min(28, fontSize + 1);
+                setFontSize(next);
+                setUserSettings({ fontSize: Math.min(28, next - 1) });
+              }}
+              className="h-7 w-7 rounded border border-border bg-muted hover:bg-muted/70"
+            >+</button>
           </div>
         </Row>
         <Row label="Font Weight">
-          <input type="range" min={300} max={700} step={100} value={fontWeight}
-            onChange={e => setFontWeight(Number(e.target.value))} className="w-32" />
+          <input
+            type="range"
+            min={300}
+            max={700}
+            step={100}
+            value={fontWeight}
+            onChange={e => {
+              const w = Number(e.target.value);
+              setFontWeight(w);
+              setUserSettings({ fontWeight: Math.round((w - 400) / 100) });
+            }}
+            className="w-32 accent-primary"
+          />
         </Row>
-        <Row label="Color Theme">
-          <div className="flex items-center gap-2">
+        <Row label="Line Spacing">
+          <input
+            type="range"
+            min={1.4}
+            max={2.0}
+            step={0.1}
+            value={us.lineHeight ?? 1.65}
+            onChange={e => setUserSettings({ lineHeight: Number(e.target.value) })}
+            className="w-32 accent-primary"
+          />
+        </Row>
+        <Row label="Canvas Theme">
+          <div className="flex items-center gap-1.5">
             {[
-              { k: "light", bg: "#ffffff", border: "#d1d5db" },
-              { k: "dark", bg: "#0f172a", border: "#0f172a" },
-              { k: "sepia", bg: "#f4ecd8", border: "#d6c9a8" },
+              { k: "light", title: "Light", bg: "#ffffff", border: "#cbd5e1" },
+              { k: "sepia", title: "Sepia", bg: "#f4ecd8", border: "#c9b58a" },
+              { k: "dark", title: "Dark", bg: "#0f172a", border: "#475569" },
+              { k: "oled", title: "OLED Black", bg: "#000000", border: "#52525b" },
+              { k: "high-contrast", title: "High Contrast", bg: "#ffffff", border: "#000000" },
             ].map(t => (
-              <button key={t.k} onClick={() => setTheme(t.k as any)}
-                className={`h-7 w-7 rounded-full border-2 ${theme === t.k ? "ring-2 ring-blue-500" : ""}`}
-                style={{ background: t.bg, borderColor: t.border }} />
+              <button
+                key={t.k}
+                title={t.title}
+                onClick={() => {
+                  setTheme(t.k as ResolvedQuizTheme);
+                  setUserSettings({ defaultTheme: t.k as any });
+                }}
+                className={`h-6 w-6 rounded-full border-2 ${theme === t.k ? "ring-2 ring-primary ring-offset-1 ring-offset-popover" : ""}`}
+                style={{ background: t.bg, borderColor: t.border }}
+              />
+            ))}
+          </div>
+        </Row>
+        <Row label="Accent Color">
+          <div className="flex items-center gap-1.5">
+            {ACCENT_PRESETS.slice(0, 5).map((p) => (
+              <button
+                key={p.id}
+                title={p.label}
+                onClick={() => setUserSettings({ accentColor: p.hex })}
+                className={`h-5 w-5 rounded-full border ${us.accentColor?.toLowerCase() === p.hex.toLowerCase() ? "ring-2 ring-foreground" : "border-black/20"}`}
+                style={{ background: p.hex }}
+              />
+            ))}
+            <input
+              type="color"
+              value={us.accentColor ?? "#2563eb"}
+              onChange={(e) => setUserSettings({ accentColor: e.target.value })}
+              aria-label="Custom accent color"
+              className="h-5 w-6 rounded border border-border cursor-pointer bg-transparent p-0"
+            />
+          </div>
+        </Row>
+      </div>
+
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Highlight Features</div>
+        <Row label="Multicolor Highlighting">
+          <Toggle
+            on={multicolor}
+            onChange={(v: boolean) => {
+              setMulticolor(v);
+              setUserSettings({ multiHighlight: v });
+            }}
+          />
+        </Row>
+        <Row label="Highlight Style">
+          <div className="flex gap-1">
+            {(["solid", "pastel", "underline"] as HighlightStyle[]).map((st) => (
+              <button
+                key={st}
+                onClick={() => setUserSettings({ highlightStyle: st })}
+                className={`px-2 py-0.5 text-[11px] rounded border capitalize ${
+                  (us.highlightStyle ?? "solid") === st
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground"
+                }`}
+              >
+                {st}
+              </button>
             ))}
           </div>
         </Row>
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Highlight Features</div>
-        <Row label="Multicolor Highlighting"><Toggle on={multicolor} onChange={setMulticolor} /></Row>
-      </div>
-
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Customize Highlight</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Customize Highlight</div>
         {allHL.map(h => (
           <div key={h.color} className="flex items-center justify-between py-1.5">
             <button
               onClick={() => setActiveHighlight(h.color)}
               className={`flex items-center gap-2 ${activeHighlight === h.color ? "font-semibold" : ""}`}
             >
-              <span className="h-4 w-4 rounded-full border" style={{ background: h.color }} />
+              <span className="h-4 w-4 rounded-full border border-black/15" style={{ background: h.color }} />
               <span className="text-sm">{h.label}</span>
-              {activeHighlight === h.color && <span className="text-[10px] text-blue-600">(active)</span>}
+              {activeHighlight === h.color && <span className="text-[10px] text-primary">(active)</span>}
             </button>
-            <Toggle on={!!enabledHighlights[h.color]} onChange={v => setEnabledHighlights({ ...enabledHighlights, [h.color]: v })} />
+            <Toggle
+              on={!!enabledHighlights[h.color]}
+              onChange={(v: boolean) => {
+                const next = { ...enabledHighlights, [h.color]: v };
+                setEnabledHighlights(next);
+                setUserSettings({ enabledHighlights: next });
+              }}
+            />
           </div>
         ))}
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Quiz Toolbar Icons</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Quiz Toolbar Icons</div>
         {TOOLBAR_ITEMS.map(item => (
           <Row key={item.key} label={item.label}>
             <Toggle
@@ -1873,8 +2021,8 @@ export function SettingsPanel(props: any) {
         ))}
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Content</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Content</div>
         <Row label="Hide Percentages">
           <Toggle on={us.hidePercentages} onChange={(v) => setUserSettings({ hidePercentages: v })} />
         </Row>
@@ -1889,8 +2037,8 @@ export function SettingsPanel(props: any) {
         </Row>
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">More Features</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">More Features</div>
         <Row label="Confirm Answer Omission">
           <Toggle on={us.confirmOmission} onChange={(v) => setUserSettings({ confirmOmission: v })} />
         </Row>
@@ -1903,8 +2051,8 @@ export function SettingsPanel(props: any) {
       </div>
 
       <div className="p-4">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Night Mode</div>
-        <div className="text-[11px] text-gray-500 mb-2">If on, auto changes to dark mode based on scheduled time.</div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Night Mode</div>
+        <div className="text-[11px] text-muted-foreground mb-2">If on, auto changes to dark mode based on scheduled time.</div>
         <Row label="Automatic">
           <Toggle on={us.autoNightMode} onChange={(v) => setUserSettings({ autoNightMode: v })} />
         </Row>
@@ -1912,7 +2060,7 @@ export function SettingsPanel(props: any) {
           <select
             value={us.nightStart}
             onChange={(e) => setUserSettings({ nightStart: Number(e.target.value) })}
-            className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+            className="text-sm border border-border rounded px-2 py-1 bg-card text-foreground"
           >
             {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{hourStr(i)}</option>)}
           </select>
@@ -1921,7 +2069,7 @@ export function SettingsPanel(props: any) {
           <select
             value={us.nightEnd}
             onChange={(e) => setUserSettings({ nightEnd: Number(e.target.value) })}
-            className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+            className="text-sm border border-border rounded px-2 py-1 bg-card text-foreground"
           >
             {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{hourStr(i)}</option>)}
           </select>

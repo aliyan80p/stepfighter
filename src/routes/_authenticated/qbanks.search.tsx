@@ -22,6 +22,7 @@ import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
 import { ExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
 import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
+import { useHydratedSettings, getFontStack, resolveQuizTheme, type ResolvedQuizTheme } from "@/lib/user-settings";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
@@ -360,24 +361,26 @@ function QuestionModal({
   const [anchorExhibit, setAnchorExhibit] = useState<ExhibitContent | null>(null);
 
   // Settings state (matches test runner)
-  const [fontSize, setFontSize] = useState(15);
-  const [fontWeight, setFontWeight] = useState(400);
-  const [theme, setTheme] = useState<"light" | "dark" | "sepia">("light");
-  const [transparentExpl, setTransparentExpl] = useState(false);
-  const [largeImages, setLargeImages] = useState(false);
-  const [highlightOnly, setHighlightOnly] = useState(false);
-  const [multicolor, setMulticolor] = useState(true);
+  const userSettings = useHydratedSettings();
+  const [fontSize, setFontSize] = useState(userSettings.fontSize + 1);
+  const [fontWeight, setFontWeight] = useState(400 + userSettings.fontWeight * 100);
+  const [theme, setTheme] = useState<ResolvedQuizTheme>(resolveQuizTheme(userSettings));
+  const [transparentExpl, setTransparentExpl] = useState(userSettings.transparentExplanations);
+  const [largeImages, setLargeImages] = useState(userSettings.largeImages);
+  const [highlightOnly, setHighlightOnly] = useState(userSettings.highlightOnly);
+  const [multicolor, setMulticolor] = useState(userSettings.multiHighlight);
   const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
-  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>({
-    "#ffeb3b": true, "#4ade80": true, "#38bdf8": true,
-    "#f472b6": true, "#fb923c": true, "#c084fc": true,
-  });
+  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>(userSettings.enabledHighlights);
 
   const themeStyles =
-    theme === "dark"
+    theme === "oled"
+      ? { pageBg: "#000000", sideBg: "#09090b", text: "#f4f4f5", cardBg: "#121215", border: "#27272a" }
+      : theme === "dark"
       ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
       : theme === "sepia"
       ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
+      : theme === "high-contrast"
+      ? { pageBg: "#ffffff", sideBg: "#f3f4f6", text: "#000000", cardBg: "#ffffff", border: "#000000" }
       : { pageBg: "#f5f7fa", sideBg: "#eef1f5", text: "#1f2937", cardBg: "#ffffff", border: "#d1d5db" };
 
   const goFullscreen = () => {
@@ -489,7 +492,13 @@ function QuestionModal({
           <div className="flex-1 overflow-auto" ref={contentRef}>
             <div
               className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`}
-              style={{ fontSize, fontWeight, color: themeStyles.text }}
+              style={{
+                fontSize,
+                fontWeight,
+                fontFamily: getFontStack(userSettings.fontFamily),
+                lineHeight: userSettings.lineHeight,
+                color: themeStyles.text,
+              }}
             >
               <div
                 data-hlkey="q"
