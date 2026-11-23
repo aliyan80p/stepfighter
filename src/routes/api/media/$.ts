@@ -275,11 +275,14 @@ async function fetchPlainExact(
       ? raw
       : decryptImdMedia(raw, [leaf, reqLeaf, stripPrefix(leaf), stripPrefix(reqLeaf)]);
     const type = contentTypeFromBytes(data, ct);
-    if (data !== raw && looksLikePlainMedia(data)) {
+    const isValid = looksLikePlainMedia(data);
+    if (data !== raw && isValid) {
       void uploadPlain(path, data, type, supaUrl, srk);
       if (requestedPath !== path) void uploadPlain(requestedPath, data, type, supaUrl, srk);
     }
-    return rangeResponse(data, type, range);
+    const resp = rangeResponse(data, type, range);
+    if (!isValid) resp.headers.set("Cache-Control", "no-store");
+    return resp;
   }
   return upstreamMediaResponse(res, ct);
 }
