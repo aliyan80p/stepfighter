@@ -127,8 +127,14 @@ export function ExhibitModal({
 
           {content.kind === "audio" && (
             <div className="w-full max-w-lg flex flex-col items-center gap-3 p-4">
-              <div className="text-xs uppercase tracking-wider text-slate-500">Audio exhibit</div>
-              <audio key={content.src} src={content.src} controls preload="metadata" className="w-full" />
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Audio exhibit</div>
+              <audio
+                key={content.src}
+                src={content.src}
+                controls
+                preload="auto"
+                className="w-full"
+              />
             </div>
           )}
         </div>

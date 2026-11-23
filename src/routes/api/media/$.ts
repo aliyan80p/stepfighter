@@ -227,11 +227,14 @@ async function probePlainPath(
   supaUrl: string,
   srk: string,
   range: string | null,
+  bypassCache = false,
 ): Promise<Response | null> {
   const headers: Record<string, string> = { Authorization: `Bearer ${srk}`, apikey: srk };
   if (range) headers.Range = range;
+  if (bypassCache) headers["Cache-Control"] = "no-cache";
+  const suffix = bypassCache ? `?cb=${Math.floor(Date.now() / 60_000)}` : "";
   const res = await fetch(
-    `${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
+    `${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}${suffix}`,
     { headers },
   );
   if (!(res.ok || res.status === 206)) {
@@ -258,7 +261,7 @@ async function fetchPlainExact(
   // can detect legacy AES-encrypted MP3s that were previously stored undecrypted
   // in qbank-media-plain, decrypt them on the fly, self-heal storage, and serve
   // proper 206 Range responses.
-  const res = await probePlainPath(path, supaUrl, srk, isAudio ? null : range);
+  const res = await probePlainPath(path, supaUrl, srk, isAudio ? null : range, isAudio);
   if (!res) return null;
   if (!range && ct.startsWith("image/")) {
     const bytes = Buffer.from(await res.arrayBuffer());
@@ -281,7 +284,7 @@ async function fetchPlainExact(
       if (requestedPath !== path) void uploadPlain(requestedPath, data, type, supaUrl, srk);
     }
     const resp = rangeResponse(data, type, range);
-    if (!isValid) resp.headers.set("Cache-Control", "no-store");
+    resp.headers.set("Cache-Control", isValid ? "private, max-age=3600" : "no-store");
     return resp;
   }
   return upstreamMediaResponse(res, ct);

@@ -180,7 +180,7 @@ const MEDIA_QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1", 3: "step3"
 function mediaUrl(name: string, qbankId = 1) {
   const slug = MEDIA_QBANK_SLUG[qbankId] ?? "";
   const prefix = slug ? `/api/media/${slug}/` : "/api/media/";
-  return `${prefix}${encodeURIComponent(name.trim())}`;
+  return `${prefix}${encodeURIComponent(name.trim())}?v=20261124-audio-fix`;
 }
 
 function getQuestionMedia(question: { media_name?: string | null; other_medias?: string | null } | null | undefined, qbankId = 1): MediaItem[] {
