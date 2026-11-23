@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Activity } from "lucide-react";
+import { Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -85,7 +85,7 @@ export function Loader({
 /** Full-viewport centered Clinical ECG loader with a GPU shimmer progress bar. */
 export function PageLoader({ label = "Loading" }: { label?: string }) {
   return (
-    <div className="sf-page-enter flex-1 min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4">
+    <div className="sf-page-enter min-h-[calc(100vh-4rem)] w-full flex flex-col items-center justify-center gap-4 px-4">
       <Loader label={label} className="py-2" />
       <div className="relative h-1.5 w-48 overflow-hidden rounded-full bg-muted">
         <div
@@ -97,7 +97,7 @@ export function PageLoader({ label = "Loading" }: { label?: string }) {
   );
 }
 
-/** Brand-new GPU-accelerated Test Creation Overlay with ECG pulse & step timeline. */
+/** Clean, centered ECG Pulse overlay shown while generating a new quiz/test session. */
 export function TestCreationOverlay({
   open,
   mode,
@@ -111,15 +111,15 @@ export function TestCreationOverlay({
   questionCount: number;
   quizName?: string;
 }) {
-  const [step, setStep] = useState(0);
+  const [pct, setPct] = useState(28);
 
   useEffect(() => {
     if (!open) {
-      setStep(0);
+      setPct(28);
       return;
     }
-    const t1 = window.setTimeout(() => setStep(1), 500);
-    const t2 = window.setTimeout(() => setStep(2), 1150);
+    const t1 = window.setTimeout(() => setPct(68), 450);
+    const t2 = window.setTimeout(() => setPct(92), 1100);
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
@@ -128,27 +128,20 @@ export function TestCreationOverlay({
 
   if (!open) return null;
 
-  const steps = [
-    "Scanning matching questions",
-    "Balancing subjects & systems",
-    "Launching your exam workspace",
-  ];
-  const pct = step === 0 ? 34 : step === 1 ? 72 : 94;
-
   return (
     <div
       role="status"
       aria-live="polite"
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4"
     >
-      <div className="sf-scale-enter w-full max-w-md rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-5">
-        <div className="flex flex-col items-center text-center">
-          <Loader label={null} size={58} className="py-1" />
+      <div className="sf-scale-enter w-full max-w-sm rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-5 text-center">
+        <div className="flex flex-col items-center">
+          <Loader label={null} size={62} className="py-1" />
           <div className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
             <Activity className="h-3.5 w-3.5" />
-            Generating Exam Block
+            Generating Test
           </div>
-          <h2 className="mt-1 text-lg font-bold text-foreground truncate max-w-full">
+          <h2 className="mt-1 text-base font-bold text-foreground truncate max-w-full">
             {quizName?.trim() || "Custom Practice Session"}
           </h2>
           <div className="mt-2.5 flex flex-wrap items-center justify-center gap-1.5 text-xs">
@@ -164,54 +157,11 @@ export function TestCreationOverlay({
           </div>
         </div>
 
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
             className="h-full rounded-full bg-primary transition-[width] duration-700 ease-out"
             style={{ width: `${pct}%` }}
           />
-        </div>
-
-        <div className="space-y-2.5 pt-1">
-          {steps.map((text, idx) => {
-            const done = step > idx;
-            const active = step === idx;
-            return (
-              <div
-                key={text}
-                className={cn(
-                  "flex items-center gap-3 text-sm transition-all duration-300",
-                  done
-                    ? "text-foreground"
-                    : active
-                      ? "text-foreground font-medium translate-x-0.5"
-                      : "text-muted-foreground/55",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex h-5 w-5 items-center justify-center rounded-full border text-xs shrink-0 transition-colors duration-300",
-                    done
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : active
-                        ? "border-primary text-primary"
-                        : "border-border",
-                  )}
-                >
-                  {done ? (
-                    <Check className="h-3 w-3" />
-                  ) : (
-                    <span
-                      className={cn(
-                        "h-1.5 w-1.5 rounded-full",
-                        active ? "bg-primary sf-ecg-dot" : "bg-muted-foreground/40",
-                      )}
-                    />
-                  )}
-                </span>
-                <span>{text}</span>
-              </div>
-            );
-          })}
         </div>
       </div>
     </div>

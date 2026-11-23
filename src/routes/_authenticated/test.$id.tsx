@@ -772,7 +772,7 @@ function TestRunner() {
     else document.exitFullscreen?.();
   };
 
-  if (isLoading || !data || !question) return <div className="p-8"><Loader label="Loading question…" /></div>;
+  if (isLoading || !data || !question) return <div className="min-h-screen w-full flex items-center justify-center p-8 bg-background"><Loader label="Loading question" /></div>;
   if (data.test.done && !isReview) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
