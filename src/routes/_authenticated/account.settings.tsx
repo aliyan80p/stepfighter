@@ -693,12 +693,6 @@ function SettingsPage() {
               onChange={(v) => set({ showUnsubmittedIndicator: v })}
             />
             <ToggleRow
-              label="Hide question difficulty rating"
-              hint="Hide difficulty badges during practice and review."
-              value={!!s.hideDifficultyRating}
-              onChange={(v) => set({ hideDifficultyRating: v })}
-            />
-            <ToggleRow
               label="Smart Context Menu"
               hint="Show the floating quick-highlight and copy toolbar when selecting text."
               value={s.smartContextMenu !== false}
@@ -744,12 +738,12 @@ function SettingsPage() {
           </Card>
         </div>
 
-        {/* Exhibits, Sidebar & Windows */}
+        {/* Exhibits & Sidebar */}
         <Card
           icon={<LayoutGrid className="h-4 w-4" />}
           iconBg="bg-indigo-600 text-white"
-          title="Exhibits, Sidebar & Windows"
-          subtitle="Control exhibit appearance, quiz question sidebar behavior, and floating windows."
+          title="Exhibits & Sidebar"
+          subtitle="Control exhibit appearance and quiz question sidebar behavior."
         >
           <div className="flex flex-wrap items-center justify-between gap-4 pb-2">
             <div>
@@ -824,12 +818,6 @@ function SettingsPage() {
             hint="Reveal the hidden question sidebar when moving your mouse to the left edge."
             value={!!s.hoverEdgeSidebar}
             onChange={(v) => set({ hoverEdgeSidebar: v })}
-          />
-          <ToggleRow
-            label="Allow windows to go off screen"
-            hint="Permit floating tool windows to move freely near or beyond viewport edges."
-            value={!!s.allowWindowsOffScreen}
-            onChange={(v) => set({ allowWindowsOffScreen: v })}
           />
         </Card>
 

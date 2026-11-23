@@ -2218,15 +2218,12 @@ export function SettingsPanel(props: any) {
       </div>
 
       <div className="p-4 border-b border-border">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Features & Windows</div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">More Features</div>
         <Row label="Smart Context Menu">
           <Toggle on={us.smartContextMenu !== false} onChange={(v) => setUserSettings({ smartContextMenu: v })} />
         </Row>
         <Row label="Unsubmitted Question Indicator">
           <Toggle on={us.showUnsubmittedIndicator !== false} onChange={(v) => setUserSettings({ showUnsubmittedIndicator: v })} />
-        </Row>
-        <Row label="Hide Question Difficulty">
-          <Toggle on={!!us.hideDifficultyRating} onChange={(v) => setUserSettings({ hideDifficultyRating: v })} />
         </Row>
         <Row label="Confirm Answer Omission">
           <Toggle on={us.confirmOmission} onChange={(v) => setUserSettings({ confirmOmission: v })} />
@@ -2236,9 +2233,6 @@ export function SettingsPanel(props: any) {
         </Row>
         <Row label="Stop Timer on Blur">
           <Toggle on={us.stopTimerOnBlur} onChange={(v) => setUserSettings({ stopTimerOnBlur: v })} />
-        </Row>
-        <Row label="Allow Windows Off Screen">
-          <Toggle on={!!us.allowWindowsOffScreen} onChange={(v) => setUserSettings({ allowWindowsOffScreen: v })} />
         </Row>
       </div>
 

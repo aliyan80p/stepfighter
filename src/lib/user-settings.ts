@@ -81,7 +81,6 @@ export type UserSettings = {
   confirmOmission: boolean;
   hidePercentages: boolean;
   showUnsubmittedIndicator: boolean;
-  hideDifficultyRating: boolean;
   smartContextMenu: boolean;
   autoNightMode: boolean;
   nightStart: number; // hour 0-23
@@ -99,11 +98,10 @@ export type UserSettings = {
   explanationAlign: ExplanationAlign;
   imageAlign: ImageAlign;
 
-  // Exhibits & Windows
+  // Exhibits
   exhibitStyle: ExhibitStyle;
   exhibitViewerSize: ExhibitViewerSize;
   closeExhibitOnOutsideClick: boolean;
-  allowWindowsOffScreen: boolean;
 
   // Sidebar behavior (Quiz Runner)
   saveSpaceForSidebar: boolean;
@@ -346,7 +344,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
   confirmOmission: false,
   hidePercentages: false,
   showUnsubmittedIndicator: true,
-  hideDifficultyRating: false,
   smartContextMenu: true,
   autoNightMode: false,
   nightStart: 20,
@@ -366,7 +363,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
   exhibitStyle: "button",
   exhibitViewerSize: "default",
   closeExhibitOnOutsideClick: true,
-  allowWindowsOffScreen: false,
 
   saveSpaceForSidebar: true,
   autoShowSidebar: true,
