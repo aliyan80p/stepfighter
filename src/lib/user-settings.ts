@@ -72,6 +72,7 @@ export type UserSettings = {
   // Quiz defaults
   defaultTheme: QuizTheme;
   splitExplanations: boolean;
+  splitRatio: number; // 28 - 72 (% width of question column in split screen)
   transparentExplanations: boolean;
   largeImages: boolean;
   highlightOnly: boolean;
@@ -335,6 +336,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
 
   defaultTheme: "default",
   splitExplanations: false,
+  splitRatio: 50,
   transparentExplanations: true,
   largeImages: false,
   highlightOnly: true,

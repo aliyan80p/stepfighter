@@ -345,6 +345,9 @@ function TestRunner() {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const splitGridRef = useRef<HTMLDivElement>(null);
+  const [splitDragging, setSplitDragging] = useState(false);
+  const [liveSplitRatio, setLiveSplitRatio] = useState<number | null>(null);
 
   // Settings — seeded from user's saved defaults
   const userSettings = useHydratedSettings();
@@ -1257,6 +1260,7 @@ function TestRunner() {
         {/* Content */}
         <div className="sf-main-canvas flex-1 overflow-auto" ref={contentRef}>
           <div
+            ref={splitGridRef}
             className={`w-full mx-0 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
             style={{
               fontSize,
@@ -1265,6 +1269,7 @@ function TestRunner() {
               lineHeight: userSettings.lineHeight,
               color: themeStyles.text,
               paddingInline: "clamp(0.75rem, calc(1rem + var(--sf-content-padding, 0px)), 4rem)",
+              ["--sf-split-left" as string]: `${liveSplitRatio ?? userSettings.splitRatio ?? 50}%`,
               maxWidth: (!isRealExam || isReview) && !(userSettings.splitExplanations && showAnswers && !!question.explanation)
                 ? `${Math.max(50, Math.min(100, userSettings.lineWidthPercent ?? 85))}%`
                 : undefined,
@@ -1476,15 +1481,83 @@ function TestRunner() {
 
             )}
 
+            {showAnswers && question.explanation && userSettings.splitExplanations && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize question and explanation panels"
+                title="Drag to resize · Double-click to reset 50/50"
+                data-dragging={splitDragging ? "true" : "false"}
+                className="qbank-split-divider"
+                onDoubleClick={() => {
+                  setLiveSplitRatio(null);
+                  setUserSettings({ splitRatio: 50 });
+                }}
+                onPointerDown={(e) => {
+                  const grid = splitGridRef.current;
+                  if (!grid) return;
+                  e.preventDefault();
+                  const rect = grid.getBoundingClientRect();
+                  let latest = liveSplitRatio ?? userSettings.splitRatio ?? 50;
+                  setSplitDragging(true);
+                  const onMove = (ev: PointerEvent) => {
+                    const pct = ((ev.clientX - rect.left) / Math.max(1, rect.width)) * 100;
+                    latest = Math.round(Math.max(28, Math.min(72, pct)));
+                    setLiveSplitRatio(latest);
+                  };
+                  const onUp = () => {
+                    setSplitDragging(false);
+                    setLiveSplitRatio(null);
+                    setUserSettings({ splitRatio: latest });
+                    window.removeEventListener("pointermove", onMove);
+                    window.removeEventListener("pointerup", onUp);
+                  };
+                  window.addEventListener("pointermove", onMove);
+                  window.addEventListener("pointerup", onUp);
+                }}
+              />
+            )}
+
             {showAnswers && question.explanation && (
               <div className="mt-4 qbank-split-expl">
-              <div className="border-b" style={{ borderColor: themeStyles.border }}>
+              <div className="border-b flex items-center justify-between gap-2" style={{ borderColor: themeStyles.border }}>
                   <div
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
-                    style={{ background: themeStyles.cardBg, color: theme === "dark" ? "#60a5fa" : "#1e3a8a", boxShadow: `inset 0 -3px 0 ${theme === "dark" ? "#60a5fa" : "#1e3a8a"}` }}
+                    style={{
+                      background: themeStyles.cardBg,
+                      color: themeStyles.isDark ? "#93c5fd" : userSettings.accentColor,
+                      boxShadow: `inset 0 -3px 0 ${themeStyles.isDark ? "#93c5fd" : userSettings.accentColor}`,
+                    }}
                   >
                     <FileText className="h-4 w-4" /> Explanation
                   </div>
+                  {userSettings.splitExplanations && (
+                    <div className="hidden lg:inline-flex items-center gap-1 pb-1 text-[11px]">
+                      {[
+                        { label: "Compact", leftPct: 62 },
+                        { label: "50/50", leftPct: 50 },
+                        { label: "Wide", leftPct: 36 },
+                      ].map((preset) => {
+                        const active = Math.abs((liveSplitRatio ?? userSettings.splitRatio ?? 50) - preset.leftPct) <= 3;
+                        return (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            onClick={() => setUserSettings({ splitRatio: preset.leftPct })}
+                            className="px-2 py-0.5 rounded border transition-colors"
+                            style={{
+                              borderColor: active ? userSettings.accentColor : themeStyles.border,
+                              background: active ? userSettings.accentColor : "transparent",
+                              color: active ? "#ffffff" : themeStyles.text,
+                              opacity: active ? 1 : 0.72,
+                            }}
+                          >
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div
                   className="pt-3 pb-2"

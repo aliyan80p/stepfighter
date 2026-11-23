@@ -635,26 +635,62 @@ a.qbank-media-anchor[data-media-kind="video"]:hover {
 
 
 
-/* Split-screen explanations: question/answers on the left, explanation on the right */
+/* Split-screen explanations: resizable question on the left, drag divider, explanation on the right */
+.qbank-split-divider {
+  display: none;
+}
 @media (min-width: 1024px) {
   .qbank-split-mode {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 1.5rem;
+    grid-template-columns: minmax(260px, var(--sf-split-left, 50%)) 14px minmax(260px, 1fr);
+    column-gap: 0.35rem;
     align-items: start;
   }
   .qbank-split-mode > * {
     grid-column: 1;
     min-width: 0;
   }
-  .qbank-split-mode > .qbank-split-expl {
+  .qbank-split-mode > .qbank-split-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     grid-column: 2;
+    grid-row: 1 / span 999;
+    position: sticky;
+    top: 0.5rem;
+    height: calc(100vh - 9rem);
+    cursor: col-resize;
+    user-select: none;
+    touch-action: none;
+    border-radius: 9999px;
+    transition: background-color 150ms ease;
+  }
+  .qbank-split-mode > .qbank-split-divider:hover,
+  .qbank-split-mode > .qbank-split-divider[data-dragging="true"] {
+    background-color: color-mix(in srgb, var(--primary) 16%, transparent);
+  }
+  .qbank-split-mode > .qbank-split-divider::before {
+    content: "";
+    width: 4px;
+    height: 44px;
+    border-radius: 9999px;
+    background: var(--border);
+    transition: background-color 150ms ease, height 150ms ease;
+  }
+  .qbank-split-mode > .qbank-split-divider:hover::before,
+  .qbank-split-mode > .qbank-split-divider[data-dragging="true"]::before {
+    background: var(--primary);
+    height: 64px;
+  }
+  .qbank-split-mode > .qbank-split-expl {
+    grid-column: 3;
     grid-row: 1 / span 999;
     margin-top: 0;
     position: sticky;
     top: 0.5rem;
     max-height: calc(100vh - 8rem);
     overflow: auto;
+    padding-left: 0.25rem;
   }
 }
 .qbank-inline-media-wrap .qbank-inline-media {
