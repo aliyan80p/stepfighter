@@ -79,15 +79,15 @@ export const QUIZ_INTERFACE_STYLES: {
   },
   {
     id: "uworld-classic",
-    label: "Classic UWorld",
-    description: "Deep teal-navy bars, zebra Question Status list, crisp white stem & gray explanation",
-    preview: { nav: "#0b4f71", side: "#ffffff", sideAlt: "#e2e5ea", page: "#ffffff", expl: "#f3f4f6", active: "#0b4f71" },
+    label: "Classic UWorld (NBME)",
+    description: "Deep navy bars, white icon tiles, bordered Item box, in-pane Mark Question & crisp Arial stem",
+    preview: { nav: "#0b4c77", side: "#ffffff", sideAlt: "#dcdcdc", page: "#ffffff", expl: "#f3f4f6", active: "#0b4c77" },
   },
   {
     id: "uworld-modern",
-    label: "Modern Slate",
-    description: "Refined slate-blue bars, clean outline controls, soft ice-slate canvas & tinted answer rows",
-    preview: { nav: "#38506b", side: "#eef2f7", sideAlt: "#e3eaf3", page: "#f1f5fa", expl: "#f1f5fa", active: "#4a6a8c" },
+    label: "Modern UWorld",
+    description: "Slate-blue bars, clean line-art icons, Georgia serif stem, full-row tinted answers & inline Suspend/End",
+    preview: { nav: "#324a67", side: "#eef2f7", sideAlt: "#e8eef5", page: "#f1f5fa", expl: "#f1f5fa", active: "#43648a" },
   },
 ];
 

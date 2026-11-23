@@ -9,7 +9,7 @@ import {
   Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
   ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon, Lock as LockIcon,
-  ExternalLink,
+  ExternalLink, PauseCircle, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -225,7 +225,49 @@ function isEmbeddedMedia(item: MediaItem, embeddedKeys: Set<string>) {
   return mediaKeys(item.name).some((key) => embeddedKeys.has(key));
 }
 
-function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void }) {
+function TopBtn({
+  icon: Icon, imgSrc, imgFlip, imgClass, label, onClick, variant = "default", iconTileClass,
+}: {
+  icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void;
+  variant?: "default" | "uworld-classic" | "uworld-modern"; iconTileClass?: string;
+}) {
+  if (variant === "uworld-modern") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        aria-label={label}
+        className="shrink-0 flex items-center justify-center p-2 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors"
+      >
+        {Icon ? (
+          <Icon className="h-[18px] w-[18px] stroke-[1.75]" />
+        ) : imgSrc ? (
+          <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+        ) : null}
+      </button>
+    );
+  }
+  if (variant === "uworld-classic") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        aria-label={label}
+        className="shrink-0 flex flex-col items-center justify-center px-1.5 sm:px-2 py-0.5 text-white/95 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[38px] sm:min-w-[56px] leading-tight"
+      >
+        <span className={`flex items-center justify-center h-6 w-6 rounded bg-white text-[#0b4c77] shadow-xs ${iconTileClass ?? ""}`}>
+          {Icon ? (
+            <Icon className="h-4 w-4 stroke-[2.2]" />
+          ) : imgSrc ? (
+            <img src={imgSrc} alt="" className={imgClass ?? "h-4 w-4 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+          ) : null}
+        </span>
+        <span className="hidden sm:block text-[10px] font-medium mt-0.5 whitespace-nowrap">{label}</span>
+      </button>
+    );
+  }
   return (
     <button
       onClick={onClick}
@@ -436,14 +478,17 @@ function TestRunner() {
 
   const iface: QuizInterfaceStyle = userSettings.quizInterfaceStyle ?? "default";
   const isNbmeOfficial = iface === "nbme-official";
+  const isUwClassic = iface === "uworld-classic";
+  const isUwModern = iface === "uworld-modern";
+  const topBtnVariant = isUwClassic ? "uworld-classic" : isUwModern ? "uworld-modern" : "default";
 
   const navBg =
     isNbmeOfficial
       ? "#2c4a70"
-      : iface === "uworld-classic"
-        ? "#0b4f71"
-        : iface === "uworld-modern"
-          ? "#38506b"
+      : isUwClassic
+        ? "#0b4c77"
+        : isUwModern
+          ? "#324a67"
           : userSettings.useAccentInQuizNav
             ? darkenHex(userSettings.accentColor, 0.78)
             : NAV_BG;
@@ -461,9 +506,9 @@ function TestRunner() {
             : baseThemeStyles;
 
   const effectiveReadingFont =
-    userSettings.fontFamily === "system" && isNbmeOfficial
+    userSettings.fontFamily === "system" && (isNbmeOfficial || isUwClassic)
       ? "Arial, Helvetica, sans-serif"
-      : userSettings.fontFamily === "system" && iface === "uworld-modern"
+      : userSettings.fontFamily === "system" && isUwModern
         ? 'Georgia, "Times New Roman", Times, serif'
         : getFontStack(userSettings.fontFamily);
 
@@ -1177,60 +1222,134 @@ function TestRunner() {
       )}
       {/* Top nav */}
       <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: navBg }}>
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {!(isRealExam && !isReview) && (
-            <button className="p-1 hover:bg-white/10 rounded shrink-0" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
-              <span className="block w-5 h-0.5 bg-white mb-1" />
-              <span className="block w-5 h-0.5 bg-white mb-1" />
-              <span className="block w-5 h-0.5 bg-white" />
+            <button
+              type="button"
+              className={
+                isUwClassic
+                  ? "flex flex-col items-center justify-center h-7 w-7 rounded bg-white text-[#0b4c77] hover:bg-white/90 shadow-xs shrink-0"
+                  : "p-1 hover:bg-white/10 rounded shrink-0"
+              }
+              onClick={() => setSidebarOpen(v => !v)}
+              title={sidebarOpen ? "Hide question list" : "Show question list"}
+            >
+              <span className={`block w-4 h-0.5 mb-1 ${isUwClassic ? "bg-[#0b4c77]" : "bg-white"}`} />
+              <span className={`block w-4 h-0.5 mb-1 ${isUwClassic ? "bg-[#0b4c77]" : "bg-white"}`} />
+              <span className={`block w-4 h-0.5 ${isUwClassic ? "bg-[#0b4c77]" : "bg-white"}`} />
             </button>
           )}
-          <div className="text-[11px] sm:text-[12px] leading-tight shrink-0">
-            <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
+          <div
+            className={`text-[11px] sm:text-[12px] leading-tight shrink-0 ${
+              isUwClassic ? "border border-white/55 rounded px-2.5 py-0.5 text-center" : ""
+            }`}
+          >
+            <div>
+              <span className={isUwClassic ? "text-white font-medium" : "text-white/75"}>Item</span>{" "}
+              <span className="font-semibold">{idx + 1} of {total}</span>
+            </div>
             {(isRealExam && !isReview)
               ? <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
-              : <div className="hidden sm:block text-[11px] text-white/75">Question Id: {question.id}</div>}
+              : <div className="hidden sm:block text-[10.5px] text-white/80">Question Id: {question.id}</div>}
           </div>
-          <button
-            onClick={bookmark}
-            className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10 shrink-0"
-            title={isBookmarked ? "Remove flag" : "Flag question"}
-          >
-            {(isRealExam && !isReview) && (
-              <span className={`inline-flex items-center justify-center w-2.5 h-2.5 border border-white/80 ${isBookmarked ? "bg-red-600" : "bg-transparent"}`}>
-                {isBookmarked && (
-                  <svg viewBox="0 0 16 16" className="w-2 h-2 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 8.5 6.5 12 13 4.5" />
-                  </svg>
-                )}
-              </span>
-            )}
-            <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
-            <span className="hidden sm:inline text-[11px] font-semibold text-white">Mark</span>
-          </button>
-
-
-
+          {!isUwClassic && (
+            <button
+              type="button"
+              onClick={bookmark}
+              className="inline-flex items-center gap-1.5 p-1.5 rounded hover:bg-white/10 shrink-0"
+              title={isBookmarked ? "Remove flag" : "Flag question"}
+            >
+              {(isRealExam && !isReview) && (
+                <span className={`inline-flex items-center justify-center w-2.5 h-2.5 border border-white/80 ${isBookmarked ? "bg-red-600" : "bg-transparent"}`}>
+                  {isBookmarked && (
+                    <svg viewBox="0 0 16 16" className="w-2 h-2 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 8.5 6.5 12 13 4.5" />
+                    </svg>
+                  )}
+                </span>
+              )}
+              {isUwModern ? (
+                <Flag className={`h-4 w-4 ${isBookmarked ? "fill-red-500 text-red-400" : "text-white/85"}`} />
+              ) : (
+                <>
+                  <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
+                  <span className="hidden sm:inline text-[11px] font-semibold text-white">Mark</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
-          <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {isUwModern ? (
+            <>
+              <button
+                type="button"
+                onClick={() => goToQuestion(idx - 1)}
+                disabled={idx <= 0}
+                title="Previous"
+                aria-label="Previous"
+                className="h-7 w-7 rounded-full border border-white/70 flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => goToQuestion(idx + 1)}
+                disabled={idx >= total - 1}
+                title="Next"
+                aria-label="Next"
+                className="h-7 w-7 rounded-full border border-white/70 flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </>
+          ) : isUwClassic ? (
+            <>
+              <button
+                type="button"
+                onClick={() => goToQuestion(idx - 1)}
+                disabled={idx <= 0}
+                title="Previous"
+                className="flex flex-col items-center justify-center px-1.5 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
+              >
+                <span className="h-6 w-6 rounded-full bg-white text-[#0b4c77] flex items-center justify-center shadow-xs">
+                  <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
+                </span>
+                <span className="hidden sm:block text-[10px] mt-0.5">Previous</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => goToQuestion(idx + 1)}
+                disabled={idx >= total - 1}
+                title="Next"
+                className="flex flex-col items-center justify-center px-1.5 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
+              >
+                <span className="h-6 w-6 rounded-full bg-white text-[#0b4c77] flex items-center justify-center shadow-xs">
+                  <ChevronRight className="h-4 w-4 stroke-[2.5]" />
+                </span>
+                <span className="hidden sm:block text-[10px] mt-0.5">Next</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
+              <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
+            </>
+          )}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
-          {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
-          <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
-          <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
-          {false && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
-          
-          <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          {(!isRealExam || isReview) && <TopBtn variant={topBtnVariant} icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
+          {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn variant={topBtnVariant} icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
+          <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? FlaskConical : undefined} imgSrc={isUwClassic || isUwModern ? undefined : labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
+          <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? StickyNote : undefined} imgSrc={isUwClassic || isUwModern ? undefined : notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
+          <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? Calculator : undefined} imgSrc={isUwClassic || isUwModern ? undefined : calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
           {(isNbmeOfficial || (isRealExam && !isReview)) && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
           {(isNbmeOfficial || (isRealExam && !isReview)) && (
             <TopBtn imgSrc={textZoomIcon.url} imgClass="h-10 w-10 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
           )}
-          <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
+          <TopBtn variant={topBtnVariant} icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
         </div>
       </div>
 
@@ -1385,6 +1504,31 @@ function TestRunner() {
               </div>
             )}
             
+            {isUwClassic && (
+              <div className="mb-3">
+                <button
+                  type="button"
+                  onClick={bookmark}
+                  className="inline-flex items-center gap-2 text-xs font-medium hover:opacity-80 transition-opacity"
+                  style={{ color: themeStyles.text }}
+                >
+                  <span
+                    className={`inline-flex items-center justify-center h-3.5 w-3.5 rounded-[2px] border ${
+                      isBookmarked ? "bg-[#0b4c77] border-[#0b4c77] text-white" : "border-slate-400 bg-white"
+                    }`}
+                  >
+                    {isBookmarked && (
+                      <svg viewBox="0 0 16 16" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 8.5 6.5 12 13 4.5" />
+                      </svg>
+                    )}
+                  </span>
+                  <Flag className={`h-3.5 w-3.5 ${isBookmarked ? "fill-red-600 text-red-600" : "text-slate-600"}`} />
+                  <span>Mark Question</span>
+                </button>
+              </div>
+            )}
+
             <HighlightableHtml seedKey={`q-${question.id}`} mediaToken={mediaToken} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
 
             {mediaItems.length > 0 && mediaToken && (
@@ -1542,14 +1686,33 @@ function TestRunner() {
                         />
                       )}
                     </span>
-                    <span className="flex-1 min-w-0">
-                      <span
-                        data-hlkey={`a${i}`}
-                        className="qbank-html qbank-light inline"
-                        style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
-                        dangerouslySetInnerHTML={{ __html: answerHtmlFor(`a${i}`, letter, a.answer_text) }}
-                      />
-                      {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
+                    <span className="flex-1 min-w-0 flex items-center justify-between gap-3">
+                      <span>
+                        <span
+                          data-hlkey={`a${i}`}
+                          className="qbank-html qbank-light inline"
+                          style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
+                          dangerouslySetInnerHTML={{ __html: answerHtmlFor(`a${i}`, letter, a.answer_text) }}
+                        />
+                        {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
+                      </span>
+                      {(isUwClassic || isUwModern) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isReview || (submitted && showAnswers)) return;
+                            toggleStruck();
+                          }}
+                          title={isStruck ? "Remove strikethrough" : "Cross out choice"}
+                          className={`shrink-0 text-[11px] px-1 rounded hover:bg-black/5 transition-opacity ${
+                            isStruck ? "opacity-90 font-semibold text-red-600" : "opacity-45 hover:opacity-80"
+                          }`}
+                          style={{ textDecoration: "line-through" }}
+                        >
+                          ab
+                        </button>
+                      )}
                     </span>
                   </div>
                 );
@@ -1669,16 +1832,29 @@ function TestRunner() {
             {showAnswers && question.explanation && (
               <div className="mt-4 qbank-split-expl sf-reveal-up">
               <div className="border-b flex items-center justify-between gap-2" style={{ borderColor: themeStyles.border }}>
-                  <div
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
-                    style={{
-                      background: themeStyles.cardBg,
-                      color: themeStyles.isDark ? "#93c5fd" : userSettings.accentColor,
-                      boxShadow: `inset 0 -3px 0 ${themeStyles.isDark ? "#93c5fd" : userSettings.accentColor}`,
-                    }}
-                  >
-                    <FileText className="h-4 w-4" /> Explanation
-                  </div>
+                  {(isUwClassic || isUwModern) ? (
+                    <div
+                      className="inline-flex items-center px-4 py-2 rounded-t-sm font-medium text-sm relative -mb-px border-t border-x"
+                      style={{
+                        background: themeStyles.isDark ? themeStyles.cardBg : "#ffffff",
+                        borderColor: themeStyles.border,
+                        color: themeStyles.text,
+                      }}
+                    >
+                      Explanation:
+                    </div>
+                  ) : (
+                    <div
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
+                      style={{
+                        background: themeStyles.cardBg,
+                        color: themeStyles.isDark ? "#93c5fd" : userSettings.accentColor,
+                        boxShadow: `inset 0 -3px 0 ${themeStyles.isDark ? "#93c5fd" : userSettings.accentColor}`,
+                      }}
+                    >
+                      <FileText className="h-4 w-4" /> Explanation
+                    </div>
+                  )}
                   {userSettings.splitExplanations && (
                     <div className="hidden lg:inline-flex items-center gap-1 pb-1 text-[11px]">
                       {[
@@ -1896,14 +2072,25 @@ function TestRunner() {
           );
         }
         return (
-          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: navBg }}>
-            <div className="shrink-0 font-semibold tracking-wide tabular-nums">
-              {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: navBg }}>
+            <div className="shrink-0 font-semibold tracking-wide tabular-nums leading-tight">
+              {isUwModern && !isReview && (
+                <div className="text-[11px] font-semibold text-white/95">Test ID: {id}</div>
+              )}
+              <div className={isUwModern ? "text-[11px] font-normal text-white/85" : ""}>
+                {isReview || !userSettings.showTimer
+                  ? ""
+                  : isUwClassic || isUwModern
+                    ? `${timedMode ? "Block Time Remaining" : "Block Time Elapsed"}: ${bh}:${bm}:${bs}`
+                    : `Block Time: ${bh}:${bm}:${bs}`}
+              </div>
             </div>
-            <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
-              <span>StepFighter</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {!isUwClassic && !isUwModern && (
+              <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
+                <span>StepFighter</span>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-2 gap-y-1">
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={handleToggleTimed} />
@@ -1912,16 +2099,49 @@ function TestRunner() {
                 </>
               )}
 
-
-              
-              <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={() => setShowLibrary(true)} />
-              <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
-              <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
+              <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? BookOpen : undefined} imgSrc={isUwClassic || isUwModern ? undefined : medicalLibraryIcon.url} label="Medical Library" onClick={() => setShowLibrary(true)} />
+              <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? Zap : undefined} imgSrc={isUwClassic || isUwModern ? undefined : flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+              <TopBtn variant={topBtnVariant} icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
-                <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+                <TopBtn variant={topBtnVariant} icon={isUwClassic || isUwModern ? ArrowLeft : undefined} imgSrc={isUwClassic || isUwModern ? undefined : goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+              ) : isUwModern ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Suspend this test?",
+                        description: "Your progress is saved and you can resume the test later from the Tests page.",
+                        confirmLabel: "Suspend",
+                        tone: "warning",
+                      });
+                      if (ok) nav({ to: "/tests" });
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-white/10 text-white text-xs font-medium transition-colors"
+                  >
+                    <PauseCircle className="h-4 w-4 text-rose-300" />
+                    <span>Suspend</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "End this block?",
+                        description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                        confirmLabel: "End Block",
+                        tone: "danger",
+                      });
+                      if (ok) finish();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-white/10 text-white text-xs font-medium transition-colors"
+                  >
+                    <XCircle className="h-4 w-4 text-white/90" />
+                    <span>End Block</span>
+                  </button>
+                </>
               ) : (
                 <>
-                  <TopBtn imgSrc={suspendIcon.url} label="Suspend" onClick={async () => {
+                  <TopBtn variant={topBtnVariant} icon={isUwClassic ? PauseCircle : undefined} imgSrc={isUwClassic ? undefined : suspendIcon.url} label={isUwClassic ? "Pause" : "Suspend"} onClick={async () => {
                     const ok = await confirm({
                       title: "Suspend this test?",
                       description: "Your progress is saved and you can resume the test later from the Tests page.",
@@ -1930,7 +2150,7 @@ function TestRunner() {
                     });
                     if (ok) nav({ to: "/tests" });
                   }} />
-                  <TopBtn imgSrc={endBlockIcon.url} label="End Block" onClick={async () => {
+                  <TopBtn variant={topBtnVariant} icon={isUwClassic ? XCircle : undefined} iconTileClass={isUwClassic ? "text-red-600" : undefined} imgSrc={isUwClassic ? undefined : endBlockIcon.url} label="End Block" onClick={async () => {
                     const ok = await confirm({
                       title: "End this block?",
                       description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
