@@ -2,36 +2,39 @@ import { createFileRoute, Outlet, redirect, Link, useRouter, useRouterState } fr
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Gauge,
-  BookOpen,
-  Landmark,
+  LayoutDashboard,
+  Stethoscope,
+  BookMarked,
+  Layers,
   History,
-  HelpCircle,
+  Wand2,
   Search,
-  GraduationCap,
-  ClipboardList,
+  Award,
+  ClipboardCheck,
   LineChart,
   Calculator,
-  BarChart2,
+  TrendingUp,
   Users,
   Sparkles,
   PieChart,
-  UserCog,
+  SlidersHorizontal,
   Settings,
   RotateCcw,
   LogOut,
   ChevronDown,
+  NotebookPen,
   StickyNote,
-  Library,
-  CalendarDays,
-  Zap,
+  BookOpen,
+  Brain,
   Flag,
   Menu,
   PanelLeftClose,
-  Shield,
+  ShieldCheck,
   PlusCircle,
   CreditCard,
   Lock,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -44,43 +47,51 @@ import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions
 import { QBANKS, useActiveQbankId, setActiveQbankId } from "@/lib/active-qbank";
 import { PageLoader } from "@/components/loader";
 import { AppearanceQuickPanel } from "@/components/appearance-quick-panel";
-
-
-
+import { useUserSettings } from "@/lib/user-settings";
 
 type Item = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
-type Group = { key: string; label: string; icon: React.ComponentType<{ className?: string }>; items: Item[] };
+type Group = {
+  key: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconTint: string;
+  items: Item[];
+};
 
 const groups: Group[] = [
   {
     key: "courses",
     label: "Courses",
-    icon: BookOpen,
-    items: [{ to: "/courses/my-courses", label: "My Courses", icon: BookOpen }],
+    icon: Stethoscope,
+    iconTint: "bg-sky-500/20 text-sky-300",
+    items: [{ to: "/courses/my-courses", label: "My Courses", icon: BookMarked }],
   },
   {
     key: "qbanks",
     label: "Qbanks",
-    icon: Landmark,
+    icon: Layers,
+    iconTint: "bg-indigo-500/20 text-indigo-300",
     items: [
       { to: "/tests", label: "Previous Test", icon: History },
-      { to: "/new-test", label: "Generate Quiz", icon: HelpCircle },
+      { to: "/new-test", label: "Generate Quiz", icon: Wand2 },
       { to: "/qbanks/search", label: "Search", icon: Search },
     ],
   },
   {
     key: "self",
     label: "Self Assessments",
-    icon: GraduationCap,
+    icon: Award,
+    iconTint: "bg-amber-500/20 text-amber-300",
     items: [
-      { to: "/self-assessments/assessments", label: "Assessments", icon: ClipboardList },
+      { to: "/self-assessments/assessments", label: "Assessments", icon: ClipboardCheck },
       { to: "/self-assessments/report", label: "Report", icon: LineChart },
     ],
   },
   {
     key: "performance",
     label: "Performance",
-    icon: BarChart2,
+    icon: TrendingUp,
+    iconTint: "bg-emerald-500/20 text-emerald-300",
     items: [
       { to: "/performance/overall", label: "Overall", icon: PieChart },
       { to: "/performance/peer-ranking", label: "Peer Ranking", icon: Users },
@@ -93,24 +104,27 @@ const groups: Group[] = [
   {
     key: "notes-study",
     label: "Notes and Study",
-    icon: StickyNote,
+    icon: NotebookPen,
+    iconTint: "bg-rose-500/20 text-rose-300",
     items: [
       { to: "/notes", label: "Notes", icon: StickyNote },
-      { to: "/medical-library", label: "Medical Library", icon: Library },
+      { to: "/medical-library", label: "Medical Library", icon: BookOpen },
     ],
   },
   {
     key: "flashcards",
     label: "Flashcards",
-    icon: Zap,
+    icon: Brain,
+    iconTint: "bg-purple-500/20 text-purple-300",
     items: [
-      { to: "/flashcards/my-decks", label: "My Decks", icon: Zap },
+      { to: "/flashcards/my-decks", label: "My Decks", icon: Layers },
     ],
   },
   {
     key: "account",
     label: "Account",
-    icon: UserCog,
+    icon: SlidersHorizontal,
+    iconTint: "bg-teal-500/20 text-teal-300",
     items: [
       { to: "/account/settings", label: "Settings", icon: Settings },
       { to: "/account/reset", label: "Reset", icon: RotateCcw },
@@ -182,22 +196,37 @@ function AuthedLayout() {
     }
   }, [entitledAccess, activeQbankId, currentSlug, qc]);
 
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [userSettings, setUserSettings] = useUserSettings();
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [sidebarPinned, setSidebarPinned] = useState<boolean>(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("sidebar-open");
-    if (saved !== null) {
-      setSidebarOpen(saved === "1");
+    const savedPin = localStorage.getItem("sidebar-pinned");
+    const isWide = window.matchMedia("(min-width: 1024px)").matches;
+    if (savedPin !== null) {
+      const pinned = savedPin === "1";
+      setSidebarPinned(pinned);
+      setSidebarOpen(pinned);
     } else {
-      setSidebarOpen(window.matchMedia("(min-width: 768px)").matches);
+      // Auto-hide by default unless wide desktop AND autoHideSidebar is off
+      const defaultPinned = isWide && !userSettings.autoHideSidebar && userSettings.autoShowSidebar !== false;
+      setSidebarPinned(defaultPinned);
+      setSidebarOpen(defaultPinned);
     }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (hydrated) localStorage.setItem("sidebar-open", sidebarOpen ? "1" : "0");
-  }, [sidebarOpen, hydrated]);
+    if (hydrated) localStorage.setItem("sidebar-pinned", sidebarPinned ? "1" : "0");
+  }, [sidebarPinned, hydrated]);
+
+  // Auto-close sidebar whenever route changes if not pinned or autoHideSidebar is enabled
+  useEffect(() => {
+    if (!sidebarPinned || userSettings.autoHideSidebar) {
+      setSidebarOpen(false);
+    }
+  }, [pathname, sidebarPinned, userSettings.autoHideSidebar]);
 
   const signOut = async () => {
     try {
@@ -214,20 +243,43 @@ function AuthedLayout() {
 
   const hideSidebar = /^\/test\//.test(pathname);
 
-  const closeOnMobile = () => {
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+  const closeAfterNav = () => {
+    if (!sidebarPinned || userSettings.autoHideSidebar || (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches)) {
       setSidebarOpen(false);
     }
   };
 
+  const togglePin = () => {
+    const next = !sidebarPinned;
+    setSidebarPinned(next);
+    setSidebarOpen(next);
+    setUserSettings({ autoHideSidebar: !next });
+  };
+
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen bg-background text-foreground relative">
       {isNavigating && (
         <div className="fixed top-0 inset-x-0 z-50 h-[2.5px] overflow-hidden bg-primary/15 pointer-events-none">
           <div className="sf-nav-progress h-full w-1/2 rounded-full bg-primary" />
         </div>
       )}
-      {!hideSidebar && sidebarOpen && (
+      {/* Left-edge hover trigger: glide mouse to left edge to smoothly reveal sidebar */}
+      {!hideSidebar && !sidebarOpen && (
+        <div
+          onMouseEnter={() => setSidebarOpen(true)}
+          className="hidden md:block fixed inset-y-0 left-0 w-3 z-30 cursor-e-resize"
+          aria-hidden="true"
+        />
+      )}
+      {/* Click-outside backdrop whenever sidebar is open as an overlay (mobile or unpinned) */}
+      {!hideSidebar && sidebarOpen && !sidebarPinned && (
+        <div
+          className="fixed inset-0 z-30 bg-black/35 backdrop-blur-[1px] transition-opacity duration-300"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      {!hideSidebar && sidebarOpen && sidebarPinned && (
         <div
           className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[1px] transition-opacity duration-300 md:hidden"
           onClick={() => setSidebarOpen(false)}
@@ -236,56 +288,87 @@ function AuthedLayout() {
       )}
       {!hideSidebar && (
       <aside
+        onMouseLeave={() => {
+          if (!sidebarPinned) setSidebarOpen(false);
+        }}
         className={cn(
           "border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-40 shrink-0",
-          "fixed inset-y-0 left-0 md:static",
-          sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:w-0 md:translate-x-0 overflow-hidden border-r-0",
+          sidebarPinned ? "fixed inset-y-0 left-0 md:static" : "fixed inset-y-0 left-0 shadow-2xl",
+          sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:w-0 overflow-hidden border-r-0",
         )}
       >
 
         <div className="flex items-center justify-between px-4 h-14 border-b border-sidebar-border">
-          <Link to="/dashboard" className="flex items-center gap-2" onClick={closeOnMobile}>
-            <img src={logoAsset.url} alt="StepFighter" className="h-8 w-8 object-contain bg-white/95 rounded-md p-0.5" />
-            <span className="font-semibold">StepFighter</span>
+          <Link to="/dashboard" className="flex items-center gap-2.5 group" onClick={closeAfterNav}>
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-sky-400 p-0.5 shadow-sm ring-1 ring-white/20 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+              <img src={logoAsset.url} alt="StepFighter" className="h-full w-full object-contain rounded-[6px] bg-white/95 p-0.5" />
+            </div>
+            <div className="leading-tight">
+              <span className="font-bold tracking-tight block text-sm">StepFighter</span>
+              <span className="text-[10px] text-sidebar-foreground/60 font-medium">USMLE QBank</span>
+            </div>
           </Link>
-          <button
-            type="button"
-            aria-label="Collapse sidebar"
-            onClick={() => setSidebarOpen(false)}
-            className="p-1 rounded text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <PanelLeftClose className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              title={sidebarPinned ? "Unpin sidebar (auto-hide)" : "Pin sidebar open"}
+              aria-label={sidebarPinned ? "Unpin sidebar" : "Pin sidebar"}
+              onClick={togglePin}
+              className={cn(
+                "hidden md:flex p-1.5 rounded transition-colors",
+                sidebarPinned
+                  ? "text-primary bg-sidebar-accent/70 hover:bg-sidebar-accent"
+                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              )}
+            >
+              {sidebarPinned ? <Pin className="h-3.5 w-3.5" /> : <PinOff className="h-3.5 w-3.5" />}
+            </button>
+            <button
+              type="button"
+              aria-label="Collapse sidebar"
+              onClick={() => {
+                setSidebarPinned(false);
+                setSidebarOpen(false);
+              }}
+              className="p-1.5 rounded text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {/* Welcome / Dashboard */}
           <Link
             to="/dashboard"
-            onClick={closeOnMobile}
+            onClick={closeAfterNav}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-150",
               isActive("/dashboard")
-                ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-sidebar-primary"
-                : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-xs border-l-2 border-sidebar-primary"
+                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
             )}
           >
-            <Gauge className="h-4 w-4" />
+            <span className="h-6 w-6 rounded-md bg-blue-500/20 text-blue-300 flex items-center justify-center shrink-0">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+            </span>
             Welcome
           </Link>
 
           {isAdmin && (
             <Link
               to="/admin"
-              onClick={closeOnMobile}
+              onClick={closeAfterNav}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-150",
                 isActive("/admin")
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-sidebar-primary"
-                  : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-xs border-l-2 border-sidebar-primary"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
               )}
             >
-              <Shield className="h-4 w-4" />
+              <span className="h-6 w-6 rounded-md bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
+                <ShieldCheck className="h-3.5 w-3.5" />
+              </span>
               Admin
             </Link>
           )}
@@ -301,31 +384,33 @@ function AuthedLayout() {
                   type="button"
                   onClick={() => setOpen((o) => ({ ...o, [g.key]: !o[g.key] }))}
                   className={cn(
-                    "w-full flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
-                    groupActive ? "text-sidebar-foreground" : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
+                    "w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
+                    groupActive ? "text-sidebar-foreground" : "text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent/35",
                   )}
                 >
-                  <span className="flex items-center gap-3">
-                    <g.icon className="h-4 w-4" />
+                  <span className="flex items-center gap-2.5">
+                    <span className={cn("h-6 w-6 rounded-md flex items-center justify-center shrink-0", g.iconTint)}>
+                      <g.icon className="h-3.5 w-3.5" />
+                    </span>
                     {g.label}
                   </span>
-                  <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen ? "" : "-rotate-90")} />
+                  <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
                 </button>
                 {isOpen && (
-                  <div className="mt-1 ml-3 pl-3 border-l border-sidebar-border space-y-0.5">
+                  <div className="mt-1 ml-5 pl-3 border-l border-sidebar-border space-y-0.5">
                     {g.items.map((i) => (
                       <Link
                         key={i.to}
                         to={i.to}
-                        onClick={closeOnMobile}
+                        onClick={closeAfterNav}
                         className={cn(
-                          "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                          "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
                           isActive(i.to)
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                             : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
                         )}
                       >
-                        <i.icon className="h-4 w-4" />
+                        <i.icon className="h-3.5 w-3.5 shrink-0 opacity-85" />
                         {i.label}
                       </Link>
                     ))}
@@ -337,12 +422,12 @@ function AuthedLayout() {
 
           <Link
             to="/subscribe-renew"
-            onClick={closeOnMobile}
+            onClick={closeAfterNav}
             className={cn(
-              "mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "mt-2 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
               isActive("/subscribe-renew")
                 ? "bg-primary text-primary-foreground"
-                : "bg-primary/10 text-primary hover:bg-primary/20",
+                : "bg-primary/15 text-primary hover:bg-primary/25",
             )}
           >
             <CreditCard className="h-4 w-4" />
@@ -352,12 +437,12 @@ function AuthedLayout() {
           {trialEnded && (
             <Link
               to="/upgrade"
-              onClick={closeOnMobile}
+              onClick={closeAfterNav}
               className={cn(
-                "mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "mt-2 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
                 isActive("/upgrade")
                   ? "bg-primary text-primary-foreground"
-                  : "bg-primary/10 text-primary hover:bg-primary/20",
+                  : "bg-primary/15 text-primary hover:bg-primary/25",
               )}
             >
               <PlusCircle className="h-4 w-4" />
@@ -368,7 +453,7 @@ function AuthedLayout() {
 
         <div className="p-3 border-t border-sidebar-border">
           <TrialBanner />
-          <AppearanceQuickPanel onNavigate={closeOnMobile} />
+          <AppearanceQuickPanel onNavigate={closeAfterNav} />
           <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
             <LogOut className="h-4 w-4 mr-2" /> Logout
           </Button>
