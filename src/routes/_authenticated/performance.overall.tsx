@@ -89,7 +89,7 @@ function OverallPerformance() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="sf-fluid-page space-y-6">
         {/* Tabs */}
         <div className="flex justify-center">
           <div className="inline-flex rounded-full bg-muted/60 p-1">

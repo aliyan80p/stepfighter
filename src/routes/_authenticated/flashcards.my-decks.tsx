@@ -115,7 +115,7 @@ function FlashcardsPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+    <div className="sf-fluid-page">
       <div className="mb-4">
         <h1 className="text-xl font-bold text-slate-800">Your Flashcards</h1>
         <p className="text-sm text-slate-500">Create and manage your study flashcards</p>

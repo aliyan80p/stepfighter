@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ChevronUp, Search, Info, Clock, GraduationCap, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
+import { TestCreationOverlay } from "@/components/loader";
 
 export const Route = createFileRoute("/_authenticated/new-test")({
   component: NewTest,
@@ -349,7 +350,14 @@ function NewTest() {
 
 
   return (
-    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
+    <div className="sf-fluid-page space-y-6">
+      <TestCreationOverlay
+        open={loading}
+        mode={mode}
+        timed={timed}
+        questionCount={quizType === "custom" ? parseIds(customIds).length : count}
+        quizName={quizName}
+      />
       <div>
         <h1 className="text-3xl font-bold">Generate Quiz</h1>
         <p className="text-muted-foreground mt-1">Build a custom practice session</p>
@@ -659,7 +667,7 @@ function NewTest() {
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-xl border border-border bg-card p-6 shadow-sm">{children}</div>;
+  return <div className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-sm transition-all duration-200">{children}</div>;
 }
 function IconBadge({ children }: { children: React.ReactNode }) {
   return <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary shrink-0">{children}</div>;
@@ -669,8 +677,8 @@ function ModeCard({ active, onClick, icon, title, desc }: { active: boolean; onC
     <button
       onClick={onClick}
       className={cn(
-        "flex items-start gap-3 rounded-lg border p-4 text-left transition-colors",
-        active ? "border-primary bg-primary/10" : "border-border hover:bg-accent/40",
+        "flex items-start gap-3 rounded-lg border p-4 text-left transition-all duration-200 active:scale-[0.99]",
+        active ? "border-primary bg-primary/10 shadow-xs" : "border-border hover:bg-accent/40 hover:border-primary/40",
       )}
     >
       <IconBadge>{icon}</IconBadge>
@@ -714,15 +722,15 @@ function SelectionList<T extends string | number>({
           </div>
         )}
       </div>
-      <div className={cn("grid gap-2", scrollable && "max-h-[380px] overflow-y-auto pr-2", columns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-3")}>
+      <div className={cn(scrollable && "max-h-[380px] overflow-y-auto pr-2", columns === 2 ? "sf-auto-grid-wide" : "sf-auto-grid")}>
         {filtered.map((it) => {
           const isSel = selected.includes(it.id);
           return (
             <label
               key={String(it.id)}
               className={cn(
-                "flex items-center gap-2 rounded-lg border p-2.5 cursor-pointer transition-colors text-sm",
-                isSel ? "border-primary bg-primary/5" : "border-border hover:bg-accent/40",
+                "flex items-center gap-2 rounded-lg border p-2.5 cursor-pointer transition-all duration-150 text-sm",
+                isSel ? "border-primary bg-primary/8 shadow-xs" : "border-border hover:bg-accent/40 hover:border-primary/40",
               )}
             >
               <Checkbox checked={isSel} onCheckedChange={() => onToggle(it.id)} />

@@ -70,7 +70,7 @@ function SettingsPage() {
           background: `linear-gradient(135deg, var(--sidebar) 0%, var(--sf-nav-bg, #1a4b7c) 55%, var(--primary) 100%)`,
         }}
       >
-        <div className="max-w-6xl mx-auto h-full px-6 md:px-8 flex items-center justify-between gap-4">
+        <div className="sf-fluid-page !py-0 h-full flex items-center justify-between gap-4">
           <div className="text-white">
             <h1 className="text-xl md:text-2xl font-bold tracking-tight">Appearance & Settings</h1>
             <p className="text-xs md:text-sm text-white/80">
@@ -89,7 +89,7 @@ function SettingsPage() {
         </div>
       </div>
 
-      <div className="p-4 sm:p-6 md:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="sf-fluid-page space-y-6">
         {/* Live Preview */}
         <LivePreviewCard settings={s} />
 

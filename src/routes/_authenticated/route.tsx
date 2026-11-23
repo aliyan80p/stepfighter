@@ -138,6 +138,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthedLayout() {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isNavigating = useRouterState({ select: (s) => s.status === "pending" || s.isLoading });
 
   const initialOpen = () => {
     const state: Record<string, boolean> = {};
@@ -221,9 +222,14 @@ function AuthedLayout() {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
+      {isNavigating && (
+        <div className="fixed top-0 inset-x-0 z-50 h-[2.5px] overflow-hidden bg-primary/15 pointer-events-none">
+          <div className="sf-nav-progress h-full w-1/2 rounded-full bg-primary" />
+        </div>
+      )}
       {!hideSidebar && sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[1px] transition-opacity duration-300 md:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
@@ -231,9 +237,9 @@ function AuthedLayout() {
       {!hideSidebar && (
       <aside
         className={cn(
-          "border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-200 z-40",
+          "border-r border-sidebar-border flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-40 shrink-0",
           "fixed inset-y-0 left-0 md:static",
-          sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:w-0 md:translate-x-0 overflow-hidden",
+          sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:w-0 md:translate-x-0 overflow-hidden border-r-0",
         )}
       >
 
@@ -372,13 +378,13 @@ function AuthedLayout() {
       </aside>
       )}
 
-      <main className="flex-1 overflow-auto min-w-0 flex flex-col">
+      <main className="sf-main-canvas flex-1 overflow-auto min-w-0 flex flex-col">
         {!hideSidebar && !sidebarOpen && (
           <button
             type="button"
             aria-label="Open sidebar"
             onClick={() => setSidebarOpen(true)}
-            className="hidden md:flex fixed top-3 left-3 z-30 items-center justify-center h-9 w-9 rounded-md border border-border bg-background/90 backdrop-blur shadow-sm hover:bg-accent hover:text-accent-foreground"
+            className="hidden md:flex fixed top-3 left-3 z-30 items-center justify-center h-9 w-9 rounded-md border border-border bg-background/90 backdrop-blur shadow-sm hover:bg-accent hover:text-accent-foreground transition-all duration-200"
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -406,7 +412,7 @@ function AuthedLayout() {
             ? <PaywallGate />
             : !activeMatchesEntitlement
               ? <div className="min-h-full grid place-items-center p-6"><PageLoader label="Loading your workspace" /></div>
-              : <Outlet />}
+              : <div key={pathname} className="sf-page-enter min-h-full"><Outlet /></div>}
         </div>
       </main>
     </div>

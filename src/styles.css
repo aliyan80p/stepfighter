@@ -695,9 +695,72 @@ body { overscroll-behavior-y: none; }
   animation: sf-loader-shimmer 1.6s linear infinite;
 }
 .sf-loader-bar { animation: sf-loader-bar 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+/* ============ Smooth Page, Modal & Test-Creation Motion ============ */
+@keyframes sf-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes sf-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes sf-progress-indeterminate {
+  0% { transform: translateX(-100%) scaleX(0.35); }
+  50% { transform: translateX(60%) scaleX(0.65); }
+  100% { transform: translateX(260%) scaleX(0.35); }
+}
+
+.sf-page-enter {
+  animation: sf-page-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.sf-scale-enter {
+  animation: sf-scale-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.sf-nav-progress {
+  animation: sf-progress-indeterminate 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: left center;
+}
+
+/* Fluid workspace canvas that auto-adjusts cleanly as sidebar toggles or viewport resizes */
+.sf-main-canvas {
+  container-type: inline-size;
+  transition: padding 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sf-fluid-page {
+  width: 100%;
+  max-width: min(100%, 1600px);
+  margin-inline: auto;
+  padding: clamp(1rem, 2.2cqi, 2rem);
+  transition: max-width 250ms cubic-bezier(0.22, 1, 0.36, 1), padding 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sf-auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  gap: 0.65rem;
+}
+.sf-auto-grid-wide {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 0.85rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sf-loader-spin, .sf-loader-spin-rev, .sf-loader-pulse,
-  .sf-loader-ring, .sf-loader-dot, .sf-loader-shimmer, .sf-loader-bar { animation: none; }
+  .sf-loader-ring, .sf-loader-dot, .sf-loader-shimmer, .sf-loader-bar,
+  .sf-page-enter, .sf-scale-enter, .sf-nav-progress { animation: none; }
 }
 
 

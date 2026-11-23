@@ -90,7 +90,7 @@ function SearchPage() {
 
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto">
+    <div className="sf-fluid-page">
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-[#1e3a8a]">Search Questions</h1>
         <p className="text-muted-foreground text-sm mt-1">Find questions by ID or keywords from your question bank</p>

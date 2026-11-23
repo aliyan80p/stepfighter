@@ -20,7 +20,7 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="sf-fluid-page space-y-6">
         {/* Welcome banner */}
         <div className="rounded-2xl bg-card border border-border p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-4">
