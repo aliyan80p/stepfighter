@@ -1,8 +1,8 @@
 import { createDecipheriv, pbkdf2Sync } from "crypto";
 
 // Server-only. The legacy media passphrase lives in the LEGACY_MEDIA_PASSWORD
-// env var (never in source). Without it, legacy files are passed through as-is.
-const LEGACY_MEDIA_PASSWORD = process.env.LEGACY_MEDIA_PASSWORD ?? "";
+// env var (never in source). Read per-request because Cloudflare Workers inject
+// env bindings at request time rather than module import time.
 // IVs are not secret.
 const LEGACY_MEDIA_IV = Buffer.from([
   17, 115, 105, 102, 103, 104, 111, 107, 108, 122, 120, 119, 118, 98, 110, 109,
@@ -15,9 +15,10 @@ function paddedName(name: string): Buffer {
 }
 
 function tryLegacyDecrypt(data: Buffer, name: string): Buffer | null {
-  if (!LEGACY_MEDIA_PASSWORD) return null;
+  const password = process.env.LEGACY_MEDIA_PASSWORD ?? "";
+  if (!password) return null;
   try {
-    const key = pbkdf2Sync(LEGACY_MEDIA_PASSWORD, paddedName(name), 19, 16, "sha1");
+    const key = pbkdf2Sync(password, paddedName(name), 19, 16, "sha1");
     const decipher = createDecipheriv("aes-128-cbc", key, LEGACY_MEDIA_IV);
     return Buffer.concat([decipher.update(data), decipher.final()]);
   } catch {
@@ -50,6 +51,7 @@ export function looksLikePlainMedia(data: Uint8Array): boolean {
     b.subarray(4, 8).toString("ascii") === "ftyp" ||
     looksLikeMp3(b) ||
     b.subarray(0, 4).toString("ascii") === "OggS" ||
+    b.subarray(0, 4).toString("ascii") === "fLaC" ||
     (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE") ||
     b.subarray(0, 5).toString("utf8").toLowerCase() === "<?xml" ||
     b.subarray(0, 4).toString("utf8").toLowerCase() === "<svg"
@@ -83,9 +85,10 @@ export function contentTypeFromBytes(data: Uint8Array, fallback: string): string
   if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
   if (b.subarray(0, 6).toString("ascii") === "GIF87a" || b.subarray(0, 6).toString("ascii") === "GIF89a") return "image/gif";
   if (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WEBP") return "image/webp";
-  if (b.subarray(4, 8).toString("ascii") === "ftyp") return "video/mp4";
+  if (b.subarray(4, 8).toString("ascii") === "ftyp") return fallback.startsWith("audio/") ? "audio/mp4" : "video/mp4";
   if (looksLikeMp3(b)) return "audio/mpeg";
   if (b.subarray(0, 4).toString("ascii") === "OggS") return "audio/ogg";
+  if (b.subarray(0, 4).toString("ascii") === "fLaC") return "audio/flac";
   if (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE") return "audio/wav";
   return fallback;
 }
