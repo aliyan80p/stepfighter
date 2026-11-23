@@ -1911,8 +1911,10 @@ function TestRunner() {
 
 
       {exhibitSrc && (
-        <MediaExhibitModal
-          content={{ kind: "image", src: exhibitSrc, alt: "Exhibit" }}
+        <ExhibitModal
+          src={exhibitSrc}
+          zoom={exhibitZoom}
+          setZoom={setExhibitZoom}
           onClose={() => setExhibitSrc(null)}
         />
       )}
