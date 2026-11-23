@@ -40,6 +40,10 @@ import {
   type HighlightStyle,
   type ContentWidth,
   type UiRadius,
+  type ExhibitStyle,
+  type ExhibitViewerSize,
+  type ExplanationAlign,
+  type ImageAlign,
 } from "@/lib/user-settings";
 
 export const Route = createFileRoute("/_authenticated/account/settings")({
@@ -347,22 +351,87 @@ function SettingsPage() {
 
           <div className="flex flex-wrap items-center justify-between gap-4 py-2 border-t border-border">
             <div>
-              <div className="font-semibold text-sm">Reading column width</div>
-              <div className="text-xs text-muted-foreground">Limit line length for faster clinical vignette scanning.</div>
+              <div className="font-semibold text-sm">Line Width ({s.lineWidthPercent ?? 85}%)</div>
+              <div className="text-xs text-muted-foreground">Control how wide question stems span across the screen.</div>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {(["narrow", "standard", "wide", "full"] as ContentWidth[]).map((w) => (
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={50}
+                max={100}
+                step={5}
+                value={s.lineWidthPercent ?? 85}
+                onChange={(e) => set({ lineWidthPercent: Number(e.target.value) })}
+                className="w-36 accent-primary"
+              />
+              <Button variant="ghost" size="sm" onClick={() => set({ lineWidthPercent: 85 })} className="text-primary hover:bg-primary/10">
+                Reset
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 py-2 border-t border-border">
+            <div>
+              <div className="font-semibold text-sm">Extra Reading Padding ({s.contentPadding ?? 0} px)</div>
+              <div className="text-xs text-muted-foreground">Up to 48 px of extra spacing; narrower panels use less automatically.</div>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={0}
+                max={48}
+                step={4}
+                value={s.contentPadding ?? 0}
+                onChange={(e) => set({ contentPadding: Number(e.target.value) })}
+                className="w-36 accent-primary"
+              />
+              <Button variant="ghost" size="sm" onClick={() => set({ contentPadding: 0 })} className="text-primary hover:bg-primary/10">
+                Reset
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 py-2 border-t border-border">
+            <div>
+              <div className="font-semibold text-sm">Explanation Alignment</div>
+              <div className="text-xs text-muted-foreground">Text alignment for explanation paragraphs.</div>
+            </div>
+            <div className="flex gap-1.5">
+              {(["left", "justify", "center"] as ExplanationAlign[]).map((a) => (
                 <button
-                  key={w}
+                  key={a}
                   type="button"
-                  onClick={() => set({ contentWidth: w })}
+                  onClick={() => set({ explanationAlign: a })}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md border capitalize transition ${
-                    s.contentWidth === w
+                    (s.explanationAlign ?? "left") === a
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-card border-border text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  {w}
+                  {a}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 py-2 border-t border-border">
+            <div>
+              <div className="font-semibold text-sm">Image Alignment</div>
+              <div className="text-xs text-muted-foreground">Align question and explanation images left or center.</div>
+            </div>
+            <div className="flex gap-1.5">
+              {(["left", "center"] as ImageAlign[]).map((a) => (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => set({ imageAlign: a })}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md border capitalize transition ${
+                    (s.imageAlign ?? "center") === a
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card border-border text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {a}
                 </button>
               ))}
             </div>
@@ -434,6 +503,57 @@ function SettingsPage() {
               />
             </div>
           </div>
+
+          <ToggleRow
+            label="Show highlights as bold"
+            hint="Render highlighted text in bold for stronger visual emphasis."
+            value={!!s.highlightBold}
+            onChange={(v) => set({ highlightBold: v })}
+          />
+          <ToggleRow
+            label="Show highlights with shadows"
+            hint="Add a subtle drop shadow glow behind highlighted phrases."
+            value={!!s.highlightShadow}
+            onChange={(v) => set({ highlightShadow: v })}
+          />
+          {s.highlightShadow && (
+            <div className="flex items-center justify-between gap-4 py-2 border-t border-border">
+              <div>
+                <div className="font-semibold text-sm">Shadow intensity ({s.highlightShadowIntensity ?? 30})</div>
+                <div className="text-xs text-muted-foreground">Adjust highlight shadow depth (0–100).</div>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={s.highlightShadowIntensity ?? 30}
+                onChange={(e) => set({ highlightShadowIntensity: Number(e.target.value) })}
+                className="w-40 accent-primary"
+              />
+            </div>
+          )}
+          <ToggleRow
+            label="Shine in dark mode"
+            hint="Add a soft luminous shine to highlights when using dark themes."
+            value={s.highlightDarkShine !== false}
+            onChange={(v) => set({ highlightDarkShine: v })}
+          />
+          {s.highlightDarkShine !== false && (
+            <div className="flex items-center justify-between gap-4 py-2 border-t border-border">
+              <div>
+                <div className="font-semibold text-sm">Shine intensity ({s.highlightDarkShineIntensity ?? 50})</div>
+                <div className="text-xs text-muted-foreground">Adjust dark-mode highlight glow strength (0–100).</div>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={s.highlightDarkShineIntensity ?? 50}
+                onChange={(e) => set({ highlightDarkShineIntensity: Number(e.target.value) })}
+                className="w-40 accent-primary"
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {Object.entries(DEFAULT_HIGHLIGHTS).map(([hex, meta]) => (
@@ -567,6 +687,24 @@ function SettingsPage() {
               onChange={(v) => set({ hidePercentages: v })}
             />
             <ToggleRow
+              label="Show unsubmitted question indicator"
+              hint="Show an indicator when you select an answer without clicking Submit."
+              value={s.showUnsubmittedIndicator !== false}
+              onChange={(v) => set({ showUnsubmittedIndicator: v })}
+            />
+            <ToggleRow
+              label="Hide question difficulty rating"
+              hint="Hide difficulty badges during practice and review."
+              value={!!s.hideDifficultyRating}
+              onChange={(v) => set({ hideDifficultyRating: v })}
+            />
+            <ToggleRow
+              label="Smart Context Menu"
+              hint="Show the floating quick-highlight and copy toolbar when selecting text."
+              value={s.smartContextMenu !== false}
+              onChange={(v) => set({ smartContextMenu: v })}
+            />
+            <ToggleRow
               label="Automatic night mode"
               hint="Auto-switch quiz to dark mode based on scheduled time."
               value={s.autoNightMode}
@@ -605,6 +743,95 @@ function SettingsPage() {
             </div>
           </Card>
         </div>
+
+        {/* Exhibits, Sidebar & Windows */}
+        <Card
+          icon={<LayoutGrid className="h-4 w-4" />}
+          iconBg="bg-indigo-600 text-white"
+          title="Exhibits, Sidebar & Windows"
+          subtitle="Control exhibit appearance, quiz question sidebar behavior, and floating windows."
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-2">
+            <div>
+              <div className="font-semibold text-sm">Exhibit Style</div>
+              <div className="text-xs text-muted-foreground">How inline exhibit links appear inside clinical vignettes.</div>
+            </div>
+            <div className="flex gap-1.5">
+              {(["button", "link", "plain"] as ExhibitStyle[]).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => set({ exhibitStyle: st })}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md border capitalize transition ${
+                    (s.exhibitStyle ?? "button") === st
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card border-border text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-4 py-2 border-t border-border">
+            <div>
+              <div className="font-semibold text-sm">Exhibit Viewer Size</div>
+              <div className="text-xs text-muted-foreground">Default modal width when opening exhibits and images.</div>
+            </div>
+            <div className="flex gap-1.5">
+              {(["default", "small", "medium", "large"] as ExhibitViewerSize[]).map((sz) => (
+                <button
+                  key={sz}
+                  type="button"
+                  onClick={() => set({ exhibitViewerSize: sz })}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md border capitalize transition ${
+                    (s.exhibitViewerSize ?? "default") === sz
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card border-border text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {sz}
+                </button>
+              ))}
+            </div>
+          </div>
+          <ToggleRow
+            label="Close Exhibit on click outside"
+            hint="Dismiss exhibit popups when clicking the dark backdrop."
+            value={s.closeExhibitOnOutsideClick !== false}
+            onChange={(v) => set({ closeExhibitOnOutsideClick: v })}
+          />
+          <ToggleRow
+            label="Save Space for Sidebar"
+            hint="Reserve space beside the question content instead of overlaying the question list."
+            value={s.saveSpaceForSidebar !== false}
+            onChange={(v) => set({ saveSpaceForSidebar: v })}
+          />
+          <ToggleRow
+            label="Show Sidebar Automatically"
+            hint="Keep the question navigator open automatically when starting a block."
+            value={s.autoShowSidebar !== false}
+            onChange={(v) => set({ autoShowSidebar: v })}
+          />
+          <ToggleRow
+            label="Hide Sidebar Automatically"
+            hint="Auto-collapse the question navigator after selecting a question."
+            value={!!s.autoHideSidebar}
+            onChange={(v) => set({ autoHideSidebar: v })}
+          />
+          <ToggleRow
+            label="Show Sidebar by hovering over screen edge"
+            hint="Reveal the hidden question sidebar when moving your mouse to the left edge."
+            value={!!s.hoverEdgeSidebar}
+            onChange={(v) => set({ hoverEdgeSidebar: v })}
+          />
+          <ToggleRow
+            label="Allow windows to go off screen"
+            hint="Permit floating tool windows to move freely near or beyond viewport edges."
+            value={!!s.allowWindowsOffScreen}
+            onChange={(v) => set({ allowWindowsOffScreen: v })}
+          />
+        </Card>
 
         {/* Quiz Toolbar Icons */}
         <Card

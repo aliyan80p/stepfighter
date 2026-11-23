@@ -40,6 +40,9 @@ export type CustomThemeColors = {
 
 export type FontFamilyId =
   | "system"
+  | "open-sans"
+  | "arial"
+  | "verdana"
   | "inter"
   | "space-grotesk"
   | "atkinson"
@@ -50,6 +53,10 @@ export type FontFamilyId =
 export type HighlightStyle = "solid" | "pastel" | "underline";
 export type ContentWidth = "narrow" | "standard" | "wide" | "full";
 export type UiRadius = "sharp" | "rounded" | "pill";
+export type ExhibitStyle = "button" | "link" | "plain";
+export type ExhibitViewerSize = "default" | "small" | "medium" | "large";
+export type ExplanationAlign = "left" | "justify" | "center";
+export type ImageAlign = "left" | "center";
 
 export type UserSettings = {
   // Account & Global Appearance
@@ -73,20 +80,44 @@ export type UserSettings = {
   stopTimerOnBlur: boolean;
   confirmOmission: boolean;
   hidePercentages: boolean;
+  showUnsubmittedIndicator: boolean;
+  hideDifficultyRating: boolean;
+  smartContextMenu: boolean;
   autoNightMode: boolean;
   nightStart: number; // hour 0-23
   nightEnd: number;   // hour 0-23
 
-  // Reading & Typography
+  // Reading & Layout
   fontFamily: FontFamilyId;
   applyFontGlobally: boolean;
   fontSize: number;
   fontWeight: number;
   lineHeight: number;
   contentWidth: ContentWidth;
+  lineWidthPercent: number; // 50 - 100
+  contentPadding: number;   // 0 - 48 px
+  explanationAlign: ExplanationAlign;
+  imageAlign: ImageAlign;
+
+  // Exhibits & Windows
+  exhibitStyle: ExhibitStyle;
+  exhibitViewerSize: ExhibitViewerSize;
+  closeExhibitOnOutsideClick: boolean;
+  allowWindowsOffScreen: boolean;
+
+  // Sidebar behavior (Quiz Runner)
+  saveSpaceForSidebar: boolean;
+  autoShowSidebar: boolean;
+  autoHideSidebar: boolean;
+  hoverEdgeSidebar: boolean;
 
   // Highlights
   highlightStyle: HighlightStyle;
+  highlightBold: boolean;
+  highlightShadow: boolean;
+  highlightShadowIntensity: number; // 0 - 100
+  highlightDarkShine: boolean;
+  highlightDarkShineIntensity: number; // 0 - 100
   strikeColor: string;
   enabledHighlights: Record<string, boolean>;
   customHighlights: string[];
@@ -209,15 +240,39 @@ export const FONT_FAMILIES: {
     css: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   },
   {
+    id: "open-sans",
+    label: "Open Sans",
+    category: "Clean Exam Sans",
+    css: '"Open Sans", ui-sans-serif, system-ui, sans-serif',
+  },
+  {
+    id: "arial",
+    label: "Arial",
+    category: "Classic Exam",
+    css: 'Arial, Helvetica, sans-serif',
+  },
+  {
+    id: "verdana",
+    label: "Verdana",
+    category: "USMLE Classic",
+    css: 'Verdana, Geneva, sans-serif',
+  },
+  {
     id: "inter",
     label: "Inter",
     category: "Clean UI Sans",
     css: '"Inter", ui-sans-serif, system-ui, sans-serif',
   },
   {
+    id: "georgia",
+    label: "Georgia",
+    category: "Classic Serif",
+    css: 'Georgia, "Times New Roman", Times, serif',
+  },
+  {
     id: "atkinson",
     label: "Atkinson Hyperlegible",
-    category: "Accessibility / Exam",
+    category: "Accessibility",
     css: '"Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif',
   },
   {
@@ -225,12 +280,6 @@ export const FONT_FAMILIES: {
     label: "Space Grotesk",
     category: "Modern Geometric",
     css: '"Space Grotesk", ui-sans-serif, system-ui, sans-serif',
-  },
-  {
-    id: "georgia",
-    label: "Georgia",
-    category: "Classic Serif",
-    css: 'Georgia, "Times New Roman", Times, serif',
   },
   {
     id: "merriweather",
@@ -296,6 +345,9 @@ export const DEFAULT_SETTINGS: UserSettings = {
   stopTimerOnBlur: false,
   confirmOmission: false,
   hidePercentages: false,
+  showUnsubmittedIndicator: true,
+  hideDifficultyRating: false,
+  smartContextMenu: true,
   autoNightMode: false,
   nightStart: 20,
   nightEnd: 6,
@@ -306,8 +358,27 @@ export const DEFAULT_SETTINGS: UserSettings = {
   fontWeight: 0,
   lineHeight: 1.65,
   contentWidth: "standard",
+  lineWidthPercent: 85,
+  contentPadding: 0,
+  explanationAlign: "left",
+  imageAlign: "center",
+
+  exhibitStyle: "button",
+  exhibitViewerSize: "default",
+  closeExhibitOnOutsideClick: true,
+  allowWindowsOffScreen: false,
+
+  saveSpaceForSidebar: true,
+  autoShowSidebar: true,
+  autoHideSidebar: false,
+  hoverEdgeSidebar: false,
 
   highlightStyle: "solid",
+  highlightBold: false,
+  highlightShadow: false,
+  highlightShadowIntensity: 30,
+  highlightDarkShine: true,
+  highlightDarkShineIntensity: 50,
   strikeColor: "#ef4444",
   enabledHighlights: Object.fromEntries(Object.keys(DEFAULT_HIGHLIGHTS).map((k) => [k, true])),
   customHighlights: [],
@@ -442,6 +513,16 @@ export function applyUserThemeToDocument(settings: UserSettings) {
   root.setAttribute("data-theme", theme);
   root.classList.toggle("dark", isDark);
   root.setAttribute("data-hl-style", settings.highlightStyle || "solid");
+  root.setAttribute("data-hl-bold", settings.highlightBold ? "true" : "false");
+  root.setAttribute("data-hl-shadow", settings.highlightShadow ? "true" : "false");
+  root.setAttribute("data-hl-shine", settings.highlightDarkShine ? "true" : "false");
+  root.setAttribute("data-exhibit-style", settings.exhibitStyle || "button");
+  root.setAttribute("data-img-align", settings.imageAlign || "center");
+  root.setAttribute("data-expl-align", settings.explanationAlign || "left");
+  root.style.setProperty("--sf-hl-shadow-alpha", String(Math.max(0, Math.min(100, settings.highlightShadowIntensity ?? 30)) / 100));
+  root.style.setProperty("--sf-hl-shine-alpha", String(Math.max(0, Math.min(100, settings.highlightDarkShineIntensity ?? 50)) / 100));
+  root.style.setProperty("--sf-content-padding", `${Math.max(0, Math.min(48, settings.contentPadding ?? 0))}px`);
+  root.style.setProperty("--sf-expl-align", settings.explanationAlign || "left");
 
   // Clear inline custom surface vars when switching away from custom theme
   if (theme === "custom") {

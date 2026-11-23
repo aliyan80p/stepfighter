@@ -40,6 +40,10 @@ import {
   type ResolvedQuizTheme,
   type HighlightStyle,
   type FontFamilyId,
+  type ExhibitStyle,
+  type ExhibitViewerSize,
+  type ExplanationAlign,
+  type ImageAlign,
 } from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { MedicalLibraryModal } from "@/components/medical-library-modal";
@@ -1010,7 +1014,7 @@ function TestRunner() {
 
   return (
     <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
-      {hlBar && (
+      {hlBar && userSettings.smartContextMenu !== false && (
         <div
           data-hl-toolbar
           data-placement={hlBar.placement}
@@ -1120,10 +1124,27 @@ function TestRunner() {
 
       {/* Main */}
       <div className="flex flex-1 overflow-hidden relative">
+        {/* Hover-edge sensor to reveal sidebar on mouse hover */}
+        {!sidebarOpen && userSettings.hoverEdgeSidebar && (
+          <div
+            onMouseEnter={() => setSidebarOpen(true)}
+            className="hidden md:block absolute inset-y-0 left-0 w-3.5 z-30 cursor-e-resize"
+            title="Hover to show question list"
+          />
+        )}
         {/* Left navigator */}
         {sidebarOpen && (
         <aside
-          className="w-14 md:w-24 shrink-0 overflow-auto border-r"
+          onMouseLeave={() => {
+            if (userSettings.hoverEdgeSidebar && !userSettings.saveSpaceForSidebar) {
+              setSidebarOpen(false);
+            }
+          }}
+          className={`w-14 md:w-24 shrink-0 overflow-auto border-r transition-all duration-200 ${
+            userSettings.saveSpaceForSidebar === false
+              ? "absolute inset-y-0 left-0 z-30 shadow-2xl"
+              : "relative"
+          }`}
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
 
@@ -1134,6 +1155,7 @@ function TestRunner() {
               ? (hideResult ? "attempted" : att.is_correct ? "correct" : "wrong")
               : "none";
             const active = i === idx;
+            const isUnsubmitted = active && selected !== null && !submitted && userSettings.showUnsubmittedIndicator !== false;
             return (
               <button
                 type="button"
@@ -1142,7 +1164,10 @@ function TestRunner() {
                   e.preventDefault();
                   e.stopPropagation();
                   goToQuestion(i);
-                  if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+                  if (
+                    userSettings.autoHideSidebar ||
+                    (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches)
+                  ) {
                     setSidebarOpen(false);
                   }
                 }}
@@ -1158,7 +1183,13 @@ function TestRunner() {
                 {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
                 {status === "wrong" && <span className="text-red-600 font-bold">✕</span>}
                 {status === "attempted" && <span className="w-3.5" />}
-                {status === "none" && <span className="inline-block h-2 w-2 rounded-full bg-slate-700/60 scale-[0.7]" />}
+                {status === "none" && (
+                  isUnsubmitted ? (
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" title="Selected, not yet submitted" />
+                  ) : (
+                    <span className="inline-block h-2 w-2 rounded-full bg-slate-700/60 scale-[0.7]" />
+                  )
+                )}
                 <span>{i + 1}</span>
                 {data.bookmarkedIds.has(q.id) && <img src={markFlagIcon.url} alt="Flagged" className="h-3.5 w-3.5 ml-auto object-contain" />}
               </button>
@@ -1169,29 +1200,32 @@ function TestRunner() {
 
 
         {/* Content */}
-        <div className="flex-1 overflow-auto" ref={contentRef}>
+        <div className="sf-main-canvas flex-1 overflow-auto" ref={contentRef}>
           <div
-            className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
+            className={`w-full mx-0 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
             style={{
               fontSize,
               fontWeight,
               fontFamily: getFontStack(userSettings.fontFamily),
               lineHeight: userSettings.lineHeight,
               color: themeStyles.text,
+              paddingInline: "clamp(0.75rem, calc(1rem + var(--sf-content-padding, 0px)), 4rem)",
               maxWidth: (!isRealExam || isReview) && !(userSettings.splitExplanations && showAnswers && !!question.explanation)
-                ? CONTENT_WIDTH_PX[userSettings.contentWidth]
+                ? `${Math.max(50, Math.min(100, userSettings.lineWidthPercent ?? 85))}%`
                 : undefined,
             }}
           >
-            {(() => null)()}
-            {(() => null)()}
-
-
+            {selected !== null && !submitted && !isReview && userSettings.showUnsubmittedIndicator !== false && (
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Answer selected — not submitted yet
+              </div>
+            )}
             
             <HighlightableHtml seedKey={`q-${question.id}`} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
 
             {mediaItems.length > 0 && (
-              <div className="mt-3 flex flex-wrap items-start justify-center gap-3">
+              <div className={`mt-3 flex flex-wrap items-start gap-3 ${userSettings.imageAlign === "left" ? "justify-start" : "justify-center"}`}>
                 {mediaItems.map((item, mediaIndex) => {
                   const src = item.url;
                   if (item.kind === "image") {
@@ -1729,6 +1763,15 @@ function ExhibitModal({
   src, zoom, setZoom, onClose,
 }: { src: string; zoom: number; setZoom: (v: number) => void; onClose: () => void }) {
   const [expanded, setExpanded] = useState(false);
+  const userSettings = useHydratedSettings();
+  const sizeClass =
+    userSettings.exhibitViewerSize === "small"
+      ? "w-[400px]"
+      : userSettings.exhibitViewerSize === "medium"
+        ? "w-[740px]"
+        : userSettings.exhibitViewerSize === "large"
+          ? "w-[1020px]"
+          : "w-[540px]";
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -1736,14 +1779,16 @@ function ExhibitModal({
   }, [onClose]);
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-[1px] p-4"
+      onClick={() => {
+        if (userSettings.closeExhibitOnOutsideClick !== false) onClose();
+      }}
     >
       <div
-        className={`bg-white rounded shadow-2xl overflow-hidden flex flex-col ${expanded ? "w-[95vw] h-[95vh]" : "w-[520px] max-w-[95vw] max-h-[92vh]"}`}
+        className={`sf-scale-enter bg-card text-card-foreground border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col ${expanded ? "w-[95vw] h-[95vh]" : `${sizeClass} max-w-[95vw] max-h-[92vh]`}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e3a8a] text-white">
+        <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: "var(--sf-nav-bg, #1a4b7c)" }}>
           <span className="text-sm font-semibold">Exhibit Display</span>
           <div className="flex items-center gap-1">
             <button
@@ -1978,6 +2023,146 @@ export function SettingsPanel(props: any) {
             ))}
           </div>
         </Row>
+        <Row label="Show as Bold">
+          <Toggle on={!!us.highlightBold} onChange={(v: boolean) => setUserSettings({ highlightBold: v })} />
+        </Row>
+        <Row label="Show with Shadows">
+          <Toggle on={!!us.highlightShadow} onChange={(v: boolean) => setUserSettings({ highlightShadow: v })} />
+        </Row>
+        {us.highlightShadow && (
+          <Row label={`Shadow Intensity (${us.highlightShadowIntensity ?? 30})`}>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={us.highlightShadowIntensity ?? 30}
+              onChange={(e) => setUserSettings({ highlightShadowIntensity: Number(e.target.value) })}
+              className="w-28 accent-primary"
+            />
+          </Row>
+        )}
+        <Row label="Shine in Dark Mode">
+          <Toggle on={us.highlightDarkShine !== false} onChange={(v: boolean) => setUserSettings({ highlightDarkShine: v })} />
+        </Row>
+        {us.highlightDarkShine !== false && (
+          <Row label={`Shine Intensity (${us.highlightDarkShineIntensity ?? 50})`}>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={us.highlightDarkShineIntensity ?? 50}
+              onChange={(e) => setUserSettings({ highlightDarkShineIntensity: Number(e.target.value) })}
+              className="w-28 accent-primary"
+            />
+          </Row>
+        )}
+      </div>
+
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Layout, Exhibits & Sidebar</div>
+        <Row label={`Line Width (${us.lineWidthPercent ?? 85}%)`}>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="range"
+              min={50}
+              max={100}
+              step={5}
+              value={us.lineWidthPercent ?? 85}
+              onChange={(e) => setUserSettings({ lineWidthPercent: Number(e.target.value) })}
+              className="w-24 accent-primary"
+            />
+            <button onClick={() => setUserSettings({ lineWidthPercent: 85 })} className="text-[11px] text-primary hover:underline">Reset</button>
+          </div>
+        </Row>
+        <Row label={`Padding (${us.contentPadding ?? 0} px)`}>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="range"
+              min={0}
+              max={48}
+              step={4}
+              value={us.contentPadding ?? 0}
+              onChange={(e) => setUserSettings({ contentPadding: Number(e.target.value) })}
+              className="w-24 accent-primary"
+            />
+            <button onClick={() => setUserSettings({ contentPadding: 0 })} className="text-[11px] text-primary hover:underline">Reset</button>
+          </div>
+        </Row>
+        <Row label="Explanation Alignment">
+          <div className="flex gap-1">
+            {(["left", "justify", "center"] as ExplanationAlign[]).map((a) => (
+              <button
+                key={a}
+                onClick={() => setUserSettings({ explanationAlign: a })}
+                className={`px-2 py-0.5 text-[11px] rounded border capitalize ${
+                  (us.explanationAlign ?? "left") === a
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </Row>
+        <Row label="Image Alignment">
+          <div className="flex gap-1">
+            {(["left", "center"] as ImageAlign[]).map((a) => (
+              <button
+                key={a}
+                onClick={() => setUserSettings({ imageAlign: a })}
+                className={`px-2.5 py-0.5 text-[11px] rounded border capitalize ${
+                  (us.imageAlign ?? "center") === a
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </Row>
+        <Row label="Exhibit Style">
+          <div className="flex gap-1">
+            {(["button", "link", "plain"] as ExhibitStyle[]).map((st) => (
+              <button
+                key={st}
+                onClick={() => setUserSettings({ exhibitStyle: st })}
+                className={`px-2 py-0.5 text-[11px] rounded border capitalize ${
+                  (us.exhibitStyle ?? "button") === st
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+        </Row>
+        <Row label="Exhibit Viewer Size">
+          <select
+            value={us.exhibitViewerSize ?? "default"}
+            onChange={(e) => setUserSettings({ exhibitViewerSize: e.target.value as ExhibitViewerSize })}
+            className="text-xs border border-border rounded px-2 py-1 bg-card text-foreground"
+          >
+            <option value="default">Default</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+          </select>
+        </Row>
+        <Row label="Close Exhibit on Click Outside">
+          <Toggle on={us.closeExhibitOnOutsideClick !== false} onChange={(v: boolean) => setUserSettings({ closeExhibitOnOutsideClick: v })} />
+        </Row>
+        <Row label="Save Space for Sidebar">
+          <Toggle on={us.saveSpaceForSidebar !== false} onChange={(v: boolean) => setUserSettings({ saveSpaceForSidebar: v })} />
+        </Row>
+        <Row label="Hide Sidebar Automatically">
+          <Toggle on={!!us.autoHideSidebar} onChange={(v: boolean) => setUserSettings({ autoHideSidebar: v })} />
+        </Row>
+        <Row label="Show Sidebar on Edge Hover">
+          <Toggle on={!!us.hoverEdgeSidebar} onChange={(v: boolean) => setUserSettings({ hoverEdgeSidebar: v })} />
+        </Row>
       </div>
 
       <div className="p-4 border-b border-border">
@@ -2033,7 +2218,16 @@ export function SettingsPanel(props: any) {
       </div>
 
       <div className="p-4 border-b border-border">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">More Features</div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Features & Windows</div>
+        <Row label="Smart Context Menu">
+          <Toggle on={us.smartContextMenu !== false} onChange={(v) => setUserSettings({ smartContextMenu: v })} />
+        </Row>
+        <Row label="Unsubmitted Question Indicator">
+          <Toggle on={us.showUnsubmittedIndicator !== false} onChange={(v) => setUserSettings({ showUnsubmittedIndicator: v })} />
+        </Row>
+        <Row label="Hide Question Difficulty">
+          <Toggle on={!!us.hideDifficultyRating} onChange={(v) => setUserSettings({ hideDifficultyRating: v })} />
+        </Row>
         <Row label="Confirm Answer Omission">
           <Toggle on={us.confirmOmission} onChange={(v) => setUserSettings({ confirmOmission: v })} />
         </Row>
@@ -2042,6 +2236,9 @@ export function SettingsPanel(props: any) {
         </Row>
         <Row label="Stop Timer on Blur">
           <Toggle on={us.stopTimerOnBlur} onChange={(v) => setUserSettings({ stopTimerOnBlur: v })} />
+        </Row>
+        <Row label="Allow Windows Off Screen">
+          <Toggle on={!!us.allowWindowsOffScreen} onChange={(v) => setUserSettings({ allowWindowsOffScreen: v })} />
         </Row>
       </div>
 

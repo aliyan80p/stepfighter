@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { X, Maximize2, Minimize2, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useHydratedSettings } from "@/lib/user-settings";
 
 export type ExhibitContent =
   | { kind: "image"; src: string; alt?: string }
@@ -24,6 +25,16 @@ export function ExhibitModal({
 }) {
   const [maximized, setMaximized] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const userSettings = useHydratedSettings();
+
+  const viewerWidthClass =
+    userSettings.exhibitViewerSize === "small"
+      ? "w-[min(92vw,440px)]"
+      : userSettings.exhibitViewerSize === "medium"
+        ? "w-[min(92vw,780px)]"
+        : userSettings.exhibitViewerSize === "large"
+          ? "w-[min(96vw,1060px)]"
+          : "w-[min(92vw,620px)]";
 
   useEffect(() => {
     if (!content) return;
@@ -41,22 +52,24 @@ export function ExhibitModal({
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={() => {
+        if (userSettings.closeExhibitOnOutsideClick !== false) onClose();
+      }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col",
+          "sf-scale-enter bg-card text-card-foreground rounded-lg shadow-2xl overflow-hidden flex flex-col border border-border",
           maximized
             ? "w-[98vw] h-[96vh]"
-            : "w-[min(92vw,620px)] max-h-[88vh]"
+            : `${viewerWidthClass} max-h-[88vh]`
         )}
         style={{ fontFamily: "Verdana, Arial, Georgia, serif" }}
       >
-        {/* Navy header (Fighter pattern) — 40px tall */}
+        {/* Header — adapts to user nav accent */}
         <div
           className="flex items-center justify-between px-4 text-white shrink-0"
-          style={{ backgroundColor: "#1a4b7c", height: 40 }}
+          style={{ backgroundColor: "var(--sf-nav-bg, #1a4b7c)", height: 40 }}
         >
           <div className="text-[13px] font-semibold tracking-wide">{title}</div>
           <div className="flex items-center gap-1">
