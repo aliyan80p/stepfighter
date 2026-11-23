@@ -34,6 +34,11 @@ export function looksLikePlainMedia(data: Uint8Array): boolean {
     b.subarray(0, 6).toString("ascii") === "GIF87a" ||
     b.subarray(0, 6).toString("ascii") === "GIF89a" ||
     (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WEBP") ||
+    (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE") ||
+    b.subarray(0, 3).toString("ascii") === "ID3" ||
+    (b[0] === 0xff && (b[1] & 0xe0) === 0xe0 && (b[1] & 0x06) !== 0x00) ||
+    b.subarray(0, 4).toString("ascii") === "OggS" ||
+    b.subarray(0, 4).toString("ascii") === "fLaC" ||
     b.subarray(4, 8).toString("ascii") === "ftyp" ||
     b.subarray(0, 5).toString("utf8").toLowerCase() === "<?xml" ||
     b.subarray(0, 4).toString("utf8").toLowerCase() === "<svg"
@@ -67,6 +72,10 @@ export function contentTypeFromBytes(data: Uint8Array, fallback: string): string
   if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
   if (b.subarray(0, 6).toString("ascii") === "GIF87a" || b.subarray(0, 6).toString("ascii") === "GIF89a") return "image/gif";
   if (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WEBP") return "image/webp";
-  if (b.subarray(4, 8).toString("ascii") === "ftyp") return "video/mp4";
+  if (b.subarray(0, 4).toString("ascii") === "RIFF" && b.subarray(8, 12).toString("ascii") === "WAVE") return "audio/wav";
+  if (b.subarray(0, 3).toString("ascii") === "ID3" || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0 && (b[1] & 0x06) !== 0x00)) return "audio/mpeg";
+  if (b.subarray(0, 4).toString("ascii") === "OggS") return "audio/ogg";
+  if (b.subarray(0, 4).toString("ascii") === "fLaC") return "audio/flac";
+  if (b.subarray(4, 8).toString("ascii") === "ftyp") return fallback.startsWith("audio/") ? "audio/mp4" : "video/mp4";
   return fallback;
 }

@@ -252,16 +252,36 @@ async function fetchPlainExact(
   srk: string,
   range: string | null,
 ): Promise<Response | null> {
-  const res = await probePlainPath(path, supaUrl, srk, range);
+  const ct = contentTypeFor(path);
+  const isAudio = ct.startsWith("audio/");
+  // For audio files, always fetch the full object (audio clips are <1MB) so we
+  // can detect legacy AES-encrypted MP3s that were previously stored undecrypted
+  // in qbank-media-plain, decrypt them on the fly, self-heal storage, and serve
+  // proper 206 Range responses.
+  const res = await probePlainPath(path, supaUrl, srk, isAudio ? null : range);
   if (!res) return null;
-  if (!range && contentTypeFor(path).startsWith("image/")) {
+  if (!range && ct.startsWith("image/")) {
     const bytes = Buffer.from(await res.arrayBuffer());
     if (!looksLikePlainMedia(bytes)) return null;
-    const type = contentTypeFromBytes(bytes, contentTypeFor(path));
+    const type = contentTypeFromBytes(bytes, ct);
     if (path !== requestedPath) void uploadPlain(requestedPath, bytes, type, supaUrl, srk);
     return rangeResponse(bytes, type, null);
   }
-  return upstreamMediaResponse(res, contentTypeFor(path));
+  if (isAudio) {
+    const raw = Buffer.from(await res.arrayBuffer());
+    const leaf = path.split("/").pop() ?? path;
+    const reqLeaf = requestedPath.split("/").pop() ?? requestedPath;
+    const data = looksLikePlainMedia(raw)
+      ? raw
+      : decryptImdMedia(raw, [leaf, reqLeaf, stripPrefix(leaf), stripPrefix(reqLeaf)]);
+    const type = contentTypeFromBytes(data, ct);
+    if (data !== raw && looksLikePlainMedia(data)) {
+      void uploadPlain(path, data, type, supaUrl, srk);
+      if (requestedPath !== path) void uploadPlain(requestedPath, data, type, supaUrl, srk);
+    }
+    return rangeResponse(data, type, range);
+  }
+  return upstreamMediaResponse(res, ct);
 }
 
 /**
