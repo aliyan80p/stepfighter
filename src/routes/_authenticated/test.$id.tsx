@@ -65,38 +65,91 @@ export const Route = createFileRoute("/_authenticated/test/$id")({
  * highlighter across parent re-renders (timer ticks, selection state, etc.)
  * so that <img>/<video> inside the HTML never remount and never flash.
  */
+function patchMediaElementsWithToken(root: HTMLElement, token: string) {
+  const updateUrl = (raw: string | null) => {
+    if (!raw || !raw.includes("/api/media/")) return null;
+    const next = withMediaToken(raw, token);
+    return next !== raw ? next : null;
+  };
+
+  root.querySelectorAll<HTMLImageElement>("img[src]").forEach((img) => {
+    const next = updateUrl(img.getAttribute("src"));
+    if (next) {
+      (img as any).__sfRetryBound = false;
+      img.setAttribute("src", next);
+    }
+  });
+
+  root.querySelectorAll<HTMLAudioElement | HTMLVideoElement>("audio, video").forEach((el) => {
+    let changed = false;
+    const nextSrc = updateUrl(el.getAttribute("src"));
+    if (nextSrc) {
+      el.setAttribute("src", nextSrc);
+      changed = true;
+    }
+    el.querySelectorAll<HTMLSourceElement>("source[src]").forEach((source) => {
+      const nextSource = updateUrl(source.getAttribute("src"));
+      if (nextSource) {
+        source.setAttribute("src", nextSource);
+        changed = true;
+      }
+    });
+    if (changed) {
+      try { el.load(); } catch {}
+    }
+  });
+
+  root.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((a) => {
+    const next = updateUrl(a.getAttribute("href"));
+    if (next) a.setAttribute("href", next);
+  });
+}
+
 function attachImageAutoRetry(root: HTMLElement) {
   const imgs = root.querySelectorAll<HTMLImageElement>("img");
   imgs.forEach((img) => {
     if ((img as any).__sfRetryBound) return;
     (img as any).__sfRetryBound = true;
     let tries = 0;
-    const original = img.getAttribute("src") || "";
     const retry = () => {
-      if (tries >= 3 || !original) return;
+      const currentSrc = img.getAttribute("src") || "";
+      // Don't burn retries on a tokenless /api/media/ URL while token is still loading
+      if (!currentSrc || (currentSrc.includes("/api/media/") && !currentSrc.includes("t="))) return;
+      if (tries >= 3) return;
       tries += 1;
-      const sep = original.includes("?") ? "&" : "?";
+      const base = currentSrc.replace(/([?&])r=[^&]*/g, "$1").replace(/[?&]+$/, "");
+      const sep = base.includes("?") ? "&" : "?";
       const bust = `${sep}r=${Date.now()}-${tries}`;
-      setTimeout(() => { img.src = original + bust; }, 200 * tries);
+      setTimeout(() => { img.src = base + bust; }, 250 * tries);
     };
     img.addEventListener("error", retry);
     // If already broken by the time we bind (cached failure), kick a retry.
-    if (img.complete && img.naturalWidth === 0 && original) retry();
+    if (img.complete && img.naturalWidth === 0) retry();
   });
 }
 
 function HighlightableHtml({
   html,
   seedKey,
+  mediaToken,
   ...rest
-}: { html: string; seedKey: string | number } & React.HTMLAttributes<HTMLDivElement>) {
+}: { html: string; seedKey: string | number; mediaToken?: string } & React.HTMLAttributes<HTMLDivElement>) {
   const ref = useRef<HTMLDivElement>(null);
   const lastSeed = useRef<string | number | null>(null);
+  const lastToken = useRef<string | undefined>(undefined);
   useLayoutEffect(() => {
     if (!ref.current) return;
     if (lastSeed.current !== seedKey) {
       ref.current.innerHTML = html;
       lastSeed.current = seedKey;
+      lastToken.current = mediaToken;
+      if (mediaToken) patchMediaElementsWithToken(ref.current, mediaToken);
+      attachImageAutoRetry(ref.current);
+    } else if (mediaToken && lastToken.current !== mediaToken) {
+      // Token just arrived or rotated: update media URLs in place without
+      // wiping any in-progress user highlights.
+      patchMediaElementsWithToken(ref.current, mediaToken);
+      lastToken.current = mediaToken;
       attachImageAutoRetry(ref.current);
     }
   });
@@ -118,7 +171,7 @@ function mediaKind(name: string): MediaKind | null {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext)) return "image";
   if (["mp4", "webm", "mov", "m4v"].includes(ext)) return "video";
-  if (["mp3", "wav", "ogg"].includes(ext)) return "audio";
+  if (["mp3", "wav", "ogg", "m4a", "aac", "flac"].includes(ext)) return "audio";
   return null;
 }
 
@@ -1222,20 +1275,29 @@ function TestRunner() {
               </div>
             )}
             
-            <HighlightableHtml seedKey={`q-${question.id}`} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
+            <HighlightableHtml seedKey={`q-${question.id}`} mediaToken={mediaToken} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
 
-            {mediaItems.length > 0 && (
+            {mediaItems.length > 0 && mediaToken && (
               <div className={`mt-3 flex flex-wrap items-start gap-3 ${userSettings.imageAlign === "left" ? "justify-start" : "justify-center"}`}>
                 {mediaItems.map((item, mediaIndex) => {
                   const src = item.url;
                   if (item.kind === "image") {
                     return (
                       <img
-                        key={`${item.name}-${mediaIndex}`}
+                        key={`${item.name}-${mediaIndex}-${mediaToken}`}
                         src={src}
                         alt="Exhibit"
                         loading="lazy"
                         decoding="async"
+                        onError={(e) => {
+                          const img = e.currentTarget;
+                          const tries = Number(img.dataset.retry ?? "0");
+                          if (tries >= 3) return;
+                          img.dataset.retry = String(tries + 1);
+                          const base = src.replace(/([?&])r=[^&]*/g, "$1").replace(/[?&]+$/, "");
+                          const sep = base.includes("?") ? "&" : "?";
+                          setTimeout(() => { img.src = `${base}${sep}r=${Date.now()}-${tries + 1}`; }, 250 * (tries + 1));
+                        }}
                         onClick={() => { setExhibitSrc(src); setExhibitZoom(1); }}
                         className="max-w-full rounded border cursor-zoom-in bg-white"
                         style={{ borderColor: "#b8c6de", maxHeight: "70vh" }}
@@ -1245,7 +1307,7 @@ function TestRunner() {
                   if (item.kind === "video") {
                     return (
                       <video
-                        key={`${item.name}-${mediaIndex}`}
+                        key={`${item.name}-${mediaIndex}-${mediaToken}`}
                         src={src}
                         controls
                         preload="metadata"
@@ -1256,10 +1318,11 @@ function TestRunner() {
                   }
                   return (
                     <audio
-                      key={`${item.name}-${mediaIndex}`}
+                      key={`${item.name}-${mediaIndex}-${mediaToken}`}
                       src={src}
                       controls
                       preload="metadata"
+                      className="w-full max-w-md"
                     />
                   );
                 })}
@@ -1439,6 +1502,7 @@ function TestRunner() {
                 >
                   <HighlightableHtml
                     seedKey={`e-${question.id}`}
+                    mediaToken={mediaToken}
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
                     html={htmlFor("e", question.explanation, true)}

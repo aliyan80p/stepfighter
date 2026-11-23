@@ -10,8 +10,9 @@
  * the network untouched.
  */
 
-const CACHE_NAME = "sf-media-v2";
+const CACHE_NAME = "sf-media-v3";
 const MEDIA_PREFIX = "/api/media/";
+const STREAM_EXT_RE = /\.(?:mp3|wav|ogg|m4a|aac|flac|mp4|webm|mov|m4v|ogv)$/i;
 
 self.addEventListener("install", (event) => {
   // Activate immediately so the very next media request is intercepted.
@@ -44,9 +45,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (!url.pathname.startsWith(MEDIA_PREFIX)) return;
-  // Range requests (video/audio seek) must not be served from Cache Storage —
-  // the browser expects a 206 Partial Content, but Cache.match returns 200.
-  if (req.headers.has("range")) return;
+  // Audio/video streaming & Range requests must bypass Cache Storage so browsers
+  // (especially Safari/iOS) get clean 206 Partial Content responses for seeking.
+  if (req.headers.has("range") || STREAM_EXT_RE.test(url.pathname)) return;
 
   event.respondWith(
     (async () => {

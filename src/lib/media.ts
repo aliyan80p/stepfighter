@@ -14,8 +14,26 @@ function mediaRoute(prefix: string, name: string, token?: string): string {
   return `${prefix}${encodeURIComponent(name)}?v=${MEDIA_VERSION}${tokenPart}`;
 }
 
+function refreshApiMediaToken(src: string, token?: string): string {
+  if (!token) return src;
+  try {
+    const isAbs = /^https?:\/\//i.test(src);
+    const u = new URL(src, "https://local.invalid");
+    u.searchParams.set("t", token);
+    u.searchParams.delete("r");
+    return isAbs ? u.toString() : `${u.pathname}${u.search}${u.hash}`;
+  } catch {
+    const cleaned = src.replace(/([?&])(t|r)=[^&]*/g, "$1").replace(/[?&]+$/, "");
+    const sep = cleaned.includes("?") ? "&" : "?";
+    return `${cleaned}${sep}t=${encodeURIComponent(token)}`;
+  }
+}
+
 function resolve(src: string, qbankId = 1, token?: string): string | null {
-  if (/^(https?:|data:|\/__l5e\/|\/api\/media\/)/i.test(src)) return null;
+  if (/^\/api\/media\//i.test(src)) {
+    return token ? refreshApiMediaToken(src, token) : null;
+  }
+  if (/^(https?:|data:|\/__l5e\/)/i.test(src)) return null;
   const slug = QBANK_SLUG[qbankId] ?? "";
   const prefix = slug ? `/api/media/${slug}/` : `/api/media/`;
   const original = src.split("/").pop() ?? src;
@@ -26,11 +44,10 @@ function resolve(src: string, qbankId = 1, token?: string): string | null {
   return mediaRoute(prefix, original, token);
 }
 
-/** Append the media access token to a raw /api/media URL built outside rewriteMedia. */
+/** Append or replace the media access token on a raw /api/media URL built outside rewriteMedia. */
 export function withMediaToken(url: string, token: string | undefined): string {
   if (!token) return url;
-  const sep = url.includes("?") ? "&" : "?";
-  return `${url}${sep}t=${encodeURIComponent(token)}`;
+  return refreshApiMediaToken(url, token);
 }
 
 function stripTags(html: string): string {

@@ -23,7 +23,7 @@ function contentTypeFor(name: string): string {
     png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
     webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp",
     mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", m4v: "video/mp4",
-    mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav",
+    mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav", m4a: "audio/mp4", aac: "audio/aac", flac: "audio/flac",
   };
   return map[ext] ?? "application/octet-stream";
 }
@@ -161,7 +161,14 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
 
 function upstreamMediaResponse(res: Response, fallbackContentType: string): Response {
   const headers = new Headers();
-  headers.set("Content-Type", res.headers.get("content-type") || fallbackContentType);
+  const upstreamType = res.headers.get("content-type")?.trim() ?? "";
+  // Supabase Storage often returns application/octet-stream for audio/video
+  // files, which breaks Safari/iOS <audio> playback. Prefer the extension MIME.
+  const resolvedType =
+    !upstreamType || upstreamType === "application/octet-stream"
+      ? fallbackContentType
+      : upstreamType;
+  headers.set("Content-Type", resolvedType);
   headers.set("Accept-Ranges", res.headers.get("accept-ranges") || "bytes");
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   headers.set("Content-Disposition", "inline");
