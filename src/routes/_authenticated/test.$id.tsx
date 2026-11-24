@@ -224,10 +224,28 @@ function isEmbeddedMedia(item: MediaItem, embeddedKeys: Set<string>) {
 }
 
 function TopBtn({
-  icon: Icon, imgSrc, imgFlip, imgClass, label, onClick, tileClass,
+  icon: Icon, imgSrc, imgFlip, imgClass, label, onClick, tileClass, plain,
 }: {
-  icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void; tileClass?: string;
+  icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void; tileClass?: string; plain?: boolean;
 }) {
+  if (plain) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        aria-label={label}
+        className="shrink-0 flex flex-col items-center justify-center px-1 sm:px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[36px] sm:min-w-[64px] leading-tight"
+      >
+        {imgSrc ? (
+          <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+        ) : Icon ? (
+          <Icon className="h-5 w-5" />
+        ) : null}
+        <span className="hidden sm:block text-[11px] mt-0.5">{label}</span>
+      </button>
+    );
+  }
   return (
     <button
       type="button"
@@ -439,16 +457,6 @@ function TestRunner() {
     };
   }, []);
 
-  const navBg = userSettings.useAccentInQuizNav
-    ? darkenHex(userSettings.accentColor, 0.78)
-    : NAV_BG;
-
-  const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
-  const themeStyles =
-    !baseThemeStyles.isDark && theme === "light"
-      ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
-      : baseThemeStyles;
-
   const question = data?.questions[idx];
   const mediaToken = useMediaToken(data?.qbankId);
   const allMediaItems = getQuestionMedia(question, data?.qbankId ?? 1)
@@ -458,7 +466,21 @@ function TestRunner() {
   const isPractice = data?.test.mode === "practice";
   const isRealExam = data?.test.mode === "test";
   const isReview = !!data?.test.done;
+  const isExamUI = isRealExam && !isReview;
+  const isUworldUI = !isExamUI;
   const total = data?.questions.length ?? 0;
+
+  const navBg = userSettings.useAccentInQuizNav
+    ? darkenHex(userSettings.accentColor, 0.78)
+    : isExamUI
+      ? "#1a4b7c"
+      : NAV_BG;
+
+  const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
+  const themeStyles =
+    isUworldUI && !baseThemeStyles.isDark && theme === "light"
+      ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
+      : baseThemeStyles;
 
   // Preload next question's images in the background so switching questions feels instant.
   useEffect(() => {
@@ -1157,10 +1179,48 @@ function TestRunner() {
           </button>
         </div>
       )}
-      {/* Top nav — Official UWorld ocean-navy bar */}
-      <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-1.5 text-white" style={{ background: navBg }}>
-        <div className="flex items-center gap-2 shrink-0">
-          {!(isRealExam && !isReview) && (
+      {/* Top nav — Original NBME/Exam bar in Exam mode; Official UWorld bar in Tutor/Review mode */}
+      {isExamUI ? (
+        <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-0.5 text-white" style={{ background: navBg }}>
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="text-[11px] sm:text-[12px] leading-tight shrink-0">
+              <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
+              <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
+            </div>
+            <button
+              type="button"
+              onClick={bookmark}
+              className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10 shrink-0"
+              title={isBookmarked ? "Remove flag" : "Flag question"}
+            >
+              <span className={`inline-flex items-center justify-center w-2.5 h-2.5 border border-white/80 ${isBookmarked ? "bg-red-600" : "bg-transparent"}`}>
+                {isBookmarked && (
+                  <svg viewBox="0 0 16 16" className="w-2 h-2 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 8.5 6.5 12 13 4.5" />
+                  </svg>
+                )}
+              </span>
+              <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
+              <span className="hidden sm:inline text-[11px] font-semibold text-white">Mark</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <TopBtn plain imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
+            <TopBtn plain imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0">
+            <TopBtn plain imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
+            <TopBtn plain imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
+            <TopBtn plain imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+            <TopBtn plain imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />
+            <TopBtn plain imgSrc={textZoomIcon.url} imgClass="h-10 w-10 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
+          </div>
+        </div>
+      ) : (
+        <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-1.5 text-white" style={{ background: navBg }}>
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               className="flex flex-col items-center justify-center h-7 w-7 rounded-[4px] bg-white text-[#004a77] hover:bg-white/90 shadow-xs shrink-0"
@@ -1171,58 +1231,52 @@ function TestRunner() {
               <span className="block w-4 h-0.5 bg-[#004a77] mb-1" />
               <span className="block w-4 h-0.5 bg-[#004a77]" />
             </button>
-          )}
-          <div className="border border-white/55 rounded-[2px] px-2.5 py-0.5 text-[11px] sm:text-[12px] leading-tight shrink-0">
-            <div className="font-semibold">Item: {idx + 1} of {total}</div>
-            {(isRealExam && !isReview)
-              ? <div className="text-[10.5px] text-white/85">Block: 1 of 1</div>
-              : <div className="hidden sm:block text-[10.5px] text-white/85">Question Id: {question.id}</div>}
+            <div className="border border-white/55 rounded-[2px] px-2.5 py-0.5 text-[11px] sm:text-[12px] leading-tight shrink-0">
+              <div className="font-semibold">Item: {idx + 1} of {total}</div>
+              <div className="hidden sm:block text-[10.5px] text-white/85">Question Id: {question.id}</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx - 1)}
+              disabled={idx <= 0}
+              title="Previous"
+              className="flex flex-col items-center justify-center px-1 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
+            >
+              <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
+                <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
+              </span>
+              <span className="hidden sm:block text-[10px] font-medium mt-0.5">Previous</span>
+            </button>
+            <span className="text-[12px] font-medium tabular-nums text-white/95 px-1">
+              {idx + 1} / {total}
+            </span>
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx + 1)}
+              disabled={idx >= total - 1}
+              title="Next"
+              className="flex flex-col items-center justify-center px-1 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
+            >
+              <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
+                <ChevronRight className="h-4 w-4 stroke-[2.5]" />
+              </span>
+              <span className="hidden sm:block text-[10px] font-medium mt-0.5">Next</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
+            {mediaItems.length > 0 && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
+            <TopBtn icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
+            <TopBtn icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
+            <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+            <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
           </div>
         </div>
-
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => goToQuestion(idx - 1)}
-            disabled={idx <= 0}
-            title="Previous"
-            className="flex flex-col items-center justify-center px-1 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
-          >
-            <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
-              <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
-            </span>
-            <span className="hidden sm:block text-[10px] font-medium mt-0.5">Previous</span>
-          </button>
-          <span className="text-[12px] font-medium tabular-nums text-white/95 px-1">
-            {idx + 1} / {total}
-          </span>
-          <button
-            type="button"
-            onClick={() => goToQuestion(idx + 1)}
-            disabled={idx >= total - 1}
-            title="Next"
-            className="flex flex-col items-center justify-center px-1 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
-          >
-            <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
-              <ChevronRight className="h-4 w-4 stroke-[2.5]" />
-            </span>
-            <span className="hidden sm:block text-[10px] font-medium mt-0.5">Next</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-          {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
-          {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
-          <TopBtn icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
-          <TopBtn icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
-          <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
-          {isRealExam && !isReview && (
-            <TopBtn imgSrc={textZoomIcon.url} imgClass="h-5 w-5 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
-          )}
-          <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
-        </div>
-      </div>
+      )}
 
       {/* Main */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -1256,18 +1310,20 @@ function TestRunner() {
           style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
         >
 
-          <div
-            className="px-2 py-2 text-[10px] font-bold text-center leading-tight border-b sticky top-0 z-20"
-            style={{
-              background: themeStyles.isDark ? themeStyles.cardBg : "#ffffff",
-              borderColor: themeStyles.border,
-              color: themeStyles.text,
-            }}
-          >
-            Question
-            <br />
-            Status
-          </div>
+          {isUworldUI && (
+            <div
+              className="px-2 py-2 text-[10px] font-bold text-center leading-tight border-b sticky top-0 z-20"
+              style={{
+                background: themeStyles.isDark ? themeStyles.cardBg : "#ffffff",
+                borderColor: themeStyles.border,
+                color: themeStyles.text,
+              }}
+            >
+              Question
+              <br />
+              Status
+            </div>
+          )}
 
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
@@ -1278,7 +1334,7 @@ function TestRunner() {
             const active = i === idx;
             const isUnsubmitted = active && selected !== null && !submitted && userSettings.showUnsubmittedIndicator !== false;
             const zebraBg =
-              i % 2 === 1
+              isUworldUI && i % 2 === 1
                 ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e9edf2")
                 : "transparent";
             return (
@@ -1305,22 +1361,26 @@ function TestRunner() {
                 className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:brightness-95 ${active ? "font-semibold" : ""}`}
                 style={{
                   borderColor: themeStyles.border,
-                  color: active ? "#ffffff" : themeStyles.text,
-                  background: active ? navBg : zebraBg,
+                  color: active && isUworldUI ? "#ffffff" : themeStyles.text,
+                  background: active ? (isUworldUI ? navBg : themeStyles.cardBg) : zebraBg,
                 }}
               >
-                {status === "correct" && <CheckCircle2 className={`h-3.5 w-3.5 ${active ? "text-emerald-300" : "text-green-600"}`} />}
-                {status === "wrong" && <span className={`font-bold ${active ? "text-red-300" : "text-red-600"}`}>✕</span>}
+                {status === "correct" && <CheckCircle2 className={`h-3.5 w-3.5 ${active && isUworldUI ? "text-emerald-300" : "text-green-600"}`} />}
+                {status === "wrong" && <span className={`font-bold ${active && isUworldUI ? "text-red-300" : "text-red-600"}`}>✕</span>}
                 {status === "attempted" && <span className="w-3.5" />}
                 {status === "none" && (
                   isUnsubmitted ? (
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse" title="Selected, not yet submitted" />
                   ) : (
-                    <span className={`inline-block h-2 w-2 rounded-full scale-[0.7] ${active ? "bg-white/80" : "bg-slate-700/60"}`} />
+                    <span className={`inline-block h-2 w-2 rounded-full scale-[0.7] ${active && isUworldUI ? "bg-white/80" : "bg-slate-700/60"}`} />
                   )
                 )}
                 <span>{i + 1}</span>
-                {data.bookmarkedIds.has(q.id) && <Flag className={`h-3 w-3 ml-auto ${active ? "fill-red-300 text-red-300" : "fill-red-600 text-red-600"}`} />}
+                {data.bookmarkedIds.has(q.id) && (
+                  isUworldUI
+                    ? <Flag className={`h-3 w-3 ml-auto ${active ? "fill-red-300 text-red-300" : "fill-red-600 text-red-600"}`} />
+                    : <img src={markFlagIcon.url} alt="Flagged" className="h-3.5 w-3.5 ml-auto object-contain" />
+                )}
               </button>
             );
           })}
@@ -1345,37 +1405,46 @@ function TestRunner() {
                 : undefined,
             }}
           >
-            {/* Official UWorld Mark Question bar */}
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={bookmark}
-                className="inline-flex items-center gap-2 text-[13px] font-medium hover:opacity-80 transition-opacity"
-                style={{ color: themeStyles.isDark ? themeStyles.text : "#475569" }}
-              >
-                <span
-                  className={`inline-flex items-center justify-center h-4 w-4 rounded-[2px] border transition-colors ${
-                    isBookmarked
-                      ? "bg-[#004a77] border-[#004a77] text-white"
-                      : "border-slate-400 bg-transparent"
-                  }`}
+            {/* Official UWorld Mark Question bar (Tutor / Review mode only) */}
+            {isUworldUI ? (
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={bookmark}
+                  className="inline-flex items-center gap-2 text-[13px] font-medium hover:opacity-80 transition-opacity"
+                  style={{ color: themeStyles.isDark ? themeStyles.text : "#475569" }}
                 >
-                  {isBookmarked && (
-                    <svg viewBox="0 0 16 16" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 8.5 6.5 12 13 4.5" />
-                    </svg>
-                  )}
-                </span>
-                <Flag className={`h-3.5 w-3.5 ${isBookmarked ? "fill-red-600 text-red-600" : "text-slate-500"}`} />
-                <span>Mark Question</span>
-              </button>
-              {selected !== null && !submitted && !isReview && userSettings.showUnsubmittedIndicator !== false && (
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
+                  <span
+                    className={`inline-flex items-center justify-center h-4 w-4 rounded-[2px] border transition-colors ${
+                      isBookmarked
+                        ? "bg-[#004a77] border-[#004a77] text-white"
+                        : "border-slate-400 bg-transparent"
+                    }`}
+                  >
+                    {isBookmarked && (
+                      <svg viewBox="0 0 16 16" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 8.5 6.5 12 13 4.5" />
+                      </svg>
+                    )}
+                  </span>
+                  <Flag className={`h-3.5 w-3.5 ${isBookmarked ? "fill-red-600 text-red-600" : "text-slate-500"}`} />
+                  <span>Mark Question</span>
+                </button>
+                {selected !== null && !submitted && !isReview && userSettings.showUnsubmittedIndicator !== false && (
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Answer selected — not submitted yet
+                  </div>
+                )}
+              </div>
+            ) : (
+              selected !== null && !submitted && !isReview && userSettings.showUnsubmittedIndicator !== false && (
+                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                   Answer selected — not submitted yet
                 </div>
-              )}
-            </div>
+              )
+            )}
             
             <HighlightableHtml seedKey={`q-${question.id}`} mediaToken={mediaToken} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
 
@@ -1432,11 +1501,13 @@ function TestRunner() {
             )}
 
             <div
-              className="mt-4 w-full max-w-[560px] rounded-[2px] border px-3.5 py-2.5"
+              className={isUworldUI ? "mt-4 w-full max-w-[560px] rounded-[2px] border px-3.5 py-2.5" : "mt-3 inline-block rounded border px-4 py-2"}
               style={{
-                borderColor: themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#004a77",
-                borderWidth: "1px 1px 2.5px 1px",
-                background: themeStyles.isDark ? themeStyles.cardBg : "#f7f9fc",
+                borderColor: isExamUI
+                  ? (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9")
+                  : (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#004a77"),
+                borderWidth: isExamUI ? 1 : "1px 1px 2.5px 1px",
+                background: isUworldUI && !themeStyles.isDark ? "#f7f9fc" : themeStyles.cardBg,
                 color: themeStyles.text,
               }}
             >
@@ -1507,21 +1578,23 @@ function TestRunner() {
                         />
                         {submitted && pct != null && !userSettings.hidePercentages && <span className="text-slate-500 ml-1">({pct}%)</span>}
                       </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isReview || (submitted && showAnswers)) return;
-                          toggleStruck();
-                        }}
-                        title={isStruck ? "Remove strikethrough" : "Cross out choice"}
-                        className={`shrink-0 text-[11px] px-1 rounded hover:bg-black/5 transition-opacity ${
-                          isStruck ? "opacity-90 font-semibold text-red-600" : "opacity-45 hover:opacity-80"
-                        }`}
-                        style={{ textDecoration: "line-through" }}
-                      >
-                        ab
-                      </button>
+                      {isUworldUI && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isReview || (submitted && showAnswers)) return;
+                            toggleStruck();
+                          }}
+                          title={isStruck ? "Remove strikethrough" : "Cross out choice"}
+                          className={`shrink-0 text-[11px] px-1 rounded hover:bg-black/5 transition-opacity ${
+                            isStruck ? "opacity-90 font-semibold text-red-600" : "opacity-45 hover:opacity-80"
+                          }`}
+                          style={{ textDecoration: "line-through" }}
+                        >
+                          ab
+                        </button>
+                      )}
                     </span>
                   </div>
                 );
