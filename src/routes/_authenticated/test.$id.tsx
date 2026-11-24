@@ -6,10 +6,10 @@ import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.f
 import { rewriteMedia, withMediaToken } from "@/lib/media";
 import { useMediaToken } from "@/lib/use-media-token";
 import {
-  Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
+  Flag, ChevronLeft, ChevronRight, Maximize2, Minimize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
   ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon, Lock as LockIcon,
-  ExternalLink, PauseCircle, XCircle, BarChart2,
+  ExternalLink, PauseCircle, XCircle, BarChart2, ZoomIn, ZoomOut, RotateCcw, Sun, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -2196,15 +2196,16 @@ function ExhibitModal({
   src, zoom, setZoom, onClose,
 }: { src: string; zoom: number; setZoom: (v: number) => void; onClose: () => void }) {
   const [expanded, setExpanded] = useState(false);
+  const [bright, setBright] = useState(false);
   const userSettings = useHydratedSettings();
   const sizeClass =
     userSettings.exhibitViewerSize === "small"
-      ? "w-[400px]"
+      ? "w-[440px]"
       : userSettings.exhibitViewerSize === "medium"
         ? "w-[740px]"
         : userSettings.exhibitViewerSize === "large"
           ? "w-[1020px]"
-          : "w-[540px]";
+          : "w-[580px]";
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -2218,43 +2219,90 @@ function ExhibitModal({
       }}
     >
       <div
-        className={`sf-scale-enter bg-card text-card-foreground border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col ${expanded ? "w-[95vw] h-[95vh]" : `${sizeClass} max-w-[95vw] max-h-[92vh]`}`}
+        className={`sf-scale-enter rounded-[3px] shadow-2xl overflow-hidden flex flex-col border-[4px] ${expanded ? "w-[95vw] h-[95vh]" : `${sizeClass} max-w-[95vw] max-h-[92vh]`}`}
+        style={{ borderColor: NAV_BG, background: NAV_BG }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-3 py-1.5 text-white" style={{ background: NAV_BG }}>
-          <span className="text-sm font-semibold">Exhibit Display</span>
+        {/* UWorld Exhibit Display Header */}
+        <div className="flex items-center justify-between px-3 py-2 text-white shrink-0" style={{ background: NAV_BG }}>
+          <span className="text-[13px] font-medium tracking-wide">Exhibit Display</span>
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => setExpanded(!expanded)}
-              className="p-1 hover:bg-white/10 rounded"
+              className="p-1 hover:bg-white/15 rounded transition-colors"
               title={expanded ? "Restore" : "Expand"}
             >
-              <Maximize2 className="h-4 w-4" />
+              {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
-            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded" title="Close">
-              <span className="text-lg leading-none">✕</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 hover:bg-white/15 rounded transition-colors"
+              title="Close"
+            >
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto bg-white p-3 flex items-start justify-center">
+
+        {/* Crisp white exhibit canvas */}
+        <div className="flex-1 overflow-auto bg-white p-4 flex items-center justify-center">
           <img
             src={src}
             alt="Exhibit"
-            style={{ transform: `scale(${zoom})`, transformOrigin: "top center", transition: "transform 0.15s" }}
-            className="max-w-full h-auto"
+            draggable={false}
+            style={{
+              transform: `scale(${zoom})`,
+              transformOrigin: "center center",
+              transition: "transform 150ms ease, filter 150ms ease",
+              filter: bright ? "brightness(1.12)" : "none",
+            }}
+            className="max-w-full max-h-[68vh] h-auto object-contain select-none"
           />
         </div>
-        <div className="flex items-center justify-center gap-2 border-t bg-gray-50 py-1.5">
+
+        {/* UWorld bottom white icon toolbar */}
+        <div className="flex items-center justify-center gap-3 border-t border-slate-300 bg-white py-1.5 px-3 text-slate-700 shrink-0">
           <button
-            onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
-            className="h-7 w-7 rounded-full border border-gray-300 bg-white hover:bg-gray-100 flex items-center justify-center text-sm"
-          >−</button>
-          <span className="text-xs text-gray-600 w-12 text-center">{Math.round(zoom * 100)}%</span>
+            type="button"
+            onClick={() => setBright((b) => !b)}
+            title={bright ? "Normal brightness" : "Slightly brighten image"}
+            className={`p-1.5 rounded transition-colors ${bright ? "bg-[#004a77]/12 text-[#004a77]" : "hover:bg-slate-100"}`}
+          >
+            <Sun className="h-4 w-4" />
+          </button>
           <button
-            onClick={() => setZoom(Math.min(4, zoom + 0.25))}
-            className="h-7 w-7 rounded-full border border-gray-300 bg-white hover:bg-gray-100 flex items-center justify-center text-sm"
-          >+</button>
+            type="button"
+            onClick={() => setZoom(Math.min(3.5, +(zoom + 0.25).toFixed(2)))}
+            title="Zoom in"
+            className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(Math.max(0.5, +(zoom - 0.25).toFixed(2)))}
+            title="Zoom out"
+            className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setZoom(1); setBright(false); }}
+            title="Reset view"
+            className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+          <span className="text-[11px] font-medium text-slate-500 tabular-nums ml-1">
+            {Math.round(zoom * 100)}%
+          </span>
         </div>
+
+        {/* Solid UWorld ocean-navy bottom bar */}
+        <div className="h-3.5 shrink-0" style={{ background: NAV_BG }} />
       </div>
     </div>
   );
