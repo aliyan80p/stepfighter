@@ -168,6 +168,8 @@ export const getFilters = createServerFn({ method: "GET" })
     return { subjects, systems, topics, questionMeta, totalQuestions: questionMeta.length };
   });
 
+const DifficultySchema = z.enum(["all", "easy", "medium", "hard"]).default("all");
+
 const CreateTestInput = z.object({
   qbankId: qb(),
   subjectIds: z.array(z.number()).default([]),
@@ -178,8 +180,38 @@ const CreateTestInput = z.object({
   mode: z.enum(["practice", "test"]).default("practice"),
   timed: z.boolean().default(false),
   scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
+  difficulty: DifficultySchema,
+  name: z.string().trim().max(120).optional(),
 });
 
+async function filterIdsByDifficulty(
+  supabase: any,
+  qbankId: number,
+  ids: number[],
+  difficulty: "all" | "easy" | "medium" | "hard",
+): Promise<number[]> {
+  if (difficulty === "all" || !ids.length) return ids;
+  const matched: number[] = [];
+  for (let i = 0; i < ids.length; i += 1000) {
+    const chunk = ids.slice(i, i + 1000);
+    const { data: rows, error } = await supabase
+      .from("questions")
+      .select("id,ppl_taken,corr_taken")
+      .eq("qbank_id", qbankId)
+      .in("id", chunk);
+    if (error) throw error;
+    for (const r of rows ?? []) {
+      const ppl = Number(r.ppl_taken ?? 0);
+      const corr = Number(r.corr_taken ?? 0);
+      if (ppl <= 0 || (ppl === 100 && corr <= 1)) continue;
+      const pct = (corr / ppl) * 100;
+      if (difficulty === "easy" && pct >= 70) matched.push(r.id);
+      else if (difficulty === "medium" && pct >= 45 && pct < 70) matched.push(r.id);
+      else if (difficulty === "hard" && pct < 45) matched.push(r.id);
+    }
+  }
+  return matched;
+}
 
 export const createTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -194,10 +226,13 @@ export const createTest = createServerFn({ method: "POST" })
       p_system_ids: data.systemIds.length ? data.systemIds : undefined,
       p_topic_names: data.topicNames.length ? data.topicNames : undefined,
       p_scope: data.scope,
-      p_count: data.count,
+      p_count: data.difficulty === "all" ? data.count : 10000,
     });
     if (pickErr) throw pickErr;
-    const ids = (picked as number[] | null) ?? [];
+    let ids = (picked as number[] | null) ?? [];
+    if (data.difficulty !== "all") {
+      ids = shuffle(await filterIdsByDifficulty(supabase, data.qbankId, ids, data.difficulty)).slice(0, data.count);
+    }
     if (!ids.length) throw new Error("No questions match those filters.");
     return await insertTest(supabase, userId, ids, data);
   });
@@ -255,27 +290,44 @@ export const getPoolCount = createServerFn({ method: "POST" })
     topicNames: z.array(z.string()).default([]),
     sources: z.array(z.string()).default([]),
     scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
+    difficulty: DifficultySchema,
   }).parse(d))
 
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { data: count, error } = await supabase.rpc("pool_count", {
+    if (data.difficulty === "all") {
+      const { data: count, error } = await supabase.rpc("pool_count", {
+        p_qbank_id: data.qbankId,
+        p_sources: data.sources.length ? data.sources : undefined,
+        p_subject_ids: data.subjectIds.length ? data.subjectIds : undefined,
+        p_system_ids: data.systemIds.length ? data.systemIds : undefined,
+        p_topic_names: data.topicNames.length ? data.topicNames : undefined,
+        p_scope: data.scope,
+      });
+      if (error) throw error;
+      return { count: (count as number | null) ?? 0 };
+    }
+    const { data: picked, error } = await supabase.rpc("pick_question_ids", {
       p_qbank_id: data.qbankId,
       p_sources: data.sources.length ? data.sources : undefined,
       p_subject_ids: data.subjectIds.length ? data.subjectIds : undefined,
       p_system_ids: data.systemIds.length ? data.systemIds : undefined,
       p_topic_names: data.topicNames.length ? data.topicNames : undefined,
       p_scope: data.scope,
+      p_count: 10000,
     });
     if (error) throw error;
-    return { count: (count as number | null) ?? 0 };
+    const filtered = await filterIdsByDifficulty(supabase, data.qbankId, (picked as number[] | null) ?? [], data.difficulty);
+    return { count: filtered.length };
   });
 
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
   await assertQbankAccess(supabase, userId, data.qbankId);
+  const insertRow: any = { user_id: userId, question_ids: ids, mode: data.mode, qbank_id: data.qbankId, timed: !!data.timed };
+  if (data.name) insertRow.name = data.name;
   const { data: inserted, error } = await supabase
     .from("tests")
-    .insert({ user_id: userId, question_ids: ids, mode: data.mode, qbank_id: data.qbankId, timed: !!data.timed })
+    .insert(insertRow)
     .select("id")
     .single();
   if (error) throw error;
