@@ -879,8 +879,9 @@ export const getAssessmentReport = createServerFn({ method: "GET" })
       }
     }
 
-    // Peer scores on same source (all users)
-    const { data: peerAtt } = await supabase
+    // Peer scores on same source (all users via service-role admin client to bypass per-user RLS)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: peerAtt } = await supabaseAdmin
       .from("attempts")
       .select("user_id,question_id,is_correct,selected_answer,created_at")
       .eq("qbank_id", data.qbankId)
@@ -894,7 +895,8 @@ export const getAssessmentReport = createServerFn({ method: "GET" })
       m.set(a.question_id, a);
     }
     const peerScores: number[] = [];
-    for (const m of perUserLatest.values()) {
+    for (const [uid, m] of perUserLatest.entries()) {
+      if (uid === userId) continue;
       let c = 0;
       for (const a of m.values()) if (a.selected_answer != null && a.is_correct) c++;
       peerScores.push(c / totalQuestions);

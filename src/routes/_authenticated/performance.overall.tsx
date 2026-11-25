@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getDashboardStats } from "@/lib/qbank.functions";
+import { getPerformanceGraphs } from "@/lib/performance.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
 import { CheckCircle2, XCircle, MinusCircle, HelpCircle, User, ArrowRightLeft, RefreshCw, Repeat, FilePlus2, FileCheck2, PauseCircle, ClipboardList } from "lucide-react";
 
@@ -65,6 +66,7 @@ const OPTIONS = buildOptions();
 
 function OverallPerformance() {
   const fn = useServerFn(getDashboardStats);
+  const graphsFn = useServerFn(getPerformanceGraphs);
   const activeQbankId = useActiveQbankId();
   const activeSlug = QBANKS.find((q) => q.id === activeQbankId)?.slug ?? "step2";
   const filteredOptions = useMemo(
@@ -84,6 +86,13 @@ function OverallPerformance() {
   const { data, isLoading } = useQuery({
     queryKey: ["perf-overall", opt.qbankId, opt.sources?.join(",") ?? "all"],
     queryFn: () => fn({ data: { qbankId: opt.qbankId, sources: opt.sources } }),
+  });
+
+  const { data: analysis, isLoading: analysisLoading } = useQuery({
+    queryKey: ["perf-overall-analysis", opt.qbankId, opt.sources?.join(",") ?? "all"],
+    queryFn: () => graphsFn({ data: { qbankId: opt.qbankId, sources: opt.sources, days: 365 } }),
+    enabled: tab === "analysis",
+    staleTime: 60_000,
   });
 
 
@@ -135,9 +144,70 @@ function OverallPerformance() {
         </div>
 
         {tab === "analysis" ? (
-          <div className="rounded-2xl bg-card border border-border p-10 text-center text-muted-foreground">
-            Detailed analysis coming soon.
-          </div>
+          analysisLoading || !analysis ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {[0, 1].map((i) => <div key={i} className="h-64 rounded-2xl border border-border animate-pulse bg-card" />)}
+            </div>
+          ) : analysis.totalAttempts === 0 ? (
+            <div className="rounded-2xl bg-card border border-border p-10 text-center text-muted-foreground">
+              No attempts recorded in this filter yet. Answer a few questions to unlock subject &amp; system analysis.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl bg-card border border-border p-4">
+                  <div className="text-xs text-muted-foreground">Total Attempts (Last 365d)</div>
+                  <div className="text-2xl font-bold mt-1">{analysis.totalAttempts.toLocaleString()}</div>
+                </div>
+                <div className="rounded-2xl bg-card border border-border p-4">
+                  <div className="text-xs text-muted-foreground">Average Time / Question</div>
+                  <div className="text-2xl font-bold mt-1">{analysis.avgTimeSec}s</div>
+                </div>
+                <div className="rounded-2xl bg-card border border-border p-4">
+                  <div className="text-xs text-muted-foreground">Weakest Subject</div>
+                  <div className="text-base font-bold mt-1 truncate">
+                    {[...analysis.subjectBreakdown].sort((a, b) => a.pct - b.pct)[0]?.name ?? "—"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                {[
+                  { title: "By Subject", rows: analysis.subjectBreakdown },
+                  { title: "By System", rows: analysis.systemBreakdown },
+                ].map(({ title, rows }) => (
+                  <div key={title} className="rounded-2xl bg-card border border-border p-5 space-y-3">
+                    <div className="font-semibold text-sm">{title}</div>
+                    {rows.length === 0 ? (
+                      <div className="text-xs text-muted-foreground">No data yet.</div>
+                    ) : (
+                      <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                        {rows.map((r) => (
+                          <div key={r.id} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs gap-2">
+                              <span className="font-medium truncate">{r.name}</span>
+                              <span className="text-muted-foreground shrink-0 tabular-nums">
+                                {r.correct}/{r.total} · <span className="font-semibold text-foreground">{r.pct}%</span>
+                              </span>
+                            </div>
+                            <div className="h-2 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${r.pct}%`,
+                                  background: r.pct >= 70 ? "hsl(142 71% 45%)" : r.pct >= 50 ? "hsl(38 92% 50%)" : "hsl(0 84% 60%)",
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
         ) : (
           <>
             {/* Top gradient tiles */}

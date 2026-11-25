@@ -20,6 +20,7 @@ import { NotesModal } from "@/components/notes-modal";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
+import { LabValuesPanel } from "@/components/lab-values-panel";
 import { ExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
 import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
 import { useHydratedSettings, getFontStack, resolveQuizTheme, getQuizPalette, type ResolvedQuizTheme } from "@/lib/user-settings";
@@ -339,7 +340,6 @@ function QuestionModal({
 }) {
   const r = items[index];
   const total = items.length;
-  const notImpl = (name: string) => () => toast.info(`${name} — coming soon`);
   const correctAns = r.answers.find((a) => a.answer_index === r.correctAnswer);
   const correctLetter = correctAns ? String.fromCharCode(65 + correctAns.answer_index) : "";
   const correctText = correctAns?.answer_text ?? "";
@@ -351,6 +351,7 @@ function QuestionModal({
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showCalc, setShowCalc] = useState(false);
+  const [showLabValues, setShowLabValues] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
@@ -440,7 +441,7 @@ function QuestionModal({
           </div>
           <div className="flex items-center gap-1">
             <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
-            <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
+            <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
             <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
             
             <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
@@ -631,6 +632,7 @@ function QuestionModal({
         </div>
 
         {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+        <LabValuesPanel open={showLabValues} onClose={() => setShowLabValues(false)} />
         <NotesModal
           open={showNotes}
           onClose={() => setShowNotes(false)}
