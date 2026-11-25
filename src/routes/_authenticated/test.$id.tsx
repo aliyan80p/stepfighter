@@ -546,7 +546,7 @@ function TestRunner() {
   const total = data?.questions.length ?? 0;
 
   const navBg = isWebFred
-    ? "#004976"
+    ? "#004673"
     : userSettings.useAccentInQuizNav
       ? darkenHex(userSettings.accentColor, 0.78)
       : NAV_BG;
@@ -1268,17 +1268,29 @@ function TestRunner() {
           </button>
         </div>
       )}
-      {/* Full-height 80px NBME WebFRED left item sidebar (spans 100vh to the left of top & bottom bars) */}
+      {/* Full-height NBME Self-Assessment left sidebar with Question Status header */}
       {isWebFred && (
         <aside
-          aria-label="Exam items"
-          className="w-[80px] shrink-0 h-screen overflow-y-scroll py-[5px] border-r select-none"
+          aria-label="Question Status"
+          className="w-[88px] shrink-0 h-screen overflow-y-auto border-r select-none flex flex-col"
           style={{
-            background: themeStyles.isDark ? "#0d131c" : "#fcfcfc",
-            borderColor: themeStyles.isDark ? "#334155" : "#c0c0c0",
-            fontFamily: '"Andale Mono", "Lucida Console", Menlo, monospace',
+            background: themeStyles.isDark ? "#0d131c" : "#ffffff",
+            borderColor: themeStyles.isDark ? "#334155" : "#808080",
+            fontFamily: 'Arial, Helvetica, sans-serif',
           }}
         >
+          <div
+            className="px-1.5 py-2 text-[11px] font-bold text-center leading-tight border-b sticky top-0 z-20 shrink-0"
+            style={{
+              background: themeStyles.isDark ? "#111827" : "#f5f5f5",
+              borderColor: themeStyles.isDark ? "#334155" : "#a3a3a3",
+              color: themeStyles.text,
+            }}
+          >
+            Question
+            <br />
+            Status
+          </div>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
             const hideResult = !isReview && !tutorMode;
@@ -1286,9 +1298,9 @@ function TestRunner() {
               ? (hideResult ? "attempted" : att.is_correct ? "correct" : "wrong")
               : "none";
             const active = i === idx;
-            const oddBg =
-              i % 2 === 0
-                ? (themeStyles.isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.1)")
+            const zebraBg =
+              i % 2 === 1
+                ? (themeStyles.isDark ? "rgba(255,255,255,0.06)" : "#e6e6e6")
                 : "transparent";
             return (
               <button
@@ -1304,10 +1316,10 @@ function TestRunner() {
                   goToQuestion(i);
                 }}
                 aria-label={`Go to item ${i + 1}`}
-                className="w-full h-[18px] flex items-center gap-1 px-1.5 text-[12px] leading-[15px] cursor-pointer text-left"
+                className="w-full h-[20px] flex items-center gap-1 px-2 text-[11.5px] leading-none cursor-pointer text-left shrink-0"
                 style={{
-                  background: active ? "#004976" : oddBg,
-                  color: active ? "#fcfcfc" : themeStyles.text,
+                  background: active ? "#004673" : zebraBg,
+                  color: active ? "#ffffff" : themeStyles.text,
                   fontWeight: active ? 600 : 400,
                 }}
               >
@@ -1333,70 +1345,79 @@ function TestRunner() {
       )}
 
       <div className={isWebFred ? "flex-1 flex flex-col min-w-0 h-screen overflow-hidden" : "contents"}>
-      {/* Top nav — NBME WebFRED / Modern UWorld Slate / Official UWorld */}
+      {/* Top nav — NBME Self-Assessment / Official UWorld */}
       {isWebFred ? (
         <div
-          className="qbank-nav-scroll flex items-center justify-between gap-2 px-[10px] pt-[3px] pb-[5px] min-h-[54px] text-[#fcfcfc]"
+          className="qbank-nav-scroll flex items-center justify-between gap-2 px-2.5 py-1.5 min-h-[54px] text-[#fcfcfc]"
           style={{ background: navBg }}
         >
           <div className="flex items-center gap-2.5 shrink-0">
             <div
-              className="px-[6px] py-[3px] leading-tight shrink-0"
-              style={{ border: "1px outset #5872c4" }}
+              className="px-3 py-0.5 text-center leading-tight shrink-0"
+              style={{ border: "1px solid #6b93b8" }}
             >
-              <div className="text-[14px] font-medium">Item: {idx + 1} of {total}</div>
+              <div className="text-[12.5px] font-medium">Item: {idx + 1} of {total}</div>
               {isExamUI
-                ? <div className="text-[12px] text-[#fcfcfc]/90">Block: 1 of 1</div>
-                : <div className="text-[12px] text-[#fcfcfc]/90">Question Id: {question.id}</div>}
+                ? <div className="text-[11.5px] text-white/90">Block: 1 of 1</div>
+                : <div className="text-[11px] text-white/85">Question Id: {question.id}</div>}
             </div>
+            {(data?.test as { name?: string | null } | undefined)?.name && (
+              <span className="hidden md:inline text-[12px] text-white/90 font-normal truncate max-w-[180px]">
+                {(data?.test as { name?: string | null }).name}
+              </span>
+            )}
             <button
               type="button"
               onClick={bookmark}
-              className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-[3px] hover:bg-[#407699] transition-colors shrink-0"
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[2px] hover:bg-white/10 transition-colors shrink-0"
               title={isBookmarked ? "Remove flag" : "Mark item"}
             >
-              <span className={`inline-flex items-center justify-center w-3 h-3 border border-[#fcfcfc] ${isBookmarked ? "bg-red-600" : "bg-[#fcfcfc]"}`}>
+              <span className={`inline-flex items-center justify-center w-3 h-3 border border-white/90 ${isBookmarked ? "bg-red-600" : "bg-white"}`}>
                 {isBookmarked && (
                   <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 8.5 6.5 12 13 4.5" />
                   </svg>
                 )}
               </span>
-              <img src={markFlagIcon.url} alt="Mark" className="h-5 w-5 object-contain" />
-              <span className="hidden sm:inline text-[13px] text-[#fcfcfc]">Mark</span>
+              <Flag className={`h-3.5 w-3.5 ${isBookmarked ? "fill-red-400 text-red-400" : "text-white/90"}`} />
+              <span className="hidden sm:inline text-[11.5px] text-white">Mark</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-6 shrink-0">
             <button
               type="button"
               onClick={() => goToQuestion(idx - 1)}
               disabled={idx <= 0}
               title="Previous"
-              className="flex flex-col items-center justify-center min-w-[60px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] disabled:opacity-55 transition-colors leading-tight"
+              className="flex flex-col items-center justify-center px-1.5 text-white/95 hover:text-white disabled:opacity-45 leading-tight"
             >
-              <NbmeTriangleArrow dir="left" />
-              <span className="hidden sm:block text-[12px] text-[#fcfcfc] mt-0.5">Previous</span>
+              <span className="h-6 w-6 rounded-full bg-white text-[#004673] flex items-center justify-center">
+                <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
+              </span>
+              <span className="hidden sm:block text-[10.5px] mt-0.5">Previous</span>
             </button>
             <button
               type="button"
               onClick={() => goToQuestion(idx + 1)}
               disabled={idx >= total - 1}
               title="Next"
-              className="flex flex-col items-center justify-center min-w-[60px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] disabled:opacity-55 transition-colors leading-tight"
+              className="flex flex-col items-center justify-center px-1.5 text-white/95 hover:text-white disabled:opacity-45 leading-tight"
             >
-              <NbmeTriangleArrow dir="right" />
-              <span className="hidden sm:block text-[12px] text-[#fcfcfc] mt-0.5">Next</span>
+              <span className="h-6 w-6 rounded-full bg-white text-[#004673] flex items-center justify-center">
+                <ChevronRight className="h-4 w-4 stroke-[2.5]" />
+              </span>
+              <span className="hidden sm:block text-[10.5px] mt-0.5">Next</span>
             </button>
           </div>
 
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-            <TopBtn plain imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
-            <TopBtn plain imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
-            <TopBtn plain imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+            <TopBtn icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
+            <TopBtn icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
+            <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
             <TopBtn plain imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />
             <NbmeTextZoom fontSize={fontSize} setFontSize={setFontSize} />
-            {!isExamUI && <TopBtn plain icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
+            <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
           </div>
         </div>
       ) : (
@@ -2126,42 +2147,31 @@ function TestRunner() {
           const mmss = bh !== "00" ? `${bh}:${bm}:${bs}` : `${bm}:${bs}`;
           return (
             <div
-              className="flex flex-wrap items-center justify-between gap-2 px-[10px] pt-[5px] pb-[3px] min-h-[51px] text-[#fcfcfc] text-xs"
+              className="flex flex-wrap items-center justify-between gap-2 px-2.5 py-1.5 min-h-[50px] text-[#fcfcfc] text-xs"
               style={{ background: navBg }}
             >
               <div
-                className="px-[6px] py-[3px] leading-tight tabular-nums shrink-0"
-                style={{ border: "1px outset #5872c4" }}
+                className="px-2.5 py-1 leading-tight tabular-nums shrink-0"
+                style={{ border: "1px solid #6b93b8" }}
               >
-                <div className="text-[14px] font-medium">
-                  Block Time Remaining: <span className="ml-2">{mmss}</span>
+                <div className="text-[12.5px] font-normal">
+                  Block Time Remaining: <span className="ml-1 font-medium">{mmss}</span>
                 </div>
-                <div className="text-[12px] text-[#fcfcfc]/90 text-right">
-                  Day Time Remaining: <span className="ml-2">{mmss}</span>
+                <div className="text-[11.5px] text-white/90">
+                  Day Time Remaining: <span className="ml-1">{mmss}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                {isPractice && (
-                  <button
-                    type="button"
-                    onClick={() => setTutorMode(true)}
-                    className="px-2.5 py-1 rounded-[2px] border border-white/50 text-[11px] font-medium text-[#fcfcfc] hover:bg-[#407699] transition-colors"
-                  >
-                    Back to Tutor
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setBreakModal("suspend")}
-                  title="Unauthorized Break"
-                  className="flex flex-col items-center justify-center min-w-[60px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] transition-colors leading-none text-[#fcfcfc]"
-                >
-                  <span className="flex items-center justify-center h-6 w-6">
-                    <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
-                  </span>
-                  <span className="text-[11px] mt-0.5">Lock</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setBreakModal("suspend")}
+                title="Pause assessment"
+                className="flex flex-col items-center justify-center min-w-[54px] py-0.5 px-2 rounded-[2px] hover:bg-white/10 transition-colors leading-none text-white"
+              >
+                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-white text-[#004673]">
+                  <PauseCircle className="h-4 w-4 stroke-[2.2]" />
+                </span>
+                <span className="text-[10.5px] mt-1">Pause</span>
+              </button>
               <button
                 type="button"
                 onClick={async () => {
@@ -2173,10 +2183,12 @@ function TestRunner() {
                   });
                   if (ok) finish();
                 }}
-                className="flex flex-col items-center justify-center min-w-[70px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] transition-colors text-[#fcfcfc] leading-none"
+                className="flex flex-col items-center justify-center min-w-[64px] py-0.5 px-2 rounded-[2px] hover:bg-white/10 transition-colors text-white leading-none"
               >
-                <img src={endBlockIcon.url} alt="" className="h-6 w-6 object-contain" />
-                <span className="text-[11px] mt-0.5">End Block</span>
+                <span className="flex items-center justify-center h-5 w-5 rounded-[2px] border border-white/85">
+                  <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
+                </span>
+                <span className="text-[10.5px] mt-1">End Block</span>
               </button>
             </div>
           );
@@ -2248,34 +2260,52 @@ function TestRunner() {
       </div>
 
       {breakModal && (
-        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setBreakModal(null)}>
-          <div className="w-full max-w-md rounded shadow-lg overflow-hidden bg-white" onClick={(e) => e.stopPropagation()}>
-            <div className="px-5 py-3 text-white font-semibold text-center" style={{ background: "#a94442" }}>
-              Unauthorized Break Warning
-            </div>
-            <div className="px-6 py-5 text-center text-sm text-gray-700 space-y-1">
-              <div>You are about to lock the exam and take an Unauthorized Break.</div>
-              <div>An Unauthorized Break may be reported as an irregularity for the exam.</div>
-            </div>
-            <div className="flex items-center justify-center gap-6 pb-5">
+        <div className="fixed inset-0 z-[60] bg-black/45 flex items-center justify-center p-4" onClick={() => setBreakModal(null)}>
+          <div className="w-full max-w-[540px] border border-black/40 shadow-2xl overflow-hidden bg-white" onClick={(e) => e.stopPropagation()}>
+            <div className="relative px-4 py-2.5 text-white font-semibold text-base text-center" style={{ background: "#008cc8" }}>
+              <span>Pause</span>
               <button
+                type="button"
+                onClick={() => setBreakModal(null)}
+                aria-label="Close"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-[2px] bg-white text-[#008cc8] flex items-center justify-center hover:bg-white/90"
+              >
+                <X className="h-3.5 w-3.5 stroke-[2.5]" />
+              </button>
+            </div>
+            <div className="px-6 py-5 text-center text-[13.5px] leading-relaxed text-black space-y-3">
+              <p>
+                You have elected to pause your assessment. You may resume your assessment at a later time,
+                provided time allotted for your assessment has not run out. To pause your assessment, click OK.
+                When you resume the assessment, you will return to the same section and item in which you were working.
+              </p>
+              <p>
+                To pause your examination, click OK.
+                <br />
+                Click &apos;Cancel&apos; to return to your test.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-5 pb-6">
+              <button
+                type="button"
                 onClick={() => {
                   const action = breakModal;
                   setBreakModal(null);
-                  if (action === "suspend") nav({ to: "/tests" });
+                  if (action === "suspend") nav({ to: "/self-assessments/assessments" });
                   else finish();
                 }}
-                className="px-5 py-2 rounded text-white text-sm font-semibold"
-                style={{ background: "#a94442" }}
+                className="min-w-[82px] px-5 py-1.5 rounded-[2px] text-white text-[13px] font-medium border border-[#0b4b7a] shadow-xs hover:brightness-105"
+                style={{ background: "linear-gradient(#5398d0, #0d5891)" }}
               >
-                Unauthorized Break
+                OK
               </button>
               <button
+                type="button"
                 onClick={() => setBreakModal(null)}
-                className="px-5 py-2 rounded text-white text-sm font-semibold"
-                style={{ background: "#d4a017" }}
+                className="min-w-[96px] px-5 py-1.5 rounded-[2px] text-white text-[13px] font-medium border border-[#7a3f00] shadow-xs hover:brightness-105"
+                style={{ background: "linear-gradient(#b56500, #8a4a00)" }}
               >
-                Return to Exam
+                Cancel
               </button>
             </div>
           </div>
@@ -2325,6 +2355,7 @@ function TestRunner() {
           activeHighlight={activeHighlight} setActiveHighlight={setActiveHighlight}
           enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
           userSettings={userSettings}
+          isSelfAssessment={isSelfAssessment}
         />
       )}
 
@@ -2585,7 +2616,7 @@ export function SettingsPanel(props: any) {
     transparentExpl, setTransparentExpl, largeImages, setLargeImages,
     multicolor, setMulticolor,
     activeHighlight, setActiveHighlight, enabledHighlights, setEnabledHighlights,
-    userSettings,
+    userSettings, isSelfAssessment,
   } = props;
   const us = userSettings ?? DEFAULT_SETTINGS;
   const customColors: string[] = us.customHighlights ?? [];
@@ -2670,6 +2701,7 @@ export function SettingsPanel(props: any) {
             className="w-32 accent-primary"
           />
         </Row>
+        {!isSelfAssessment && (
         <Row label="Interface Style">
           <div className="flex items-center gap-1.5">
             {TUTOR_INTERFACE_STYLES.map((st) => {
@@ -2693,6 +2725,7 @@ export function SettingsPanel(props: any) {
             })}
           </div>
         </Row>
+        )}
         <Row label="Canvas Theme">
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
             {[
