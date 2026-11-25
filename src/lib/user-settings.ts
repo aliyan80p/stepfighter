@@ -57,6 +57,33 @@ export type ExhibitStyle = "button" | "link" | "plain";
 export type ExhibitViewerSize = "default" | "small" | "medium" | "large";
 export type ExplanationAlign = "left" | "justify" | "center";
 export type ImageAlign = "left" | "center";
+export type TutorInterfaceStyle = "uworld" | "uworld-modern" | "nbme-fred";
+
+export const TUTOR_INTERFACE_STYLES: {
+  id: TutorInterfaceStyle;
+  label: string;
+  description: string;
+  preview: { nav: string; side: string; sideAlt: string; page: string; active: string };
+}[] = [
+  {
+    id: "uworld",
+    label: "Official UWorld",
+    description: "Deep #004a77 bars, white icon tiles, bordered Item/Time boxes, in-pane Mark Question & folder Explanation tab",
+    preview: { nav: "#004a77", side: "#ffffff", sideAlt: "#e9edf2", page: "#ffffff", active: "#004a77" },
+  },
+  {
+    id: "uworld-modern",
+    label: "Modern UWorld Slate",
+    description: "Slate-blue #324a67 bars, clean line-art icons, Georgia serif stem, full-row tinted answers & inline Suspend/End",
+    preview: { nav: "#324a67", side: "#eef2f7", sideAlt: "#e3eaf3", page: "#f1f5fa", active: "#43648a" },
+  },
+  {
+    id: "nbme-fred",
+    label: "NBME WebFRED",
+    description: "Exact USMLE/NBME WebFRED look: full-height 80px sidebar, #004976 bars, cool gradient canvas & A|A|A Text Zoom",
+    preview: { nav: "#004976", side: "#fcfcfc", sideAlt: "#e3e3e3", page: "#eef1f8", active: "#004976" },
+  },
+];
 
 export type UserSettings = {
   // Account & Global Appearance
@@ -70,6 +97,7 @@ export type UserSettings = {
   hideNameOnLeaderboard: boolean;
 
   // Quiz defaults
+  tutorInterface: TutorInterfaceStyle;
   defaultTheme: QuizTheme;
   splitExplanations: boolean;
   splitRatio: number; // 28 - 72 (% width of question column in split screen)
@@ -334,6 +362,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   imagesAutoZoom: false,
   hideNameOnLeaderboard: false,
 
+  tutorInterface: "uworld",
   defaultTheme: "default",
   splitExplanations: false,
   splitRatio: 50,

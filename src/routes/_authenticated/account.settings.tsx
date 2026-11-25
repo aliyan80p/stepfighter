@@ -30,6 +30,7 @@ import {
   TOOLBAR_ITEMS,
   APP_THEMES,
   QUIZ_THEME_OPTIONS,
+  TUTOR_INTERFACE_STYLES,
   ACCENT_PRESETS,
   FONT_FAMILIES,
   getFontStack,
@@ -609,6 +610,52 @@ function SettingsPage() {
             title="Quiz Defaults"
             subtitle="Applied automatically every time a quiz opens."
           >
+            <div className="pb-3 border-b border-border space-y-2.5">
+              <div>
+                <div className="font-semibold text-sm">Tutor Mode Interface</div>
+                <div className="text-xs text-muted-foreground">
+                  Choose your Tutor &amp; Review layout. Exam Mode always uses the official NBME WebFRED simulator interface.
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {TUTOR_INTERFACE_STYLES.map((st) => {
+                  const active = (s.tutorInterface ?? "uworld") === st.id;
+                  return (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => set({ tutorInterface: st.id })}
+                      className={`text-left rounded-lg border p-2.5 transition ${
+                        active
+                          ? "border-primary ring-2 ring-primary/25 bg-primary/5"
+                          : "border-border bg-card hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="rounded border border-black/15 overflow-hidden mb-2 h-14 flex flex-col">
+                        <div className="h-2.5 w-full" style={{ background: st.preview.nav }} />
+                        <div className="flex-1 flex">
+                          <div className="w-3.5 border-r border-black/10 flex flex-col">
+                            <div className="h-2.5" style={{ background: st.preview.active }} />
+                            <div className="h-2" style={{ background: st.preview.side }} />
+                            <div className="h-2" style={{ background: st.preview.sideAlt }} />
+                          </div>
+                          <div className="flex-1" style={{ background: st.preview.page }} />
+                        </div>
+                        <div className="h-2 w-full" style={{ background: st.preview.nav }} />
+                      </div>
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-semibold truncate">{st.label}</span>
+                        {active && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                      </div>
+                      <p className="text-[10.5px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+                        {st.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="pb-3 border-b border-border space-y-2">
               <div className="font-semibold text-sm">Default Quiz Canvas Theme</div>
               <div className="flex flex-wrap gap-2">

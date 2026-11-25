@@ -33,6 +33,7 @@ import {
   TOOLBAR_ITEMS,
   FONT_FAMILIES,
   ACCENT_PRESETS,
+  TUTOR_INTERFACE_STYLES,
   CONTENT_WIDTH_PX,
   getFontStack,
   resolveQuizTheme,
@@ -45,6 +46,7 @@ import {
   type ExhibitViewerSize,
   type ExplanationAlign,
   type ImageAlign,
+  type TutorInterfaceStyle,
 } from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { MedicalLibraryModal } from "@/components/medical-library-modal";
@@ -223,11 +225,81 @@ function isEmbeddedMedia(item: MediaItem, embeddedKeys: Set<string>) {
   return mediaKeys(item.name).some((key) => embeddedKeys.has(key));
 }
 
+function NbmeTriangleArrow({ dir }: { dir: "left" | "right" }) {
+  return (
+    <svg viewBox="0 0 30 22" className="h-[22px] w-[30px]" aria-hidden="true">
+      {dir === "left" ? (
+        <>
+          <polygon points="2,11 28,2 28,20" fill="#fcfcfc" />
+          <polygon points="6,11 26,5 26,17" fill="#5490cc" />
+        </>
+      ) : (
+        <>
+          <polygon points="28,11 2,2 2,20" fill="#fcfcfc" />
+          <polygon points="24,11 4,5 4,17" fill="#5490cc" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function NbmeTextZoom({ fontSize, setFontSize }: { fontSize: number; setFontSize: (n: number) => void }) {
+  const levels = [
+    { size: 16, textClass: "text-[11px]", rounded: "rounded-l-[6px]" },
+    { size: 19, textClass: "text-[16px]", rounded: "" },
+    { size: 22, textClass: "text-[22px]", rounded: "rounded-r-[6px]" },
+  ];
+  const activeIdx = fontSize >= 21 ? 2 : fontSize >= 18 ? 1 : 0;
+  return (
+    <div className="shrink-0 flex flex-col items-center justify-center px-1.5 leading-tight">
+      <div className="inline-flex items-center">
+        {levels.map((lv, i) => {
+          const active = i === activeIdx;
+          return (
+            <button
+              key={lv.size}
+              type="button"
+              onClick={() => setFontSize(lv.size)}
+              title={`Text Zoom ${i === 0 ? "Normal" : i === 1 ? "Medium" : "Large"}`}
+              className={`h-[26px] w-[22px] border border-[#fcfcfc] flex items-center justify-center font-bold leading-none transition-colors ${lv.rounded} ${i > 0 ? "-ml-px" : ""} ${lv.textClass}`}
+              style={{
+                fontFamily: '"Arial Narrow", Arial, sans-serif',
+                background: active ? "#d7dced" : "transparent",
+                color: active ? "#000000" : "#fcfcfc",
+              }}
+            >
+              A
+            </button>
+          );
+        })}
+      </div>
+      <span className="hidden sm:block text-[11px] text-[#fcfcfc] mt-0.5">Text Zoom</span>
+    </div>
+  );
+}
+
 function TopBtn({
-  icon: Icon, imgSrc, imgFlip, imgClass, label, onClick, tileClass, plain,
+  icon: Icon, imgSrc, imgFlip, imgClass, label, onClick, tileClass, plain, modern,
 }: {
-  icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void; tileClass?: string; plain?: boolean;
+  icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void; tileClass?: string; plain?: boolean; modern?: boolean;
 }) {
+  if (modern) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        aria-label={label}
+        className="shrink-0 flex items-center justify-center p-2 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors"
+      >
+        {Icon ? (
+          <Icon className="h-[18px] w-[18px] stroke-[1.75]" />
+        ) : imgSrc ? (
+          <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+        ) : null}
+      </button>
+    );
+  }
   if (plain) {
     return (
       <button
@@ -235,14 +307,14 @@ function TopBtn({
         onClick={onClick}
         title={label}
         aria-label={label}
-        className="shrink-0 flex flex-col items-center justify-center px-1 sm:px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[36px] sm:min-w-[64px] leading-tight"
+        className="shrink-0 flex flex-col items-center justify-center px-1.5 sm:px-2.5 py-0.5 text-[#fcfcfc] hover:bg-[#407699] rounded-[2px] transition-colors min-w-[42px] sm:min-w-[60px] leading-tight"
       >
         {imgSrc ? (
-          <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+          <img src={imgSrc} alt="" className={imgClass ?? "h-6 w-6 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
         ) : Icon ? (
           <Icon className="h-5 w-5" />
         ) : null}
-        <span className="hidden sm:block text-[11px] mt-0.5">{label}</span>
+        <span className="hidden sm:block text-[11px] mt-0.5 whitespace-nowrap">{label}</span>
       </button>
     );
   }
@@ -467,20 +539,38 @@ function TestRunner() {
   const isRealExam = data?.test.mode === "test";
   const isReview = !!data?.test.done;
   const isExamUI = isRealExam && !isReview;
-  const isUworldUI = !isExamUI;
+  const tutorIface: TutorInterfaceStyle = userSettings.tutorInterface ?? "uworld";
+  const isWebFred = isExamUI || tutorIface === "nbme-fred";
+  const isUwModern = !isExamUI && tutorIface === "uworld-modern";
+  const isUworldUI = !isWebFred;
   const total = data?.questions.length ?? 0;
 
-  const navBg = userSettings.useAccentInQuizNav
-    ? darkenHex(userSettings.accentColor, 0.78)
-    : isExamUI
-      ? "#1a4b7c"
-      : NAV_BG;
+  const navBg = isWebFred
+    ? "#004976"
+    : isUwModern
+      ? "#324a67"
+      : userSettings.useAccentInQuizNav
+        ? darkenHex(userSettings.accentColor, 0.78)
+        : NAV_BG;
 
   const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
   const themeStyles =
-    isUworldUI && !baseThemeStyles.isDark && theme === "light"
-      ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
-      : baseThemeStyles;
+    isWebFred && baseThemeStyles.isDark
+      ? { ...baseThemeStyles, pageBg: "#000000", sideBg: "#111827", cardBg: "#000000", text: "#ffffff", border: "#334155" }
+      : isWebFred && !baseThemeStyles.isDark && theme === "light"
+        ? { ...baseThemeStyles, pageBg: "#fcfcfc", sideBg: "#fcfcfc", cardBg: "#fcfcfc", text: "#000000", border: "#c0c0c0" }
+        : isUwModern && !baseThemeStyles.isDark && theme === "light"
+          ? { ...baseThemeStyles, pageBg: "#f1f5fa", sideBg: "#eef2f7", cardBg: "#f7f9fc", text: "#1e293b", border: "#cbd5e1" }
+          : !baseThemeStyles.isDark && theme === "light"
+            ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
+            : baseThemeStyles;
+
+  const effectiveReadingFont =
+    isWebFred && userSettings.fontFamily === "system"
+      ? '"Arial Unicode MS", Arial, Helvetica, sans-serif'
+      : isUwModern && userSettings.fontFamily === "system"
+        ? 'Georgia, "Times New Roman", Times, serif'
+        : getFontStack(userSettings.fontFamily);
 
   // Preload next question's images in the background so switching questions feels instant.
   useEffect(() => {
@@ -1129,7 +1219,11 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
+    <div
+      ref={rootRef}
+      className={isWebFred ? "flex flex-row h-screen overflow-hidden" : "flex flex-col h-screen"}
+      style={{ background: themeStyles.pageBg, color: themeStyles.text }}
+    >
       {hlBar && userSettings.smartContextMenu !== false && (
         <div
           data-hl-toolbar
@@ -1179,43 +1273,194 @@ function TestRunner() {
           </button>
         </div>
       )}
-      {/* Top nav — Original NBME/Exam bar in Exam mode; Official UWorld bar in Tutor/Review mode */}
-      {isExamUI ? (
-        <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-0.5 text-white" style={{ background: navBg }}>
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <div className="text-[11px] sm:text-[12px] leading-tight shrink-0">
-              <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
-              <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
+      {/* Full-height 80px NBME WebFRED left item sidebar (spans 100vh to the left of top & bottom bars) */}
+      {isWebFred && (
+        <aside
+          aria-label="Exam items"
+          className="w-[80px] shrink-0 h-screen overflow-y-scroll py-[5px] border-r select-none"
+          style={{
+            background: themeStyles.isDark ? "#0d131c" : "#fcfcfc",
+            borderColor: themeStyles.isDark ? "#334155" : "#c0c0c0",
+            fontFamily: '"Andale Mono", "Lucida Console", Menlo, monospace',
+          }}
+        >
+          {data.questions.map((q, i) => {
+            const att = data.attemptsByQ[q.id];
+            const hideResult = !isReview && !tutorMode;
+            const status = att
+              ? (hideResult ? "attempted" : att.is_correct ? "correct" : "wrong")
+              : "none";
+            const active = i === idx;
+            const oddBg =
+              i % 2 === 0
+                ? (themeStyles.isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.1)")
+                : "transparent";
+            return (
+              <button
+                type="button"
+                key={q.id}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  goToQuestion(i);
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToQuestion(i);
+                }}
+                aria-label={`Go to item ${i + 1}`}
+                className="w-full h-[18px] flex items-center gap-1 px-1.5 text-[12px] leading-[15px] cursor-pointer text-left"
+                style={{
+                  background: active ? "#004976" : oddBg,
+                  color: active ? "#fcfcfc" : themeStyles.text,
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                <span className="w-3 inline-flex justify-center shrink-0 text-[11px]">
+                  {status === "correct" ? (
+                    <span className={active ? "text-emerald-300" : "text-green-600"}>✓</span>
+                  ) : status === "wrong" ? (
+                    <span className={active ? "text-red-300" : "text-red-600"}>✕</span>
+                  ) : status === "attempted" ? (
+                    ""
+                  ) : (
+                    "•"
+                  )}
+                </span>
+                <span className="tabular-nums">{i + 1}</span>
+                {data.bookmarkedIds.has(q.id) && (
+                  <Flag className={`h-2.5 w-2.5 ml-auto shrink-0 ${active ? "fill-red-300 text-red-300" : "fill-red-600 text-red-600"}`} />
+                )}
+              </button>
+            );
+          })}
+        </aside>
+      )}
+
+      <div className={isWebFred ? "flex-1 flex flex-col min-w-0 h-screen overflow-hidden" : "contents"}>
+      {/* Top nav — NBME WebFRED / Modern UWorld Slate / Official UWorld */}
+      {isWebFred ? (
+        <div
+          className="qbank-nav-scroll flex items-center justify-between gap-2 px-[10px] pt-[3px] pb-[5px] min-h-[54px] text-[#fcfcfc]"
+          style={{ background: navBg }}
+        >
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div
+              className="px-[6px] py-[3px] leading-tight shrink-0"
+              style={{ border: "1px outset #5872c4" }}
+            >
+              <div className="text-[14px] font-medium">Item: {idx + 1} of {total}</div>
+              {isExamUI
+                ? <div className="text-[12px] text-[#fcfcfc]/90">Block: 1 of 1</div>
+                : <div className="text-[12px] text-[#fcfcfc]/90">Question Id: {question.id}</div>}
             </div>
             <button
               type="button"
               onClick={bookmark}
-              className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10 shrink-0"
-              title={isBookmarked ? "Remove flag" : "Flag question"}
+              className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-[3px] hover:bg-[#407699] transition-colors shrink-0"
+              title={isBookmarked ? "Remove flag" : "Mark item"}
             >
-              <span className={`inline-flex items-center justify-center w-2.5 h-2.5 border border-white/80 ${isBookmarked ? "bg-red-600" : "bg-transparent"}`}>
+              <span className={`inline-flex items-center justify-center w-3 h-3 border border-[#fcfcfc] ${isBookmarked ? "bg-red-600" : "bg-[#fcfcfc]"}`}>
                 {isBookmarked && (
-                  <svg viewBox="0 0 16 16" className="w-2 h-2 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 8.5 6.5 12 13 4.5" />
                   </svg>
                 )}
               </span>
-              <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
-              <span className="hidden sm:inline text-[11px] font-semibold text-white">Mark</span>
+              <img src={markFlagIcon.url} alt="Mark" className="h-5 w-5 object-contain" />
+              <span className="hidden sm:inline text-[13px] text-[#fcfcfc]">Mark</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <TopBtn plain imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
-            <TopBtn plain imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx - 1)}
+              disabled={idx <= 0}
+              title="Previous"
+              className="flex flex-col items-center justify-center min-w-[60px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] disabled:opacity-55 transition-colors leading-tight"
+            >
+              <NbmeTriangleArrow dir="left" />
+              <span className="hidden sm:block text-[12px] text-[#fcfcfc] mt-0.5">Previous</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx + 1)}
+              disabled={idx >= total - 1}
+              title="Next"
+              className="flex flex-col items-center justify-center min-w-[60px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] disabled:opacity-55 transition-colors leading-tight"
+            >
+              <NbmeTriangleArrow dir="right" />
+              <span className="hidden sm:block text-[12px] text-[#fcfcfc] mt-0.5">Next</span>
+            </button>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <TopBtn plain imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
             <TopBtn plain imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
             <TopBtn plain imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
             <TopBtn plain imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />
-            <TopBtn plain imgSrc={textZoomIcon.url} imgClass="h-10 w-10 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
+            <NbmeTextZoom fontSize={fontSize} setFontSize={setFontSize} />
+            {!isExamUI && <TopBtn plain icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
+          </div>
+        </div>
+      ) : isUwModern ? (
+        <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-1.5 text-white" style={{ background: navBg }}>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              className="p-1.5 hover:bg-white/10 rounded shrink-0"
+              onClick={() => setSidebarOpen(v => !v)}
+              title={sidebarOpen ? "Hide question list" : "Show question list"}
+            >
+              <span className="block w-4 h-0.5 bg-white mb-1" />
+              <span className="block w-4 h-0.5 bg-white mb-1" />
+              <span className="block w-4 h-0.5 bg-white" />
+            </button>
+            <div className="text-[11px] sm:text-[12px] leading-tight shrink-0">
+              <div className="font-semibold">Item {idx + 1} of {total}</div>
+              <div className="hidden sm:block text-[10.5px] text-white/75">Question Id: {question.id}</div>
+            </div>
+            <button
+              type="button"
+              onClick={bookmark}
+              className="p-1.5 rounded hover:bg-white/10 shrink-0"
+              title={isBookmarked ? "Remove flag" : "Flag question"}
+            >
+              <Flag className={`h-4 w-4 ${isBookmarked ? "fill-red-500 text-red-400" : "text-white/85"}`} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx - 1)}
+              disabled={idx <= 0}
+              title="Previous"
+              aria-label="Previous"
+              className="h-7 w-7 rounded-full border border-white/70 flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx + 1)}
+              disabled={idx >= total - 1}
+              title="Next"
+              aria-label="Next"
+              className="h-7 w-7 rounded-full border border-white/70 flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 transition-colors"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-0.5 shrink-0">
+            <TopBtn modern icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
+            {mediaItems.length > 0 && <TopBtn modern icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
+            <TopBtn modern icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
+            <TopBtn modern icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
+            <TopBtn modern icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+            <TopBtn modern icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
           </div>
         </div>
       ) : (
@@ -1281,14 +1526,15 @@ function TestRunner() {
       {/* Main */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Hover-edge sensor to reveal sidebar on mouse hover */}
-        {!sidebarOpen && userSettings.hoverEdgeSidebar && (
+        {!isWebFred && !sidebarOpen && userSettings.hoverEdgeSidebar && (
           <div
             onMouseEnter={() => setSidebarOpen(true)}
             className="hidden md:block absolute inset-y-0 left-0 w-3.5 z-30 cursor-e-resize"
             title="Hover to show question list"
           />
         )}
-        {/* Left navigator — smoothly glides open/closed with GPU transitions */}
+        {/* Left navigator — smoothly glides open/closed with GPU transitions (hidden in WebFRED which uses full-height 80px sidebar) */}
+        {!isWebFred && (
         <aside
           aria-hidden={!sidebarOpen}
           onMouseLeave={() => {
@@ -1385,28 +1631,38 @@ function TestRunner() {
             );
           })}
         </aside>
+        )}
 
 
         {/* Content */}
-        <div className="sf-main-canvas flex-1 overflow-auto" ref={contentRef}>
+        <div
+          className="sf-main-canvas flex-1 overflow-auto"
+          ref={contentRef}
+          style={
+            isWebFred && !themeStyles.isDark && theme === "light"
+              ? { backgroundImage: "linear-gradient(#fcfcfc 30%, #d7dced 100%)" }
+              : undefined
+          }
+        >
           <div
             ref={splitGridRef}
             className={`w-full mx-0 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
             style={{
               fontSize,
               fontWeight,
-              fontFamily: getFontStack(userSettings.fontFamily),
-              lineHeight: userSettings.lineHeight,
+              fontFamily: effectiveReadingFont,
+              lineHeight: isWebFred ? 1.4 : userSettings.lineHeight,
               color: themeStyles.text,
-              paddingInline: "clamp(0.75rem, calc(1rem + var(--sf-content-padding, 0px)), 4rem)",
+              paddingInline: isWebFred ? "30px" : "clamp(0.75rem, calc(1rem + var(--sf-content-padding, 0px)), 4rem)",
+              paddingTop: isWebFred ? "22px" : undefined,
               ["--sf-split-left" as string]: `${liveSplitRatio ?? userSettings.splitRatio ?? 50}%`,
               maxWidth: (!isRealExam || isReview) && !(userSettings.splitExplanations && showAnswers && !!question.explanation)
                 ? `${Math.max(50, Math.min(100, userSettings.lineWidthPercent ?? 85))}%`
                 : undefined,
             }}
           >
-            {/* Official UWorld Mark Question bar (Tutor / Review mode only) */}
-            {isUworldUI ? (
+            {/* Official UWorld Mark Question bar (Official UWorld Tutor mode only) */}
+            {!isWebFred && !isUwModern ? (
               <div className="mb-3 flex items-center justify-between gap-2">
                 <button
                   type="button"
@@ -1501,13 +1757,29 @@ function TestRunner() {
             )}
 
             <div
-              className={isUworldUI ? "mt-4 w-full max-w-[560px] rounded-[2px] border px-3.5 py-2.5" : "mt-3 inline-block rounded border px-4 py-2"}
+              className={
+                isWebFred
+                  ? "mt-4 inline-block min-w-[240px] max-w-[98%] px-3 py-2"
+                  : "mt-4 w-full max-w-[560px] rounded-[2px] border px-3.5 py-2.5"
+              }
               style={{
-                borderColor: isExamUI
-                  ? (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#c9c9c9")
-                  : (themeStyles.isDark ? "#475569" : theme === "high-contrast" ? "#000000" : "#004a77"),
-                borderWidth: isExamUI ? 1 : "1px 1px 2.5px 1px",
-                background: isUworldUI && !themeStyles.isDark ? "#f7f9fc" : themeStyles.cardBg,
+                borderStyle: "solid",
+                borderColor: themeStyles.isDark
+                  ? "#475569"
+                  : theme === "high-contrast"
+                    ? "#000000"
+                    : isWebFred
+                      ? "#004976"
+                      : isUwModern
+                        ? "#43648a"
+                        : "#004a77",
+                borderWidth: isWebFred ? "1px 1px 5px 1px" : "1px 1px 2.5px 1px",
+                background:
+                  themeStyles.isDark
+                    ? themeStyles.cardBg
+                    : isWebFred
+                      ? "#fcfcfc"
+                      : "#f7f9fc",
                 color: themeStyles.text,
               }}
             >
@@ -1554,8 +1826,20 @@ function TestRunner() {
                       if (isReview || (submitted && showAnswers)) return;
                       toggleStruck();
                     }}
-                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 text-[15px] ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
-                    style={{ color: themeStyles.text }}
+                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 px-1.5 rounded-[3px] transition-colors text-[15px] ${
+                      isWebFred && !themeStyles.isDark ? "hover:bg-[#ececec]" : ""
+                    } ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
+                    style={{
+                      color: themeStyles.text,
+                      background:
+                        isUwModern
+                          ? isThisWrong
+                            ? "rgba(239, 68, 68, 0.14)"
+                            : isThisCorrect
+                              ? "rgba(34, 197, 94, 0.15)"
+                              : undefined
+                          : undefined,
+                    }}
                   >
                     <span className="w-4 flex justify-center shrink-0">
                       {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
@@ -1603,12 +1887,16 @@ function TestRunner() {
 
             {/* Primary action button — directly below answer choices */}
             {!isReview && (
-              <div className={`mt-4 ${isRealExam ? "flex justify-center max-w-[520px]" : ""}`}>
+              <div className={`mt-4 ${isRealExam ? "flex justify-center max-w-[560px]" : ""}`}>
                 {!tutorMode ? (
                   <button
                     onClick={proceedExam}
-                    className="px-4 py-1.5 rounded-sm text-white text-[12px] font-semibold disabled:opacity-40"
-                    style={{ background: NAV_BG }}
+                    className="px-3 py-1 rounded-[3px] text-white text-[14px] font-normal disabled:opacity-40 transition-opacity hover:brightness-95"
+                    style={{
+                      background: "linear-gradient(#5490cc, #004976)",
+                      border: "1px solid #004976",
+                      textShadow: "0 -1px 0 rgba(0, 0, 0, 0.25)",
+                    }}
                   >
                     {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
                   </button>
@@ -1616,7 +1904,7 @@ function TestRunner() {
                   <button
                     onClick={submit}
                     className="px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide"
-                    style={{ background: NAV_BG }}
+                    style={{ background: navBg }}
                   >
                     Submit
                   </button>
@@ -1912,21 +2200,33 @@ function TestRunner() {
 
         const examUI = isRealExam && !isReview;
         if (examUI) {
+          const mmss = bh !== "00" ? `${bh}:${bm}:${bs}` : `${bm}:${bs}`;
           return (
-            <div className="flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: navBg }}>
-              <div className="font-semibold tracking-wide tabular-nums">
-                {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
+            <div
+              className="flex flex-wrap items-center justify-between gap-2 px-[10px] pt-[5px] pb-[3px] min-h-[51px] text-[#fcfcfc] text-xs"
+              style={{ background: navBg }}
+            >
+              <div
+                className="px-[6px] py-[3px] leading-tight tabular-nums shrink-0"
+                style={{ border: "1px outset #5872c4" }}
+              >
+                <div className="text-[14px] font-medium">
+                  Block Time Remaining: <span className="ml-2">{mmss}</span>
+                </div>
+                <div className="text-[12px] text-[#fcfcfc]/90 text-right">
+                  Day Time Remaining: <span className="ml-2">{mmss}</span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setBreakModal("suspend")}
                 title="Unauthorized Break"
-                className="flex flex-col items-center leading-none text-white"
+                className="flex flex-col items-center justify-center min-w-[60px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] transition-colors leading-none text-[#fcfcfc]"
               >
                 <span className="flex items-center justify-center h-6 w-6">
                   <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
                 </span>
-                <span className="text-[10px] font-semibold mt-0.5">Lock</span>
+                <span className="text-[11px] mt-0.5">Lock</span>
               </button>
               <button
                 type="button"
@@ -1939,10 +2239,10 @@ function TestRunner() {
                   });
                   if (ok) finish();
                 }}
-                className="inline-flex items-center gap-2 rounded-sm hover:bg-white/10 px-2 py-1 text-white text-xs font-semibold"
+                className="flex flex-col items-center justify-center min-w-[70px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] transition-colors text-[#fcfcfc] leading-none"
               >
                 <img src={endBlockIcon.url} alt="" className="h-6 w-6 object-contain" />
-                End Block
+                <span className="text-[11px] mt-0.5">End Block</span>
               </button>
             </div>
           );
@@ -1951,9 +2251,21 @@ function TestRunner() {
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 sm:px-3 py-1.5 text-white text-xs leading-tight" style={{ background: navBg }}>
             <div className="shrink-0">
               {!isReview && userSettings.showTimer && (
-                <div className="border border-white/55 rounded-[2px] px-2.5 py-1 text-[11px] font-semibold tracking-wide tabular-nums">
-                  {timedMode ? `Block Time Remaining: ${bh}:${bm}:${bs}` : `Block Time Elapsed: ${bh}:${bm}:${bs}`}
-                </div>
+                isUwModern ? (
+                  <div className="leading-tight tabular-nums">
+                    <div className="text-[11px] font-semibold text-white/95">Test ID: {id}</div>
+                    <div className="text-[11px] text-white/85">
+                      {timedMode ? `Block Time Remaining: ${bh}:${bm}:${bs}` : `Block Time Elapsed: ${bh}:${bm}:${bs}`}
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="rounded-[2px] px-2.5 py-1 text-[11px] font-semibold tracking-wide tabular-nums"
+                    style={{ border: isWebFred ? "1px outset #5872c4" : "1px solid rgba(255,255,255,0.55)" }}
+                  >
+                    {timedMode ? `Block Time Remaining: ${bh}:${bm}:${bs}` : `Block Time Elapsed: ${bh}:${bm}:${bs}`}
+                  </div>
+                )
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-1 sm:gap-x-1.5 gap-y-1">
@@ -1965,14 +2277,50 @@ function TestRunner() {
                 </>
               )}
 
-              <TopBtn icon={BookOpen} label="Medical Library" onClick={() => setShowLibrary(true)} />
-              <TopBtn icon={Zap} label="Flashcards" onClick={() => setShowFlashcards(true)} />
-              <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
+              <TopBtn modern={isUwModern} plain={isWebFred} icon={BookOpen} label="Medical Library" onClick={() => setShowLibrary(true)} />
+              <TopBtn modern={isUwModern} plain={isWebFred} icon={Zap} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+              <TopBtn modern={isUwModern} plain={isWebFred} icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
-                <TopBtn icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+                <TopBtn modern={isUwModern} plain={isWebFred} icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+              ) : isUwModern ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Suspend this test?",
+                        description: "Your progress is saved and you can resume the test later from the Tests page.",
+                        confirmLabel: "Suspend",
+                        tone: "warning",
+                      });
+                      if (ok) nav({ to: "/tests" });
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-white/10 text-white text-xs font-medium transition-colors"
+                  >
+                    <PauseCircle className="h-4 w-4 text-rose-300" />
+                    <span>Suspend</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "End this block?",
+                        description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                        confirmLabel: "End Block",
+                        tone: "danger",
+                      });
+                      if (ok) finish();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-white/10 text-white text-xs font-medium transition-colors"
+                  >
+                    <XCircle className="h-4 w-4 text-white/90" />
+                    <span>End Block</span>
+                  </button>
+                </>
               ) : (
                 <>
                   <TopBtn
+                    plain={isWebFred}
                     icon={PauseCircle}
                     tileClass="rounded-full"
                     label="Suspend"
@@ -1987,6 +2335,7 @@ function TestRunner() {
                     }}
                   />
                   <TopBtn
+                    plain={isWebFred}
                     icon={XCircle}
                     tileClass="rounded-full !bg-red-600 !text-white ring-1 ring-white/80"
                     label="End Block"
@@ -2006,6 +2355,7 @@ function TestRunner() {
           </div>
         );
       })()}
+      </div>
 
       {breakModal && (
         <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setBreakModal(null)}>
@@ -2429,6 +2779,29 @@ export function SettingsPanel(props: any) {
             onChange={e => setUserSettings({ lineHeight: Number(e.target.value) })}
             className="w-32 accent-primary"
           />
+        </Row>
+        <Row label="Tutor Interface">
+          <div className="flex items-center gap-1">
+            {TUTOR_INTERFACE_STYLES.map((st) => {
+              const active = (us.tutorInterface ?? "uworld") === st.id;
+              const shortLabel = st.id === "uworld" ? "UWorld" : st.id === "uworld-modern" ? "Modern" : "NBME";
+              return (
+                <button
+                  key={st.id}
+                  type="button"
+                  title={st.label}
+                  onClick={() => setUserSettings({ tutorInterface: st.id })}
+                  className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${
+                    active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/60 text-popover-foreground border-border hover:bg-muted"
+                  }`}
+                >
+                  {shortLabel}
+                </button>
+              );
+            })}
+          </div>
         </Row>
         <Row label="Canvas Theme">
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
