@@ -2107,42 +2107,6 @@ function TestRunner() {
 
               </div>
             )}
-
-            <div className="mt-6 flex justify-end items-center">
-              {isReview ? (
-                <button
-                  onClick={() => {
-                    if (idx === total - 1) nav({ to: "/test-results/$id", params: { id } });
-                    else goToQuestion(idx + 1);
-                  }}
-                  className="px-6 py-2 rounded text-white text-sm font-semibold hover:brightness-95 transition"
-                  style={{ background: navBg }}
-                >
-                  {idx === total - 1 ? "Finish Review" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
-                </button>
-              ) : !tutorMode ? null : !submitted ? null : (
-                <button
-                  onClick={async () => {
-                    if (idx === total - 1) {
-                      const ok = await confirm({
-                        title: "End this test?",
-                        description: "Your answers will be submitted and the test will be scored. This cannot be undone.",
-                        confirmLabel: "End Test",
-                        tone: "danger",
-                      });
-                      if (ok) finish();
-                    } else {
-                      goToQuestion(idx + 1);
-                    }
-                  }}
-                  className="px-6 py-2 rounded text-white text-sm font-semibold hover:brightness-95 transition"
-                  style={{ background: navBg }}
-                >
-                  {idx === total - 1 ? "End Test" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
-                </button>
-              )}
-
-            </div>
           </div>
         </div>
       </div>
