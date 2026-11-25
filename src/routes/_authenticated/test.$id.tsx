@@ -1804,12 +1804,12 @@ function TestRunner() {
                         <span
                           data-hlkey={`a${i}`}
                           className="qbank-html qbank-light inline"
-                          style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
+                          style={isStruck && !showAnswers ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
                           dangerouslySetInnerHTML={{ __html: answerHtmlFor(`a${i}`, letter, a.answer_text) }}
                         />
                         {submitted && pct != null && !userSettings.hidePercentages && <span className="text-slate-500 ml-1">({pct}%)</span>}
                       </span>
-                      {isUworldUI && (
+                      {isUworldUI && !showAnswers && (
                         <button
                           type="button"
                           onClick={(e) => {
