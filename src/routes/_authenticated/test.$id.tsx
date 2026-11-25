@@ -545,13 +545,18 @@ function TestRunner() {
   const isUworldUI = !isWebFred;
   const total = data?.questions.length ?? 0;
 
-  const navBg = userSettings.useAccentInQuizNav
-    ? darkenHex(userSettings.accentColor, 0.78)
-    : isWebFred
-      ? "#004673"
-      : NAV_BG;
-
   const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
+  const navBg =
+    theme === "dark"
+      ? "#0a0d14"
+      : theme === "forest"
+        ? "#071410"
+        : userSettings.useAccentInQuizNav
+          ? darkenHex(userSettings.accentColor, 0.78)
+          : isWebFred
+            ? "#004673"
+            : NAV_BG;
+
   const themeStyles =
     isWebFred && !baseThemeStyles.isDark && theme === "light"
       ? { ...baseThemeStyles, pageBg: "#fcfcfc", sideBg: "#ffffff", cardBg: "#fcfcfc", text: "#000000", border: "#c0c0c0" }
@@ -1830,11 +1835,18 @@ function TestRunner() {
                   <button
                     onClick={proceedExam}
                     className="px-4 py-1.5 rounded-[3px] text-white text-[13.5px] font-medium disabled:opacity-40 transition-opacity hover:brightness-95"
-                    style={{
-                      background: `linear-gradient(${userSettings.accentColor}, ${darkenHex(userSettings.accentColor, 0.78)})`,
-                      border: `1px solid ${darkenHex(userSettings.accentColor, 0.72)}`,
-                      textShadow: "0 -1px 0 rgba(0, 0, 0, 0.2)",
-                    }}
+                    style={
+                      themeStyles.isDark
+                        ? {
+                            background: "#111827",
+                            border: "1px solid #334155",
+                          }
+                        : {
+                            background: `linear-gradient(${userSettings.accentColor}, ${darkenHex(userSettings.accentColor, 0.78)})`,
+                            border: `1px solid ${darkenHex(userSettings.accentColor, 0.72)}`,
+                            textShadow: "0 -1px 0 rgba(0, 0, 0, 0.2)",
+                          }
+                    }
                   >
                     {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
                   </button>
