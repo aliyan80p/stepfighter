@@ -2800,11 +2800,10 @@ export function SettingsPanel(props: any) {
         {theme === "custom" && (
           <div className="mb-2 rounded-md border border-border bg-muted/40 px-2.5 py-2 space-y-1.5">
             <div className="text-[11px] font-semibold text-muted-foreground">Custom Canvas Colors</div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {(
                 [
                   { key: "background", label: "Canvas" },
-                  { key: "card", label: "Box" },
                   { key: "text", label: "Text" },
                 ] as const
               ).map(({ key, label }) => {
@@ -2814,11 +2813,15 @@ export function SettingsPanel(props: any) {
                     <input
                       type="color"
                       value={ct[key]}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setUserSettings({
-                          customTheme: { ...ct, [key]: e.target.value },
-                        })
-                      }
+                          customTheme:
+                            key === "background"
+                              ? { ...ct, background: val, card: val }
+                              : { ...ct, [key]: val },
+                        });
+                      }}
                       className="h-7 w-full rounded cursor-pointer border border-border bg-transparent p-0"
                     />
                     <span className="text-[10px] text-muted-foreground">{label}</span>
