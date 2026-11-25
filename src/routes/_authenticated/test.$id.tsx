@@ -959,8 +959,18 @@ function TestRunner() {
   const secs = elapsed % 60;
   const timeLabel = `${mins}min: ${secs}sec`;
 
-  // stub peer % (would come from analytics)
-  const peerPct = 73;
+  // Real peer % from Supabase `questions.corr_taken / ppl_taken` and `answers.correct_percentage`
+  // (NBME/CMS placeholder rows have ppl_taken=100, corr_taken=1 and answer counts summing to 0 — treat those as unavailable.)
+  const answerCountSum = answers.reduce((sum, a) => sum + Math.max(0, Number((a as any).correct_percentage ?? 0)), 0);
+  const rawPpl = Number((question as any).ppl_taken ?? 0);
+  const rawCorr = Number((question as any).corr_taken ?? 0);
+  const isPlaceholderPeer = answerCountSum === 0 && rawPpl === 100 && rawCorr <= 1;
+  const peerPct: number | null =
+    answerCountSum > 0 && correctIdx != null && answers[correctIdx]
+      ? Math.round((Math.max(0, Number((answers[correctIdx] as any).correct_percentage ?? 0)) / answerCountSum) * 100)
+      : !isPlaceholderPeer && rawPpl > 0 && rawCorr >= 0
+        ? Math.round((rawCorr / rawPpl) * 100)
+        : null;
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
@@ -1823,10 +1833,11 @@ function TestRunner() {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
                 const isThisWrong = showAnswers && selected === i && i !== correctIdx;
-                // deterministic pseudo peer % per answer
-                const pct: number | null = submitted
-                  ? (i === correctIdx ? 55 + ((question.id * 7) % 25) : 2 + ((question.id * 3 + i * 11) % 18))
-                  : null;
+                // Real per-option peer % from Supabase `answers.correct_percentage` counts
+                const pct: number | null =
+                  showAnswers && answerCountSum > 0
+                    ? Math.round((Math.max(0, Number((a as any).correct_percentage ?? 0)) / answerCountSum) * 100)
+                    : null;
                 const isSelected = selected === i;
                 const isStruck = struck.has(i);
                 const toggleStruck = () => {
@@ -1980,7 +1991,7 @@ function TestRunner() {
                   )}
                 </div>
 
-                {!userSettings.hidePercentages && (
+                {!userSettings.hidePercentages && peerPct != null && (
                   <div className="flex items-center gap-2">
                     <BarChart2 className="h-4 w-4 opacity-55 shrink-0" />
                     <div className="leading-tight">

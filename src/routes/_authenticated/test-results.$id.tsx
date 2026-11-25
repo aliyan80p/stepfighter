@@ -46,9 +46,12 @@ function TestResults() {
     return data.questions.map((q, idx) => {
       const a = data.attemptsByQ[q.id];
       const status: Status = !a ? "omitted" : a.is_correct ? "correct" : "wrong";
-      // Deterministic peer avg 45-90% based on question id
-      const seed = (q.id * 9301 + 49297) % 233280;
-      const others = Math.round(45 + (seed / 233280) * 45 * 10) / 10;
+      // Real peer accuracy from Supabase `questions.corr_taken / ppl_taken`
+      // (skip NBME/CMS placeholder rows where ppl_taken=100 and corr_taken<=1)
+      const ppl = Number((q as any).ppl_taken ?? 0);
+      const corr = Number((q as any).corr_taken ?? 0);
+      const isPlaceholder = ppl === 100 && corr <= 1;
+      const others = !isPlaceholder && ppl > 0 ? Math.round((corr / ppl) * 1000) / 10 : null;
       const time = (a as any)?.time_seconds ?? 0;
       return {
         index: idx + 1,
@@ -67,9 +70,9 @@ function TestResults() {
     const correct = rows.filter((r) => r.status === "correct").length;
     const wrong = rows.filter((r) => r.status === "wrong").length;
     const omitted = rows.filter((r) => r.status === "omitted").length;
-    const answered = correct + wrong;
     const score = rows.length ? (correct / rows.length) * 100 : 0;
-    const peer = rows.length ? rows.reduce((s, r) => s + r.others, 0) / rows.length : 0;
+    const peerRows = rows.filter((r): r is typeof r & { others: number } => r.others != null);
+    const peer = peerRows.length ? peerRows.reduce((s, r) => s + r.others, 0) / peerRows.length : null;
     // Best/worst subject by accuracy
     const bySub: Record<string, { c: number; t: number; o: number }> = {};
     for (const r of rows) {
@@ -98,7 +101,7 @@ function TestResults() {
         case "subject": cmp = a.subject.localeCompare(b.subject); break;
         case "system": cmp = a.system.localeCompare(b.system); break;
         case "topic": cmp = a.topic.localeCompare(b.topic); break;
-        case "others": cmp = a.others - b.others; break;
+        case "others": cmp = (a.others ?? -1) - (b.others ?? -1); break;
         case "time": cmp = a.time - b.time; break;
         case "status": cmp = a.status.localeCompare(b.status); break;
       }
@@ -122,7 +125,7 @@ function TestResults() {
 
   const mode = data.test.mode;
   const created = new Date(data.test.created_at);
-  const belowPeer = totals.score < totals.peer;
+  const belowPeer = totals.peer != null && totals.score < totals.peer;
 
   return (
     <div className="sf-fluid-page space-y-6">
@@ -220,20 +223,22 @@ function TestResults() {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed">
-                  {belowPeer
-                    ? `You are ${(totals.peer - totals.score).toFixed(1)}% below the peer average (${totals.peer.toFixed(1)}%). Focus on weaker subjects first.`
-                    : `You are ${(totals.score - totals.peer).toFixed(1)}% above the peer average (${totals.peer.toFixed(1)}%). Strong work.`}
+                  {totals.peer == null
+                    ? "Review your missed and omitted questions below to lock in key concepts."
+                    : belowPeer
+                      ? `You are ${(totals.peer - totals.score).toFixed(1)}% below the peer average (${totals.peer.toFixed(1)}%). Focus on weaker subjects first.`
+                      : `You are ${(totals.score - totals.peer).toFixed(1)}% above the peer average (${totals.peer.toFixed(1)}%). Strong work.`}
                 </p>
               </div>
             </div>
 
-            <Donut value={totals.score} peer={totals.peer} />
+            <Donut value={totals.score} peer={totals.peer ?? 0} />
           </div>
 
           {/* Score vs Peer comparison bar */}
           <div className="relative space-y-3 pt-4 border-t border-border">
             <BarLine label="Your Score" value={totals.score} tone="mine" />
-            <BarLine label="Peer Average" value={totals.peer} tone="peer" />
+            {totals.peer != null && <BarLine label="Peer Average" value={totals.peer} tone="peer" />}
           </div>
 
           {/* Clean Breakdown Counters */}
@@ -368,7 +373,7 @@ function TestResults() {
               <div className="text-sm md:truncate" title={r.subject}><span className="md:hidden text-xs text-muted-foreground mr-1">Subject:</span>{r.subject}</div>
               <div className="text-sm md:truncate" title={r.system}><span className="md:hidden text-xs text-muted-foreground mr-1">System:</span>{r.system}</div>
               <div className="text-sm text-primary md:truncate" title={r.topic}><span className="md:hidden text-xs text-muted-foreground mr-1">Topic:</span>{r.topic}</div>
-              <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.others.toFixed(1)}% others</span></div>
+              <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.others != null ? `${r.others.toFixed(1)}% others` : "—"}</span></div>
               <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.time} sec</span></div>
               <div className="md:text-right">
                 <Link to="/test/$id" params={{ id }} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border hover:bg-muted">

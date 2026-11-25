@@ -238,10 +238,11 @@ export const getPeerRanking = createServerFn({ method: "GET" })
     const yourAnswered = you ? you.unique.size : 0;
     const yourAttempts = you?.total ?? 0;
 
-    // percentile: fraction of peers you beat (0..100)
+    // percentile: fraction of other peers you beat (0..100)
+    const otherPeers = stats.filter((s) => s.uid !== userId);
     const beatOn = (val: number, key: "accuracy" | "answered" | "attempts") =>
-      totalPeers > 1
-        ? Math.round((stats.filter((s) => s.uid !== userId && s[key] < val).length / (totalPeers - 1)) * 100)
+      otherPeers.length > 0
+        ? Math.round((otherPeers.filter((s) => s[key] < val).length / otherPeers.length) * 100)
         : 0;
 
     const meanAccuracy = totalPeers ? stats.reduce((a, s) => a + s.accuracy, 0) / totalPeers : 0;
@@ -249,7 +250,13 @@ export const getPeerRanking = createServerFn({ method: "GET" })
     const meanAttempts = totalPeers ? stats.reduce((a, s) => a + s.attempts, 0) / totalPeers : 0;
 
     const sortedAcc = [...stats].sort((a, b) => a.accuracy - b.accuracy);
-    const median = totalPeers ? sortedAcc[Math.floor(totalPeers / 2)].accuracy : 0;
+    const mid = Math.floor(totalPeers / 2);
+    const median =
+      totalPeers === 0
+        ? 0
+        : totalPeers % 2 === 1
+          ? sortedAcc[mid].accuracy
+          : (sortedAcc[mid - 1].accuracy + sortedAcc[mid].accuracy) / 2;
 
     // Distribution bins (accuracy 0-100 in 10% bins)
     const bins = Array.from({ length: 10 }, (_, i) => ({
