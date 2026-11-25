@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import {
   ChevronUp, Search, Clock, GraduationCap, ClipboardCheck,
-  Columns2, LayoutList, PanelTop, Sparkles, SlidersHorizontal,
+  Sparkles, SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TestCreationOverlay } from "@/components/loader";
@@ -24,7 +24,6 @@ export const Route = createFileRoute("/_authenticated/new-test")({
 type Tab = "courses" | "qbank" | "subjects" | "systems" | "topics";
 type Scope = "all" | "unused" | "incorrect" | "correct" | "omitted" | "marked";
 type Difficulty = "all" | "easy" | "medium" | "hard";
-type PageLayout = "studio" | "uworld" | "topbar";
 
 const COURSES = ALL_QBANKS.map((q) => ({ id: q.slug, qbankId: q.id, name: q.name }));
 
@@ -139,19 +138,8 @@ function NewTest() {
     return activeCourse ? [activeCourse] : [];
   }, [entitledSlugs, qbankId]);
 
-  const [layout, setLayout] = useState<PageLayout>(() => {
-    if (typeof window === "undefined") return "studio";
-    const saved = window.localStorage.getItem("sf:newTestLayout");
-    return saved === "uworld" || saved === "topbar" ? saved : "studio";
-  });
-  const chooseLayout = (next: PageLayout) => {
-    setLayout(next);
-    try { window.localStorage.setItem("sf:newTestLayout", next); } catch {}
-  };
-
   const [openTab, setOpenTab] = useState<Tab>("qbank");
   const [selectionOpen, setSelectionOpen] = useState(true);
-  const [topicsOpen, setTopicsOpen] = useState(false);
   const [courseIds, setCourseIds] = useState<string[]>([]);
   const [qbankIds, setQbankIds] = useState<string[]>([]);
   const [subjectIds, setSubjectIds] = useState<number[]>([]);
@@ -757,32 +745,6 @@ function NewTest() {
               </button>
             ))}
           </div>
-
-          {/* 3-Layout Orientation Switcher */}
-          {quizType === "standard" && (
-            <div className="inline-flex rounded-lg border border-border bg-card p-0.5" title="Switch page layout">
-              {([
-                { id: "studio", label: "Studio", icon: Columns2 },
-                { id: "uworld", label: "UWorld", icon: LayoutList },
-                { id: "topbar", label: "Top Bar", icon: PanelTop },
-              ] as const).map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => chooseLayout(id)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-colors",
-                    layout === id
-                      ? "bg-primary text-primary-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -848,8 +810,8 @@ function NewTest() {
         </div>
       )}
 
-      {/* ==================== LAYOUT 1: TWO-COLUMN STUDIO ==================== */}
-      {quizType === "standard" && layout === "studio" && (
+      {/* ==================== TWO-COLUMN STUDIO ==================== */}
+      {quizType === "standard" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* Left: Filters, Scope & Difficulty */}
           <div className="lg:col-span-8 space-y-5 min-w-0">
@@ -939,199 +901,6 @@ function NewTest() {
               </div>
             </Card>
           </div>
-        </div>
-      )}
-
-      {/* ==================== LAYOUT 2: OFFICIAL UWORLD CREATE TEST ==================== */}
-      {quizType === "standard" && layout === "uworld" && (
-        <div className="space-y-4">
-          {/* Top compact UWorld Test Mode + Question Mode + Difficulty */}
-          <Card>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 divide-y lg:divide-y-0 lg:divide-x divide-border">
-              <div className="space-y-2.5">
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Test Mode</div>
-                {modeControl()}
-              </div>
-              <div className="pt-4 lg:pt-0 lg:pl-5 space-y-2.5">
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Question Mode</div>
-                {scopePills}
-              </div>
-              <div className="pt-4 lg:pt-0 lg:pl-5 space-y-2.5">
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Difficulty</div>
-                {difficultyPills}
-              </div>
-            </div>
-          </Card>
-
-          {/* QBank Selector */}
-          <Card>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-sm">1. Select QBank</h2>
-              <span className="text-xs text-muted-foreground">{qbankIds.length} selected</span>
-            </div>
-            <SelectionList
-              items={qbankListItems}
-              selected={qbankIds}
-              onToggle={(id) => setQbankIds((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-              columns={3}
-            />
-          </Card>
-
-          {/* Subjects & Systems Side-by-Side (classic UWorld orientation!) */}
-          {hasQbank && !cmsMode && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-semibold text-sm">2. Subjects</h2>
-                  <span className="text-xs text-muted-foreground">
-                    {subjectIds.length ? `${subjectIds.length} selected` : "All included"}
-                  </span>
-                </div>
-                <SelectionList
-                  items={subjectItems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
-                  selected={subjectIds}
-                  onToggle={(id) => setSubjectIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
-                  search={subjectSearch}
-                  onSearch={setSubjectSearch}
-                  selectAll={() => setSubjectIds((data?.subjects ?? []).map((s) => s.id))}
-                  clearAll={() => setSubjectIds([])}
-                  columns={2}
-                  scrollable
-                />
-              </Card>
-
-              <Card>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="font-semibold text-sm">3. Systems</h2>
-                  <span className="text-xs text-muted-foreground">
-                    {systemIds.length ? `${systemIds.length} selected` : "All included"}
-                  </span>
-                </div>
-                <SelectionList
-                  items={filteredSystems.filter((s) => (s.count ?? 0) > 0).map((s) => ({ id: s.id, label: s.name, count: s.count ?? 0 }))}
-                  selected={systemIds}
-                  onToggle={(id) => setSystemIds((v) => v.includes(id as number) ? v.filter((x) => x !== id) : [...v, id as number])}
-                  search={systemSearch}
-                  onSearch={setSystemSearch}
-                  selectAll={() => setSystemIds(filteredSystems.map((s) => s.id))}
-                  clearAll={() => setSystemIds([])}
-                  columns={2}
-                  scrollable
-                />
-              </Card>
-            </div>
-          )}
-
-          {/* CMS Forms when CMS selected */}
-          {hasQbank && cmsMode && (
-            <Card>
-              <h2 className="font-semibold text-sm mb-3">2. CMS Forms</h2>
-              <SelectionList
-                items={cmsFormItems}
-                selected={cmsFormSources}
-                onToggle={(id) => setCmsFormSources((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-                search={subjectSearch}
-                onSearch={setSubjectSearch}
-                selectAll={() => setCmsFormSources(cmsFormItems.map((i) => i.id))}
-                clearAll={() => setCmsFormSources([])}
-                columns={3}
-              />
-            </Card>
-          )}
-
-          {/* Optional expandable Topics */}
-          {hasQbank && !cmsMode && filteredTopics.length > 0 && (
-            <Card>
-              <button
-                type="button"
-                onClick={() => setTopicsOpen((v) => !v)}
-                className="w-full flex items-center justify-between text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <h2 className="font-semibold text-sm">4. Topics (Optional)</h2>
-                  {topicNames.length > 0 && (
-                    <span className="rounded-full bg-primary/15 text-primary px-2 py-0.5 text-[11px] font-semibold">
-                      {topicNames.length} selected
-                    </span>
-                  )}
-                </div>
-                <ChevronUp className={cn("h-4 w-4 text-muted-foreground transition-transform", !topicsOpen && "rotate-180")} />
-              </button>
-              <div className="sf-accordion" data-open={topicsOpen ? "true" : "false"}>
-                <div className="pt-4">
-                  <SelectionList
-                    items={filteredTopics.map((t) => ({ id: t.name, label: t.name, count: t.count }))}
-                    selected={topicNames}
-                    onToggle={(id) => setTopicNames((v) => v.includes(id as string) ? v.filter((x) => x !== id) : [...v, id as string])}
-                    search={topicSearch}
-                    onSearch={setTopicSearch}
-                    selectAll={() => setTopicNames(filteredTopics.map((t) => t.name))}
-                    clearAll={() => setTopicNames([])}
-                    columns={3}
-                    scrollable
-                  />
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Bottom UWorld Generate Bar */}
-          <Card>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="flex-1 max-w-md">{countControl()}</div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Input
-                  value={quizName}
-                  onChange={(e) => setQuizName(e.target.value)}
-                  placeholder="Quiz name (optional)"
-                  className="w-48 h-10 text-sm"
-                />
-                <Button size="lg" onClick={start} disabled={!canGenerate} className="min-w-[170px]">
-                  {loading ? "Generating…" : `Generate Test (${count})`}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* ==================== LAYOUT 3: TOP CONTROL BAR + WIDE FILTER GRID ==================== */}
-      {quizType === "standard" && layout === "topbar" && (
-        <div className="space-y-4">
-          <Card>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border">
-                {modeControl(true)}
-                <div className="flex flex-wrap items-center gap-2 ml-auto">
-                  <Input
-                    value={quizName}
-                    onChange={(e) => setQuizName(e.target.value)}
-                    placeholder="Quiz name (optional)"
-                    className="w-44 h-9 text-xs"
-                  />
-                  <Button onClick={start} disabled={!canGenerate} className="h-9 px-5 gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {loading ? "Generating…" : `Generate (${count})`}
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-                <div className="lg:col-span-5 space-y-1.5">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Question Mode</div>
-                  {scopePills}
-                </div>
-                <div className="lg:col-span-4 space-y-1.5">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Difficulty</div>
-                  {difficultyPills}
-                </div>
-                <div className="lg:col-span-3">
-                  {countControl(true)}
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {tabbedFilterCard}
         </div>
       )}
     </div>
