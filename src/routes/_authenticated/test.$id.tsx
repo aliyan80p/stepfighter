@@ -1836,19 +1836,27 @@ function TestRunner() {
                 {!tutorMode ? (
                   <button
                     onClick={proceedExam}
-                    className="px-3 py-1 rounded-[3px] text-white text-[14px] font-normal disabled:opacity-40 transition-opacity hover:brightness-95"
-                    style={{
-                      background: "linear-gradient(#5490cc, #004976)",
-                      border: "1px solid #004976",
-                      textShadow: "0 -1px 0 rgba(0, 0, 0, 0.25)",
-                    }}
+                    className="px-4 py-1.5 rounded-[3px] text-white text-[13.5px] font-medium disabled:opacity-40 transition-opacity hover:brightness-95"
+                    style={
+                      isSelfAssessment
+                        ? {
+                            background: "linear-gradient(#5490cc, #004673)",
+                            border: "1px solid #004673",
+                            textShadow: "0 -1px 0 rgba(0, 0, 0, 0.25)",
+                          }
+                        : {
+                            background: `linear-gradient(${userSettings.accentColor}, ${darkenHex(userSettings.accentColor, 0.78)})`,
+                            border: `1px solid ${darkenHex(userSettings.accentColor, 0.72)}`,
+                            textShadow: "0 -1px 0 rgba(0, 0, 0, 0.2)",
+                          }
+                    }
                   >
                     {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
                   </button>
                 ) : !submitted ? (
                   <button
                     onClick={submit}
-                    className="px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide"
+                    className="px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide hover:brightness-95 transition"
                     style={{ background: navBg }}
                   >
                     Submit
@@ -2104,8 +2112,8 @@ function TestRunner() {
                     if (idx === total - 1) nav({ to: "/test-results/$id", params: { id } });
                     else goToQuestion(idx + 1);
                   }}
-                  className="px-6 py-2 rounded text-white text-sm font-semibold"
-                  style={{ background: NAV_BG }}
+                  className="px-6 py-2 rounded text-white text-sm font-semibold hover:brightness-95 transition"
+                  style={{ background: navBg }}
                 >
                   {idx === total - 1 ? "Finish Review" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
                 </button>
@@ -2124,8 +2132,8 @@ function TestRunner() {
                       goToQuestion(idx + 1);
                     }
                   }}
-                  className="px-6 py-2 rounded text-white text-sm font-semibold"
-                  style={{ background: NAV_BG }}
+                  className="px-6 py-2 rounded text-white text-sm font-semibold hover:brightness-95 transition"
+                  style={{ background: navBg }}
                 >
                   {idx === total - 1 ? "End Test" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
                 </button>
