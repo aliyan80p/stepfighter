@@ -786,16 +786,44 @@ function TestRunner() {
   };
 
 
-  const bookmark = async () => {
+  const bookmark = () => {
     if (!question) return;
-    try {
-      const result = await bmFn({ data: { questionId: question.id, qbankId: data?.qbankId ?? 1 } });
-      toast(result.bookmarked ? "Question flagged" : "Flag removed");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to update flag");
-      return;
-    }
-    qc.invalidateQueries({ queryKey: ["test", testId] });
+    const qid = question.id;
+    const wasBookmarked = data?.bookmarkedIds?.has(qid) ?? false;
+    const nextBookmarked = !wasBookmarked;
+
+    // Instant optimistic update so the flag checkbox & sidebar icon respond in 0ms
+    qc.setQueryData(["test", testId], (old: any) => {
+      if (!old) return old;
+      const nextSet = new Set<number>(old.bookmarkedIds ?? []);
+      if (nextBookmarked) nextSet.add(qid);
+      else nextSet.delete(qid);
+      return { ...old, bookmarkedIds: nextSet };
+    });
+
+    bmFn({ data: { questionId: qid, qbankId: data?.qbankId ?? 1 } })
+      .then((result) => {
+        if (result.bookmarked !== nextBookmarked) {
+          qc.setQueryData(["test", testId], (old: any) => {
+            if (!old) return old;
+            const nextSet = new Set<number>(old.bookmarkedIds ?? []);
+            if (result.bookmarked) nextSet.add(qid);
+            else nextSet.delete(qid);
+            return { ...old, bookmarkedIds: nextSet };
+          });
+        }
+      })
+      .catch((e) => {
+        // Roll back on failure
+        qc.setQueryData(["test", testId], (old: any) => {
+          if (!old) return old;
+          const nextSet = new Set<number>(old.bookmarkedIds ?? []);
+          if (wasBookmarked) nextSet.add(qid);
+          else nextSet.delete(qid);
+          return { ...old, bookmarkedIds: nextSet };
+        });
+        toast.error(e instanceof Error ? e.message : "Failed to update flag");
+      });
   };
 
   const finish = async (opts?: { force?: boolean }) => {
@@ -1264,14 +1292,53 @@ function TestRunner() {
           >
             <Eraser className="h-4 w-4" />
           </button>
-          <button
-            type="button"
-            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }}
-            title="Copy"
-            aria-label="Copy"
-          >
-            <Copy className="h-4 w-4" />
-          </button>
+          {userSettings.toolbar?.copy !== false && (
+            <button
+              type="button"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }}
+              title="Copy"
+              aria-label="Copy"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
+          )}
+          {userSettings.toolbar?.notes !== false && (
+            <button
+              type="button"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setHlBar(null); setShowNotes(true); }}
+              title="Add to Notes"
+              aria-label="Add to Notes"
+            >
+              <StickyNote className="h-4 w-4" />
+            </button>
+          )}
+          {userSettings.toolbar?.library !== false && (
+            <button
+              type="button"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const sel = (savedTextRef.current || window.getSelection()?.toString() || "").trim();
+                setHlBar(null);
+                setLibraryTarget({ docId: null, search: sel || null });
+                setShowLibrary(true);
+              }}
+              title="Search Medical Library"
+              aria-label="Search Medical Library"
+            >
+              <BookOpen className="h-4 w-4" />
+            </button>
+          )}
+          {(userSettings.toolbar?.newFlashcard !== false || userSettings.toolbar?.existingFlashcard !== false) && (
+            <button
+              type="button"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setHlBar(null); setShowFlashcards(true); }}
+              title="Flashcards"
+              aria-label="Flashcards"
+            >
+              <Zap className="h-4 w-4" />
+            </button>
+          )}
         </div>
       )}
       {/* Full-height NBME Self-Assessment left sidebar with Question Status header */}
