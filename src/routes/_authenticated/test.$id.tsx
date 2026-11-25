@@ -1809,7 +1809,7 @@ function TestRunner() {
                         />
                         {submitted && pct != null && !userSettings.hidePercentages && <span className="text-slate-500 ml-1">({pct}%)</span>}
                       </span>
-                      {isUworldUI && !showAnswers && (
+                      {!showAnswers && (
                         <button
                           type="button"
                           onClick={(e) => {
