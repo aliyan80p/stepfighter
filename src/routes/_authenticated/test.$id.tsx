@@ -1302,7 +1302,7 @@ function TestRunner() {
             const active = i === idx;
             const zebraBg =
               i % 2 === 1
-                ? (themeStyles.isDark ? "rgba(255,255,255,0.06)" : "#e6e6e6")
+                ? (themeStyles.isDark ? "rgba(255,255,255,0.06)" : theme === "light" ? "#e6e6e6" : "rgba(0,0,0,0.055)")
                 : "transparent";
             return (
               <button
@@ -1517,7 +1517,7 @@ function TestRunner() {
             <div
               className="px-2 py-2 text-[10px] font-bold text-center leading-tight border-b sticky top-0 z-20"
               style={{
-                background: themeStyles.isDark ? themeStyles.cardBg : "#ffffff",
+                background: themeStyles.cardBg,
                 borderColor: themeStyles.border,
                 color: themeStyles.text,
               }}
@@ -1538,7 +1538,7 @@ function TestRunner() {
             const isUnsubmitted = active && selected !== null && !submitted && userSettings.showUnsubmittedIndicator !== false;
             const zebraBg =
               isUworldUI && i % 2 === 1
-                ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : "#e9edf2")
+                ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : theme === "light" ? "#e9edf2" : "rgba(0,0,0,0.05)")
                 : "transparent";
             return (
               <button
@@ -1874,7 +1874,9 @@ function TestRunner() {
                   borderLeftColor: isCorrect ? "#22c55e" : "#ef4444",
                   background: themeStyles.isDark
                     ? (isCorrect ? "rgba(34,197,94,0.10)" : "rgba(239,68,68,0.10)")
-                    : "#f4f6f8",
+                    : theme === "light"
+                      ? "#f4f6f8"
+                      : themeStyles.cardBg,
                   color: themeStyles.text,
                 }}
               >
@@ -1956,7 +1958,7 @@ function TestRunner() {
                 className="border-b flex items-center justify-between gap-2 pt-1.5 px-2"
                 style={{
                   borderColor: themeStyles.border,
-                  background: themeStyles.isDark ? "transparent" : "#f4f6f9",
+                  background: themeStyles.isDark ? "transparent" : theme === "light" ? "#f4f6f9" : themeStyles.sideBg,
                 }}
               >
                   <div
