@@ -503,7 +503,7 @@ function AuthedLayout() {
             ? <PaywallGate />
             : !activeMatchesEntitlement
               ? <div className="min-h-full grid place-items-center p-6"><PageLoader label="Loading your workspace" /></div>
-              : <div key={pathname} className="sf-page-enter min-h-full"><Outlet /></div>}
+              : <div className="min-h-full"><Outlet /></div>}
         </div>
       </main>
     </div>

@@ -373,6 +373,7 @@ function TestRunner() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["test", testId],
     queryFn: () => getFn({ data: { id: testId } }),
+    staleTime: 60_000,
     retry: false,
   });
 

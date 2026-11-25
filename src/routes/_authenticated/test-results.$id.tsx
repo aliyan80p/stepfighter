@@ -31,6 +31,7 @@ function TestResults() {
   const { data, isLoading } = useQuery({
     queryKey: ["test-results", id],
     queryFn: () => fn({ data: { id: Number(id) } }),
+    staleTime: 60_000,
   });
 
   const [tab, setTab] = useState<"results" | "analysis">("results");

@@ -844,19 +844,19 @@ body { overscroll-behavior-y: none; }
   100% { transform: translateX(260%) scaleX(0.35); }
 }
 @keyframes sf-page-in {
-  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  from { opacity: 0.92; transform: translate3d(0, 2px, 0); }
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 @keyframes sf-tab-in {
-  from { opacity: 0; transform: translate3d(6px, 0, 0); }
+  from { opacity: 0.88; transform: translate3d(3px, 0, 0); }
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 @keyframes sf-scale-in {
-  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.97); }
-  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  from { opacity: 0.85; transform: scale(0.985); }
+  to   { opacity: 1; transform: scale(1); }
 }
 @keyframes sf-reveal-up {
-  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  from { opacity: 0.88; transform: translate3d(0, 3px, 0); }
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
@@ -902,20 +902,16 @@ body { overscroll-behavior-y: none; }
 }
 
 .sf-page-enter {
-  animation: sf-page-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: transform, opacity;
+  animation: sf-page-in 130ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .sf-tab-enter {
-  animation: sf-tab-in 190ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: transform, opacity;
+  animation: sf-tab-in 130ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .sf-scale-enter {
-  animation: sf-scale-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: transform, opacity;
+  animation: sf-scale-in 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .sf-reveal-up {
-  animation: sf-reveal-up 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: transform, opacity;
+  animation: sf-reveal-up 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Smooth 60fps CSS-grid accordion (no JS height measurement, zero jank) */
@@ -942,16 +938,16 @@ body { overscroll-behavior-y: none; }
   transform: translate3d(0, -1.5px, 0);
 }
 
-/* Subtle staggered entrance for dashboard / grid cards */
+/* Subtle staggered entrance for dashboard / grid cards (zero blank flash) */
 .sf-stagger > * {
-  animation: sf-page-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sf-page-in 130ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .sf-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.sf-stagger > *:nth-child(2) { animation-delay: 35ms; }
-.sf-stagger > *:nth-child(3) { animation-delay: 70ms; }
-.sf-stagger > *:nth-child(4) { animation-delay: 105ms; }
-.sf-stagger > *:nth-child(5) { animation-delay: 140ms; }
-.sf-stagger > *:nth-child(6) { animation-delay: 175ms; }
+.sf-stagger > *:nth-child(2) { animation-delay: 12ms; }
+.sf-stagger > *:nth-child(3) { animation-delay: 24ms; }
+.sf-stagger > *:nth-child(4) { animation-delay: 36ms; }
+.sf-stagger > *:nth-child(5) { animation-delay: 48ms; }
+.sf-stagger > *:nth-child(6) { animation-delay: 60ms; }
 
 /* Fluid workspace canvas that auto-adjusts cleanly as sidebar toggles or viewport resizes */
 .sf-main-canvas {
