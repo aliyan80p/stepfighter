@@ -460,11 +460,19 @@ function TestRunner() {
   const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>(DEFAULT_SETTINGS.enabledHighlights);
   const [settingsApplied, setSettingsApplied] = useState(false);
   const [darkBarUsesAccent, setDarkBarUsesAccent] = useState(false);
+  const [saThemeOverride, setSaThemeOverride] = useState(false);
+  const [saAccentOverride, setSaAccentOverride] = useState(false);
 
   // Reset dark-mode bar back to sleek black whenever entering Reverse Color / Dark / Forest theme
   useEffect(() => {
     if (theme === "dark" || theme === "forest") setDarkBarUsesAccent(false);
   }, [theme]);
+
+  // Reset Self-Assessment local color overrides when switching to another test
+  useEffect(() => {
+    setSaThemeOverride(false);
+    setSaAccentOverride(false);
+  }, [id]);
 
   // Apply user's saved defaults once hydrated
   useEffect(() => {
@@ -552,20 +560,23 @@ function TestRunner() {
   const isUworldUI = !isWebFred;
   const total = data?.questions.length ?? 0;
 
-  const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
+  const effectiveTheme: ResolvedQuizTheme = isSelfAssessment && !saThemeOverride ? "light" : theme;
+  const baseThemeStyles = getQuizPalette(effectiveTheme, userSettings.customTheme);
   const navBg =
-    (theme === "dark" || theme === "forest") && !darkBarUsesAccent
-      ? (theme === "forest" ? "#071410" : "#0a0d14")
-      : userSettings.useAccentInQuizNav
-        ? darkenHex(userSettings.accentColor, baseThemeStyles.isDark ? 0.62 : 0.78)
-        : isWebFred
-          ? "#004673"
-          : NAV_BG;
+    (effectiveTheme === "dark" || effectiveTheme === "forest") && !darkBarUsesAccent
+      ? (effectiveTheme === "forest" ? "#071410" : "#0a0d14")
+      : isSelfAssessment && !saAccentOverride
+        ? "#004673"
+        : userSettings.useAccentInQuizNav
+          ? darkenHex(userSettings.accentColor, baseThemeStyles.isDark ? 0.62 : 0.78)
+          : isWebFred
+            ? "#004673"
+            : NAV_BG;
 
   const themeStyles =
-    isWebFred && !baseThemeStyles.isDark && theme === "light"
+    isWebFred && !baseThemeStyles.isDark && effectiveTheme === "light"
       ? { ...baseThemeStyles, pageBg: "#fcfcfc", sideBg: "#ffffff", cardBg: "#fcfcfc", text: "#000000", border: "#c0c0c0" }
-      : !baseThemeStyles.isDark && theme === "light"
+      : !baseThemeStyles.isDark && effectiveTheme === "light"
         ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
         : baseThemeStyles;
 
@@ -1668,14 +1679,14 @@ function TestRunner() {
           className="sf-main-canvas flex-1 overflow-auto"
           ref={contentRef}
           style={
-            isWebFred && !themeStyles.isDark && theme === "light"
+            isWebFred && !themeStyles.isDark && effectiveTheme === "light"
               ? { backgroundImage: "linear-gradient(#fcfcfc 30%, #d7dced 100%)" }
               : undefined
           }
         >
           <div
             ref={splitGridRef}
-            className={`w-full mx-0 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${isExamUI ? "qbank-exam-stem" : ""}`}
+            className={`w-full mx-0 py-3 qbank-theme-${effectiveTheme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${isExamUI ? "qbank-exam-stem" : ""}`}
             style={{
               fontSize,
               fontWeight,
@@ -1913,11 +1924,17 @@ function TestRunner() {
                             background: "#111827",
                             border: "1px solid #334155",
                           }
-                        : {
-                            background: `linear-gradient(${userSettings.accentColor}, ${darkenHex(userSettings.accentColor, 0.78)})`,
-                            border: `1px solid ${darkenHex(userSettings.accentColor, 0.72)}`,
-                            textShadow: "0 -1px 0 rgba(0, 0, 0, 0.2)",
-                          }
+                        : isSelfAssessment && !saAccentOverride
+                          ? {
+                              background: "linear-gradient(#5490cc, #004673)",
+                              border: "1px solid #004673",
+                              textShadow: "0 -1px 0 rgba(0, 0, 0, 0.25)",
+                            }
+                          : {
+                              background: `linear-gradient(${userSettings.accentColor}, ${darkenHex(userSettings.accentColor, 0.78)})`,
+                              border: `1px solid ${darkenHex(userSettings.accentColor, 0.72)}`,
+                              textShadow: "0 -1px 0 rgba(0, 0, 0, 0.2)",
+                            }
                     }
                   >
                     {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
@@ -2387,7 +2404,11 @@ function TestRunner() {
           onClose={() => setShowSettings(false)}
           fontSize={fontSize} setFontSize={setFontSize}
           fontWeight={fontWeight} setFontWeight={setFontWeight}
-          theme={theme} setTheme={setTheme}
+          theme={effectiveTheme}
+          setTheme={(next: ResolvedQuizTheme) => {
+            setSaThemeOverride(true);
+            setTheme(next);
+          }}
           transparentExpl={transparentExpl} setTransparentExpl={setTransparentExpl}
           largeImages={largeImages} setLargeImages={setLargeImages}
           highlightOnly={highlightOnly} setHighlightOnly={setHighlightOnly}
@@ -2396,7 +2417,10 @@ function TestRunner() {
           enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
           userSettings={userSettings}
           isSelfAssessment={isSelfAssessment}
-          onPickAccent={() => setDarkBarUsesAccent(true)}
+          onPickAccent={() => {
+            setSaAccentOverride(true);
+            setDarkBarUsesAccent(true);
+          }}
         />
       )}
 
