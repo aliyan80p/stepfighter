@@ -11,7 +11,7 @@ import {
 import {
   Activity, ListOrdered, StickyNote, CheckCircle2, ChevronRight, XCircle,
   TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2, X, Copy, Check,
-  ArrowRightLeft, RefreshCw, Repeat, Target, AlertTriangle,
+  ArrowRightLeft, RefreshCw, Repeat, Target, AlertTriangle, Search, Eye,
 } from "lucide-react";
 import { Loader } from "@/components/loader";
 import { TestAnalysisPane } from "./performance.ai-test-analysis";
@@ -34,9 +34,13 @@ function TestResults() {
     staleTime: 60_000,
   });
 
-  const [tab, setTab] = useState<"results" | "analysis">("results");
+  const [tab, setTab] = useState<"results" | "analysis">(() => {
+    if (typeof window === "undefined") return "results";
+    return new URLSearchParams(window.location.search).get("tab") === "analysis" ? "analysis" : "results";
+  });
   const [pageSize, setPageSize] = useState(40);
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
+  const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortAsc, setSortAsc] = useState(true);
   const [showQList, setShowQList] = useState(false);
@@ -94,6 +98,16 @@ function TestResults() {
   const filtered = useMemo(() => {
     let out = rows;
     if (statusFilter !== "all") out = out.filter((r) => r.status === statusFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      out = out.filter(
+        (r) =>
+          String(r.id).includes(q) ||
+          r.subject.toLowerCase().includes(q) ||
+          r.system.toLowerCase().includes(q) ||
+          r.topic.toLowerCase().includes(q),
+      );
+    }
     out = [...out].sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
@@ -108,7 +122,7 @@ function TestResults() {
       return sortAsc ? cmp : -cmp;
     });
     return out.slice(0, pageSize);
-  }, [rows, statusFilter, sortKey, sortAsc, pageSize]);
+  }, [rows, statusFilter, search, sortKey, sortAsc, pageSize]);
 
   const toggleSort = (k: SortKey) => {
     if (sortKey === k) setSortAsc((v) => !v);
@@ -313,42 +327,56 @@ function TestResults() {
         );
       })()}
 
-      {/* Table controls */}
-      <div className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center"><ListOrdered className="h-4 w-4" /></div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Display</div>
-          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
-            <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-            <SelectContent>{[10, 20, 40, 100, 500].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground">rows</span>
+      {/* Compact Clinical Studio Table Controls */}
+      <div className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {(
+            [
+              { id: "all", label: `All (${rows.length})` },
+              { id: "correct", label: `Correct (${totals.correct})` },
+              { id: "wrong", label: `Incorrect (${totals.wrong})` },
+              { id: "omitted", label: `Omitted (${totals.omitted})` },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setStatusFilter(f.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                statusFilter === f.id
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center"><Filter className="h-4 w-4" /></div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Filter Status</div>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="correct">Correct</SelectItem>
-              <SelectItem value="wrong">Incorrect</SelectItem>
-              <SelectItem value="omitted">Omitted</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="ml-auto flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center"><Settings2 className="h-4 w-4" /></div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Quiz Mode</div>
-            <div className="text-sm font-semibold capitalize">{mode}</div>
+
+        <div className="flex flex-wrap items-center gap-2 flex-1 sm:flex-initial justify-end">
+          <div className="relative flex-1 sm:w-56 sm:flex-initial">
+            <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search ID, subject, topic…"
+              className="pl-8 h-8 text-xs"
+            />
           </div>
+          <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+            <SelectTrigger className="w-[82px] h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>{[10, 20, 40, 100, 500].map((n) => <SelectItem key={n} value={String(n)}>{n} rows</SelectItem>)}</SelectContent>
+          </Select>
+          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium capitalize text-muted-foreground">
+            <Settings2 className="h-3.5 w-3.5 text-primary" />
+            {mode === "practice" ? "Tutor" : "Exam"}
+          </span>
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-border overflow-hidden">
-        <div className="bg-muted/50 hidden md:grid grid-cols-[70px_1fr_1.4fr_1.4fr_1.6fr_1fr_1fr_80px] gap-3 px-4 py-3 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+        <div className="bg-muted/40 border-b border-border hidden md:grid grid-cols-[64px_1fr_1.3fr_1.3fr_1.7fr_0.95fr_0.85fr_92px] gap-3 px-4 py-2.5 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
           <div>Status</div>
           <SortH label="ID" k="id" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
           <SortH label="Subjects" k="subject" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
@@ -356,32 +384,36 @@ function TestResults() {
           <SortH label="Topics" k="topic" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
           <SortH label="% Others" k="others" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
           <SortH label="Time" k="time" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
-          <div className="text-right">Action</div>
+          <div className="text-right">Review</div>
         </div>
         <div className="divide-y divide-border">
-          {filtered.length === 0 && <div className="p-6 text-muted-foreground">No questions match this filter.</div>}
+          {filtered.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No questions match this filter.</div>}
           {filtered.map((r) => (
-            <div key={r.id} className="flex flex-col gap-2 md:grid md:grid-cols-[70px_1fr_1.4fr_1.4fr_1.6fr_1fr_1fr_80px] md:gap-3 px-4 py-3 md:items-center hover:bg-muted/30">
+            <div key={r.id} className="flex flex-col gap-2 md:grid md:grid-cols-[64px_1fr_1.3fr_1.3fr_1.7fr_0.95fr_0.85fr_92px] md:gap-3 px-4 py-3 md:items-center hover:bg-muted/25 transition-colors">
               <div className="flex items-center gap-2">
                 <StatusDot status={r.status} />
                 <span className="md:hidden text-xs text-muted-foreground uppercase">{r.status}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">#{r.index}</span>
-                <span className="font-semibold">{r.id}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-muted-foreground bg-muted rounded px-1.5 py-0.5 tabular-nums">#{r.index}</span>
+                <span className="font-semibold text-sm tabular-nums">{r.id}</span>
               </div>
-              <div className="text-sm md:truncate" title={r.subject}><span className="md:hidden text-xs text-muted-foreground mr-1">Subject:</span>{r.subject}</div>
-              <div className="text-sm md:truncate" title={r.system}><span className="md:hidden text-xs text-muted-foreground mr-1">System:</span>{r.system}</div>
-              <div className="text-sm text-primary md:truncate" title={r.topic}><span className="md:hidden text-xs text-muted-foreground mr-1">Topic:</span>{r.topic}</div>
-              <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.others != null ? `${r.others.toFixed(1)}% others` : "—"}</span></div>
-              <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.time} sec</span></div>
+              <div className="text-xs sm:text-sm md:truncate" title={r.subject}><span className="md:hidden text-xs text-muted-foreground mr-1">Subject:</span>{r.subject}</div>
+              <div className="text-xs sm:text-sm md:truncate" title={r.system}><span className="md:hidden text-xs text-muted-foreground mr-1">System:</span>{r.system}</div>
+              <div className="text-xs sm:text-sm text-primary font-medium md:truncate" title={r.topic}><span className="md:hidden text-xs text-muted-foreground mr-1">Topic:</span>{r.topic}</div>
+              <div><span className="inline-block rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs tabular-nums">{r.others != null ? `${r.others.toFixed(1)}%` : "—"}</span></div>
+              <div><span className="inline-block rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs tabular-nums">{r.time}s</span></div>
               <div className="md:text-right">
-                <Link to="/test/$id" params={{ id }} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border hover:bg-muted">
-                  <ChevronRight className="h-4 w-4" />
+                <Link
+                  to="/test/$id"
+                  params={{ id }}
+                  search={{ q: r.index - 1 } as any}
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary px-2.5 py-1 text-xs font-medium transition-colors"
+                >
+                  <Eye className="h-3.5 w-3.5" /> Open
                 </Link>
               </div>
             </div>
-
           ))}
         </div>
       </div>

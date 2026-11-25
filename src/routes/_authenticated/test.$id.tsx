@@ -386,6 +386,11 @@ function TestRunner() {
 
   const [idx, setIdx] = useState(() => {
     if (typeof window === "undefined") return 0;
+    const qp = new URLSearchParams(window.location.search).get("q");
+    if (qp != null) {
+      const qn = parseInt(qp, 10);
+      if (Number.isFinite(qn) && qn >= 0) return qn;
+    }
     const saved = window.localStorage.getItem(`test:${id}:idx`);
     const n = saved ? parseInt(saved, 10) : 0;
     return Number.isFinite(n) && n >= 0 ? n : 0;
