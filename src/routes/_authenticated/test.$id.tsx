@@ -545,22 +545,19 @@ function TestRunner() {
   const isUworldUI = !isWebFred;
   const total = data?.questions.length ?? 0;
 
-  const navBg = isWebFred
-    ? "#004673"
-    : userSettings.useAccentInQuizNav
-      ? darkenHex(userSettings.accentColor, 0.78)
+  const navBg = userSettings.useAccentInQuizNav
+    ? darkenHex(userSettings.accentColor, 0.78)
+    : isWebFred
+      ? "#004673"
       : NAV_BG;
 
   const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
-  const isWebFredDark = isWebFred && (theme === "dark" || (!isExamUI && baseThemeStyles.isDark));
   const themeStyles =
-    isWebFred && isWebFredDark
-      ? { ...baseThemeStyles, isDark: true, pageBg: "#000000", sideBg: "#111827", cardBg: "#000000", text: "#ffffff", border: "#334155" }
-      : isWebFred
-        ? { ...baseThemeStyles, isDark: false, pageBg: "#fcfcfc", sideBg: "#fcfcfc", cardBg: "#fcfcfc", text: "#000000", border: "#c0c0c0" }
-        : !baseThemeStyles.isDark && theme === "light"
-          ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
-          : baseThemeStyles;
+    isWebFred && !baseThemeStyles.isDark && theme === "light"
+      ? { ...baseThemeStyles, pageBg: "#fcfcfc", sideBg: "#ffffff", cardBg: "#fcfcfc", text: "#000000", border: "#c0c0c0" }
+      : !baseThemeStyles.isDark && theme === "light"
+        ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
+        : baseThemeStyles;
 
   const effectiveReadingFont =
     isWebFred && userSettings.fontFamily === "system"
@@ -1274,16 +1271,16 @@ function TestRunner() {
           aria-label="Question Status"
           className="w-[88px] shrink-0 h-screen overflow-y-auto border-r select-none flex flex-col"
           style={{
-            background: themeStyles.isDark ? "#0d131c" : "#ffffff",
-            borderColor: themeStyles.isDark ? "#334155" : "#808080",
+            background: themeStyles.sideBg,
+            borderColor: themeStyles.isDark ? themeStyles.border : theme === "light" ? "#808080" : themeStyles.border,
             fontFamily: 'Arial, Helvetica, sans-serif',
           }}
         >
           <div
             className="px-1.5 py-2 text-[11px] font-bold text-center leading-tight border-b sticky top-0 z-20 shrink-0"
             style={{
-              background: themeStyles.isDark ? "#111827" : "#f5f5f5",
-              borderColor: themeStyles.isDark ? "#334155" : "#a3a3a3",
+              background: themeStyles.isDark ? themeStyles.cardBg : theme === "light" ? "#f5f5f5" : themeStyles.cardBg,
+              borderColor: themeStyles.isDark ? themeStyles.border : theme === "light" ? "#a3a3a3" : themeStyles.border,
               color: themeStyles.text,
             }}
           >
@@ -1318,7 +1315,7 @@ function TestRunner() {
                 aria-label={`Go to item ${i + 1}`}
                 className="w-full h-[20px] flex items-center gap-1 px-2 text-[11.5px] leading-none cursor-pointer text-left shrink-0"
                 style={{
-                  background: active ? "#004673" : zebraBg,
+                  background: active ? navBg : zebraBg,
                   color: active ? "#ffffff" : themeStyles.text,
                   fontWeight: active ? 600 : 400,
                 }}
@@ -1594,7 +1591,7 @@ function TestRunner() {
           className="sf-main-canvas flex-1 overflow-auto"
           ref={contentRef}
           style={
-            isWebFred && !isWebFredDark
+            isWebFred && !themeStyles.isDark && theme === "light"
               ? { backgroundImage: "linear-gradient(#fcfcfc 30%, #d7dced 100%)" }
               : undefined
           }
@@ -1723,16 +1720,14 @@ function TestRunner() {
                   ? "#475569"
                   : theme === "high-contrast"
                     ? "#000000"
-                    : isWebFred
-                      ? "#004976"
-                      : "#004a77",
+                    : navBg,
                 borderWidth: isWebFred ? "1px 1px 5px 1px" : "1px 1px 2.5px 1px",
                 background:
                   themeStyles.isDark
                     ? themeStyles.cardBg
-                    : isWebFred
-                      ? "#fcfcfc"
-                      : "#f7f9fc",
+                    : theme === "light"
+                      ? (isWebFred ? "#fcfcfc" : "#f7f9fc")
+                      : themeStyles.cardBg,
                 color: themeStyles.text,
               }}
             >
@@ -1835,19 +1830,11 @@ function TestRunner() {
                   <button
                     onClick={proceedExam}
                     className="px-4 py-1.5 rounded-[3px] text-white text-[13.5px] font-medium disabled:opacity-40 transition-opacity hover:brightness-95"
-                    style={
-                      isSelfAssessment
-                        ? {
-                            background: "linear-gradient(#5490cc, #004673)",
-                            border: "1px solid #004673",
-                            textShadow: "0 -1px 0 rgba(0, 0, 0, 0.25)",
-                          }
-                        : {
-                            background: `linear-gradient(${userSettings.accentColor}, ${darkenHex(userSettings.accentColor, 0.78)})`,
-                            border: `1px solid ${darkenHex(userSettings.accentColor, 0.72)}`,
-                            textShadow: "0 -1px 0 rgba(0, 0, 0, 0.2)",
-                          }
-                    }
+                    style={{
+                      background: `linear-gradient(${userSettings.accentColor}, ${darkenHex(userSettings.accentColor, 0.78)})`,
+                      border: `1px solid ${darkenHex(userSettings.accentColor, 0.72)}`,
+                      textShadow: "0 -1px 0 rgba(0, 0, 0, 0.2)",
+                    }}
                   >
                     {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
                   </button>
