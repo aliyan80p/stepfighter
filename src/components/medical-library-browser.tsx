@@ -77,7 +77,15 @@ function buildTree(rows: LibraryNode[]): Tree[] {
   return roots;
 }
 
-export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: string }) {
+export function MedicalLibraryBrowser({
+  rootClassName,
+  initialDocId,
+  initialSearch,
+}: {
+  rootClassName?: string;
+  initialDocId?: number | null;
+  initialSearch?: string | null;
+}) {
   // The Medical Library is one shared dataset (qbank 2) for Step 1/2 CK/3.
   const LIBRARY_QBANK_ID = 2;
   const tocFn = useServerFn(getLibraryToc);
@@ -86,11 +94,20 @@ export function MedicalLibraryBrowser({ rootClassName }: { rootClassName?: strin
   const mediaToken = useLibraryMediaToken();
 
   const [open, setOpen] = useState<Set<number>>(new Set());
-  const [activeDoc, setActiveDoc] = useState<number | null>(null);
+  const [activeDoc, setActiveDoc] = useState<number | null>(initialDocId ?? null);
   const [anchor, setAnchor] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [debounced, setDebounced] = useState("");
+  const [query, setQuery] = useState(initialSearch ?? "");
+  const [debounced, setDebounced] = useState(initialSearch?.trim() ?? "");
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialDocId != null) {
+      setActiveDoc(initialDocId);
+    } else if (initialSearch) {
+      setQuery(initialSearch);
+      setDebounced(initialSearch.trim());
+    }
+  }, [initialDocId, initialSearch]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 350);

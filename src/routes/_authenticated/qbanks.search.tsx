@@ -20,8 +20,10 @@ import { NotesModal } from "@/components/notes-modal";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
+import { LabValuesPanel } from "@/components/lab-values-panel";
 import { ExhibitModal, type ExhibitContent } from "@/components/exhibit-modal";
 import { attachMediaAnchorHandlers } from "@/lib/media-anchors";
+import { useHydratedSettings, getFontStack, resolveQuizTheme, getQuizPalette, type ResolvedQuizTheme } from "@/lib/user-settings";
 import calculatorIcon from "@/assets/icons/calculator-icon.png.asset.json";
 import notesIcon from "@/assets/icons/notes.png.asset.json";
 import medicalLibraryIcon from "@/assets/icons/medical-library.svg.asset.json";
@@ -89,7 +91,7 @@ function SearchPage() {
 
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto">
+    <div className="sf-fluid-page">
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-[#1e3a8a]">Search Questions</h1>
         <p className="text-muted-foreground text-sm mt-1">Find questions by ID or keywords from your question bank</p>
@@ -338,7 +340,6 @@ function QuestionModal({
 }) {
   const r = items[index];
   const total = items.length;
-  const notImpl = (name: string) => () => toast.info(`${name} — coming soon`);
   const correctAns = r.answers.find((a) => a.answer_index === r.correctAnswer);
   const correctLetter = correctAns ? String.fromCharCode(65 + correctAns.answer_index) : "";
   const correctText = correctAns?.answer_text ?? "";
@@ -350,6 +351,7 @@ function QuestionModal({
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showCalc, setShowCalc] = useState(false);
+  const [showLabValues, setShowLabValues] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
@@ -360,25 +362,18 @@ function QuestionModal({
   const [anchorExhibit, setAnchorExhibit] = useState<ExhibitContent | null>(null);
 
   // Settings state (matches test runner)
-  const [fontSize, setFontSize] = useState(15);
-  const [fontWeight, setFontWeight] = useState(400);
-  const [theme, setTheme] = useState<"light" | "dark" | "sepia">("light");
-  const [transparentExpl, setTransparentExpl] = useState(false);
-  const [largeImages, setLargeImages] = useState(false);
-  const [highlightOnly, setHighlightOnly] = useState(false);
-  const [multicolor, setMulticolor] = useState(true);
+  const userSettings = useHydratedSettings();
+  const [fontSize, setFontSize] = useState(userSettings.fontSize + 1);
+  const [fontWeight, setFontWeight] = useState(400 + userSettings.fontWeight * 100);
+  const [theme, setTheme] = useState<ResolvedQuizTheme>(resolveQuizTheme(userSettings));
+  const [transparentExpl, setTransparentExpl] = useState(userSettings.transparentExplanations);
+  const [largeImages, setLargeImages] = useState(userSettings.largeImages);
+  const [highlightOnly, setHighlightOnly] = useState(userSettings.highlightOnly);
+  const [multicolor, setMulticolor] = useState(userSettings.multiHighlight);
   const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
-  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>({
-    "#ffeb3b": true, "#4ade80": true, "#38bdf8": true,
-    "#f472b6": true, "#fb923c": true, "#c084fc": true,
-  });
+  const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>(userSettings.enabledHighlights);
 
-  const themeStyles =
-    theme === "dark"
-      ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
-      : theme === "sepia"
-      ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
-      : { pageBg: "#f5f7fa", sideBg: "#eef1f5", text: "#1f2937", cardBg: "#ffffff", border: "#d1d5db" };
+  const themeStyles = getQuizPalette(theme, userSettings.customTheme);
 
   const goFullscreen = () => {
     if (!document.fullscreenElement) rootRef.current?.requestFullscreen?.();
@@ -446,7 +441,7 @@ function QuestionModal({
           </div>
           <div className="flex items-center gap-1">
             <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
-            <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={notImpl("Lab Values")} />
+            <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
             <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
             
             <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc((v) => !v)} />
@@ -489,7 +484,13 @@ function QuestionModal({
           <div className="flex-1 overflow-auto" ref={contentRef}>
             <div
               className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""}`}
-              style={{ fontSize, fontWeight, color: themeStyles.text }}
+              style={{
+                fontSize,
+                fontWeight,
+                fontFamily: getFontStack(userSettings.fontFamily),
+                lineHeight: userSettings.lineHeight,
+                color: themeStyles.text,
+              }}
             >
               <div
                 data-hlkey="q"
@@ -631,6 +632,7 @@ function QuestionModal({
         </div>
 
         {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
+        <LabValuesPanel open={showLabValues} onClose={() => setShowLabValues(false)} />
         <NotesModal
           open={showNotes}
           onClose={() => setShowNotes(false)}

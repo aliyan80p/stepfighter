@@ -14,7 +14,7 @@ const driveIdCache = new Map<string, string | null>();
 const QBANK_SLUGS: Record<string, number> = { step1: 2, step2: 1, step3: 3 };
 
 function stripPrefix(name: string): string {
-  return name.replace(/^(highresdefault_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
+  return name.replace(/^(highresdefault_|maxresdefault_|highres_|hqdefault_|mqdefault_|sddefault_|default_)/i, "");
 }
 
 function contentTypeFor(name: string): string {
@@ -23,7 +23,7 @@ function contentTypeFor(name: string): string {
     png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
     webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp",
     mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", m4v: "video/mp4",
-    mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav",
+    mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav", m4a: "audio/mp4", aac: "audio/aac", flac: "audio/flac",
   };
   return map[ext] ?? "application/octet-stream";
 }
@@ -32,9 +32,50 @@ const HIGHRES_PREFIXES = ["highresdefault_", "hqdefault_", "sddefault_", "mqdefa
 
 function normalizeMediaLeafCase(name: string): string {
   return name.replace(
-    /^((?:highresdefault_|hqdefault_|sddefault_|mqdefault_|default_)?)([ul])(\d)/i,
+    /^((?:highresdefault_|maxresdefault_|highres_|hqdefault_|mqdefault_|sddefault_|default_)?)([ul])(\d)/i,
     (_match, prefix: string, letter: string, digit: string) => `${prefix}${letter.toUpperCase()}${digit}`,
   );
+}
+
+/**
+ * Compact, high-priority candidate list for HTTP storage probing.
+ * Stays small (<= 8 entries) so we NEVER exceed Cloudflare Workers' 50-subrequest limit
+ * when probing highresdefault_* / prefix variants across storage namespaces.
+ */
+function compactProbeNames(name: string): string[] {
+  const set = new Set<string>();
+  const normalized = normalizeMediaLeafCase(name);
+  const stripped = stripPrefix(normalized);
+  const dot = stripped.lastIndexOf(".");
+  const base = dot > 0 ? stripped.slice(0, dot) : stripped;
+  const ext = dot > 0 ? stripped.slice(dot + 1).toLowerCase() : "";
+
+  const add = (v: string) => { if (v) set.add(v); };
+  add(name);
+  add(normalized);
+  // Always try lowercase extension early (350+ question refs use .JPG/.PNG while storage uses .jpg/.png)
+  if (ext) {
+    const normDot = normalized.lastIndexOf(".");
+    if (normDot > 0) add(`${normalized.slice(0, normDot)}.${ext}`);
+    add(`${base}.${ext}`);
+    add(`highresdefault_${base}.${ext}`);
+  }
+  add(stripped);
+  // Common extension swaps (jpg <-> png <-> jpeg) for both prefixed & stripped
+  if (ext === "jpg" || ext === "jpeg") {
+    add(`${base}.png`);
+    add(`highresdefault_${base}.png`);
+    add(`${base}.${ext === "jpg" ? "jpeg" : "jpg"}`);
+  } else if (ext === "png") {
+    add(`${base}.jpg`);
+    add(`highresdefault_${base}.jpg`);
+  }
+  // Upper/lower first letter of stripped leaf (e.g. L123 vs l123, U123 vs u123)
+  if (/^[A-Za-z]/.test(stripped)) {
+    const flipped = (stripped[0] === stripped[0].toUpperCase() ? stripped[0].toLowerCase() : stripped[0].toUpperCase()) + stripped.slice(1);
+    add(flipped);
+  }
+  return Array.from(set).slice(0, 8);
 }
 
 function extensionVariants(name: string): string[] {
@@ -86,13 +127,12 @@ async function resolveEncryptedFromBucket(
   name: string, supaUrl: string, srk: string,
 ): Promise<Response | null> {
   const cached = nameCache.get(name);
-  const tryNames = cached === undefined ? candidateNames(name) : cached ? [cached] : [];
+  const tryNames = cached === undefined ? compactProbeNames(name) : cached ? [cached] : [];
   for (const n of tryNames) {
     const url = `${supaUrl}/storage/v1/object/${BUCKET}/${encodeURIComponent(n)}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${srk}`, apikey: srk } });
     if (res.ok) { nameCache.set(name, n); return res; }
   }
-  if (cached === undefined) nameCache.set(name, null);
   return null;
 }
 
@@ -161,7 +201,14 @@ function rangeResponse(data: Buffer, contentType: string, range: string | null):
 
 function upstreamMediaResponse(res: Response, fallbackContentType: string): Response {
   const headers = new Headers();
-  headers.set("Content-Type", res.headers.get("content-type") || fallbackContentType);
+  const upstreamType = res.headers.get("content-type")?.trim() ?? "";
+  // Supabase Storage often returns application/octet-stream for audio/video
+  // files, which breaks Safari/iOS <audio> playback. Prefer the extension MIME.
+  const resolvedType =
+    !upstreamType || upstreamType === "application/octet-stream"
+      ? fallbackContentType
+      : upstreamType;
+  headers.set("Content-Type", resolvedType);
   headers.set("Accept-Ranges", res.headers.get("accept-ranges") || "bytes");
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
   headers.set("Content-Disposition", "inline");
@@ -180,11 +227,14 @@ async function probePlainPath(
   supaUrl: string,
   srk: string,
   range: string | null,
+  bypassCache = false,
 ): Promise<Response | null> {
   const headers: Record<string, string> = { Authorization: `Bearer ${srk}`, apikey: srk };
   if (range) headers.Range = range;
+  if (bypassCache) headers["Cache-Control"] = "no-cache";
+  const suffix = bypassCache ? `?cb=${Math.floor(Date.now() / 60_000)}` : "";
   const res = await fetch(
-    `${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`,
+    `${supaUrl}/storage/v1/object/${PLAIN_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}${suffix}`,
     { headers },
   );
   if (!(res.ok || res.status === 206)) {
@@ -205,16 +255,39 @@ async function fetchPlainExact(
   srk: string,
   range: string | null,
 ): Promise<Response | null> {
-  const res = await probePlainPath(path, supaUrl, srk, range);
+  const ct = contentTypeFor(path);
+  const isAudio = ct.startsWith("audio/");
+  // For audio files, always fetch the full object (audio clips are <1MB) so we
+  // can detect legacy AES-encrypted MP3s that were previously stored undecrypted
+  // in qbank-media-plain, decrypt them on the fly, self-heal storage, and serve
+  // proper 206 Range responses.
+  const res = await probePlainPath(path, supaUrl, srk, isAudio ? null : range, isAudio);
   if (!res) return null;
-  if (!range && contentTypeFor(path).startsWith("image/")) {
+  if (!range && ct.startsWith("image/")) {
     const bytes = Buffer.from(await res.arrayBuffer());
     if (!looksLikePlainMedia(bytes)) return null;
-    const type = contentTypeFromBytes(bytes, contentTypeFor(path));
+    const type = contentTypeFromBytes(bytes, ct);
     if (path !== requestedPath) void uploadPlain(requestedPath, bytes, type, supaUrl, srk);
     return rangeResponse(bytes, type, null);
   }
-  return upstreamMediaResponse(res, contentTypeFor(path));
+  if (isAudio) {
+    const raw = Buffer.from(await res.arrayBuffer());
+    const leaf = path.split("/").pop() ?? path;
+    const reqLeaf = requestedPath.split("/").pop() ?? requestedPath;
+    const data = looksLikePlainMedia(raw)
+      ? raw
+      : decryptImdMedia(raw, [leaf, reqLeaf, stripPrefix(leaf), stripPrefix(reqLeaf)]);
+    const type = contentTypeFromBytes(data, ct);
+    const isValid = looksLikePlainMedia(data);
+    if (data !== raw && isValid) {
+      void uploadPlain(path, data, type, supaUrl, srk);
+      if (requestedPath !== path) void uploadPlain(requestedPath, data, type, supaUrl, srk);
+    }
+    const resp = rangeResponse(data, type, range);
+    resp.headers.set("Cache-Control", isValid ? "private, max-age=3600" : "no-store");
+    return resp;
+  }
+  return upstreamMediaResponse(res, ct);
 }
 
 /**
@@ -254,18 +327,20 @@ async function fetchPlainObject(
   const cached = plainNameCache.get(cacheKey);
   const dir = storagePath.includes("/") ? storagePath.slice(0, storagePath.lastIndexOf("/") + 1) : "";
   const leaf = storagePath.slice(dir.length);
-  const candidatePaths = Array.from(new Set([storagePath, ...candidateNames(leaf).map((candidate) => dir + candidate)]));
-  const paths = cached === undefined
-    ? candidatePaths
-    : cached ? [cached, ...candidatePaths.filter((path) => path !== cached)] : [];
+  // Skip the exact storagePath (already probed by exactHit) and keep probe count tiny
+  const candidatePaths = Array.from(
+    new Set(compactProbeNames(leaf).map((candidate) => dir + candidate)),
+  ).filter((p) => p !== storagePath);
+  const paths = cached
+    ? [cached, ...candidatePaths.filter((path) => path !== cached)]
+    : candidatePaths;
   if (!paths.length) return null;
 
-  const hit = await firstPlainHit(paths, storagePath, supaUrl, srk, range);
+  const hit = await firstPlainHit(paths, storagePath, supaUrl, srk, range, 6);
   if (hit) {
     plainNameCache.set(cacheKey, hit.path);
     return hit.response;
   }
-  if (cached === undefined) plainNameCache.set(cacheKey, null);
   return null;
 }
 
@@ -423,11 +498,20 @@ export const Route = createFileRoute("/api/media/$")({
 
         // Medical Library articles are shared by all qbanks, but their images
         // were warmed under whichever namespace first requested them (root /
-        // step1 / step3). Probe the exact filename under every namespace in
-        // parallel first — this is the common case and costs one round trip,
-        // instead of dozens of sequential misses before the right prefix.
+        // step1 / step3). For images, also probe `highresdefault_<name>` in the
+        // same parallel batch FIRST so users automatically receive the sharper
+        // high-resolution version whenever it exists (zero extra round trips).
         const altPrefixes = ["", "step1/", "step3/"].filter((p) => p !== storagePrefix);
-        const exactPaths = [`${storagePrefix}${name}`, ...altPrefixes.map((p) => `${p}${name}`)];
+        const normName = normalizeMediaLeafCase(name);
+        const alreadyHighres = /^highresdefault_/i.test(normName);
+        const highresName = alreadyHighres ? null : `highresdefault_${stripPrefix(normName)}`;
+        const exactPaths = Array.from(
+          new Set([
+            ...(isImage && highresName ? [`${storagePrefix}${highresName}`] : []),
+            `${storagePrefix}${name}`,
+            ...altPrefixes.map((p) => `${p}${name}`),
+          ]),
+        );
         const exactHit = await firstPlainHit(
           exactPaths, `${storagePrefix}${name}`, supaUrl, srk, range, exactPaths.length,
         );
@@ -441,13 +525,24 @@ export const Route = createFileRoute("/api/media/$")({
           return exactHit.response;
         }
 
-        // Fuzzy fallback: case/prefix/extension variants, per namespace.
+        // Fuzzy fallback: compact prefix/extension/case variants under active namespace first,
+        // then only the stripped high-probability path across alternate namespaces so we
+        // stay comfortably below Cloudflare Workers' 50-subrequest limit.
         const plainObject = await fetchPlainObject(`${storagePrefix}${name}`, cacheKey, supaUrl, srk, range);
         if (plainObject) return plainObject;
 
-        for (const alt of altPrefixes) {
-          const altObject = await fetchPlainObject(`${alt}${name}`, `${alt}|${name}`, supaUrl, srk, range);
-          if (altObject) return altObject;
+        const strippedLeaf = stripPrefix(normalizeMediaLeafCase(name));
+        const altQuickPaths = Array.from(
+          new Set(
+            altPrefixes.flatMap((alt) => [
+              `${alt}${strippedLeaf}`,
+              `${alt}highresdefault_${strippedLeaf}`,
+            ]),
+          ),
+        ).filter((p) => !exactPaths.includes(p));
+        if (altQuickPaths.length) {
+          const altHit = await firstPlainHit(altQuickPaths, `${storagePrefix}${name}`, supaUrl, srk, range, altQuickPaths.length);
+          if (altHit) return altHit.response;
         }
 
 

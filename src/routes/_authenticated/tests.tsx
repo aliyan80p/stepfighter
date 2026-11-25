@@ -20,7 +20,7 @@ import {
   FileText, BarChart3, Trash2, Pencil, ArrowUpDown, Search, Filter, ListOrdered, MoreVertical, Copy, PlayCircle, Rocket, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Loader } from "@/components/loader";
+import { TableSkeleton } from "@/components/loader";
 
 
 export const Route = createFileRoute("/_authenticated/tests")({
@@ -107,7 +107,7 @@ function TestsList() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="sf-fluid-page space-y-6">
       {/* Header banner */}
       <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -175,7 +175,7 @@ function TestsList() {
           <div className="text-muted-foreground">Actions</div>
         </div>
         <div className="divide-y divide-border">
-          {isLoading && <Loader label="Loading tests…" />}
+          {isLoading && <div className="p-4"><TableSkeleton rows={5} /></div>}
           {!isLoading && filtered.length === 0 && (
             <div className="p-6 text-muted-foreground">
               No tests match. <Link to="/new-test" className="text-primary underline">Start a new test</Link>.

@@ -133,7 +133,10 @@ export function eraseInRange(root: HTMLElement, range: Range) {
 function makeMark(text: string, color: string, strike: boolean): HTMLElement {
   const m = document.createElement("mark");
   m.className = MARK_CLASS;
-  if (color) m.setAttribute("data-color", color);
+  if (color) {
+    m.setAttribute("data-color", color);
+    m.style.setProperty("--hl-color", color);
+  }
   if (strike) m.setAttribute("data-strike", "");
   m.appendChild(document.createTextNode(text));
   return m;
@@ -217,6 +220,7 @@ export function highlightRange(
     const mark = document.createElement("mark");
     mark.className = MARK_CLASS;
     mark.setAttribute("data-color", opts.color);
+    if (opts.color) mark.style.setProperty("--hl-color", opts.color);
     if (opts.strike) mark.setAttribute("data-strike", "");
     middle.parentNode?.insertBefore(mark, middle);
     mark.appendChild(middle);

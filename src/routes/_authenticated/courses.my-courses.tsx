@@ -35,7 +35,7 @@ function MyCourses() {
   const hasMore = entQ.data ? visibleQbanks.length < QBANKS.length : false;
 
   return (
-    <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-6">
+    <div className="sf-fluid-page space-y-6">
       <div>
         <h1 className="text-3xl font-bold">My Courses</h1>
         <p className="text-muted-foreground mt-1">Your active course is used for all quizzes, stats and searches.</p>

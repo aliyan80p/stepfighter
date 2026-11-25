@@ -6,9 +6,10 @@ import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.f
 import { rewriteMedia, withMediaToken } from "@/lib/media";
 import { useMediaToken } from "@/lib/use-media-token";
 import {
-  Flag, ChevronLeft, ChevronRight, Maximize2, FlaskConical, StickyNote,
+  Flag, ChevronLeft, ChevronRight, Maximize2, Minimize2, FlaskConical, StickyNote,
   Notebook, Calculator, Settings, BookOpen, Library, Zap, MessageSquare,
   ArrowLeft, Clock, CheckCircle2, FileText, Eraser, Copy, ImageIcon, Lock as LockIcon,
+  ExternalLink, PauseCircle, XCircle, BarChart2, ZoomIn, ZoomOut, RotateCcw, Sun, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -25,7 +26,28 @@ import navArrowIcon from "@/assets/icons/nav-arrow.png.asset.json";
 import markFlagIcon from "@/assets/icons/mark-flag.png.asset.json";
 import labValuesIcon from "@/assets/icons/lab-values.png.asset.json";
 import textZoomIcon from "@/assets/icons/text-zoom.png.asset.json";
-import { DEFAULT_SETTINGS, useHydratedSettings, setUserSettings, TOOLBAR_ITEMS } from "@/lib/user-settings";
+import {
+  DEFAULT_SETTINGS,
+  useHydratedSettings,
+  setUserSettings,
+  TOOLBAR_ITEMS,
+  FONT_FAMILIES,
+  ACCENT_PRESETS,
+  TUTOR_INTERFACE_STYLES,
+  CONTENT_WIDTH_PX,
+  getFontStack,
+  resolveQuizTheme,
+  getQuizPalette,
+  darkenHex,
+  type ResolvedQuizTheme,
+  type HighlightStyle,
+  type FontFamilyId,
+  type ExhibitStyle,
+  type ExhibitViewerSize,
+  type ExplanationAlign,
+  type ImageAlign,
+  type TutorInterfaceStyle,
+} from "@/lib/user-settings";
 import { FlashcardsModal } from "@/components/flashcards-modal";
 import { MedicalLibraryModal } from "@/components/medical-library-modal";
 import { FeedbackModal } from "@/components/feedback-modal";
@@ -46,38 +68,91 @@ export const Route = createFileRoute("/_authenticated/test/$id")({
  * highlighter across parent re-renders (timer ticks, selection state, etc.)
  * so that <img>/<video> inside the HTML never remount and never flash.
  */
+function patchMediaElementsWithToken(root: HTMLElement, token: string) {
+  const updateUrl = (raw: string | null) => {
+    if (!raw || !raw.includes("/api/media/")) return null;
+    const next = withMediaToken(raw, token);
+    return next !== raw ? next : null;
+  };
+
+  root.querySelectorAll<HTMLImageElement>("img[src]").forEach((img) => {
+    const next = updateUrl(img.getAttribute("src"));
+    if (next) {
+      (img as any).__sfRetryBound = false;
+      img.setAttribute("src", next);
+    }
+  });
+
+  root.querySelectorAll<HTMLAudioElement | HTMLVideoElement>("audio, video").forEach((el) => {
+    let changed = false;
+    const nextSrc = updateUrl(el.getAttribute("src"));
+    if (nextSrc) {
+      el.setAttribute("src", nextSrc);
+      changed = true;
+    }
+    el.querySelectorAll<HTMLSourceElement>("source[src]").forEach((source) => {
+      const nextSource = updateUrl(source.getAttribute("src"));
+      if (nextSource) {
+        source.setAttribute("src", nextSource);
+        changed = true;
+      }
+    });
+    if (changed) {
+      try { el.load(); } catch {}
+    }
+  });
+
+  root.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((a) => {
+    const next = updateUrl(a.getAttribute("href"));
+    if (next) a.setAttribute("href", next);
+  });
+}
+
 function attachImageAutoRetry(root: HTMLElement) {
   const imgs = root.querySelectorAll<HTMLImageElement>("img");
   imgs.forEach((img) => {
     if ((img as any).__sfRetryBound) return;
     (img as any).__sfRetryBound = true;
     let tries = 0;
-    const original = img.getAttribute("src") || "";
     const retry = () => {
-      if (tries >= 3 || !original) return;
+      const currentSrc = img.getAttribute("src") || "";
+      // Don't burn retries on a tokenless /api/media/ URL while token is still loading
+      if (!currentSrc || (currentSrc.includes("/api/media/") && !currentSrc.includes("t="))) return;
+      if (tries >= 3) return;
       tries += 1;
-      const sep = original.includes("?") ? "&" : "?";
+      const base = currentSrc.replace(/([?&])r=[^&]*/g, "$1").replace(/[?&]+$/, "");
+      const sep = base.includes("?") ? "&" : "?";
       const bust = `${sep}r=${Date.now()}-${tries}`;
-      setTimeout(() => { img.src = original + bust; }, 200 * tries);
+      setTimeout(() => { img.src = base + bust; }, 250 * tries);
     };
     img.addEventListener("error", retry);
     // If already broken by the time we bind (cached failure), kick a retry.
-    if (img.complete && img.naturalWidth === 0 && original) retry();
+    if (img.complete && img.naturalWidth === 0) retry();
   });
 }
 
 function HighlightableHtml({
   html,
   seedKey,
+  mediaToken,
   ...rest
-}: { html: string; seedKey: string | number } & React.HTMLAttributes<HTMLDivElement>) {
+}: { html: string; seedKey: string | number; mediaToken?: string } & React.HTMLAttributes<HTMLDivElement>) {
   const ref = useRef<HTMLDivElement>(null);
   const lastSeed = useRef<string | number | null>(null);
+  const lastToken = useRef<string | undefined>(undefined);
   useLayoutEffect(() => {
     if (!ref.current) return;
     if (lastSeed.current !== seedKey) {
       ref.current.innerHTML = html;
       lastSeed.current = seedKey;
+      lastToken.current = mediaToken;
+      if (mediaToken) patchMediaElementsWithToken(ref.current, mediaToken);
+      attachImageAutoRetry(ref.current);
+    } else if (mediaToken && lastToken.current !== mediaToken) {
+      // Token just arrived or rotated: update media URLs in place without
+      // wiping any in-progress user highlights.
+      patchMediaElementsWithToken(ref.current, mediaToken);
+      lastToken.current = mediaToken;
       attachImageAutoRetry(ref.current);
     }
   });
@@ -85,12 +160,12 @@ function HighlightableHtml({
 }
 
 
-// USMLE-Fighter palette
-const NAV_BG = "#1a4b7c";       // USMLE Fighter navy top/bottom bars
-const NAV_ACCENT = "#2a4ba0";
-const PAGE_BG = "#f5f7fa";
-const SIDE_BG = "#eef1f5";
-const TEXT = "#1f2937";
+// Official UWorld ocean-navy palette
+const NAV_BG = "#004a77";
+const NAV_ACCENT = "#005f99";
+const PAGE_BG = "#ffffff";
+const SIDE_BG = "#ffffff";
+const TEXT = "#1e293b";
 
 type MediaKind = "image" | "video" | "audio";
 type MediaItem = { name: string; url: string; kind: MediaKind };
@@ -99,7 +174,7 @@ function mediaKind(name: string): MediaKind | null {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"].includes(ext)) return "image";
   if (["mp4", "webm", "mov", "m4v"].includes(ext)) return "video";
-  if (["mp3", "wav", "ogg"].includes(ext)) return "audio";
+  if (["mp3", "wav", "ogg", "m4a", "aac", "flac"].includes(ext)) return "audio";
   return null;
 }
 
@@ -108,7 +183,7 @@ const MEDIA_QBANK_SLUG: Record<number, string> = { 1: "", 2: "step1", 3: "step3"
 function mediaUrl(name: string, qbankId = 1) {
   const slug = MEDIA_QBANK_SLUG[qbankId] ?? "";
   const prefix = slug ? `/api/media/${slug}/` : "/api/media/";
-  return `${prefix}${encodeURIComponent(name.trim())}`;
+  return `${prefix}${encodeURIComponent(name.trim())}?v=20261124-audio-fix`;
 }
 
 function getQuestionMedia(question: { media_name?: string | null; other_medias?: string | null } | null | undefined, qbankId = 1): MediaItem[] {
@@ -150,20 +225,115 @@ function isEmbeddedMedia(item: MediaItem, embeddedKeys: Set<string>) {
   return mediaKeys(item.name).some((key) => embeddedKeys.has(key));
 }
 
-function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void }) {
+function NbmeTriangleArrow({ dir }: { dir: "left" | "right" }) {
+  return (
+    <svg viewBox="0 0 30 22" className="h-[22px] w-[30px]" aria-hidden="true">
+      {dir === "left" ? (
+        <>
+          <polygon points="2,11 28,2 28,20" fill="#fcfcfc" />
+          <polygon points="6,11 26,5 26,17" fill="#5490cc" />
+        </>
+      ) : (
+        <>
+          <polygon points="28,11 2,2 2,20" fill="#fcfcfc" />
+          <polygon points="24,11 4,5 4,17" fill="#5490cc" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function NbmeTextZoom({ fontSize, setFontSize }: { fontSize: number; setFontSize: (n: number) => void }) {
+  const levels = [
+    { size: 16, textClass: "text-[11px]", rounded: "rounded-l-[6px]" },
+    { size: 19, textClass: "text-[16px]", rounded: "" },
+    { size: 22, textClass: "text-[22px]", rounded: "rounded-r-[6px]" },
+  ];
+  const activeIdx = fontSize >= 21 ? 2 : fontSize >= 18 ? 1 : 0;
+  return (
+    <div className="shrink-0 flex flex-col items-center justify-center px-1.5 leading-tight">
+      <div className="inline-flex items-center">
+        {levels.map((lv, i) => {
+          const active = i === activeIdx;
+          return (
+            <button
+              key={lv.size}
+              type="button"
+              onClick={() => setFontSize(lv.size)}
+              title={`Text Zoom ${i === 0 ? "Normal" : i === 1 ? "Medium" : "Large"}`}
+              className={`h-[26px] w-[22px] border border-[#fcfcfc] flex items-center justify-center font-bold leading-none transition-colors ${lv.rounded} ${i > 0 ? "-ml-px" : ""} ${lv.textClass}`}
+              style={{
+                fontFamily: '"Arial Narrow", Arial, sans-serif',
+                background: active ? "#d7dced" : "transparent",
+                color: active ? "#000000" : "#fcfcfc",
+              }}
+            >
+              A
+            </button>
+          );
+        })}
+      </div>
+      <span className="block text-[10.5px] text-[#fcfcfc] mt-0.5 whitespace-nowrap">Text Zoom</span>
+    </div>
+  );
+}
+
+function TopBtn({
+  icon: Icon, imgSrc, imgFlip, imgClass, label, onClick, tileClass, plain, modern,
+}: {
+  icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void; tileClass?: string; plain?: boolean; modern?: boolean;
+}) {
+  if (modern) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        aria-label={label}
+        className="shrink-0 flex items-center justify-center p-2 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors"
+      >
+        {Icon ? (
+          <Icon className="h-[18px] w-[18px] stroke-[1.75]" />
+        ) : imgSrc ? (
+          <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+        ) : null}
+      </button>
+    );
+  }
+  if (plain) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        aria-label={label}
+        className="shrink-0 flex flex-col items-center justify-center px-1.5 sm:px-2.5 py-0.5 text-[#fcfcfc] hover:bg-[#407699] rounded-[2px] transition-colors min-w-[42px] sm:min-w-[60px] leading-tight"
+      >
+        {imgSrc ? (
+          <img src={imgSrc} alt="" className={imgClass ?? "h-6 w-6 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+        ) : Icon ? (
+          <Icon className="h-5 w-5" />
+        ) : null}
+        <span className="block text-[10.5px] mt-0.5 whitespace-nowrap">{label}</span>
+      </button>
+    );
+  }
   return (
     <button
+      type="button"
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="shrink-0 flex flex-col items-center justify-center px-1 sm:px-3 py-0 text-white/90 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[36px] sm:min-w-[64px] leading-tight"
+      className="shrink-0 flex flex-col items-center justify-center px-1.5 sm:px-2 py-0.5 text-white/95 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[44px] sm:min-w-[58px] leading-tight"
     >
-      {imgSrc ? (
-        <img src={imgSrc} alt="" className={imgClass ?? "h-5 w-5 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
-      ) : Icon ? (
-        <Icon className="h-5 w-5" />
-      ) : null}
-      <span className="hidden sm:block text-[11px] mt-0.5">{label}</span>
+      <span className={`flex items-center justify-center h-6 w-6 rounded-[4px] bg-white text-[#004a77] shadow-xs ${tileClass ?? ""}`}>
+        {Icon ? (
+          <Icon className="h-4 w-4 stroke-[2.15]" />
+        ) : imgSrc ? (
+          <img src={imgSrc} alt="" className={imgClass ?? "h-4 w-4 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
+        ) : null}
+      </span>
+      <span className="block text-[10px] font-medium mt-0.5 whitespace-nowrap">{label}</span>
     </button>
   );
 }
@@ -203,6 +373,7 @@ function TestRunner() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["test", testId],
     queryFn: () => getFn({ data: { id: testId } }),
+    staleTime: 60_000,
     retry: false,
   });
 
@@ -242,6 +413,7 @@ function TestRunner() {
   const [showSettings, setShowSettings] = useState(false);
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryTarget, setLibraryTarget] = useState<{ docId: number | null; search?: string | null } | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -271,12 +443,15 @@ function TestRunner() {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const splitGridRef = useRef<HTMLDivElement>(null);
+  const [splitDragging, setSplitDragging] = useState(false);
+  const [liveSplitRatio, setLiveSplitRatio] = useState<number | null>(null);
 
   // Settings — seeded from user's saved defaults
   const userSettings = useHydratedSettings();
   const [fontSize, setFontSize] = useState(DEFAULT_SETTINGS.fontSize + 1);
   const [fontWeight, setFontWeight] = useState(400);
-  const [theme, setTheme] = useState<"light" | "dark" | "sepia">("light");
+  const [theme, setTheme] = useState<ResolvedQuizTheme>("light");
   const [transparentExpl, setTransparentExpl] = useState(DEFAULT_SETTINGS.transparentExplanations);
   const [largeImages, setLargeImages] = useState(DEFAULT_SETTINGS.largeImages);
   const [highlightOnly, setHighlightOnly] = useState(DEFAULT_SETTINGS.highlightOnly);
@@ -284,13 +459,27 @@ function TestRunner() {
   const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
   const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>(DEFAULT_SETTINGS.enabledHighlights);
   const [settingsApplied, setSettingsApplied] = useState(false);
+  const [darkBarUsesAccent, setDarkBarUsesAccent] = useState(false);
+  const [saThemeOverride, setSaThemeOverride] = useState(false);
+  const [saAccentOverride, setSaAccentOverride] = useState(false);
+
+  // Reset dark-mode bar back to sleek black whenever entering Reverse Color / Dark / Forest theme
+  useEffect(() => {
+    if (theme === "dark" || theme === "forest") setDarkBarUsesAccent(false);
+  }, [theme]);
+
+  // Reset Self-Assessment local color overrides when switching to another test
+  useEffect(() => {
+    setSaThemeOverride(false);
+    setSaAccentOverride(false);
+  }, [id]);
 
   // Apply user's saved defaults once hydrated
   useEffect(() => {
     if (settingsApplied) return;
     setFontSize(Math.max(10, userSettings.fontSize + 1));
     setFontWeight(400 + userSettings.fontWeight * 100);
-    setTheme(userSettings.defaultTheme === "dark" ? "dark" : "light");
+    setTheme(resolveQuizTheme(userSettings));
     setTransparentExpl(userSettings.transparentExplanations);
     setLargeImages(userSettings.largeImages);
     setHighlightOnly(userSettings.highlightOnly);
@@ -355,12 +544,6 @@ function TestRunner() {
     };
   }, []);
 
-  const themeStyles = theme === "dark"
-    ? { pageBg: "#0f172a", sideBg: "#1e293b", text: "#e5e7eb", cardBg: "#1e293b", border: "#334155" }
-    : theme === "sepia"
-    ? { pageBg: "#f4ecd8", sideBg: "#ebe0c4", text: "#3b2f1e", cardBg: "#faf3e0", border: "#d6c9a8" }
-    : { pageBg: PAGE_BG, sideBg: SIDE_BG, text: TEXT, cardBg: "#ffffff", border: "#d1d5db" };
-
   const question = data?.questions[idx];
   const mediaToken = useMediaToken(data?.qbankId);
   const allMediaItems = getQuestionMedia(question, data?.qbankId ?? 1)
@@ -370,7 +553,62 @@ function TestRunner() {
   const isPractice = data?.test.mode === "practice";
   const isRealExam = data?.test.mode === "test";
   const isReview = !!data?.test.done;
+  const isSelfAssessment = !isReview && /\bBlock #\d+$/i.test(String((data?.test as { name?: string | null } | undefined)?.name ?? ""));
+  const isExamUI = isSelfAssessment;
+  const tutorIface: TutorInterfaceStyle = userSettings.tutorInterface === "nbme-fred" ? "nbme-fred" : "uworld";
+  const isWebFred = isSelfAssessment || tutorIface === "nbme-fred";
+  const isUworldUI = !isWebFred;
   const total = data?.questions.length ?? 0;
+
+  const effectiveTheme: ResolvedQuizTheme = isSelfAssessment && !saThemeOverride ? "light" : theme;
+  const baseThemeStyles = getQuizPalette(effectiveTheme, userSettings.customTheme);
+  const navBg =
+    (effectiveTheme === "dark" || effectiveTheme === "forest") && !darkBarUsesAccent
+      ? (effectiveTheme === "forest" ? "#071410" : "#0a0d14")
+      : isSelfAssessment && !saAccentOverride
+        ? "#004673"
+        : userSettings.useAccentInQuizNav
+          ? darkenHex(userSettings.accentColor, baseThemeStyles.isDark ? 0.62 : 0.78)
+          : isWebFred
+            ? "#004673"
+            : NAV_BG;
+
+  const themeStyles =
+    isWebFred && !baseThemeStyles.isDark && effectiveTheme === "light"
+      ? { ...baseThemeStyles, pageBg: "#fcfcfc", sideBg: "#ffffff", cardBg: "#fcfcfc", text: "#000000", border: "#c0c0c0" }
+      : !baseThemeStyles.isDark && effectiveTheme === "light"
+        ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
+        : baseThemeStyles;
+
+  const effectiveReadingFont =
+    isWebFred && userSettings.fontFamily === "system"
+      ? '"Arial Unicode MS", Arial, Helvetica, sans-serif'
+      : getFontStack(userSettings.fontFamily);
+
+  // Preload next question's images in the background so switching questions feels instant.
+  useEffect(() => {
+    if (!mediaToken || !data?.questions?.length) return;
+    const nextQ = data.questions[idx + 1];
+    if (!nextQ) return;
+    const urls = new Set<string>();
+    for (const item of getQuestionMedia(nextQ, data.qbankId ?? 1)) {
+      if (item.kind === "image") urls.add(withMediaToken(item.url, mediaToken));
+    }
+    const rewritten = rewriteMedia(nextQ.question ?? "", { qbankId: data.qbankId ?? 1, mediaToken });
+    for (const m of rewritten.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) {
+      if (m[1]) urls.add(m[1]);
+    }
+    const preloaded: HTMLImageElement[] = [];
+    for (const u of urls) {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = u;
+      preloaded.push(img);
+    }
+    return () => {
+      preloaded.length = 0;
+    };
+  }, [idx, data?.questions, data?.qbankId, mediaToken]);
 
   // Clamp restored idx once data loads (in case it exceeds range)
   useEffect(() => {
@@ -560,16 +798,44 @@ function TestRunner() {
   };
 
 
-  const bookmark = async () => {
+  const bookmark = () => {
     if (!question) return;
-    try {
-      const result = await bmFn({ data: { questionId: question.id, qbankId: data?.qbankId ?? 1 } });
-      toast(result.bookmarked ? "Question flagged" : "Flag removed");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to update flag");
-      return;
-    }
-    qc.invalidateQueries({ queryKey: ["test", testId] });
+    const qid = question.id;
+    const wasBookmarked = data?.bookmarkedIds?.has(qid) ?? false;
+    const nextBookmarked = !wasBookmarked;
+
+    // Instant optimistic update so the flag checkbox & sidebar icon respond in 0ms
+    qc.setQueryData(["test", testId], (old: any) => {
+      if (!old) return old;
+      const nextSet = new Set<number>(old.bookmarkedIds ?? []);
+      if (nextBookmarked) nextSet.add(qid);
+      else nextSet.delete(qid);
+      return { ...old, bookmarkedIds: nextSet };
+    });
+
+    bmFn({ data: { questionId: qid, qbankId: data?.qbankId ?? 1 } })
+      .then((result) => {
+        if (result.bookmarked !== nextBookmarked) {
+          qc.setQueryData(["test", testId], (old: any) => {
+            if (!old) return old;
+            const nextSet = new Set<number>(old.bookmarkedIds ?? []);
+            if (result.bookmarked) nextSet.add(qid);
+            else nextSet.delete(qid);
+            return { ...old, bookmarkedIds: nextSet };
+          });
+        }
+      })
+      .catch((e) => {
+        // Roll back on failure
+        qc.setQueryData(["test", testId], (old: any) => {
+          if (!old) return old;
+          const nextSet = new Set<number>(old.bookmarkedIds ?? []);
+          if (wasBookmarked) nextSet.add(qid);
+          else nextSet.delete(qid);
+          return { ...old, bookmarkedIds: nextSet };
+        });
+        toast.error(e instanceof Error ? e.message : "Failed to update flag");
+      });
   };
 
   const finish = async (opts?: { force?: boolean }) => {
@@ -670,7 +936,7 @@ function TestRunner() {
     else document.exitFullscreen?.();
   };
 
-  if (isLoading || !data || !question) return <div className="p-8"><Loader label="Loading question…" /></div>;
+  if (isLoading || !data || !question) return <div className="min-h-screen w-full flex items-center justify-center p-8 bg-background"><Loader label="Loading question" /></div>;
   if (data.test.done && !isReview) return <Navigate to="/test-results/$id" params={{ id }} replace />;
 
   const correctIdx = question.correct_answer;
@@ -693,8 +959,18 @@ function TestRunner() {
   const secs = elapsed % 60;
   const timeLabel = `${mins}min: ${secs}sec`;
 
-  // stub peer % (would come from analytics)
-  const peerPct = 73;
+  // Real peer % from Supabase `questions.corr_taken / ppl_taken` and `answers.correct_percentage`
+  // (NBME/CMS placeholder rows have ppl_taken=100, corr_taken=1 and answer counts summing to 0 — treat those as unavailable.)
+  const answerCountSum = answers.reduce((sum, a) => sum + Math.max(0, Number((a as any).correct_percentage ?? 0)), 0);
+  const rawPpl = Number((question as any).ppl_taken ?? 0);
+  const rawCorr = Number((question as any).corr_taken ?? 0);
+  const isPlaceholderPeer = answerCountSum === 0 && rawPpl === 100 && rawCorr <= 1;
+  const peerPct: number | null =
+    answerCountSum > 0 && correctIdx != null && answers[correctIdx]
+      ? Math.round((Math.max(0, Number((answers[correctIdx] as any).correct_percentage ?? 0)) / answerCountSum) * 100)
+      : !isPlaceholderPeer && rawPpl > 0 && rawCorr >= 0
+        ? Math.round((rawCorr / rawPpl) * 100)
+        : null;
 
   const notImpl = (n: string) => () => toast(`${n} — coming soon`);
 
@@ -994,8 +1270,12 @@ function TestRunner() {
   };
 
   return (
-    <div ref={rootRef} className="flex flex-col h-screen" style={{ background: themeStyles.pageBg, color: themeStyles.text }}>
-      {hlBar && (
+    <div
+      ref={rootRef}
+      className={isWebFred ? "flex flex-row h-screen overflow-hidden" : "flex flex-col h-screen"}
+      style={{ background: themeStyles.pageBg, color: themeStyles.text }}
+    >
+      {hlBar && userSettings.smartContextMenu !== false && (
         <div
           data-hl-toolbar
           data-placement={hlBar.placement}
@@ -1006,7 +1286,7 @@ function TestRunner() {
           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onTouchStart={(e) => { e.stopPropagation(); }}
         >
-          {(multicolor ? HL_COLORS.filter(c => enabledHighlights[c]) : [HL_COLORS[0]]).map(c => (
+          {(multicolor ? HL_COLORS.filter(c => enabledHighlights[c]) : [activeHighlight || HL_COLORS[0]]).map(c => (
             <button
               key={c}
               type="button"
@@ -1034,84 +1314,78 @@ function TestRunner() {
           >
             <Eraser className="h-4 w-4" />
           </button>
-          <button
-            type="button"
-            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }}
-            title="Copy"
-            aria-label="Copy"
-          >
-            <Copy className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-      {/* Top nav */}
-      <div className={`qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 text-white ${isRealExam && !isReview ? "py-0.5" : "py-1.5"}`} style={{ background: NAV_BG }}>
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          {!(isRealExam && !isReview) && (
-            <button className="p-1 hover:bg-white/10 rounded shrink-0" onClick={() => setSidebarOpen(v => !v)} title={sidebarOpen ? "Hide question list" : "Show question list"}>
-              <span className="block w-5 h-0.5 bg-white mb-1" />
-              <span className="block w-5 h-0.5 bg-white mb-1" />
-              <span className="block w-5 h-0.5 bg-white" />
+          {userSettings.toolbar?.copy !== false && (
+            <button
+              type="button"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); copySel(); }}
+              title="Copy"
+              aria-label="Copy"
+            >
+              <Copy className="h-4 w-4" />
             </button>
           )}
-          <div className="text-[11px] sm:text-[12px] leading-tight shrink-0">
-            <div><span className="text-white/70">Item</span> <span className="font-semibold">{idx + 1} of {total}</span></div>
-            {(isRealExam && !isReview)
-              ? <div><span className="text-white/70">Block</span> <span className="font-semibold">1 of 1</span></div>
-              : <div className="hidden sm:block text-[11px] text-white/75">Question Id: {question.id}</div>}
-          </div>
-          <button
-            onClick={bookmark}
-            className="inline-flex items-center gap-1.5 p-1 rounded hover:bg-white/10 shrink-0"
-            title={isBookmarked ? "Remove flag" : "Flag question"}
-          >
-            {(isRealExam && !isReview) && (
-              <span className={`inline-flex items-center justify-center w-2.5 h-2.5 border border-white/80 ${isBookmarked ? "bg-red-600" : "bg-transparent"}`}>
-                {isBookmarked && (
-                  <svg viewBox="0 0 16 16" className="w-2 h-2 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 8.5 6.5 12 13 4.5" />
-                  </svg>
-                )}
-              </span>
-            )}
-            <img src={markFlagIcon.url} alt="Flag" className={`h-5 w-5 object-contain ${isBookmarked ? "" : "opacity-90"}`} />
-            <span className="hidden sm:inline text-[11px] font-semibold text-white">Mark</span>
-          </button>
-
-
-
-        </div>
-
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <TopBtn imgSrc={navArrowIcon.url} imgFlip label="Previous" onClick={() => goToQuestion(idx - 1)} />
-          <TopBtn imgSrc={navArrowIcon.url} label="Next" onClick={() => goToQuestion(idx + 1)} />
-        </div>
-
-        <div className="flex items-center gap-1 shrink-0">
-          {(!isRealExam || isReview) && <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />}
-          {mediaItems.length > 0 && (!isRealExam || isReview) && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
-          <TopBtn imgSrc={labValuesIcon.url} label="Lab Values" onClick={() => setShowLabValues(true)} />
-          <TopBtn imgSrc={notesIcon.url} label="Notes" onClick={() => setShowNotes(true)} />
-          {false && <TopBtn icon={Notebook} label="Notebook" onClick={notImpl("Notebook")} />}
-          
-          <TopBtn imgSrc={calculatorIcon.url} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-          {isRealExam && !isReview && <TopBtn imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />}
-          {isRealExam && !isReview && (
-            <TopBtn imgSrc={textZoomIcon.url} imgClass="h-10 w-10 object-contain" label="Text Zoom" onClick={() => setFontSize(s => s >= 20 ? 14 : s + 2)} />
+          {userSettings.toolbar?.notes !== false && (
+            <button
+              type="button"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setHlBar(null); setShowNotes(true); }}
+              title="Add to Notes"
+              aria-label="Add to Notes"
+            >
+              <StickyNote className="h-4 w-4" />
+            </button>
           )}
-          {(!isRealExam || isReview) && <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
+          {userSettings.toolbar?.library !== false && (
+            <button
+              type="button"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const sel = (savedTextRef.current || window.getSelection()?.toString() || "").trim();
+                setHlBar(null);
+                setLibraryTarget({ docId: null, search: sel || null });
+                setShowLibrary(true);
+              }}
+              title="Search Medical Library"
+              aria-label="Search Medical Library"
+            >
+              <BookOpen className="h-4 w-4" />
+            </button>
+          )}
+          {(userSettings.toolbar?.newFlashcard !== false || userSettings.toolbar?.existingFlashcard !== false) && (
+            <button
+              type="button"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setHlBar(null); setShowFlashcards(true); }}
+              title="Flashcards"
+              aria-label="Flashcards"
+            >
+              <Zap className="h-4 w-4" />
+            </button>
+          )}
         </div>
-      </div>
-
-      {/* Main */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Left navigator */}
-        {sidebarOpen && (
+      )}
+      {/* Full-height NBME Self-Assessment left sidebar with Question Status header */}
+      {isWebFred && (
         <aside
-          className="w-14 md:w-24 shrink-0 overflow-auto border-r"
-          style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
+          aria-label="Question Status"
+          className="w-[88px] shrink-0 h-screen overflow-y-auto border-r select-none flex flex-col"
+          style={{
+            background: themeStyles.sideBg,
+            borderColor: themeStyles.isDark ? themeStyles.border : theme === "light" ? "#808080" : themeStyles.border,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}
         >
-
+          <div
+            className="px-1.5 py-2 text-[11px] font-bold text-center leading-tight border-b sticky top-0 z-20 shrink-0"
+            style={{
+              background: themeStyles.isDark ? themeStyles.cardBg : theme === "light" ? "#f5f5f5" : themeStyles.cardBg,
+              borderColor: themeStyles.isDark ? themeStyles.border : theme === "light" ? "#a3a3a3" : themeStyles.border,
+              color: themeStyles.text,
+            }}
+          >
+            Question
+            <br />
+            Status
+          </div>
           {data.questions.map((q, i) => {
             const att = data.attemptsByQ[q.id];
             const hideResult = !isReview && !tutorMode;
@@ -1119,6 +1393,10 @@ function TestRunner() {
               ? (hideResult ? "attempted" : att.is_correct ? "correct" : "wrong")
               : "none";
             const active = i === idx;
+            const zebraBg =
+              i % 2 === 1
+                ? (themeStyles.isDark ? "rgba(255,255,255,0.06)" : theme === "light" ? "#e6e6e6" : "rgba(0,0,0,0.055)")
+                : "transparent";
             return (
               <button
                 type="button"
@@ -1127,7 +1405,246 @@ function TestRunner() {
                   e.preventDefault();
                   e.stopPropagation();
                   goToQuestion(i);
-                  if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToQuestion(i);
+                }}
+                aria-label={`Go to item ${i + 1}`}
+                className="w-full h-[20px] flex items-center gap-1 px-2 text-[11.5px] leading-none cursor-pointer text-left shrink-0"
+                style={{
+                  background: active ? navBg : zebraBg,
+                  color: active ? "#ffffff" : themeStyles.text,
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                <span className="w-3 inline-flex justify-center shrink-0 text-[11px]">
+                  {status === "correct" ? (
+                    <span className={active ? "text-emerald-300" : "text-green-600"}>✓</span>
+                  ) : status === "wrong" ? (
+                    <span className={active ? "text-red-300" : "text-red-600"}>✕</span>
+                  ) : status === "attempted" ? (
+                    ""
+                  ) : (
+                    "•"
+                  )}
+                </span>
+                <span className="tabular-nums">{i + 1}</span>
+                {data.bookmarkedIds.has(q.id) && (
+                  <Flag className={`h-2.5 w-2.5 ml-auto shrink-0 ${active ? "fill-red-300 text-red-300" : "fill-red-600 text-red-600"}`} />
+                )}
+              </button>
+            );
+          })}
+        </aside>
+      )}
+
+      <div className={isWebFred ? "flex-1 flex flex-col min-w-0 h-screen overflow-hidden" : "contents"}>
+      {/* Top nav — NBME Self-Assessment / Official UWorld */}
+      {isWebFred ? (
+        <div
+          className="qbank-nav-scroll flex items-center justify-between gap-2 px-2.5 py-1.5 min-h-[54px] text-[#fcfcfc]"
+          style={{ background: navBg }}
+        >
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div
+              className="px-3 py-0.5 text-center leading-tight shrink-0"
+              style={{ border: "1px solid #6b93b8" }}
+            >
+              <div className="text-[12.5px] font-medium">Item: {idx + 1} of {total}</div>
+              {isExamUI
+                ? <div className="text-[11.5px] text-white/90">Block: 1 of 1</div>
+                : <div className="text-[11px] text-white/85">Question Id: {question.id}</div>}
+            </div>
+            {(data?.test as { name?: string | null } | undefined)?.name && (
+              <span className="hidden md:inline text-[12px] text-white/90 font-normal truncate max-w-[180px]">
+                {(data?.test as { name?: string | null }).name}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-6 shrink-0">
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx - 1)}
+              disabled={idx <= 0}
+              title="Previous"
+              className="flex flex-col items-center justify-center px-1.5 text-white/95 hover:text-white disabled:opacity-45 leading-tight"
+            >
+              <span className="h-6 w-6 rounded-full bg-white text-[#004673] flex items-center justify-center">
+                <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
+              </span>
+              <span className="block text-[10.5px] mt-0.5">Previous</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx + 1)}
+              disabled={idx >= total - 1}
+              title="Next"
+              className="flex flex-col items-center justify-center px-1.5 text-white/95 hover:text-white disabled:opacity-45 leading-tight"
+            >
+              <span className="h-6 w-6 rounded-full bg-white text-[#004673] flex items-center justify-center">
+                <ChevronRight className="h-4 w-4 stroke-[2.5]" />
+              </span>
+              <span className="block text-[10.5px] mt-0.5">Next</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <TopBtn icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
+            <TopBtn icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
+            <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+            <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
+          </div>
+        </div>
+      ) : (
+        <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-1.5 text-white" style={{ background: navBg }}>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              className="flex flex-col items-center justify-center h-7 w-7 rounded-[4px] bg-white text-[#004a77] hover:bg-white/90 shadow-xs shrink-0"
+              onClick={() => setSidebarOpen(v => !v)}
+              title={sidebarOpen ? "Hide question list" : "Show question list"}
+            >
+              <span className="block w-4 h-0.5 bg-[#004a77] mb-1" />
+              <span className="block w-4 h-0.5 bg-[#004a77] mb-1" />
+              <span className="block w-4 h-0.5 bg-[#004a77]" />
+            </button>
+            <div className="border border-white/55 rounded-[2px] px-2.5 py-0.5 text-[11px] sm:text-[12px] leading-tight shrink-0">
+              <div className="font-semibold">Item: {idx + 1} of {total}</div>
+              <div className="hidden sm:block text-[10.5px] text-white/85">Question Id: {question.id}</div>
+            </div>
+            <button
+              type="button"
+              onClick={bookmark}
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-[2px] hover:bg-white/10 transition-colors shrink-0"
+              title={isBookmarked ? "Remove flag" : "Flag question"}
+            >
+              <span className={`inline-flex items-center justify-center w-3 h-3 border border-white/90 ${isBookmarked ? "bg-red-600" : "bg-white"}`}>
+                {isBookmarked && (
+                  <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 8.5 6.5 12 13 4.5" />
+                  </svg>
+                )}
+              </span>
+              <Flag className={`h-3.5 w-3.5 ${isBookmarked ? "fill-red-400 text-red-400" : "text-white/90"}`} />
+              <span className="hidden sm:inline text-[11.5px] font-medium text-white">Mark</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx - 1)}
+              disabled={idx <= 0}
+              title="Previous"
+              className="flex flex-col items-center justify-center px-1 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
+            >
+              <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
+                <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
+              </span>
+              <span className="block text-[10px] font-medium mt-0.5">Previous</span>
+            </button>
+            <span className="text-[12px] font-medium tabular-nums text-white/95 px-1">
+              {idx + 1} / {total}
+            </span>
+            <button
+              type="button"
+              onClick={() => goToQuestion(idx + 1)}
+              disabled={idx >= total - 1}
+              title="Next"
+              className="flex flex-col items-center justify-center px-1 text-white/95 hover:text-white disabled:opacity-40 leading-tight"
+            >
+              <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
+                <ChevronRight className="h-4 w-4 stroke-[2.5]" />
+              </span>
+              <span className="block text-[10px] font-medium mt-0.5">Next</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <TopBtn icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
+            {mediaItems.length > 0 && <TopBtn icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
+            <TopBtn icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
+            <TopBtn icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
+            <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
+            <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
+          </div>
+        </div>
+      )}
+
+      {/* Main */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Hover-edge sensor to reveal sidebar on mouse hover */}
+        {!isWebFred && !sidebarOpen && userSettings.hoverEdgeSidebar && (
+          <div
+            onMouseEnter={() => setSidebarOpen(true)}
+            className="hidden md:block absolute inset-y-0 left-0 w-3.5 z-30 cursor-e-resize"
+            title="Hover to show question list"
+          />
+        )}
+        {/* Left navigator — smoothly glides open/closed with GPU transitions (hidden in WebFRED which uses full-height 80px sidebar) */}
+        {!isWebFred && (
+        <aside
+          aria-hidden={!sidebarOpen}
+          onMouseLeave={() => {
+            if (userSettings.hoverEdgeSidebar && !userSettings.saveSpaceForSidebar) {
+              setSidebarOpen(false);
+            }
+          }}
+          className={`shrink-0 overflow-auto border-r transition-[width,transform,opacity] duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
+            userSettings.saveSpaceForSidebar === false
+              ? "absolute inset-y-0 left-0 z-30 shadow-2xl"
+              : "relative"
+          } ${
+            sidebarOpen
+              ? "w-14 md:w-24 translate-x-0 opacity-100"
+              : userSettings.saveSpaceForSidebar === false
+                ? "w-14 md:w-24 -translate-x-full opacity-0 pointer-events-none"
+                : "w-0 -translate-x-full opacity-0 border-r-0 overflow-hidden pointer-events-none"
+          }`}
+          style={{ background: themeStyles.sideBg, borderColor: themeStyles.border }}
+        >
+
+          {isUworldUI && (
+            <div
+              className="px-2 py-2 text-[10px] font-bold text-center leading-tight border-b sticky top-0 z-20"
+              style={{
+                background: themeStyles.cardBg,
+                borderColor: themeStyles.border,
+                color: themeStyles.text,
+              }}
+            >
+              Question
+              <br />
+              Status
+            </div>
+          )}
+
+          {data.questions.map((q, i) => {
+            const att = data.attemptsByQ[q.id];
+            const hideResult = !isReview && !tutorMode;
+            const status = att
+              ? (hideResult ? "attempted" : att.is_correct ? "correct" : "wrong")
+              : "none";
+            const active = i === idx;
+            const isUnsubmitted = active && selected !== null && !submitted && userSettings.showUnsubmittedIndicator !== false;
+            const zebraBg =
+              isUworldUI && i % 2 === 1
+                ? (themeStyles.isDark ? "rgba(255,255,255,0.04)" : theme === "light" ? "#e9edf2" : "rgba(0,0,0,0.05)")
+                : "transparent";
+            return (
+              <button
+                type="button"
+                key={q.id}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  goToQuestion(i);
+                  if (
+                    userSettings.autoHideSidebar ||
+                    (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches)
+                  ) {
                     setSidebarOpen(false);
                   }
                 }}
@@ -1137,15 +1654,29 @@ function TestRunner() {
                 }}
                 onMouseUp={(e) => e.stopPropagation()}
                 aria-label={`Go to question ${i + 1}`}
-                className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:bg-black/10 ${active ? "font-semibold" : ""}`}
-                style={{ borderColor: themeStyles.border, color: themeStyles.text, background: active ? themeStyles.cardBg : "transparent" }}
+                className={`relative z-10 w-full min-h-7 flex items-center gap-1 px-2 py-1 text-xs border-b cursor-pointer hover:brightness-95 ${active ? "font-semibold" : ""}`}
+                style={{
+                  borderColor: themeStyles.border,
+                  color: active && isUworldUI ? "#ffffff" : themeStyles.text,
+                  background: active ? (isUworldUI ? navBg : themeStyles.cardBg) : zebraBg,
+                }}
               >
-                {status === "correct" && <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />}
-                {status === "wrong" && <span className="text-red-600 font-bold">✕</span>}
+                {status === "correct" && <CheckCircle2 className={`h-3.5 w-3.5 ${active && isUworldUI ? "text-emerald-300" : "text-green-600"}`} />}
+                {status === "wrong" && <span className={`font-bold ${active && isUworldUI ? "text-red-300" : "text-red-600"}`}>✕</span>}
                 {status === "attempted" && <span className="w-3.5" />}
-                {status === "none" && <span className="inline-block h-2 w-2 rounded-full bg-slate-700/60 scale-[0.7]" />}
+                {status === "none" && (
+                  isUnsubmitted ? (
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse" title="Selected, not yet submitted" />
+                  ) : (
+                    <span className={`inline-block h-2 w-2 rounded-full scale-[0.7] ${active && isUworldUI ? "bg-white/80" : "bg-slate-700/60"}`} />
+                  )
+                )}
                 <span>{i + 1}</span>
-                {data.bookmarkedIds.has(q.id) && <img src={markFlagIcon.url} alt="Flagged" className="h-3.5 w-3.5 ml-auto object-contain" />}
+                {data.bookmarkedIds.has(q.id) && (
+                  isUworldUI
+                    ? <Flag className={`h-3 w-3 ml-auto ${active ? "fill-red-300 text-red-300" : "fill-red-600 text-red-600"}`} />
+                    : <img src={markFlagIcon.url} alt="Flagged" className="h-3.5 w-3.5 ml-auto object-contain" />
+                )}
               </button>
             );
           })}
@@ -1154,27 +1685,96 @@ function TestRunner() {
 
 
         {/* Content */}
-        <div className="flex-1 overflow-auto" ref={contentRef}>
-          <div className={`w-full mx-0 px-3 sm:px-6 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`} style={{ fontSize, fontWeight, color: themeStyles.text }}>
-            {(() => null)()}
-            {(() => null)()}
-
-
+        <div
+          className="sf-main-canvas flex-1 overflow-auto"
+          ref={contentRef}
+          style={
+            isWebFred && !themeStyles.isDark && effectiveTheme === "light"
+              ? { backgroundImage: "linear-gradient(#fcfcfc 30%, #d7dced 100%)" }
+              : undefined
+          }
+        >
+          <div
+            ref={splitGridRef}
+            className={`w-full mx-0 py-3 qbank-theme-${effectiveTheme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${isExamUI ? "qbank-exam-stem" : ""}`}
+            style={{
+              fontSize,
+              fontWeight,
+              fontFamily: effectiveReadingFont,
+              lineHeight: isWebFred ? 1.4 : userSettings.lineHeight,
+              color: themeStyles.text,
+              paddingInline: isWebFred ? "30px" : "clamp(0.75rem, calc(1rem + var(--sf-content-padding, 0px)), 4rem)",
+              paddingTop: isWebFred ? "22px" : undefined,
+              ["--sf-split-left" as string]: `${liveSplitRatio ?? userSettings.splitRatio ?? 50}%`,
+              maxWidth: !isExamUI && !(userSettings.splitExplanations && showAnswers && !!question.explanation)
+                ? `${Math.max(50, Math.min(100, userSettings.lineWidthPercent ?? 85))}%`
+                : undefined,
+            }}
+          >
+            {/* NBME Mark Question bar (in-pane for NBME style; UWorld uses top-bar Mark) */}
+            {isWebFred ? (
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={bookmark}
+                  className="inline-flex items-center gap-2 text-[13px] font-medium hover:opacity-80 transition-opacity"
+                  style={{ color: themeStyles.isDark ? themeStyles.text : "#475569" }}
+                >
+                  <span
+                    className={`inline-flex items-center justify-center h-4 w-4 rounded-[2px] border transition-colors ${
+                      isBookmarked
+                        ? "bg-[#004a77] border-[#004a77] text-white"
+                        : "border-slate-400 bg-transparent"
+                    }`}
+                  >
+                    {isBookmarked && (
+                      <svg viewBox="0 0 16 16" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 8.5 6.5 12 13 4.5" />
+                      </svg>
+                    )}
+                  </span>
+                  <Flag className={`h-3.5 w-3.5 ${isBookmarked ? "fill-red-600 text-red-600" : "text-slate-500"}`} />
+                  <span>Mark Question</span>
+                </button>
+                {selected !== null && !submitted && !isReview && userSettings.showUnsubmittedIndicator !== false && (
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Answer selected — not submitted yet
+                  </div>
+                )}
+              </div>
+            ) : (
+              selected !== null && !submitted && !isReview && userSettings.showUnsubmittedIndicator !== false && (
+                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Answer selected — not submitted yet
+                </div>
+              )
+            )}
             
-            <HighlightableHtml seedKey={`q-${question.id}`} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
+            <HighlightableHtml seedKey={`q-${question.id}`} mediaToken={mediaToken} data-hlkey="q" className="qbank-html qbank-light" html={htmlFor("q", question.question, true)} />
 
-            {mediaItems.length > 0 && (
-              <div className="mt-3 flex flex-wrap items-start justify-center gap-3">
+            {mediaItems.length > 0 && mediaToken && (
+              <div className={`mt-3 flex flex-wrap items-start gap-3 ${userSettings.imageAlign === "left" ? "justify-start" : "justify-center"}`}>
                 {mediaItems.map((item, mediaIndex) => {
                   const src = item.url;
                   if (item.kind === "image") {
                     return (
                       <img
-                        key={`${item.name}-${mediaIndex}`}
+                        key={`${item.name}-${mediaIndex}-${mediaToken}`}
                         src={src}
                         alt="Exhibit"
                         loading="lazy"
                         decoding="async"
+                        onError={(e) => {
+                          const img = e.currentTarget;
+                          const tries = Number(img.dataset.retry ?? "0");
+                          if (tries >= 3) return;
+                          img.dataset.retry = String(tries + 1);
+                          const base = src.replace(/([?&])r=[^&]*/g, "$1").replace(/[?&]+$/, "");
+                          const sep = base.includes("?") ? "&" : "?";
+                          setTimeout(() => { img.src = `${base}${sep}r=${Date.now()}-${tries + 1}`; }, 250 * (tries + 1));
+                        }}
                         onClick={() => { setExhibitSrc(src); setExhibitZoom(1); }}
                         className="max-w-full rounded border cursor-zoom-in bg-white"
                         style={{ borderColor: "#b8c6de", maxHeight: "70vh" }}
@@ -1184,7 +1784,7 @@ function TestRunner() {
                   if (item.kind === "video") {
                     return (
                       <video
-                        key={`${item.name}-${mediaIndex}`}
+                        key={`${item.name}-${mediaIndex}-${mediaToken}`}
                         src={src}
                         controls
                         preload="metadata"
@@ -1195,25 +1795,49 @@ function TestRunner() {
                   }
                   return (
                     <audio
-                      key={`${item.name}-${mediaIndex}`}
+                      key={`${item.name}-${mediaIndex}-${mediaToken}`}
                       src={src}
                       controls
                       preload="metadata"
+                      className="w-full max-w-md"
                     />
                   );
                 })}
               </div>
             )}
 
-            <div className="mt-3 inline-block rounded border px-4 py-2" style={{ borderColor: (isRealExam && !isReview && !showAnswers) ? (theme === "dark" ? "#475569" : "#c9c9c9") : (theme === "dark" ? "#475569" : "#5b8fc9"), borderWidth: (isRealExam && !isReview && !showAnswers) ? 1 : 2, background: theme === "dark" ? "#1e293b" : theme === "sepia" ? "#f4ecd8" : "#ffffff", color: themeStyles.text }}>
+            <div
+              className={
+                isWebFred
+                  ? "mt-4 inline-block min-w-[240px] max-w-[98%] px-3 py-2"
+                  : "mt-4 w-full max-w-[560px] rounded-[2px] border px-3.5 py-2.5"
+              }
+              style={{
+                borderStyle: "solid",
+                borderColor: themeStyles.isDark
+                  ? "#475569"
+                  : theme === "high-contrast"
+                    ? "#000000"
+                    : navBg,
+                borderWidth: isWebFred ? "1px 1px 5px 1px" : "1px 1px 2.5px 1px",
+                background:
+                  themeStyles.isDark
+                    ? themeStyles.cardBg
+                    : theme === "light"
+                      ? (isWebFred ? "#fcfcfc" : "#f7f9fc")
+                      : themeStyles.cardBg,
+                color: themeStyles.text,
+              }}
+            >
               {answers.map((a, i) => {
                 const letter = String.fromCharCode(65 + i);
                 const isThisCorrect = showAnswers && i === correctIdx;
                 const isThisWrong = showAnswers && selected === i && i !== correctIdx;
-                // deterministic pseudo peer % per answer
-                const pct: number | null = submitted
-                  ? (i === correctIdx ? 55 + ((question.id * 7) % 25) : 2 + ((question.id * 3 + i * 11) % 18))
-                  : null;
+                // Real per-option peer % from Supabase `answers.correct_percentage` counts
+                const pct: number | null =
+                  showAnswers && answerCountSum > 0
+                    ? Math.round((Math.max(0, Number((a as any).correct_percentage ?? 0)) / answerCountSum) * 100)
+                    : null;
                 const isSelected = selected === i;
                 const isStruck = struck.has(i);
                 const toggleStruck = () => {
@@ -1249,7 +1873,9 @@ function TestRunner() {
                       if (isReview || (submitted && showAnswers)) return;
                       toggleStruck();
                     }}
-                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 text-[15px] ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
+                    className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 px-1.5 rounded-[3px] transition-colors text-[15px] ${
+                      isWebFred && !themeStyles.isDark ? "hover:bg-[#ececec]" : ""
+                    } ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
                     style={{ color: themeStyles.text }}
                   >
                     <span className="w-4 flex justify-center shrink-0">
@@ -1258,19 +1884,38 @@ function TestRunner() {
                     </span>
                     <span
                       className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
-                        isSelected ? "border-gray-600" : "border-gray-400"
+                        isSelected ? "border-[#005f99]" : "border-slate-400"
                       }`}
                     >
-                      {isSelected && <span className="h-2 w-2 rounded-full bg-gray-700" />}
+                      {isSelected && <span className="h-2 w-2 rounded-full bg-[#005f99]" />}
                     </span>
-                    <span className="flex-1 min-w-0">
-                      <span
-                        data-hlkey={`a${i}`}
-                        className="qbank-html qbank-light inline"
-                        style={isStruck ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
-                        dangerouslySetInnerHTML={{ __html: answerHtmlFor(`a${i}`, letter, a.answer_text) }}
-                      />
-                      {submitted && pct != null && !userSettings.hidePercentages && <span className="text-gray-600 ml-1">({pct}%)</span>}
+                    <span className="flex-1 min-w-0 flex items-center justify-between gap-3">
+                      <span>
+                        <span
+                          data-hlkey={`a${i}`}
+                          className="qbank-html qbank-light inline"
+                          style={isStruck && !showAnswers ? { textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.55 } : undefined}
+                          dangerouslySetInnerHTML={{ __html: answerHtmlFor(`a${i}`, letter, a.answer_text) }}
+                        />
+                        {submitted && pct != null && !userSettings.hidePercentages && <span className="text-slate-500 ml-1">({pct}%)</span>}
+                      </span>
+                      {!showAnswers && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isReview || (submitted && showAnswers)) return;
+                            toggleStruck();
+                          }}
+                          title={isStruck ? "Remove strikethrough" : "Cross out choice"}
+                          className={`shrink-0 text-[11px] px-1 rounded hover:bg-black/5 transition-opacity ${
+                            isStruck ? "opacity-90 font-semibold text-red-600" : "opacity-45 hover:opacity-80"
+                          }`}
+                          style={{ textDecoration: "line-through" }}
+                        >
+                          ab
+                        </button>
+                      )}
                     </span>
                   </div>
                 );
@@ -1279,20 +1924,37 @@ function TestRunner() {
 
             {/* Primary action button — directly below answer choices */}
             {!isReview && (
-              <div className={`mt-4 ${isRealExam ? "flex justify-center max-w-[520px]" : ""}`}>
+              <div className={`mt-4 ${isRealExam ? "flex justify-center max-w-[560px]" : ""}`}>
                 {!tutorMode ? (
                   <button
                     onClick={proceedExam}
-                    className="px-4 py-1.5 rounded-sm text-white text-[12px] font-semibold disabled:opacity-40"
-                    style={{ background: NAV_BG }}
+                    className="px-4 py-1.5 rounded-[3px] text-white text-[13.5px] font-medium disabled:opacity-40 transition-opacity hover:brightness-95"
+                    style={
+                      themeStyles.isDark && !darkBarUsesAccent
+                        ? {
+                            background: "#111827",
+                            border: "1px solid #334155",
+                          }
+                        : isSelfAssessment && !saAccentOverride
+                          ? {
+                              background: "linear-gradient(#5490cc, #004673)",
+                              border: "1px solid #004673",
+                              textShadow: "0 -1px 0 rgba(0, 0, 0, 0.25)",
+                            }
+                          : {
+                              background: `linear-gradient(${userSettings.accentColor}, ${darkenHex(userSettings.accentColor, 0.78)})`,
+                              border: `1px solid ${darkenHex(userSettings.accentColor, 0.72)}`,
+                              textShadow: "0 -1px 0 rgba(0, 0, 0, 0.2)",
+                            }
+                    }
                   >
                     {idx === total - 1 ? "End Block" : "Proceed to Next Item"}
                   </button>
                 ) : !submitted ? (
                   <button
                     onClick={submit}
-                    className="px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide"
-                    style={{ background: NAV_BG }}
+                    className="px-6 py-2 rounded text-white text-sm font-semibold uppercase tracking-wide hover:brightness-95 transition"
+                    style={{ background: navBg }}
                   >
                     Submit
                   </button>
@@ -1302,63 +1964,140 @@ function TestRunner() {
 
 
 
-            {/* Answered banner — placed just above the explanation */}
+            {/* Answered result banner — Official UWorld horizontal status card */}
             {submitted && showAnswers && (
               <div
-                className={`mt-4 rounded-md border-l-4 p-3 flex items-start justify-between gap-6 ${isCorrect ? "border-green-500" : "border-red-500"}`}
+                className="mt-4 w-full max-w-[560px] rounded-[2px] border px-4 py-3 flex flex-wrap items-center justify-between gap-4"
                 style={{
-                  background: theme === "dark"
-                    ? (isCorrect ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)")
-                    : (isCorrect ? "#f0fdf4" : "#fef2f2"),
+                  borderColor: themeStyles.border,
+                  borderLeftWidth: 4,
+                  borderLeftColor: isCorrect ? "#22c55e" : "#ef4444",
+                  background: themeStyles.isDark
+                    ? (isCorrect ? "rgba(34,197,94,0.10)" : "rgba(239,68,68,0.10)")
+                    : theme === "light"
+                      ? "#f4f6f8"
+                      : themeStyles.cardBg,
                   color: themeStyles.text,
                 }}
               >
-                <div>
-                  <div className={`font-semibold ${isCorrect ? "text-green-500" : "text-red-500"}`}>
-                    {isCorrect ? "Answered Correctly" : "Answered Incorrectly"}
+                <div className="min-w-[110px]">
+                  <div className={`text-sm font-bold ${isCorrect ? "text-green-600" : "text-red-600"}`}>
+                    {isCorrect ? "Correct" : "Incorrect"}
                   </div>
-                  <div className="text-xs mt-1 opacity-70">The correct answer is:</div>
-                  <div className="font-semibold mt-1" style={{ color: themeStyles.text }} dangerouslySetInnerHTML={{ __html: `${correctLetter}. ${rewriteMedia(correctText, { qbankId: data?.qbankId ?? 1, mediaToken })}` }} />
-                </div>
-                <div className="flex items-center gap-4 shrink-0">
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: theme === "dark" ? "rgba(59,130,246,0.2)" : "#dbeafe" }}>
-                      <Clock className="h-4 w-4" style={{ color: theme === "dark" ? "#60a5fa" : "#1d4ed8" }} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">{(() => {
-                        const t = (priorAttempt as any)?.time_seconds;
-                        const s = typeof t === "number" ? t : (submittedSecs ?? elapsed);
-                        return `${Math.floor(s / 60)}min: ${s % 60}sec`;
-                      })()}</div>
-                      <div className="text-[11px] opacity-60">Time Taken</div>
-                    </div>
-                  </div>
-                  {!userSettings.hidePercentages && (
-                    <div className="flex items-center gap-2">
-                      <div className="h-9 w-9 rounded-full flex items-center justify-center" style={{ background: theme === "dark" ? "rgba(34,197,94,0.2)" : "#dcfce7" }}>
-                        <CheckCircle2 className="h-4 w-4" style={{ color: theme === "dark" ? "#4ade80" : "#15803d" }} />
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold">{peerPct}%</div>
-                        <div className="text-[11px] opacity-60">Answered Correctly</div>
-                      </div>
+                  {!isCorrect && (
+                    <div className="text-xs mt-0.5 opacity-80">
+                      Correct answer: <span className="font-semibold">{correctLetter}</span>
                     </div>
                   )}
                 </div>
-              </div>
 
+                {!userSettings.hidePercentages && peerPct != null && (
+                  <div className="flex items-center gap-2">
+                    <BarChart2 className="h-4 w-4 opacity-55 shrink-0" />
+                    <div className="leading-tight">
+                      <div className="text-xs font-bold">{peerPct}%</div>
+                      <div className="text-[11px] opacity-65">Answered correctly</div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 opacity-55 shrink-0" />
+                  <div className="leading-tight">
+                    <div className="text-xs font-bold tabular-nums">{(() => {
+                      const t = (priorAttempt as any)?.time_seconds;
+                      const s = typeof t === "number" ? t : (submittedSecs ?? elapsed);
+                      return s >= 60 ? `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s` : `${String(s).padStart(2, "0")} secs`;
+                    })()}</div>
+                    <div className="text-[11px] opacity-65">Time Spent</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showAnswers && question.explanation && userSettings.splitExplanations && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize question and explanation panels"
+                title="Drag to resize · Double-click to reset 50/50"
+                data-dragging={splitDragging ? "true" : "false"}
+                className="qbank-split-divider"
+                onDoubleClick={() => {
+                  setLiveSplitRatio(null);
+                  setUserSettings({ splitRatio: 50 });
+                }}
+                onPointerDown={(e) => {
+                  const grid = splitGridRef.current;
+                  if (!grid) return;
+                  e.preventDefault();
+                  const rect = grid.getBoundingClientRect();
+                  let latest = liveSplitRatio ?? userSettings.splitRatio ?? 50;
+                  setSplitDragging(true);
+                  const onMove = (ev: PointerEvent) => {
+                    const pct = ((ev.clientX - rect.left) / Math.max(1, rect.width)) * 100;
+                    latest = Math.round(Math.max(28, Math.min(72, pct)));
+                    setLiveSplitRatio(latest);
+                  };
+                  const onUp = () => {
+                    setSplitDragging(false);
+                    setLiveSplitRatio(null);
+                    setUserSettings({ splitRatio: latest });
+                    window.removeEventListener("pointermove", onMove);
+                    window.removeEventListener("pointerup", onUp);
+                  };
+                  window.addEventListener("pointermove", onMove);
+                  window.addEventListener("pointerup", onUp);
+                }}
+              />
             )}
 
             {showAnswers && question.explanation && (
-              <div className="mt-4 qbank-split-expl">
-              <div className="border-b" style={{ borderColor: themeStyles.border }}>
+              <div className="mt-4 qbank-split-expl sf-reveal-up">
+              <div
+                className="border-b flex items-center justify-between gap-2 pt-1.5 px-2"
+                style={{
+                  borderColor: themeStyles.border,
+                  background: themeStyles.isDark ? "transparent" : theme === "light" ? "#f4f6f9" : themeStyles.sideBg,
+                }}
+              >
                   <div
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-t-md font-semibold text-sm relative -mb-px"
-                    style={{ background: themeStyles.cardBg, color: theme === "dark" ? "#60a5fa" : "#1e3a8a", boxShadow: `inset 0 -3px 0 ${theme === "dark" ? "#60a5fa" : "#1e3a8a"}` }}
+                    className="inline-flex items-center px-4 py-2 rounded-t-[2px] font-semibold text-[13px] relative -mb-px border-t border-x"
+                    style={{
+                      background: themeStyles.cardBg,
+                      borderColor: themeStyles.border,
+                      color: themeStyles.text,
+                    }}
                   >
-                    <FileText className="h-4 w-4" /> Explanation
+                    Explanation
                   </div>
+                  {userSettings.splitExplanations && (
+                    <div className="hidden lg:inline-flex items-center gap-1 pb-1 text-[11px]">
+                      {[
+                        { label: "Compact", leftPct: 62 },
+                        { label: "50/50", leftPct: 50 },
+                        { label: "Wide", leftPct: 36 },
+                      ].map((preset) => {
+                        const active = Math.abs((liveSplitRatio ?? userSettings.splitRatio ?? 50) - preset.leftPct) <= 3;
+                        return (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            onClick={() => setUserSettings({ splitRatio: preset.leftPct })}
+                            className="px-2 py-0.5 rounded border transition-colors"
+                            style={{
+                              borderColor: active ? userSettings.accentColor : themeStyles.border,
+                              background: active ? userSettings.accentColor : "transparent",
+                              color: active ? "#ffffff" : themeStyles.text,
+                              opacity: active ? 1 : 0.72,
+                            }}
+                          >
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div
                   className="pt-3 pb-2"
@@ -1378,50 +2117,92 @@ function TestRunner() {
                 >
                   <HighlightableHtml
                     seedKey={`e-${question.id}`}
+                    mediaToken={mediaToken}
                     data-hlkey="e"
                     className="qbank-html qbank-light qbank-explanation"
                     html={htmlFor("e", question.explanation, true)}
                   />
+
+                  {(() => {
+                    const qRefs = (data?.refsByQ?.[question.id] ?? []) as Array<{
+                      id: number;
+                      ref_title: string | null;
+                      ref_link: string | null;
+                      ref_type: number | null;
+                      library_doc_id: number | null;
+                    }>;
+                    const libraryRefs = qRefs.filter((r) => r.ref_type === 18 && r.ref_title);
+                    const externalRefs = qRefs.filter((r) => r.ref_type !== 18 && (r.ref_title || r.ref_link));
+                    if (libraryRefs.length === 0 && externalRefs.length === 0) return null;
+                    return (
+                      <div className="mt-6 pt-4 border-t space-y-4 text-sm" style={{ borderColor: themeStyles.border }}>
+                        {libraryRefs.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-2 opacity-80">
+                              <BookOpen className="h-3.5 w-3.5 text-primary" />
+                              Related Medical Library Articles
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {libraryRefs.map((ref) => (
+                                <button
+                                  key={ref.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setLibraryTarget({
+                                      docId: ref.library_doc_id,
+                                      search: ref.library_doc_id ? null : ref.ref_title,
+                                    });
+                                    setShowLibrary(true);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
+                                  style={{
+                                    borderColor: userSettings.accentColor,
+                                    color: themeStyles.isDark ? "#93c5fd" : userSettings.accentColor,
+                                    background: themeStyles.isDark ? "rgba(59,130,246,0.12)" : "rgba(37,99,235,0.07)",
+                                  }}
+                                >
+                                  <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                                  <span>{ref.ref_title}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {externalRefs.length > 0 && (
+                          <div>
+                            <div className="text-xs font-bold uppercase tracking-wider mb-2 opacity-80">
+                              References
+                            </div>
+                            <ol className="list-decimal pl-5 space-y-1.5 text-xs leading-relaxed">
+                              {externalRefs.map((ref) => (
+                                <li key={ref.id}>
+                                  {ref.ref_link ? (
+                                    <a
+                                      href={ref.ref_link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-baseline gap-1 underline underline-offset-2 hover:opacity-80"
+                                      style={{ color: themeStyles.isDark ? "#93c5fd" : userSettings.accentColor }}
+                                    >
+                                      <span>{ref.ref_title || ref.ref_link}</span>
+                                      <ExternalLink className="h-3 w-3 inline shrink-0 translate-y-[1px]" />
+                                    </a>
+                                  ) : (
+                                    <span>{ref.ref_title}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
               </div>
             )}
-
-            <div className="mt-6 flex justify-end items-center">
-              {isReview ? (
-                <button
-                  onClick={() => {
-                    if (idx === total - 1) nav({ to: "/test-results/$id", params: { id } });
-                    else goToQuestion(idx + 1);
-                  }}
-                  className="px-6 py-2 rounded text-white text-sm font-semibold"
-                  style={{ background: NAV_BG }}
-                >
-                  {idx === total - 1 ? "Finish Review" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
-                </button>
-              ) : !tutorMode ? null : !submitted ? null : (
-                <button
-                  onClick={async () => {
-                    if (idx === total - 1) {
-                      const ok = await confirm({
-                        title: "End this test?",
-                        description: "Your answers will be submitted and the test will be scored. This cannot be undone.",
-                        confirmLabel: "End Test",
-                        tone: "danger",
-                      });
-                      if (ok) finish();
-                    } else {
-                      goToQuestion(idx + 1);
-                    }
-                  }}
-                  className="px-6 py-2 rounded text-white text-sm font-semibold"
-                  style={{ background: NAV_BG }}
-                >
-                  {idx === total - 1 ? "End Test" : <>Next <ChevronRight className="h-4 w-4 inline -mt-0.5" /></>}
-                </button>
-              )}
-
-            </div>
           </div>
         </div>
       </div>
@@ -1433,23 +2214,31 @@ function TestRunner() {
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
 
-        const examUI = isRealExam && !isReview;
-        if (examUI) {
+        if (isExamUI) {
+          const mmss = bh !== "00" ? `${bh}:${bm}:${bs}` : `${bm}:${bs}`;
           return (
-            <div className="flex flex-wrap items-center justify-between gap-2 px-1 sm:px-4 py-1.5 text-white text-xs" style={{ background: NAV_BG }}>
-              <div className="font-semibold tracking-wide tabular-nums">
-                {`Block Time Remaining:  ${bh}:${bm}:${bs}`}
+            <div
+              className="flex flex-wrap items-center justify-between gap-2 px-2.5 py-1.5 min-h-[50px] text-[#fcfcfc] text-xs"
+              style={{ background: navBg }}
+            >
+              <div
+                className="px-2.5 py-1.5 leading-tight tabular-nums shrink-0"
+                style={{ border: "1px solid #6b93b8" }}
+              >
+                <div className="text-[12.5px] font-medium">
+                  Block Time Remaining: <span className="ml-1">{mmss}</span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setBreakModal("suspend")}
-                title="Unauthorized Break"
-                className="flex flex-col items-center leading-none text-white"
+                title="Pause assessment"
+                className="flex flex-col items-center justify-center min-w-[54px] py-0.5 px-2 rounded-[2px] hover:bg-white/10 transition-colors leading-none text-white"
               >
-                <span className="flex items-center justify-center h-6 w-6">
-                  <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
+                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-white text-[#004673]">
+                  <PauseCircle className="h-4 w-4 stroke-[2.2]" />
                 </span>
-                <span className="text-[10px] font-semibold mt-0.5">Lock</span>
+                <span className="text-[10.5px] mt-1">Pause</span>
               </button>
               <button
                 type="button"
@@ -1462,23 +2251,29 @@ function TestRunner() {
                   });
                   if (ok) finish();
                 }}
-                className="inline-flex items-center gap-2 rounded-sm hover:bg-white/10 px-2 py-1 text-white text-xs font-semibold"
+                className="flex flex-col items-center justify-center min-w-[64px] py-0.5 px-2 rounded-[2px] hover:bg-white/10 transition-colors text-white leading-none"
               >
-                <img src={endBlockIcon.url} alt="" className="h-6 w-6 object-contain" />
-                End Block
+                <span className="flex items-center justify-center h-5 w-5 rounded-[2px] border border-white/85">
+                  <ChevronRight className="h-3.5 w-3.5 stroke-[2.5]" />
+                </span>
+                <span className="text-[10.5px] mt-1">End Block</span>
               </button>
             </div>
           );
         }
         return (
-          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1 sm:px-4 py-1 text-white text-xs leading-tight" style={{ background: NAV_BG }}>
-            <div className="shrink-0 font-semibold tracking-wide tabular-nums">
-              {isReview || !userSettings.showTimer ? "" : `Block Time: ${bh}:${bm}:${bs}`}
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 sm:px-3 py-1.5 text-white text-xs leading-tight" style={{ background: navBg }}>
+            <div className="shrink-0">
+              {!isReview && userSettings.showTimer && (
+                <div
+                  className="rounded-[2px] px-2.5 py-1 text-[11px] font-semibold tracking-wide tabular-nums"
+                  style={{ border: isWebFred ? "1px outset #5872c4" : "1px solid rgba(255,255,255,0.55)" }}
+                >
+                  {timedMode ? `Block Time Remaining: ${bh}:${bm}:${bs}` : `Block Time Elapsed: ${bh}:${bm}:${bs}`}
+                </div>
+              )}
             </div>
-            <div className="shrink-0 font-semibold tracking-wide hidden md:flex items-center gap-3">
-              <span>StepFighter</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <div className="flex flex-wrap items-center gap-x-1 sm:gap-x-1.5 gap-y-1">
               {!isReview && (
                 <>
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={handleToggleTimed} />
@@ -1487,69 +2282,98 @@ function TestRunner() {
                 </>
               )}
 
-
-              
-              <TopBtn imgSrc={medicalLibraryIcon.url} label="Medical Library" onClick={() => setShowLibrary(true)} />
-              <TopBtn imgSrc={flashcardIcon.url} label="Flashcards" onClick={() => setShowFlashcards(true)} />
-              <TopBtn icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
+              <TopBtn plain={isWebFred} icon={BookOpen} label="Medical Library" onClick={() => setShowLibrary(true)} />
+              <TopBtn plain={isWebFred} icon={Zap} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+              <TopBtn plain={isWebFred} icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
-                <TopBtn imgSrc={goBackIcon.url} imgClass="h-9 w-9 object-contain" label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
+                <TopBtn plain={isWebFred} icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
-                  <TopBtn imgSrc={suspendIcon.url} label="Suspend" onClick={async () => {
-                    const ok = await confirm({
-                      title: "Suspend this test?",
-                      description: "Your progress is saved and you can resume the test later from the Tests page.",
-                      confirmLabel: "Suspend",
-                      tone: "warning",
-                    });
-                    if (ok) nav({ to: "/tests" });
-                  }} />
-                  <TopBtn imgSrc={endBlockIcon.url} label="End Block" onClick={async () => {
-                    const ok = await confirm({
-                      title: "End this block?",
-                      description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
-                      confirmLabel: "End Block",
-                      tone: "danger",
-                    });
-                    if (ok) finish();
-                  }} />
+                  <TopBtn
+                    plain={isWebFred}
+                    icon={PauseCircle}
+                    tileClass="rounded-full"
+                    label="Suspend"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Suspend this test?",
+                        description: "Your progress is saved and you can resume the test later from the Tests page.",
+                        confirmLabel: "Suspend",
+                        tone: "warning",
+                      });
+                      if (ok) nav({ to: "/tests" });
+                    }}
+                  />
+                  <TopBtn
+                    plain={isWebFred}
+                    icon={XCircle}
+                    tileClass="rounded-full !bg-red-600 !text-white ring-1 ring-white/80"
+                    label="End Block"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "End this block?",
+                        description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
+                        confirmLabel: "End Block",
+                        tone: "danger",
+                      });
+                      if (ok) finish();
+                    }}
+                  />
                 </>
               )}
             </div>
           </div>
         );
       })()}
+      </div>
 
       {breakModal && (
-        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={() => setBreakModal(null)}>
-          <div className="w-full max-w-md rounded shadow-lg overflow-hidden bg-white" onClick={(e) => e.stopPropagation()}>
-            <div className="px-5 py-3 text-white font-semibold text-center" style={{ background: "#a94442" }}>
-              Unauthorized Break Warning
-            </div>
-            <div className="px-6 py-5 text-center text-sm text-gray-700 space-y-1">
-              <div>You are about to lock the exam and take an Unauthorized Break.</div>
-              <div>An Unauthorized Break may be reported as an irregularity for the exam.</div>
-            </div>
-            <div className="flex items-center justify-center gap-6 pb-5">
+        <div className="fixed inset-0 z-[60] bg-black/45 flex items-center justify-center p-4" onClick={() => setBreakModal(null)}>
+          <div className="w-full max-w-[540px] border border-black/40 shadow-2xl overflow-hidden bg-white" onClick={(e) => e.stopPropagation()}>
+            <div className="relative px-4 py-2.5 text-white font-semibold text-base text-center" style={{ background: "#008cc8" }}>
+              <span>Pause</span>
               <button
+                type="button"
+                onClick={() => setBreakModal(null)}
+                aria-label="Close"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-[2px] bg-white text-[#008cc8] flex items-center justify-center hover:bg-white/90"
+              >
+                <X className="h-3.5 w-3.5 stroke-[2.5]" />
+              </button>
+            </div>
+            <div className="px-6 py-5 text-center text-[13.5px] leading-relaxed text-black space-y-3">
+              <p>
+                You have elected to pause your assessment. You may resume your assessment at a later time,
+                provided time allotted for your assessment has not run out. To pause your assessment, click OK.
+                When you resume the assessment, you will return to the same section and item in which you were working.
+              </p>
+              <p>
+                To pause your examination, click OK.
+                <br />
+                Click &apos;Cancel&apos; to return to your test.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-5 pb-6">
+              <button
+                type="button"
                 onClick={() => {
                   const action = breakModal;
                   setBreakModal(null);
-                  if (action === "suspend") nav({ to: "/tests" });
+                  if (action === "suspend") nav({ to: "/self-assessments/assessments" });
                   else finish();
                 }}
-                className="px-5 py-2 rounded text-white text-sm font-semibold"
-                style={{ background: "#a94442" }}
+                className="min-w-[82px] px-5 py-1.5 rounded-[2px] text-white text-[13px] font-medium border border-[#0b4b7a] shadow-xs hover:brightness-105"
+                style={{ background: "linear-gradient(#5398d0, #0d5891)" }}
               >
-                Unauthorized Break
+                OK
               </button>
               <button
+                type="button"
                 onClick={() => setBreakModal(null)}
-                className="px-5 py-2 rounded text-white text-sm font-semibold"
-                style={{ background: "#d4a017" }}
+                className="min-w-[96px] px-5 py-1.5 rounded-[2px] text-white text-[13px] font-medium border border-[#7a3f00] shadow-xs hover:brightness-105"
+                style={{ background: "linear-gradient(#b56500, #8a4a00)" }}
               >
-                Return to Exam
+                Cancel
               </button>
             </div>
           </div>
@@ -1559,7 +2383,15 @@ function TestRunner() {
 
 
       {showCalc && <SciCalculator onClose={() => setShowCalc(false)} />}
-      <MedicalLibraryModal open={showLibrary} onClose={() => setShowLibrary(false)} />
+      <MedicalLibraryModal
+        open={showLibrary}
+        onClose={() => {
+          setShowLibrary(false);
+          setLibraryTarget(null);
+        }}
+        initialDocId={libraryTarget?.docId ?? null}
+        initialSearch={libraryTarget?.search ?? null}
+      />
       <FlashcardsModal
         open={showFlashcards}
         onClose={() => setShowFlashcards(false)}
@@ -1583,7 +2415,11 @@ function TestRunner() {
           onClose={() => setShowSettings(false)}
           fontSize={fontSize} setFontSize={setFontSize}
           fontWeight={fontWeight} setFontWeight={setFontWeight}
-          theme={theme} setTheme={setTheme}
+          theme={effectiveTheme}
+          setTheme={(next: ResolvedQuizTheme) => {
+            setSaThemeOverride(true);
+            setTheme(next);
+          }}
           transparentExpl={transparentExpl} setTransparentExpl={setTransparentExpl}
           largeImages={largeImages} setLargeImages={setLargeImages}
           highlightOnly={highlightOnly} setHighlightOnly={setHighlightOnly}
@@ -1591,6 +2427,11 @@ function TestRunner() {
           activeHighlight={activeHighlight} setActiveHighlight={setActiveHighlight}
           enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
           userSettings={userSettings}
+          isSelfAssessment={isSelfAssessment}
+          onPickAccent={() => {
+            setSaAccentOverride(true);
+            setDarkBarUsesAccent(true);
+          }}
         />
       )}
 
@@ -1702,6 +2543,16 @@ function ExhibitModal({
   src, zoom, setZoom, onClose,
 }: { src: string; zoom: number; setZoom: (v: number) => void; onClose: () => void }) {
   const [expanded, setExpanded] = useState(false);
+  const [bright, setBright] = useState(false);
+  const userSettings = useHydratedSettings();
+  const sizeClass =
+    userSettings.exhibitViewerSize === "small"
+      ? "w-[440px]"
+      : userSettings.exhibitViewerSize === "medium"
+        ? "w-[740px]"
+        : userSettings.exhibitViewerSize === "large"
+          ? "w-[1020px]"
+          : "w-[580px]";
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
@@ -1709,47 +2560,96 @@ function ExhibitModal({
   }, [onClose]);
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-[1px] p-4"
+      onClick={() => {
+        if (userSettings.closeExhibitOnOutsideClick !== false) onClose();
+      }}
     >
       <div
-        className={`bg-white rounded shadow-2xl overflow-hidden flex flex-col ${expanded ? "w-[95vw] h-[95vh]" : "w-[520px] max-w-[95vw] max-h-[92vh]"}`}
+        className={`sf-scale-enter rounded-[3px] shadow-2xl overflow-hidden flex flex-col border-[4px] ${expanded ? "w-[95vw] h-[95vh]" : `${sizeClass} max-w-[95vw] max-h-[92vh]`}`}
+        style={{ borderColor: NAV_BG, background: NAV_BG }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-3 py-1.5 bg-[#1e3a8a] text-white">
-          <span className="text-sm font-semibold">Exhibit Display</span>
+        {/* UWorld Exhibit Display Header */}
+        <div className="flex items-center justify-between px-3 py-2 text-white shrink-0" style={{ background: NAV_BG }}>
+          <span className="text-[13px] font-medium tracking-wide">Exhibit Display</span>
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => setExpanded(!expanded)}
-              className="p-1 hover:bg-white/10 rounded"
+              className="p-1 hover:bg-white/15 rounded transition-colors"
               title={expanded ? "Restore" : "Expand"}
             >
-              <Maximize2 className="h-4 w-4" />
+              {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
-            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded" title="Close">
-              <span className="text-lg leading-none">✕</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 hover:bg-white/15 rounded transition-colors"
+              title="Close"
+            >
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto bg-white p-3 flex items-start justify-center">
+
+        {/* Crisp white exhibit canvas */}
+        <div className="flex-1 overflow-auto bg-white p-4 flex items-center justify-center">
           <img
             src={src}
             alt="Exhibit"
-            style={{ transform: `scale(${zoom})`, transformOrigin: "top center", transition: "transform 0.15s" }}
-            className="max-w-full h-auto"
+            draggable={false}
+            style={{
+              transform: `scale(${zoom})`,
+              transformOrigin: "center center",
+              transition: "transform 150ms ease, filter 150ms ease",
+              filter: bright ? "brightness(1.12)" : "none",
+            }}
+            className="max-w-full max-h-[68vh] h-auto object-contain select-none"
           />
         </div>
-        <div className="flex items-center justify-center gap-2 border-t bg-gray-50 py-1.5">
+
+        {/* UWorld bottom white icon toolbar */}
+        <div className="flex items-center justify-center gap-3 border-t border-slate-300 bg-white py-1.5 px-3 text-slate-700 shrink-0">
           <button
-            onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
-            className="h-7 w-7 rounded-full border border-gray-300 bg-white hover:bg-gray-100 flex items-center justify-center text-sm"
-          >−</button>
-          <span className="text-xs text-gray-600 w-12 text-center">{Math.round(zoom * 100)}%</span>
+            type="button"
+            onClick={() => setBright((b) => !b)}
+            title={bright ? "Normal brightness" : "Slightly brighten image"}
+            className={`p-1.5 rounded transition-colors ${bright ? "bg-[#004a77]/12 text-[#004a77]" : "hover:bg-slate-100"}`}
+          >
+            <Sun className="h-4 w-4" />
+          </button>
           <button
-            onClick={() => setZoom(Math.min(4, zoom + 0.25))}
-            className="h-7 w-7 rounded-full border border-gray-300 bg-white hover:bg-gray-100 flex items-center justify-center text-sm"
-          >+</button>
+            type="button"
+            onClick={() => setZoom(Math.min(3.5, +(zoom + 0.25).toFixed(2)))}
+            title="Zoom in"
+            className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(Math.max(0.5, +(zoom - 0.25).toFixed(2)))}
+            title="Zoom out"
+            className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { setZoom(1); setBright(false); }}
+            title="Reset view"
+            className="p-1.5 rounded hover:bg-slate-100 transition-colors"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+          <span className="text-[11px] font-medium text-slate-500 tabular-nums ml-1">
+            {Math.round(zoom * 100)}%
+          </span>
         </div>
+
+        {/* Solid UWorld ocean-navy bottom bar */}
+        <div className="h-3.5 shrink-0" style={{ background: NAV_BG }} />
       </div>
     </div>
   );
@@ -1779,8 +2679,8 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between py-2">
-      <span className="text-sm text-gray-700">{label}</span>
+    <div className="flex items-center justify-between gap-2 py-2">
+      <span className="text-sm text-popover-foreground">{label}</span>
       {children}
     </div>
   );
@@ -1792,11 +2692,17 @@ export function SettingsPanel(props: any) {
     transparentExpl, setTransparentExpl, largeImages, setLargeImages,
     multicolor, setMulticolor,
     activeHighlight, setActiveHighlight, enabledHighlights, setEnabledHighlights,
-    userSettings,
+    userSettings, isSelfAssessment, onPickAccent,
   } = props;
   const us = userSettings ?? DEFAULT_SETTINGS;
   const customColors: string[] = us.customHighlights ?? [];
-  const allHL = [...HIGHLIGHTS, ...customColors.map((c: string, i: number) => ({ color: c, label: `Custom ${i + 1}` }))];
+  const allHL = [
+    ...HIGHLIGHTS,
+    ...customColors.map((c: string, i: number) => ({
+      color: c,
+      label: us.customHighlightLabels?.[c] || `Custom ${i + 1}`,
+    })),
+  ];
 
   const hourStr = (h: number) => {
     const hr = ((h + 11) % 12) + 1;
@@ -1805,64 +2711,385 @@ export function SettingsPanel(props: any) {
   };
 
   return (
-    <div className="fixed top-16 right-4 w-80 bg-white border border-gray-300 rounded-lg shadow-2xl z-50 text-gray-800 max-h-[80vh] overflow-auto">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b bg-gray-100 sticky top-0">
-        <span className="font-semibold">Settings</span>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-800">✕</button>
+    <div className="fixed top-16 right-4 w-84 max-w-[calc(100vw-2rem)] bg-popover border border-border rounded-xl shadow-2xl z-50 text-popover-foreground max-h-[82vh] overflow-auto">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/60 backdrop-blur sticky top-0 z-10">
+        <span className="font-semibold">Quiz Appearance & Settings</span>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">✕</button>
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Appearance</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Appearance & Typography</div>
+        <Row label="Font Family">
+          <select
+            value={us.fontFamily ?? "system"}
+            onChange={(e) => setUserSettings({ fontFamily: e.target.value as FontFamilyId })}
+            className="text-xs border border-border rounded px-2 py-1 bg-card text-foreground max-w-[155px]"
+          >
+            {FONT_FAMILIES.map((f) => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </select>
+        </Row>
         <Row label="Font Size">
           <div className="flex items-center gap-2">
-            <button onClick={() => setFontSize(Math.max(12, fontSize - 1))} className="h-7 w-7 rounded border hover:bg-gray-50">−</button>
-            <span className="w-6 text-center font-semibold">A</span>
-            <button onClick={() => setFontSize(Math.min(28, fontSize + 1))} className="h-7 w-7 rounded border hover:bg-gray-50">+</button>
+            <button
+              onClick={() => {
+                const next = Math.max(12, fontSize - 1);
+                setFontSize(next);
+                setUserSettings({ fontSize: Math.max(10, next - 1) });
+              }}
+              className="h-7 w-7 rounded border border-border bg-muted hover:bg-muted/70"
+            >−</button>
+            <span className="w-8 text-center text-xs font-semibold">{fontSize}px</span>
+            <button
+              onClick={() => {
+                const next = Math.min(28, fontSize + 1);
+                setFontSize(next);
+                setUserSettings({ fontSize: Math.min(28, next - 1) });
+              }}
+              className="h-7 w-7 rounded border border-border bg-muted hover:bg-muted/70"
+            >+</button>
           </div>
         </Row>
         <Row label="Font Weight">
-          <input type="range" min={300} max={700} step={100} value={fontWeight}
-            onChange={e => setFontWeight(Number(e.target.value))} className="w-32" />
+          <input
+            type="range"
+            min={300}
+            max={700}
+            step={100}
+            value={fontWeight}
+            onChange={e => {
+              const w = Number(e.target.value);
+              setFontWeight(w);
+              setUserSettings({ fontWeight: Math.round((w - 400) / 100) });
+            }}
+            className="w-32 accent-primary"
+          />
         </Row>
-        <Row label="Color Theme">
-          <div className="flex items-center gap-2">
+        <Row label="Line Spacing">
+          <input
+            type="range"
+            min={1.4}
+            max={2.0}
+            step={0.1}
+            value={us.lineHeight ?? 1.65}
+            onChange={e => setUserSettings({ lineHeight: Number(e.target.value) })}
+            className="w-32 accent-primary"
+          />
+        </Row>
+        {!isSelfAssessment && (
+        <Row label="Interface Style">
+          <div className="flex items-center gap-1.5">
+            {TUTOR_INTERFACE_STYLES.map((st) => {
+              const active = (us.tutorInterface === "nbme-fred" ? "nbme-fred" : "uworld") === st.id;
+              const shortLabel = st.id === "uworld" ? "UWorld" : "NBME";
+              return (
+                <button
+                  key={st.id}
+                  type="button"
+                  title={st.label}
+                  onClick={() => setUserSettings({ tutorInterface: st.id })}
+                  className={`px-3 py-1 text-xs font-medium rounded border transition-colors ${
+                    active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/60 text-popover-foreground border-border hover:bg-muted"
+                  }`}
+                >
+                  {shortLabel}
+                </button>
+              );
+            })}
+          </div>
+        </Row>
+        )}
+        <Row label="Reverse Color">
+          <Toggle
+            on={theme === "dark"}
+            onChange={(on) => setTheme(on ? "dark" : "light")}
+          />
+        </Row>
+        <Row label="Canvas Theme">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
             {[
-              { k: "light", bg: "#ffffff", border: "#d1d5db" },
-              { k: "dark", bg: "#0f172a", border: "#0f172a" },
-              { k: "sepia", bg: "#f4ecd8", border: "#d6c9a8" },
+              { k: "light", title: "Crisp White", bg: "#ffffff", border: "#cbd5e1" },
+              { k: "ocean", title: "Clinical Ocean", bg: "#edf5fc", border: "#93c5fd" },
+              { k: "mint", title: "Fresh Mint", bg: "#eef7f3", border: "#6ee7b7" },
+              { k: "sepia", title: "Warm Paper", bg: "#f4ecd8", border: "#c9b58a" },
+              { k: "dark", title: "Midnight Dark", bg: "#0d1321", border: "#475569" },
+              { k: "forest", title: "Deep Emerald", bg: "#0b1714", border: "#1f3d34" },
+              { k: "custom", title: "Custom Theme", bg: "conic-gradient(#38bdf8, #a855f7, #f472b6, #facc15, #38bdf8)", border: "#94a3b8" },
             ].map(t => (
-              <button key={t.k} onClick={() => setTheme(t.k as any)}
-                className={`h-7 w-7 rounded-full border-2 ${theme === t.k ? "ring-2 ring-blue-500" : ""}`}
-                style={{ background: t.bg, borderColor: t.border }} />
+              <button
+                key={t.k}
+                title={t.title}
+                onClick={() => {
+                  setTheme(t.k as ResolvedQuizTheme);
+                  setUserSettings({ defaultTheme: t.k as any });
+                }}
+                className={`h-6 w-6 rounded-full border-2 ${theme === t.k ? "ring-2 ring-primary ring-offset-1 ring-offset-popover" : ""}`}
+                style={{ background: t.bg, borderColor: t.border }}
+              />
             ))}
+          </div>
+        </Row>
+        {theme === "custom" && (
+          <div className="mb-2 rounded-md border border-border bg-muted/40 px-2.5 py-2 space-y-1.5">
+            <div className="text-[11px] font-semibold text-muted-foreground">Custom Canvas Colors</div>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { key: "background", label: "Canvas" },
+                  { key: "text", label: "Text" },
+                ] as const
+              ).map(({ key, label }) => {
+                const ct = us.customTheme ?? DEFAULT_SETTINGS.customTheme;
+                return (
+                  <label key={key} className="flex flex-col items-center gap-1 cursor-pointer">
+                    <input
+                      type="color"
+                      value={ct[key]}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setUserSettings({
+                          customTheme:
+                            key === "background"
+                              ? { ...ct, background: val, card: val }
+                              : { ...ct, [key]: val },
+                        });
+                      }}
+                      className="h-7 w-full rounded cursor-pointer border border-border bg-transparent p-0"
+                    />
+                    <span className="text-[10px] text-muted-foreground">{label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <Row label="Accent Color">
+          <div className="flex items-center gap-1.5">
+            {ACCENT_PRESETS.slice(0, 5).map((p) => (
+              <button
+                key={p.id}
+                title={p.label}
+                onClick={() => {
+                  onPickAccent?.();
+                  setUserSettings({ accentColor: p.hex });
+                }}
+                className={`h-5 w-5 rounded-full border ${us.accentColor?.toLowerCase() === p.hex.toLowerCase() ? "ring-2 ring-foreground" : "border-black/20"}`}
+                style={{ background: p.hex }}
+              />
+            ))}
+            <input
+              type="color"
+              value={us.accentColor ?? "#2563eb"}
+              onChange={(e) => {
+                onPickAccent?.();
+                setUserSettings({ accentColor: e.target.value });
+              }}
+              aria-label="Custom accent color"
+              className="h-5 w-6 rounded border border-border cursor-pointer bg-transparent p-0"
+            />
           </div>
         </Row>
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Highlight Features</div>
-        <Row label="Multicolor Highlighting"><Toggle on={multicolor} onChange={setMulticolor} /></Row>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Highlight Features</div>
+        <Row label="Multicolor Highlighting">
+          <Toggle
+            on={multicolor}
+            onChange={(v: boolean) => {
+              setMulticolor(v);
+              setUserSettings({ multiHighlight: v });
+            }}
+          />
+        </Row>
+        <Row label="Highlight Style">
+          <div className="flex gap-1">
+            {(["solid", "pastel", "underline"] as HighlightStyle[]).map((st) => (
+              <button
+                key={st}
+                onClick={() => setUserSettings({ highlightStyle: st })}
+                className={`px-2 py-0.5 text-[11px] rounded border capitalize ${
+                  (us.highlightStyle ?? "solid") === st
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+        </Row>
+        <Row label="Show as Bold">
+          <Toggle on={!!us.highlightBold} onChange={(v: boolean) => setUserSettings({ highlightBold: v })} />
+        </Row>
+        <Row label="Show with Shadows">
+          <Toggle on={!!us.highlightShadow} onChange={(v: boolean) => setUserSettings({ highlightShadow: v })} />
+        </Row>
+        {us.highlightShadow && (
+          <Row label={`Shadow Intensity (${us.highlightShadowIntensity ?? 30})`}>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={us.highlightShadowIntensity ?? 30}
+              onChange={(e) => setUserSettings({ highlightShadowIntensity: Number(e.target.value) })}
+              className="w-28 accent-primary"
+            />
+          </Row>
+        )}
+        <Row label="Shine in Dark Mode">
+          <Toggle on={us.highlightDarkShine !== false} onChange={(v: boolean) => setUserSettings({ highlightDarkShine: v })} />
+        </Row>
+        {us.highlightDarkShine !== false && (
+          <Row label={`Shine Intensity (${us.highlightDarkShineIntensity ?? 50})`}>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={us.highlightDarkShineIntensity ?? 50}
+              onChange={(e) => setUserSettings({ highlightDarkShineIntensity: Number(e.target.value) })}
+              className="w-28 accent-primary"
+            />
+          </Row>
+        )}
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Customize Highlight</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Layout, Exhibits & Sidebar</div>
+        <Row label={`Line Width (${us.lineWidthPercent ?? 85}%)`}>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="range"
+              min={50}
+              max={100}
+              step={5}
+              value={us.lineWidthPercent ?? 85}
+              onChange={(e) => setUserSettings({ lineWidthPercent: Number(e.target.value) })}
+              className="w-24 accent-primary"
+            />
+            <button onClick={() => setUserSettings({ lineWidthPercent: 85 })} className="text-[11px] text-primary hover:underline">Reset</button>
+          </div>
+        </Row>
+        <Row label={`Padding (${us.contentPadding ?? 0} px)`}>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="range"
+              min={0}
+              max={48}
+              step={4}
+              value={us.contentPadding ?? 0}
+              onChange={(e) => setUserSettings({ contentPadding: Number(e.target.value) })}
+              className="w-24 accent-primary"
+            />
+            <button onClick={() => setUserSettings({ contentPadding: 0 })} className="text-[11px] text-primary hover:underline">Reset</button>
+          </div>
+        </Row>
+        <Row label="Explanation Alignment">
+          <div className="flex gap-1">
+            {(["left", "justify", "center"] as ExplanationAlign[]).map((a) => (
+              <button
+                key={a}
+                onClick={() => setUserSettings({ explanationAlign: a })}
+                className={`px-2 py-0.5 text-[11px] rounded border capitalize ${
+                  (us.explanationAlign ?? "left") === a
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </Row>
+        <Row label="Image Alignment">
+          <div className="flex gap-1">
+            {(["left", "center"] as ImageAlign[]).map((a) => (
+              <button
+                key={a}
+                onClick={() => setUserSettings({ imageAlign: a })}
+                className={`px-2.5 py-0.5 text-[11px] rounded border capitalize ${
+                  (us.imageAlign ?? "center") === a
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </Row>
+        <Row label="Exhibit Style">
+          <div className="flex gap-1">
+            {(["button", "link", "plain"] as ExhibitStyle[]).map((st) => (
+              <button
+                key={st}
+                onClick={() => setUserSettings({ exhibitStyle: st })}
+                className={`px-2 py-0.5 text-[11px] rounded border capitalize ${
+                  (us.exhibitStyle ?? "button") === st
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-muted-foreground"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+        </Row>
+        <Row label="Exhibit Viewer Size">
+          <select
+            value={us.exhibitViewerSize ?? "default"}
+            onChange={(e) => setUserSettings({ exhibitViewerSize: e.target.value as ExhibitViewerSize })}
+            className="text-xs border border-border rounded px-2 py-1 bg-card text-foreground"
+          >
+            <option value="default">Default</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+          </select>
+        </Row>
+        <Row label="Close Exhibit on Click Outside">
+          <Toggle on={us.closeExhibitOnOutsideClick !== false} onChange={(v: boolean) => setUserSettings({ closeExhibitOnOutsideClick: v })} />
+        </Row>
+        <Row label="Save Space for Sidebar">
+          <Toggle on={us.saveSpaceForSidebar !== false} onChange={(v: boolean) => setUserSettings({ saveSpaceForSidebar: v })} />
+        </Row>
+        <Row label="Hide Sidebar Automatically">
+          <Toggle on={!!us.autoHideSidebar} onChange={(v: boolean) => setUserSettings({ autoHideSidebar: v })} />
+        </Row>
+        <Row label="Show Sidebar on Edge Hover">
+          <Toggle on={!!us.hoverEdgeSidebar} onChange={(v: boolean) => setUserSettings({ hoverEdgeSidebar: v })} />
+        </Row>
+      </div>
+
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Customize Highlight</div>
         {allHL.map(h => (
           <div key={h.color} className="flex items-center justify-between py-1.5">
             <button
               onClick={() => setActiveHighlight(h.color)}
               className={`flex items-center gap-2 ${activeHighlight === h.color ? "font-semibold" : ""}`}
             >
-              <span className="h-4 w-4 rounded-full border" style={{ background: h.color }} />
+              <span className="h-4 w-4 rounded-full border border-black/15" style={{ background: h.color }} />
               <span className="text-sm">{h.label}</span>
-              {activeHighlight === h.color && <span className="text-[10px] text-blue-600">(active)</span>}
+              {activeHighlight === h.color && <span className="text-[10px] text-primary">(active)</span>}
             </button>
-            <Toggle on={!!enabledHighlights[h.color]} onChange={v => setEnabledHighlights({ ...enabledHighlights, [h.color]: v })} />
+            <Toggle
+              on={!!enabledHighlights[h.color]}
+              onChange={(v: boolean) => {
+                const next = { ...enabledHighlights, [h.color]: v };
+                setEnabledHighlights(next);
+                setUserSettings({ enabledHighlights: next });
+              }}
+            />
           </div>
         ))}
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Quiz Toolbar Icons</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Quiz Toolbar Icons</div>
         {TOOLBAR_ITEMS.map(item => (
           <Row key={item.key} label={item.label}>
             <Toggle
@@ -1873,8 +3100,8 @@ export function SettingsPanel(props: any) {
         ))}
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Content</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Content</div>
         <Row label="Hide Percentages">
           <Toggle on={us.hidePercentages} onChange={(v) => setUserSettings({ hidePercentages: v })} />
         </Row>
@@ -1889,8 +3116,14 @@ export function SettingsPanel(props: any) {
         </Row>
       </div>
 
-      <div className="p-4 border-b">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">More Features</div>
+      <div className="p-4 border-b border-border">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">More Features</div>
+        <Row label="Smart Context Menu">
+          <Toggle on={us.smartContextMenu !== false} onChange={(v) => setUserSettings({ smartContextMenu: v })} />
+        </Row>
+        <Row label="Unsubmitted Question Indicator">
+          <Toggle on={us.showUnsubmittedIndicator !== false} onChange={(v) => setUserSettings({ showUnsubmittedIndicator: v })} />
+        </Row>
         <Row label="Confirm Answer Omission">
           <Toggle on={us.confirmOmission} onChange={(v) => setUserSettings({ confirmOmission: v })} />
         </Row>
@@ -1903,8 +3136,8 @@ export function SettingsPanel(props: any) {
       </div>
 
       <div className="p-4">
-        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">Night Mode</div>
-        <div className="text-[11px] text-gray-500 mb-2">If on, auto changes to dark mode based on scheduled time.</div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Night Mode</div>
+        <div className="text-[11px] text-muted-foreground mb-2">If on, auto changes to dark mode based on scheduled time.</div>
         <Row label="Automatic">
           <Toggle on={us.autoNightMode} onChange={(v) => setUserSettings({ autoNightMode: v })} />
         </Row>
@@ -1912,7 +3145,7 @@ export function SettingsPanel(props: any) {
           <select
             value={us.nightStart}
             onChange={(e) => setUserSettings({ nightStart: Number(e.target.value) })}
-            className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+            className="text-sm border border-border rounded px-2 py-1 bg-card text-foreground"
           >
             {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{hourStr(i)}</option>)}
           </select>
@@ -1921,7 +3154,7 @@ export function SettingsPanel(props: any) {
           <select
             value={us.nightEnd}
             onChange={(e) => setUserSettings({ nightEnd: Number(e.target.value) })}
-            className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+            className="text-sm border border-border rounded px-2 py-1 bg-card text-foreground"
           >
             {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{hourStr(i)}</option>)}
           </select>

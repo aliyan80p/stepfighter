@@ -9,9 +9,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  BarChart3, ListOrdered, StickyNote, CheckCircle2, ChevronRight, Flame,
+  Activity, ListOrdered, StickyNote, CheckCircle2, ChevronRight, XCircle,
   TrendingUp, TrendingDown, Minus, ArrowUpDown, Filter, Settings2, X, Copy, Check,
-  ArrowRightLeft, RefreshCw, Repeat,
+  ArrowRightLeft, RefreshCw, Repeat, Target, AlertTriangle,
 } from "lucide-react";
 import { Loader } from "@/components/loader";
 import { TestAnalysisPane } from "./performance.ai-test-analysis";
@@ -31,6 +31,7 @@ function TestResults() {
   const { data, isLoading } = useQuery({
     queryKey: ["test-results", id],
     queryFn: () => fn({ data: { id: Number(id) } }),
+    staleTime: 60_000,
   });
 
   const [tab, setTab] = useState<"results" | "analysis">("results");
@@ -45,9 +46,12 @@ function TestResults() {
     return data.questions.map((q, idx) => {
       const a = data.attemptsByQ[q.id];
       const status: Status = !a ? "omitted" : a.is_correct ? "correct" : "wrong";
-      // Deterministic peer avg 45-90% based on question id
-      const seed = (q.id * 9301 + 49297) % 233280;
-      const others = Math.round(45 + (seed / 233280) * 45 * 10) / 10;
+      // Real peer accuracy from Supabase `questions.corr_taken / ppl_taken`
+      // (skip NBME/CMS placeholder rows where ppl_taken=100 and corr_taken<=1)
+      const ppl = Number((q as any).ppl_taken ?? 0);
+      const corr = Number((q as any).corr_taken ?? 0);
+      const isPlaceholder = ppl === 100 && corr <= 1;
+      const others = !isPlaceholder && ppl > 0 ? Math.round((corr / ppl) * 1000) / 10 : null;
       const time = (a as any)?.time_seconds ?? 0;
       return {
         index: idx + 1,
@@ -66,9 +70,9 @@ function TestResults() {
     const correct = rows.filter((r) => r.status === "correct").length;
     const wrong = rows.filter((r) => r.status === "wrong").length;
     const omitted = rows.filter((r) => r.status === "omitted").length;
-    const answered = correct + wrong;
     const score = rows.length ? (correct / rows.length) * 100 : 0;
-    const peer = rows.length ? rows.reduce((s, r) => s + r.others, 0) / rows.length : 0;
+    const peerRows = rows.filter((r): r is typeof r & { others: number } => r.others != null);
+    const peer = peerRows.length ? peerRows.reduce((s, r) => s + r.others, 0) / peerRows.length : null;
     // Best/worst subject by accuracy
     const bySub: Record<string, { c: number; t: number; o: number }> = {};
     for (const r of rows) {
@@ -97,7 +101,7 @@ function TestResults() {
         case "subject": cmp = a.subject.localeCompare(b.subject); break;
         case "system": cmp = a.system.localeCompare(b.system); break;
         case "topic": cmp = a.topic.localeCompare(b.topic); break;
-        case "others": cmp = a.others - b.others; break;
+        case "others": cmp = (a.others ?? -1) - (b.others ?? -1); break;
         case "time": cmp = a.time - b.time; break;
         case "status": cmp = a.status.localeCompare(b.status); break;
       }
@@ -112,15 +116,19 @@ function TestResults() {
   };
 
   if (isLoading || !data) {
-    return <div className="p-8"><Loader label="Loading results…" /></div>;
+    return (
+      <div className="min-h-[75vh] w-full flex items-center justify-center p-8">
+        <Loader label="Loading results" />
+      </div>
+    );
   }
 
   const mode = data.test.mode;
   const created = new Date(data.test.created_at);
-  const belowPeer = totals.score < totals.peer;
+  const belowPeer = totals.peer != null && totals.score < totals.peer;
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="sf-fluid-page space-y-6">
       {/* Top tabs + name */}
       <div className="rounded-2xl border border-border bg-card p-4 md:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex gap-2">
@@ -161,58 +169,124 @@ function TestResults() {
       </div>
 
 
-      {/* Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 relative overflow-hidden rounded-3xl p-6 text-white shadow-xl shadow-fuchsia-500/20">
-          {/* Vivid background */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#f472b6_0%,transparent_50%),radial-gradient(circle_at_bottom_right,#38bdf8_0%,transparent_55%),linear-gradient(135deg,#7c3aed_0%,#4f46e5_50%,#0ea5e9_100%)]" />
-          <div className="absolute -top-16 -right-16 h-56 w-56 rounded-full bg-yellow-300/30 blur-3xl" />
-          <div className="absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-emerald-300/20 blur-3xl" />
+      {/* Performance Overview — clean, theme-native medical score report */}
+      <div className="sf-stagger grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Main Score Card */}
+        <div className="lg:col-span-7 relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between gap-6">
+          {/* Subtle theme-native accent top bar & soft glow */}
+          <div className="absolute inset-x-0 top-0 h-1 bg-primary" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full opacity-[0.09] blur-3xl"
+            style={{ background: "var(--primary)" }}
+          />
 
-          <div className="relative">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.15em] font-semibold bg-white/15 backdrop-blur-md rounded-full px-3 py-1 mb-3 border border-white/20">
-                  ✨ Performance Overview
-                </div>
-                <div className="text-xs uppercase tracking-wider text-white/80 font-medium">Overall Score</div>
-                <div className="text-6xl font-black bg-gradient-to-br from-white via-yellow-100 to-amber-200 bg-clip-text text-transparent drop-shadow-lg">
-                  {totals.score.toFixed(1)}<span className="text-3xl">%</span>
-                </div>
-                <div className="text-sm text-white/85 mt-2 max-w-md">
-                  {belowPeer
-                    ? `You are ${(totals.peer - totals.score).toFixed(1)}% behind the peer average. Revisit weaker subjects first.`
-                    : `You are ${(totals.score - totals.peer).toFixed(1)}% above the peer average. Keep going.`}
-                </div>
-                <div className={`mt-3 inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 border ${belowPeer ? "bg-rose-500/25 border-rose-200/40 text-rose-50" : "bg-emerald-500/25 border-emerald-200/40 text-emerald-50"}`}>
-                  {belowPeer ? "😤 Keep Practicing" : "🎯 On Track"}
-                </div>
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="space-y-3 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold text-primary bg-primary/10 rounded-full px-3 py-1">
+                  <Activity className="h-3.5 w-3.5" />
+                  Performance Overview
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-2.5 py-1 ${
+                    belowPeer
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                  }`}
+                >
+                  {belowPeer ? (
+                    <>
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Needs Focus
+                    </>
+                  ) : (
+                    <>
+                      <Target className="h-3.5 w-3.5" />
+                      Above Peer Avg
+                    </>
+                  )}
+                </span>
               </div>
-              <Donut value={totals.score} label="Score" />
+
+              <div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                  Overall Score
+                </div>
+                <div className="flex items-baseline gap-3 mt-0.5">
+                  <span className="text-5xl font-extrabold tracking-tight text-foreground tabular-nums">
+                    {totals.score.toFixed(1)}
+                    <span className="text-2xl font-bold text-muted-foreground ml-0.5">%</span>
+                  </span>
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {totals.correct} / {rows.length} correct
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2 max-w-md leading-relaxed">
+                  {totals.peer == null
+                    ? "Review your missed and omitted questions below to lock in key concepts."
+                    : belowPeer
+                      ? `You are ${(totals.peer - totals.score).toFixed(1)}% below the peer average (${totals.peer.toFixed(1)}%). Focus on weaker subjects first.`
+                      : `You are ${(totals.score - totals.peer).toFixed(1)}% above the peer average (${totals.peer.toFixed(1)}%). Strong work.`}
+                </p>
+              </div>
             </div>
+
+            <Donut value={totals.score} peer={totals.peer ?? 0} />
+          </div>
+
+          {/* Score vs Peer comparison bar */}
+          <div className="relative space-y-3 pt-4 border-t border-border">
             <BarLine label="Your Score" value={totals.score} tone="mine" />
-            <BarLine label="Peer Average" value={totals.peer} tone="peer" />
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              <MiniStat label="You" value={`${totals.score.toFixed(1)}%`} />
-              <MiniStat label="Average" value={`${totals.peer.toFixed(1)}%`} />
-              <MiniStat label="Gap to Close" value={`${Math.abs(totals.peer - totals.score).toFixed(1)}%`} />
-            </div>
+            {totals.peer != null && <BarLine label="Peer Average" value={totals.peer} tone="peer" />}
+          </div>
+
+          {/* Clean Breakdown Counters */}
+          <div className="relative grid grid-cols-3 gap-2.5">
+            <MiniStat
+              icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+              label="Correct"
+              value={String(totals.correct)}
+            />
+            <MiniStat
+              icon={<XCircle className="h-4 w-4 text-rose-500" />}
+              label="Incorrect"
+              value={String(totals.wrong)}
+            />
+            <MiniStat
+              icon={<Minus className="h-4 w-4 text-muted-foreground" />}
+              label="Omitted"
+              value={String(totals.omitted)}
+            />
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="rounded-2xl border border-border bg-card p-4 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Peer Average</div>
-              <div className="text-2xl font-bold">{totals.peer.toFixed(1)}%</div>
-            </div>
-            <span className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 ${belowPeer ? "bg-rose-500/15 text-rose-500" : "bg-emerald-500/15 text-emerald-500"}`}>
-              {belowPeer ? "⚠ Below Peer Average" : "✓ Above Peer Average"}
-            </span>
-          </div>
-          <InsightCard tone="success" icon={<TrendingUp className="h-4 w-4" />} label="Best Subject" tag="Strength" value={totals.best?.name ?? "—"} desc="Your strongest area in this result set." />
-          <InsightCard tone="danger" icon={<TrendingDown className="h-4 w-4" />} label="Needs Review" tag="Focus" value={totals.worst?.name ?? "—"} desc="The clearest opportunity for score recovery." />
-          <InsightCard tone="info" icon={<Minus className="h-4 w-4" />} label="Most Omitted" tag="Review" value={totals.mostOmitted && totals.mostOmitted.omitted > 0 ? totals.mostOmitted.name : "No omissions detected"} desc="Skipped questions are clustering here the most." />
+        {/* Clinical Subject Insights */}
+        <div className="lg:col-span-5 flex flex-col justify-between gap-3">
+          <InsightCard
+            tone="success"
+            icon={<TrendingUp className="h-4 w-4" />}
+            label="Strongest Subject"
+            tag={totals.best ? `${totals.best.accuracy.toFixed(0)}%` : "Strength"}
+            value={totals.best?.name ?? "—"}
+            desc="Highest accuracy in this block."
+          />
+          <InsightCard
+            tone="danger"
+            icon={<TrendingDown className="h-4 w-4" />}
+            label="Needs Review"
+            tag={totals.worst ? `${totals.worst.accuracy.toFixed(0)}%` : "Focus"}
+            value={totals.worst?.name ?? "—"}
+            desc="Top priority for score improvement."
+          />
+          <InsightCard
+            tone="info"
+            icon={<Minus className="h-4 w-4" />}
+            label="Most Omitted"
+            tag={totals.mostOmitted && totals.mostOmitted.omitted > 0 ? `${totals.mostOmitted.omitted} skipped` : "Clean"}
+            value={totals.mostOmitted && totals.mostOmitted.omitted > 0 ? totals.mostOmitted.name : "No omissions"}
+            desc={totals.mostOmitted && totals.mostOmitted.omitted > 0 ? "Skipped questions clustered here." : "Every question was attempted."}
+          />
         </div>
       </div>
 
@@ -299,7 +373,7 @@ function TestResults() {
               <div className="text-sm md:truncate" title={r.subject}><span className="md:hidden text-xs text-muted-foreground mr-1">Subject:</span>{r.subject}</div>
               <div className="text-sm md:truncate" title={r.system}><span className="md:hidden text-xs text-muted-foreground mr-1">System:</span>{r.system}</div>
               <div className="text-sm text-primary md:truncate" title={r.topic}><span className="md:hidden text-xs text-muted-foreground mr-1">Topic:</span>{r.topic}</div>
-              <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.others.toFixed(1)}% others</span></div>
+              <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.others != null ? `${r.others.toFixed(1)}% others` : "—"}</span></div>
               <div><span className="inline-block rounded-full border border-border px-2.5 py-1 text-xs">{r.time} sec</span></div>
               <div className="md:text-right">
                 <Link to="/test/$id" params={{ id }} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border hover:bg-muted">
@@ -410,25 +484,43 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   );
 }
 
-function Donut({ value, label }: { value: number; label: string }) {
+function Donut({ value, peer }: { value: number; peer: number }) {
   const r = 42;
   const c = 2 * Math.PI * r;
   const off = c - (Math.min(100, Math.max(0, value)) / 100) * c;
+  const peerOff = c - (Math.min(100, Math.max(0, peer)) / 100) * c;
   return (
-    <div className="relative h-32 w-32 shrink-0">
+    <div className="relative h-32 w-32 shrink-0 self-center">
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-        <circle cx="50" cy="50" r={r} stroke="rgba(255,255,255,0.15)" strokeWidth="8" fill="none" />
-        <circle cx="50" cy="50" r={r} stroke="url(#g)" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} />
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#f472b6" />
-            <stop offset="100%" stopColor="#a78bfa" />
-          </linearGradient>
-        </defs>
+        <circle cx="50" cy="50" r={r} stroke="var(--muted)" strokeWidth="8" fill="none" />
+        <circle
+          cx="50"
+          cy="50"
+          r={r}
+          stroke="var(--border)"
+          strokeWidth="8"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={peerOff}
+          opacity="0.7"
+        />
+        <circle
+          cx="50"
+          cy="50"
+          r={r}
+          stroke="var(--primary)"
+          strokeWidth="8"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={off}
+          className="transition-all duration-700 ease-out"
+        />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-[10px] uppercase tracking-wider text-white/70">{label}</div>
-        <div className="text-xl font-bold">{value.toFixed(1)}%</div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Score</div>
+        <div className="text-xl font-bold text-foreground tabular-nums">{value.toFixed(0)}%</div>
       </div>
     </div>
   );
@@ -436,44 +528,75 @@ function Donut({ value, label }: { value: number; label: string }) {
 
 function BarLine({ label, value, tone }: { label: string; value: number; tone: "mine" | "peer" }) {
   return (
-    <div className="mb-2">
-      <div className="flex items-center justify-between text-xs mb-1">
-        <span className="text-white/80 uppercase tracking-wider">{label}</span>
-        <span className="font-semibold">{value.toFixed(1)}%</span>
+    <div>
+      <div className="flex items-center justify-between text-xs mb-1.5">
+        <span className="font-medium text-muted-foreground">{label}</span>
+        <span className="font-semibold text-foreground tabular-nums">{value.toFixed(1)}%</span>
       </div>
-      <div className="h-1.5 rounded-full bg-white/15 overflow-hidden">
-        <div className={`h-full ${tone === "mine" ? "bg-gradient-to-r from-amber-400 to-rose-400" : "bg-white/60"}`} style={{ width: `${Math.min(100, value)}%` }} />
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-[width] duration-700 ease-out ${
+            tone === "mine" ? "bg-primary" : "bg-muted-foreground/45"
+          }`}
+          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+        />
       </div>
     </div>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+function MiniStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-white/10 px-3 py-2">
-      <div className="text-[9px] uppercase tracking-wider text-white/70">{label}</div>
-      <div className="text-sm font-bold">{value}</div>
+    <div className="rounded-xl border border-border bg-muted/35 px-3 py-2.5 flex items-center gap-2.5">
+      <div className="shrink-0">{icon}</div>
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="text-base font-bold text-foreground tabular-nums">{value}</div>
+      </div>
     </div>
   );
 }
 
-function InsightCard({ tone, icon, label, tag, value, desc }: { tone: "success" | "danger" | "info"; icon: React.ReactNode; label: string; tag: string; value: string; desc: string }) {
-  const bg = tone === "success" ? "bg-emerald-500/10 border-emerald-500/30" : tone === "danger" ? "bg-rose-500/10 border-rose-500/30" : "bg-sky-500/10 border-sky-500/30";
-  const iconBg = tone === "success" ? "bg-emerald-500/20 text-emerald-500" : tone === "danger" ? "bg-rose-500/20 text-rose-500" : "bg-sky-500/20 text-sky-500";
-  const tagCls = tone === "success" ? "bg-emerald-500/20 text-emerald-500" : tone === "danger" ? "bg-rose-500/20 text-rose-500" : "bg-sky-500/20 text-sky-500";
+function InsightCard({
+  tone,
+  icon,
+  label,
+  tag,
+  value,
+  desc,
+}: {
+  tone: "success" | "danger" | "info";
+  icon: React.ReactNode;
+  label: string;
+  tag: string;
+  value: string;
+  desc: string;
+}) {
+  const iconBg =
+    tone === "success"
+      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+      : tone === "danger"
+        ? "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+        : "bg-amber-500/15 text-amber-600 dark:text-amber-400";
+  const tagCls =
+    tone === "success"
+      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+      : tone === "danger"
+        ? "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+        : "bg-muted text-muted-foreground";
   return (
-    <div className={`rounded-2xl border p-4 ${bg}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-start gap-3">
-          <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${iconBg}`}>{icon}</div>
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-            <div className="font-semibold">{value}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">{desc}</div>
-          </div>
+    <div className="sf-card-interactive flex-1 rounded-2xl border border-border bg-card p-4 shadow-sm flex items-center justify-between gap-3">
+      <div className="flex items-start gap-3 min-w-0">
+        <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>{icon}</div>
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{label}</div>
+          <div className="font-semibold text-foreground truncate">{value}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">{desc}</div>
         </div>
-        <span className={`text-[10px] uppercase tracking-wider font-semibold rounded-full px-2 py-0.5 ${tagCls}`}>{tag}</span>
       </div>
+      <span className={`text-[11px] font-semibold rounded-full px-2.5 py-1 shrink-0 tabular-nums ${tagCls}`}>
+        {tag}
+      </span>
     </div>
   );
 }

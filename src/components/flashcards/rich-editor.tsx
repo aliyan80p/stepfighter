@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   Bold, Italic, Underline as UIcon, Strikethrough, List, ListOrdered,
   AlignLeft, AlignCenter, AlignRight, Link as LinkIcon, Image as ImageIcon,
@@ -39,7 +40,7 @@ export function RichEditor({ value, onChange, placeholder, minHeight = 200 }: Pr
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (file.size > 2_000_000) { alert("Image must be under 2MB"); return; }
+    if (file.size > 2_000_000) { toast.error("Image must be under 2MB"); return; }
     const reader = new FileReader();
     reader.onload = () => exec("insertImage", String(reader.result));
     reader.readAsDataURL(file);

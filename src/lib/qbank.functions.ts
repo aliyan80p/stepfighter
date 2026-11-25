@@ -335,18 +335,18 @@ export const getTest = createServerFn({ method: "GET" })
     await assertQbankAccess(supabase, userId, qbankId);
     const { data: questions } = await supabase
       .from("questions")
-      .select("id,title,question,explanation,correct_answer,subject_id,system_id,media_name,other_medias")
+      .select("id,title,question,explanation,correct_answer,subject_id,system_id,media_name,other_medias,ppl_taken,corr_taken")
       .eq("qbank_id", qbankId)
       .in("id", test.question_ids);
     const { data: answers } = await supabase
       .from("answers")
-      .select("id,question_id,answer_index,answer_text")
+      .select("id,question_id,answer_index,answer_text,correct_percentage")
       .eq("qbank_id", qbankId)
       .in("question_id", test.question_ids)
       .order("answer_index");
     const { data: attempts } = await supabase
       .from("attempts")
-      .select("question_id,selected_answer,is_correct")
+      .select("question_id,selected_answer,is_correct,time_seconds")
       .eq("user_id", userId)
       .eq("test_id", data.id);
     // Prior attempts on the same questions BEFORE this test was created — used for Answer Changes
@@ -373,10 +373,45 @@ export const getTest = createServerFn({ method: "GET" })
       else if (!prior.is_correct && !a.is_correct) i2i++;
     }
     const { data: bookmarks } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("qbank_id", qbankId).in("question_id", test.question_ids);
-    const [{ data: subjects }, { data: systems }] = await Promise.all([
+    const [{ data: subjects }, { data: systems }, { data: refsRaw }] = await Promise.all([
       supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
       supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
+      supabase
+        .from("refs")
+        .select("id,question_id,ref_title,ref_link,ref_type")
+        .eq("qbank_id", qbankId)
+        .in("question_id", test.question_ids as number[])
+        .order("id"),
     ]);
+    const libTitles = Array.from(
+      new Set(
+        (refsRaw ?? [])
+          .filter((r) => r.ref_type === 18 && r.ref_title)
+          .map((r) => r.ref_title!.trim()),
+      ),
+    );
+    const libDocByTitle = new Map<string, number>();
+    if (libTitles.length > 0) {
+      const { data: libDocs } = await supabase
+        .from("library_docs")
+        .select("id,title")
+        .eq("qbank_id", 2)
+        .in("title", libTitles);
+      for (const d of libDocs ?? []) {
+        if (d.title) libDocByTitle.set(d.title.trim().toLowerCase(), d.id);
+      }
+    }
+    const enrichedRefs = (refsRaw ?? []).map((r) => ({
+      id: r.id,
+      question_id: r.question_id,
+      ref_title: r.ref_title,
+      ref_link: r.ref_link,
+      ref_type: r.ref_type,
+      library_doc_id:
+        r.ref_type === 18 && r.ref_title
+          ? (libDocByTitle.get(r.ref_title.trim().toLowerCase()) ?? null)
+          : null,
+    }));
     const subjectMap: Record<number, string> = Object.fromEntries((subjects ?? []).map((s) => [s.id, s.name]));
     const systemMap: Record<number, string> = Object.fromEntries((systems ?? []).map((s) => [s.id, s.name]));
     return {
@@ -385,6 +420,7 @@ export const getTest = createServerFn({ method: "GET" })
       questions: (test.question_ids as number[]).map((id) => (questions ?? []).find((q) => q.id === id)!).filter(Boolean),
       answersByQ: groupBy(answers ?? [], (a) => a.question_id),
       attemptsByQ: Object.fromEntries((attempts ?? []).map((a) => [a.question_id, a])),
+      refsByQ: groupBy(enrichedRefs, (r) => r.question_id),
       bookmarkedIds: new Set((bookmarks ?? []).map((b) => b.question_id)),
       subjectMap,
       systemMap,
