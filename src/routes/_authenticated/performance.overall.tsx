@@ -257,10 +257,7 @@ function OverallPerformance() {
               </div>
             )}
 
-            {data && (() => {
-              const scored = data.correctAttempts + data.incorrectAttempts;
-              const correctPct = scored > 0 ? Math.round((data.correctAttempts / scored) * 100) : 0;
-              return (
+            {data && (
                 <div className="grid gap-4 md:grid-cols-2">
                   {/* QBank Usage */}
                   <div className="rounded-xl bg-card border border-border p-5">
@@ -286,15 +283,16 @@ function OverallPerformance() {
                   {/* Your Score */}
                   <div className="rounded-xl bg-card border border-border p-5">
                     <div className="font-semibold text-sm">Your Score</div>
-                    <div className="text-xs text-muted-foreground mb-4">Accuracy across all answered attempts</div>
+                    <div className="text-xs text-muted-foreground mb-4">All attempts (omitted counted as wrong, UWorld-style)</div>
                     <div className="flex flex-col sm:flex-row items-center gap-5">
                       <Donut
                         size={156}
                         segments={[
                           { value: data.correctAttempts, color: "hsl(142 71% 45%)" },
                           { value: data.incorrectAttempts, color: "hsl(0 84% 60%)" },
+                          { value: data.omittedAttempts, color: "hsl(220 15% 55%)" },
                         ]}
-                        center={<div className="text-center"><div className="text-2xl font-bold tabular-nums">{correctPct}%</div><div className="text-[10px] text-muted-foreground uppercase tracking-wide">Correct</div></div>}
+                        center={<div className="text-center"><div className="text-2xl font-bold tabular-nums">{data.correctPct}%</div><div className="text-[10px] text-muted-foreground uppercase tracking-wide">Correct</div></div>}
                       />
                       <div className="flex-1 min-w-0 w-full space-y-2.5">
                         <Row icon={CheckCircle2} tone="green" label="Total Correct" value={data.correctAttempts} />
@@ -304,8 +302,7 @@ function OverallPerformance() {
                     </div>
                   </div>
                 </div>
-              );
-            })()}
+            )}
 
             {data && (
               <div className="grid gap-4 md:grid-cols-2">
