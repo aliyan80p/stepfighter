@@ -1415,7 +1415,6 @@ function TestRunner() {
             <TopBtn icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
             <TopBtn icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
             <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-            <NbmeTextZoom fontSize={fontSize} setFontSize={setFontSize} />
             <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
           </div>
         </div>
