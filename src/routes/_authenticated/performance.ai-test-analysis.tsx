@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listTests, getTest } from "@/lib/qbank.functions";
 import { getAiTestAnalysis } from "@/lib/performance.functions";
-import { useActiveQbankId } from "@/lib/active-qbank";
-import { Sparkles, Loader2, FileText, ChevronRight, ArrowUpDown, HelpCircle, XCircle, CheckCircle2, Ban } from "lucide-react";
+import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
+import {
+  Loader2, FileText, ChevronRight, ArrowUpDown, HelpCircle,
+  XCircle, CheckCircle2, Ban, Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -16,66 +19,120 @@ export const Route = createFileRoute("/_authenticated/performance/ai-test-analys
 function AiTestAnalysisPage() {
   const listFn = useServerFn(listTests);
   const qbankId = useActiveQbankId();
+  const activeQbank = QBANKS.find((q) => q.id === qbankId) ?? QBANKS[0];
   const { data: tests, isLoading } = useQuery({
     queryKey: ["tests", qbankId],
     queryFn: () => listFn({ data: { qbankId } }),
   });
   const [selected, setSelected] = useState<number | null>(null);
-  const completed = ((tests as any)?.tests ?? tests ?? []).filter((t: any) => t.done);
+  const [search, setSearch] = useState("");
+
+  const completed = useMemo(
+    () => ((tests as any)?.tests ?? tests ?? []).filter((t: any) => t.done),
+    [tests],
+  );
+
+  // Auto-select the most recent completed test when available
+  useEffect(() => {
+    if (completed.length > 0 && (selected == null || !completed.some((t: any) => t.id === selected))) {
+      setSelected(completed[0].id);
+    }
+  }, [completed, selected]);
+
+  const filteredCompleted = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return completed;
+    return completed.filter((t: any) =>
+      String(t.id).includes(q) || (t.name ?? "").toLowerCase().includes(q),
+    );
+  }, [completed, search]);
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white grid place-items-center">
-            <Sparkles className="h-5 w-5" />
-          </div>
+    <div className="min-h-screen bg-muted/20">
+      <div className="sf-fluid-page space-y-5">
+        {/* Clinical Studio Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-border">
           <div>
-            <h1 className="text-2xl font-bold">Test Analysis</h1>
-            <p className="text-sm text-muted-foreground">Per-test breakdown with subject and system analysis</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Test Analysis</h1>
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                {activeQbank.name}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Per-test performance breakdown by subject, system, and answer changes
+            </p>
           </div>
+          <span className="text-xs font-medium text-muted-foreground tabular-nums">
+            {completed.length} completed {completed.length === 1 ? "test" : "tests"}
+          </span>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-[320px_1fr]">
-          <div className="rounded-2xl bg-card border border-border p-3 shadow-sm max-h-[80vh] overflow-y-auto">
-            {isLoading ? (
-              <div className="p-4 text-sm text-muted-foreground">Loading tests…</div>
-            ) : !completed.length ? (
-              <div className="p-6 text-sm text-muted-foreground text-center">No completed tests yet.</div>
-            ) : (
-              <div className="space-y-1">
-                {completed.map((t: any) => {
-                  const pct = t.total ? Math.round((t.right_count / t.total) * 100) : 0;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => setSelected(t.id)}
-                      className={cn(
-                        "w-full text-left rounded-lg p-3 border transition-colors",
-                        selected === t.id ? "bg-primary/10 border-primary" : "bg-background border-border hover:bg-muted",
-                      )}
-                    >
-                      <div className="text-sm font-medium truncate">{t.name || `Test #${t.id}`}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                        <span>{t.right_count}/{t.total}</span>
-                        <span className={cn(
-                          "px-1.5 py-0.5 rounded",
-                          pct >= 70 ? "bg-emerald-100 text-emerald-700" : pct >= 50 ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700",
-                        )}>{pct}%</span>
-                        <span>· {new Date(t.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </button>
-                  );
-                })}
+        <div className="grid gap-5 lg:grid-cols-[300px_1fr]">
+          {/* Left test selector */}
+          <div className="rounded-xl bg-card border border-border overflow-hidden flex flex-col max-h-[78vh]">
+            <div className="p-3 border-b border-border bg-muted/30">
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Filter completed tests…"
+                  className="h-8 w-full rounded-lg border border-border bg-background pl-8 pr-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
               </div>
-            )}
+            </div>
+
+            <div className="p-2 overflow-y-auto flex-1">
+              {isLoading ? (
+                <div className="p-4 text-xs text-muted-foreground">Loading tests…</div>
+              ) : !filteredCompleted.length ? (
+                <div className="p-6 text-xs text-muted-foreground text-center">No completed tests found.</div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredCompleted.map((t: any) => {
+                    const pct = t.total ? Math.round((t.right_count / t.total) * 100) : 0;
+                    const active = selected === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelected(t.id)}
+                        className={cn(
+                          "w-full text-left rounded-lg px-3 py-2.5 border transition-colors",
+                          active
+                            ? "bg-primary/8 border-primary/50"
+                            : "bg-transparent border-transparent hover:bg-muted/60",
+                        )}
+                      >
+                        <div className="text-xs font-semibold truncate">{t.name || `Test #${t.id}`}</div>
+                        <div className="text-[11px] text-muted-foreground flex items-center gap-2 mt-1 tabular-nums">
+                          <span>{t.right_count}/{t.total}</span>
+                          <span className={cn(
+                            "px-1.5 py-0.5 rounded font-semibold",
+                            pct >= 70
+                              ? "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400"
+                              : pct >= 50
+                                ? "bg-amber-500/12 text-amber-600 dark:text-amber-400"
+                                : "bg-rose-500/12 text-rose-600 dark:text-rose-400",
+                          )}>
+                            {pct}%
+                          </span>
+                          <span className="ml-auto">{new Date(t.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* Right analysis pane */}
           <div className="min-h-[400px]">
             {!selected ? (
-              <div className="rounded-2xl bg-card border border-border p-10 h-full flex flex-col items-center justify-center text-center text-muted-foreground">
-                <FileText className="h-10 w-10 mb-2 opacity-50" />
-                <div>Select a completed test</div>
+              <div className="rounded-xl bg-card border border-border p-10 h-full flex flex-col items-center justify-center text-center text-muted-foreground">
+                <FileText className="h-9 w-9 mb-2 opacity-40" />
+                <div className="text-sm font-medium">Select a completed test</div>
               </div>
             ) : (
               <TestAnalysisPane testId={selected} />
@@ -95,7 +152,9 @@ export function TestAnalysisPane({ testId }: { testId: number }) {
     queryFn: () => getFn({ data: { id: testId } }),
   });
 
-  if (isLoading || !data) return <div className="rounded-2xl bg-card border border-border p-10 text-center text-muted-foreground">Loading…</div>;
+  if (isLoading || !data) {
+    return <div className="rounded-xl bg-card border border-border p-10 text-center text-xs text-muted-foreground">Loading analysis…</div>;
+  }
 
   const test = data.test as any;
   const questions = data.questions as any[];
@@ -121,26 +180,28 @@ export function TestAnalysisPane({ testId }: { testId: number }) {
   const totalChanges = changes.cc + changes.ci + changes.ic + changes.ii;
 
   return (
-    <div className="space-y-5">
-      {/* Header card */}
-      <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/30 dark:to-violet-950/30 border border-border p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex bg-background rounded-full p-1 shadow-sm">
-            {(["results", "analysis"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={cn(
-                  "px-4 py-1.5 text-sm font-medium rounded-full capitalize transition",
-                  tab === t ? "bg-blue-600 text-white shadow" : "text-muted-foreground hover:text-foreground",
-                )}
-              >Test {t}</button>
-            ))}
-          </div>
-          <div className="rounded-lg bg-background/70 px-3 py-1.5 text-xs text-muted-foreground">
-            <span className="mr-2">Test Name <span className="font-semibold text-foreground">{test.name || `Test #${test.id}`}</span></span>
-            <span>ID <span className="font-semibold text-foreground">{test.id}</span></span>
-          </div>
+    <div className="space-y-4">
+      {/* Header bar */}
+      <div className="rounded-xl bg-card border border-border p-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex bg-muted/60 rounded-lg p-1">
+          {(["results", "analysis"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                "px-3.5 py-1 text-xs font-semibold rounded-md capitalize transition-colors",
+                tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Test {t}
+            </button>
+          ))}
+        </div>
+        <div className="text-xs text-muted-foreground flex items-center gap-3">
+          <span>
+            Test: <span className="font-semibold text-foreground">{test.name || `Test #${test.id}`}</span>
+          </span>
+          <span className="font-mono text-[11px] bg-muted px-2 py-0.5 rounded">#{test.id}</span>
         </div>
       </div>
 
@@ -176,7 +237,7 @@ function ResultsBlock({ scorePct, correct, incorrect, omitted, total, changes, t
     { value: omitted, color: "hsl(220 15% 55%)" },
   ];
   const changeSlices = totalChanges === 0
-    ? [{ value: 1, color: "hsl(25 95% 55%)" }]
+    ? [{ value: 1, color: "hsl(var(--muted))" }]
     : [
         { value: changes.cc, color: "hsl(142 71% 45%)" },
         { value: changes.ci, color: "hsl(0 84% 60%)" },
@@ -187,24 +248,24 @@ function ResultsBlock({ scorePct, correct, incorrect, omitted, total, changes, t
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Card title="Your Score" subtitle="Snapshot of your performance">
-        <div className="flex items-center gap-6 p-4">
+        <div className="flex flex-col sm:flex-row items-center gap-5 p-4">
           <Donut slices={scoreSlices} label={`${scorePct}%`} sub="Correct" />
-          <div className="flex-1 space-y-2 text-sm">
-            <Row icon={<HelpCircle className="h-4 w-4" />} tone="blue" label="Total Questions" value={total} />
-            <Row icon={<XCircle className="h-4 w-4" />} tone="rose" label="Incorrect Questions" value={incorrect} />
-            <Row icon={<CheckCircle2 className="h-4 w-4" />} tone="emerald" label="Correct Questions" value={correct} />
-            <Row icon={<Ban className="h-4 w-4" />} tone="slate" label="Omitted Questions" value={omitted} />
+          <div className="flex-1 w-full space-y-2 text-xs">
+            <Row icon={<HelpCircle className="h-3.5 w-3.5" />} tone="blue" label="Total Questions" value={total} />
+            <Row icon={<CheckCircle2 className="h-3.5 w-3.5" />} tone="emerald" label="Correct" value={correct} />
+            <Row icon={<XCircle className="h-3.5 w-3.5" />} tone="rose" label="Incorrect" value={incorrect} />
+            <Row icon={<Ban className="h-3.5 w-3.5" />} tone="slate" label="Omitted" value={omitted} />
           </div>
         </div>
       </Card>
       <Card title="Answer Changes" subtitle="Impact of changes on your score">
-        <div className="flex items-center gap-6 p-4">
-          <Donut slices={changeSlices} label={totalChanges === 0 ? "0" : String(totalChanges)} sub="Changes" />
-          <div className="flex-1 space-y-2 text-sm">
-            <Row icon={<CheckCircle2 className="h-4 w-4" />} tone="emerald" label="Correct to Correct" value={changes.cc} />
-            <Row icon={<XCircle className="h-4 w-4" />} tone="rose" label="Correct to Incorrect" value={changes.ci} />
-            <Row icon={<CheckCircle2 className="h-4 w-4" />} tone="blue" label="Incorrect to Correct" value={changes.ic} />
-            <Row icon={<XCircle className="h-4 w-4" />} tone="orange" label="Incorrect to Incorrect" value={changes.ii} />
+        <div className="flex flex-col sm:flex-row items-center gap-5 p-4">
+          <Donut slices={changeSlices} label={String(totalChanges)} sub="Tracked" />
+          <div className="flex-1 w-full space-y-2 text-xs">
+            <Row icon={<CheckCircle2 className="h-3.5 w-3.5" />} tone="emerald" label="Correct → Correct" value={changes.cc} />
+            <Row icon={<XCircle className="h-3.5 w-3.5" />} tone="rose" label="Correct → Incorrect" value={changes.ci} />
+            <Row icon={<CheckCircle2 className="h-3.5 w-3.5" />} tone="blue" label="Incorrect → Correct" value={changes.ic} />
+            <Row icon={<XCircle className="h-3.5 w-3.5" />} tone="orange" label="Incorrect → Incorrect" value={changes.ii} />
           </div>
         </div>
       </Card>
@@ -214,10 +275,10 @@ function ResultsBlock({ scorePct, correct, incorrect, omitted, total, changes, t
 
 function Card({ title, subtitle, children }: any) {
   return (
-    <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-border">
-        <div className="text-xs font-bold tracking-wide text-muted-foreground uppercase">{title}</div>
-        <div className="text-xs text-muted-foreground/80 mt-0.5">{subtitle}</div>
+    <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="px-4 py-3 border-b border-border bg-muted/30">
+        <div className="text-sm font-semibold">{title}</div>
+        <div className="text-xs text-muted-foreground">{subtitle}</div>
       </div>
       {children}
     </div>
@@ -229,9 +290,9 @@ function Donut({ slices, label, sub }: { slices: { value: number; color: string 
   const R = 42, C = 2 * Math.PI * R;
   let offset = 0;
   return (
-    <div className="relative h-36 w-36 shrink-0">
+    <div className="relative h-32 w-32 shrink-0">
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-        <circle cx={50} cy={50} r={R} fill="none" stroke="hsl(var(--muted))" strokeWidth={14} />
+        <circle cx={50} cy={50} r={R} fill="none" stroke="hsl(var(--muted))" strokeWidth={13} />
         {slices.map((s, i) => {
           const frac = s.value / total;
           const dash = frac * C;
@@ -239,7 +300,7 @@ function Donut({ slices, label, sub }: { slices: { value: number; color: string 
             <circle
               key={i}
               cx={50} cy={50} r={R}
-              fill="none" stroke={s.color} strokeWidth={14}
+              fill="none" stroke={s.color} strokeWidth={13}
               strokeDasharray={`${dash} ${C - dash}`}
               strokeDashoffset={-offset}
             />
@@ -250,8 +311,8 @@ function Donut({ slices, label, sub }: { slices: { value: number; color: string 
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">
         <div>
-          <div className="text-lg font-bold leading-none">{label}</div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>
+          <div className="text-lg font-bold leading-none tabular-nums">{label}</div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">{sub}</div>
         </div>
       </div>
     </div>
@@ -259,21 +320,18 @@ function Donut({ slices, label, sub }: { slices: { value: number; color: string 
 }
 
 function Row({ icon, tone, label, value }: any) {
-  const tones: Record<string, string> = {
-    emerald: "bg-emerald-500", rose: "bg-rose-500", blue: "bg-blue-500", slate: "bg-slate-500", orange: "bg-orange-500",
-  };
   const softs: Record<string, string> = {
-    emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-    rose: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
-    blue: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-    slate: "bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200",
-    orange: "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
+    emerald: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400",
+    rose:    "bg-rose-500/12 text-rose-600 dark:text-rose-400",
+    blue:    "bg-blue-500/12 text-blue-600 dark:text-blue-400",
+    slate:   "bg-muted text-muted-foreground",
+    orange:  "bg-amber-500/12 text-amber-600 dark:text-amber-400",
   };
   return (
-    <div className="flex items-center gap-3">
-      <div className={cn("h-7 w-7 rounded-full grid place-items-center", softs[tone])}>{icon}</div>
-      <div className="flex-1">{label}</div>
-      <div className={cn("min-w-[36px] px-2 h-6 rounded-full text-white text-xs font-semibold grid place-items-center", tones[tone])}>{value}</div>
+    <div className="flex items-center gap-2.5">
+      <div className={cn("h-7 w-7 rounded-md grid place-items-center shrink-0", softs[tone])}>{icon}</div>
+      <div className="flex-1 truncate font-medium">{label}</div>
+      <div className={cn("px-2 py-0.5 rounded-md text-xs font-semibold tabular-nums", softs[tone])}>{value}</div>
     </div>
   );
 }
@@ -289,10 +347,10 @@ function CrossTable({
   subjectMap: Record<number, string>;
   systemMap: Record<number, string>;
 }) {
-  const primaryLabel = primaryKey === "subject" ? "SUBJECTS" : "SYSTEMS";
+  const primaryLabel = primaryKey === "subject" ? "Subjects" : "Systems";
   const primaryField = primaryKey === "subject" ? "subject_id" : "system_id";
   const primaryNames = primaryKey === "subject" ? subjectMap : systemMap;
-  // Under Subjects → show Systems as children. Under Systems → show Topics.
+
   const childKeyOf = (q: any): string => {
     if (primaryKey === "subject") {
       return q.system_id != null ? `s:${q.system_id}` : "s:none";
@@ -354,24 +412,29 @@ function CrossTable({
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
   return (
-    <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
+    <div className="rounded-xl bg-card border border-border overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-xs sm:text-sm">
           <thead>
-            <tr className="bg-sky-500 text-white">
+            <tr className="bg-muted/40 border-b border-border text-muted-foreground">
               {(["name", "total", "correct", "incorrect", "omitted"] as SortKey[]).map((k) => (
-                <th key={k} onClick={() => toggle(k)} className="text-left font-semibold uppercase tracking-wide text-xs px-4 py-3 border-l first:border-l-0 border-sky-400/40 cursor-pointer select-none">
+                <th
+                  key={k}
+                  onClick={() => toggle(k)}
+                  className="text-left font-semibold uppercase tracking-wide text-[11px] px-4 py-2.5 cursor-pointer select-none hover:text-foreground transition-colors"
+                >
                   <span className="inline-flex items-center gap-1">
                     {k === "name" ? primaryLabel : k === "total" ? "Total Q" : k}
-                    <ArrowUpDown className="h-3 w-3 opacity-70" />
+                    <ArrowUpDown className="h-3 w-3 opacity-60" />
                   </span>
                 </th>
               ))}
+              <th className="text-right font-semibold uppercase tracking-wide text-[11px] px-4 py-2.5">Accuracy</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border">
             {rows.length === 0 ? (
-              <tr><td colSpan={5} className="text-center text-muted-foreground py-8">No data</td></tr>
+              <tr><td colSpan={6} className="text-center text-muted-foreground py-8 text-xs">No data</td></tr>
             ) : rows.map((r) => {
               const open = expanded.has(r.id);
               const childRows = Array.from(r.children.entries()).map(([cid, qs]) => ({ id: cid, name: childNameOf(cid, qs[0]), ...stats(qs) }))
@@ -394,33 +457,49 @@ function CrossTable({
 }
 
 function FragmentRows({ row: r, open, childRows, onToggle }: any) {
+  const pct = r.total ? Math.round((r.correct / r.total) * 100) : 0;
   return (
     <>
-      <tr className="border-b border-border last:border-0 hover:bg-muted/40">
-        <td className="px-4 py-3">
-          <button onClick={onToggle} className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium">
-            <ChevronRight className={cn("h-4 w-4 transition-transform", open && "rotate-90")} />
-            {r.name}
+      <tr className="hover:bg-muted/30 transition-colors">
+        <td className="px-4 py-2.5">
+          <button onClick={onToggle} className="inline-flex items-center gap-1.5 text-foreground font-medium hover:text-primary transition-colors text-left">
+            <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform shrink-0", open && "rotate-90")} />
+            <span>{r.name}</span>
           </button>
         </td>
-        <td className="px-4 py-3">{r.total}</td>
-        <td className="px-4 py-3 text-emerald-600 font-semibold">{r.correct}</td>
-        <td className="px-4 py-3 text-rose-600 font-semibold">{r.incorrect}</td>
-        <td className="px-4 py-3 text-blue-600 font-semibold">{r.omitted}</td>
+        <td className="px-4 py-2.5 tabular-nums">{r.total}</td>
+        <td className="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold tabular-nums">{r.correct}</td>
+        <td className="px-4 py-2.5 text-rose-600 dark:text-rose-400 font-semibold tabular-nums">{r.incorrect}</td>
+        <td className="px-4 py-2.5 text-muted-foreground tabular-nums">{r.omitted}</td>
+        <td className="px-4 py-2.5 text-right tabular-nums">
+          <span className={cn(
+            "inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold",
+            pct >= 70
+              ? "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400"
+              : pct >= 50
+                ? "bg-amber-500/12 text-amber-600 dark:text-amber-400"
+                : "bg-rose-500/12 text-rose-600 dark:text-rose-400",
+          )}>
+            {pct}%
+          </span>
+        </td>
       </tr>
-      {open && childRows.map((c: any) => (
-        <tr key={c.id} className="border-b border-border last:border-0 bg-muted/20">
-          <td className="px-4 py-2.5 pl-12 text-blue-600 dark:text-blue-400">{c.name}</td>
-          <td className="px-4 py-2.5">{c.total}</td>
-          <td className="px-4 py-2.5 text-emerald-600">{c.correct}</td>
-          <td className="px-4 py-2.5 text-rose-600">{c.incorrect}</td>
-          <td className="px-4 py-2.5 text-blue-600">{c.omitted}</td>
-        </tr>
-      ))}
+      {open && childRows.map((c: any) => {
+        const cpct = c.total ? Math.round((c.correct / c.total) * 100) : 0;
+        return (
+          <tr key={c.id} className="bg-muted/20">
+            <td className="px-4 py-2 pl-10 text-muted-foreground">{c.name}</td>
+            <td className="px-4 py-2 tabular-nums text-muted-foreground">{c.total}</td>
+            <td className="px-4 py-2 text-emerald-600 dark:text-emerald-400 tabular-nums">{c.correct}</td>
+            <td className="px-4 py-2 text-rose-600 dark:text-rose-400 tabular-nums">{c.incorrect}</td>
+            <td className="px-4 py-2 text-muted-foreground tabular-nums">{c.omitted}</td>
+            <td className="px-4 py-2 text-right tabular-nums text-xs text-muted-foreground">{cpct}%</td>
+          </tr>
+        );
+      })}
     </>
   );
 }
-
 
 // keep import used
 void Loader2; void getAiTestAnalysis; void Button; void useMutation;

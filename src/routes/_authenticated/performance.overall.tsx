@@ -1,12 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getDashboardStats } from "@/lib/qbank.functions";
 import { getPerformanceGraphs } from "@/lib/performance.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
-import { CheckCircle2, XCircle, MinusCircle, HelpCircle, User, ArrowRightLeft, RefreshCw, Repeat, FilePlus2, FileCheck2, PauseCircle, ClipboardList } from "lucide-react";
-
+import {
+  CheckCircle2, XCircle, MinusCircle, HelpCircle, User, ArrowRightLeft,
+  RefreshCw, Repeat, FilePlus2, FileCheck2, PauseCircle, ClipboardList,
+  BarChart3, PlusCircle, Clock, AlertTriangle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/performance/overall")({
   component: OverallPerformance,
@@ -33,18 +37,15 @@ const qbId = (slug: string) => QBANKS.find((q) => q.slug === slug)?.id ?? 1;
 function buildOptions(): Opt[] {
   const out: Opt[] = [];
 
-  // Step 1
   const s1 = qbId("step1");
   out.push({ key: "step1-all", label: "All Step 1 QBanks", qbankId: s1 });
   out.push({ key: "step1-uw", label: "UWorld Step 1", qbankId: s1, sources: ["main"] });
   for (const n of [1, 2, 3]) out.push({ key: `step1-sa${n}`, label: `Step 1 Self Assessment ${n}`, qbankId: s1, sources: [`SA${n}`] });
   for (const n of STEP1_NBMES) out.push({ key: `step1-nbme${n}`, label: `Step 1 NBME ${n}`, qbankId: s1, sources: [`NBME${n}`] });
 
-  // Step 2
   const s2 = qbId("step2");
   out.push({ key: "step2-all", label: "All Step 2 CK QBanks", qbankId: s2 });
   out.push({ key: "step2-uw", label: "UWorld Step 2 CK", qbankId: s2, sources: ["main"] });
-
   for (const n of [1, 2, 3]) out.push({ key: `step2-sa${n}`, label: `Step 2 CK Self Assessment ${n}`, qbankId: s2, sources: [`SA${n}`] });
   for (const n of STEP2_NBMES) out.push({ key: `step2-nbme${n}`, label: `Step 2 CK NBME ${n}`, qbankId: s2, sources: [`NBME${n}`] });
   for (const cms of STEP2_CMS) {
@@ -53,7 +54,6 @@ function buildOptions(): Opt[] {
     out.push({ key: `step2-cms-${cms.tag}`, label, qbankId: s2, sources: forms.map((n) => `CMS_${cms.tag}${n}`) });
   }
 
-  // Step 3
   const s3 = qbId("step3");
   out.push({ key: "step3-all", label: "All Step 3 QBanks", qbankId: s3 });
   out.push({ key: "step3-uw", label: "UWorld Step 3", qbankId: s3, sources: ["main"] });
@@ -68,14 +68,14 @@ function OverallPerformance() {
   const fn = useServerFn(getDashboardStats);
   const graphsFn = useServerFn(getPerformanceGraphs);
   const activeQbankId = useActiveQbankId();
-  const activeSlug = QBANKS.find((q) => q.id === activeQbankId)?.slug ?? "step2";
+  const activeQbank = QBANKS.find((q) => q.id === activeQbankId) ?? QBANKS[0];
+  const activeSlug = activeQbank.slug ?? "step2";
   const filteredOptions = useMemo(
     () => OPTIONS.filter((o) => o.key.startsWith(`${activeSlug}-`)),
     [activeSlug],
   );
   const [tab, setTab] = useState<"overall" | "analysis">("overall");
   const [optKey, setOptKey] = useState<string>(`${activeSlug}-all`);
-  // When user switches course elsewhere, reset selection to that course's aggregate.
   useEffect(() => {
     if (!filteredOptions.some((o) => o.key === optKey)) {
       setOptKey(filteredOptions[0]?.key ?? `${activeSlug}-all`);
@@ -95,80 +95,111 @@ function OverallPerformance() {
     staleTime: 60_000,
   });
 
-
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="sf-fluid-page space-y-6">
-        {/* Tabs */}
-        <div className="flex justify-center">
-          <div className="inline-flex rounded-full bg-muted/60 p-1">
-            <button
-              className={`px-6 py-2 text-sm font-semibold rounded-full transition-colors ${tab === "overall" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-              onClick={() => setTab("overall")}
-            >Overall</button>
-            <button
-              className={`px-6 py-2 text-sm font-semibold rounded-full transition-colors ${tab === "analysis" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-              onClick={() => setTab("analysis")}
-            >Analysis</button>
+    <div className="min-h-screen bg-muted/20">
+      <div className="sf-fluid-page space-y-5">
+        {/* Clinical Studio Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-border">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Overall Performance</h1>
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                {activeQbank.name}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Accuracy, QBank completion, answer changes, and subject/system breakdowns
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/performance/graphs"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-card text-xs font-medium text-foreground hover:bg-muted/60 transition-colors"
+            >
+              <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+              Graphs
+            </Link>
+            <Link
+              to="/new-test"
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              New Quiz
+            </Link>
           </div>
         </div>
 
-        {/* Filter dropdown */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <label className="text-sm text-muted-foreground shrink-0">Filter by QBank</label>
-          <select
-            value={optKey}
-            onChange={(e) => setOptKey(e.target.value)}
-            className="min-w-0 flex-1 sm:flex-none sm:min-w-[280px] max-w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          >
-            {activeSlug === "step2" ? (
-              <>
-                <optgroup label="USMLE Step 2 CK">
-                  {filteredOptions.filter((o) => !o.key.startsWith("step2-cms")).map((o) => (
+        {/* Control Bar: Tabs + QBank Filter */}
+        <div className="rounded-xl bg-card border border-border p-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex rounded-lg bg-muted/60 p-1">
+            {(["overall", "analysis"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-semibold rounded-md transition-colors capitalize",
+                  tab === t
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t === "overall" ? "Overview" : "Subject & System Analysis"}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <label className="text-xs font-medium text-muted-foreground shrink-0">QBank</label>
+            <select
+              value={optKey}
+              onChange={(e) => setOptKey(e.target.value)}
+              className="h-9 min-w-0 flex-1 sm:flex-none sm:min-w-[260px] max-w-full rounded-lg border border-border bg-background px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {activeSlug === "step2" ? (
+                <>
+                  <optgroup label="USMLE Step 2 CK">
+                    {filteredOptions.filter((o) => !o.key.startsWith("step2-cms")).map((o) => (
+                      <option key={o.key} value={o.key}>{o.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="CMS Clinical Shelf Forms">
+                    {filteredOptions.filter((o) => o.key.startsWith("step2-cms")).map((o) => (
+                      <option key={o.key} value={o.key}>{o.label}</option>
+                    ))}
+                  </optgroup>
+                </>
+              ) : (
+                <optgroup label={activeQbank.name}>
+                  {filteredOptions.map((o) => (
                     <option key={o.key} value={o.key}>{o.label}</option>
                   ))}
                 </optgroup>
-                {filteredOptions.filter((o) => o.key.startsWith("step2-cms")).map((o) => (
-                  <option key={o.key} value={o.key}>{o.label}</option>
-                ))}
-              </>
-            ) : (
-              <optgroup label={QBANKS.find((q) => q.slug === activeSlug)?.name ?? ""}>
-                {filteredOptions.map((o) => (
-                  <option key={o.key} value={o.key}>{o.label}</option>
-                ))}
-              </optgroup>
-            )}
-
-          </select>
+              )}
+            </select>
+          </div>
         </div>
 
         {tab === "analysis" ? (
           analysisLoading || !analysis ? (
             <div className="grid gap-4 md:grid-cols-2">
-              {[0, 1].map((i) => <div key={i} className="h-64 rounded-2xl border border-border animate-pulse bg-card" />)}
+              {[0, 1].map((i) => <div key={i} className="h-64 rounded-xl border border-border animate-pulse bg-card" />)}
             </div>
           ) : analysis.totalAttempts === 0 ? (
-            <div className="rounded-2xl bg-card border border-border p-10 text-center text-muted-foreground">
+            <div className="rounded-xl bg-card border border-border p-10 text-center text-sm text-muted-foreground">
               No attempts recorded in this filter yet. Answer a few questions to unlock subject &amp; system analysis.
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl bg-card border border-border p-4">
-                  <div className="text-xs text-muted-foreground">Total Attempts (Last 365d)</div>
-                  <div className="text-2xl font-bold mt-1">{analysis.totalAttempts.toLocaleString()}</div>
-                </div>
-                <div className="rounded-2xl bg-card border border-border p-4">
-                  <div className="text-xs text-muted-foreground">Average Time / Question</div>
-                  <div className="text-2xl font-bold mt-1">{analysis.avgTimeSec}s</div>
-                </div>
-                <div className="rounded-2xl bg-card border border-border p-4">
-                  <div className="text-xs text-muted-foreground">Weakest Subject</div>
-                  <div className="text-base font-bold mt-1 truncate">
-                    {[...analysis.subjectBreakdown].sort((a, b) => a.pct - b.pct)[0]?.name ?? "—"}
-                  </div>
-                </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <KpiCard icon={ClipboardList} tone="blue" label="Attempts (365d)" value={analysis.totalAttempts.toLocaleString()} />
+                <KpiCard icon={Clock} tone="violet" label="Avg Time / Question" value={`${analysis.avgTimeSec}s`} />
+                <KpiCard
+                  icon={AlertTriangle}
+                  tone="amber"
+                  label="Weakest Subject"
+                  value={[...analysis.subjectBreakdown].sort((a, b) => a.pct - b.pct)[0]?.name ?? "—"}
+                  compactValue
+                />
               </div>
 
               <div className="grid gap-4 lg:grid-cols-2">
@@ -176,12 +207,15 @@ function OverallPerformance() {
                   { title: "By Subject", rows: analysis.subjectBreakdown },
                   { title: "By System", rows: analysis.systemBreakdown },
                 ].map(({ title, rows }) => (
-                  <div key={title} className="rounded-2xl bg-card border border-border p-5 space-y-3">
-                    <div className="font-semibold text-sm">{title}</div>
+                  <div key={title} className="rounded-xl bg-card border border-border overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
+                      <span className="font-semibold text-sm">{title}</span>
+                      <span className="text-[11px] text-muted-foreground tabular-nums">{rows.length} categories</span>
+                    </div>
                     {rows.length === 0 ? (
-                      <div className="text-xs text-muted-foreground">No data yet.</div>
+                      <div className="p-6 text-xs text-muted-foreground text-center">No data yet.</div>
                     ) : (
-                      <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                      <div className="p-4 space-y-3 max-h-[460px] overflow-y-auto">
                         {rows.map((r) => (
                           <div key={r.id} className="space-y-1">
                             <div className="flex items-center justify-between text-xs gap-2">
@@ -190,7 +224,7 @@ function OverallPerformance() {
                                 {r.correct}/{r.total} · <span className="font-semibold text-foreground">{r.pct}%</span>
                               </span>
                             </div>
-                            <div className="h-2 rounded-full bg-muted overflow-hidden">
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                               <div
                                 className="h-full rounded-full transition-all"
                                 style={{
@@ -210,16 +244,16 @@ function OverallPerformance() {
           )
         ) : (
           <>
-            {/* Top gradient tiles */}
+            {/* Top KPI Strip */}
             {isLoading || !data ? (
-              <div className="grid gap-4 md:grid-cols-3">
-                {[0,1,2].map((i) => <div key={i} className="h-28 rounded-2xl border border-border animate-pulse bg-card" />)}
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[0, 1, 2].map((i) => <div key={i} className="h-20 rounded-xl border border-border animate-pulse bg-card" />)}
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-3">
-                <BigTile from="from-blue-500" to="to-blue-600" icon={ClipboardList} label="Total Tests" value={data.testCount.created} />
-                <BigTile from="from-emerald-500" to="to-emerald-600" icon={FileCheck2} label="Tests Completed" value={data.testCount.completed} />
-                <BigTile from="from-rose-500" to="to-rose-600" icon={PauseCircle} label="Tests Suspended" value={data.testCount.suspended} />
+              <div className="grid gap-3 sm:grid-cols-3">
+                <KpiCard icon={ClipboardList} tone="blue" label="Total Tests" value={data.testCount.created.toLocaleString()} />
+                <KpiCard icon={FileCheck2} tone="green" label="Tests Completed" value={data.testCount.completed.toLocaleString()} />
+                <KpiCard icon={PauseCircle} tone="amber" label="Tests Suspended" value={data.testCount.suspended.toLocaleString()} />
               </div>
             )}
 
@@ -229,19 +263,19 @@ function OverallPerformance() {
               return (
                 <div className="grid gap-4 md:grid-cols-2">
                   {/* QBank Usage */}
-                  <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-                    <div className="font-semibold">QBank Usage</div>
-                    <div className="text-xs text-muted-foreground mb-4">Counts each unique question ID once, even if repeated</div>
-                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  <div className="rounded-xl bg-card border border-border p-5">
+                    <div className="font-semibold text-sm">QBank Usage</div>
+                    <div className="text-xs text-muted-foreground mb-4">Unique question IDs attempted at least once</div>
+                    <div className="flex flex-col sm:flex-row items-center gap-5">
                       <Donut
-                        size={170}
+                        size={156}
                         segments={[
                           { value: data.answered, color: "hsl(217 91% 60%)" },
-                          { value: Math.max(data.unused, 0), color: "hsl(0 0% 90%)" },
+                          { value: Math.max(data.unused, 0), color: "hsl(var(--muted))" },
                         ]}
-                        center={<div className="text-center"><div className="text-2xl font-bold">{data.usedPct}%</div><div className="text-[10px] text-muted-foreground uppercase">Used</div></div>}
+                        center={<div className="text-center"><div className="text-2xl font-bold tabular-nums">{data.usedPct}%</div><div className="text-[10px] text-muted-foreground uppercase tracking-wide">Used</div></div>}
                       />
-                      <div className="flex-1 min-w-0 w-full space-y-3">
+                      <div className="flex-1 min-w-0 w-full space-y-2.5">
                         <Row icon={HelpCircle} tone="blue" label="Total Questions" value={data.totalQuestions} />
                         <Row icon={User} tone="violet" label="Used Questions" value={data.answered} />
                         <Row icon={MinusCircle} tone="sky" label="Unused Questions" value={Math.max(data.unused, 0)} />
@@ -250,19 +284,19 @@ function OverallPerformance() {
                   </div>
 
                   {/* Your Score */}
-                  <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-                    <div className="font-semibold">Your Score</div>
-                    <div className="text-xs text-muted-foreground mb-4">Counts every answer attempt, so repeated attempts count</div>
-                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  <div className="rounded-xl bg-card border border-border p-5">
+                    <div className="font-semibold text-sm">Your Score</div>
+                    <div className="text-xs text-muted-foreground mb-4">Accuracy across all answered attempts</div>
+                    <div className="flex flex-col sm:flex-row items-center gap-5">
                       <Donut
-                        size={170}
+                        size={156}
                         segments={[
                           { value: data.correctAttempts, color: "hsl(142 71% 45%)" },
                           { value: data.incorrectAttempts, color: "hsl(0 84% 60%)" },
                         ]}
-                        center={<div className="text-center"><div className="text-2xl font-bold">{correctPct}%</div><div className="text-[10px] text-muted-foreground uppercase">Correct</div></div>}
+                        center={<div className="text-center"><div className="text-2xl font-bold tabular-nums">{correctPct}%</div><div className="text-[10px] text-muted-foreground uppercase tracking-wide">Correct</div></div>}
                       />
-                      <div className="flex-1 min-w-0 w-full space-y-3">
+                      <div className="flex-1 min-w-0 w-full space-y-2.5">
                         <Row icon={CheckCircle2} tone="green" label="Total Correct" value={data.correctAttempts} />
                         <Row icon={XCircle} tone="rose" label="Total Incorrect" value={data.incorrectAttempts} />
                         <Row icon={MinusCircle} tone="sky" label="Total Omitted" value={data.omittedAttempts} />
@@ -276,10 +310,10 @@ function OverallPerformance() {
             {data && (
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Answer Changes */}
-                <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-                  <div className="font-semibold">Answer Changes</div>
-                  <div className="text-xs text-muted-foreground mb-4">Detailed breakdown of attempts</div>
-                  <div className="space-y-3">
+                <div className="rounded-xl bg-card border border-border p-5">
+                  <div className="font-semibold text-sm">Answer Changes</div>
+                  <div className="text-xs text-muted-foreground mb-4">How changing answers impacted your score</div>
+                  <div className="space-y-2.5">
                     <Row icon={CheckCircle2} tone="green" label="Correct to Correct" value={data.answerChanges.correctToCorrect ?? 0} />
                     <Row icon={ArrowRightLeft} tone="rose" label="Correct to Incorrect" value={data.answerChanges.correctToIncorrect} />
                     <Row icon={RefreshCw} tone="sky" label="Incorrect to Correct" value={data.answerChanges.incorrectToCorrect} />
@@ -288,10 +322,10 @@ function OverallPerformance() {
                 </div>
 
                 {/* Test Count */}
-                <div className="rounded-2xl bg-card border border-border p-5 shadow-sm">
-                  <div className="font-semibold">Test Count</div>
-                  <div className="text-xs text-muted-foreground mb-4">Your test activity for this selection</div>
-                  <div className="space-y-3">
+                <div className="rounded-xl bg-card border border-border p-5">
+                  <div className="font-semibold text-sm">Test Activity</div>
+                  <div className="text-xs text-muted-foreground mb-4">Your test sessions for this selection</div>
+                  <div className="space-y-2.5">
                     <Row icon={FilePlus2} tone="blue" label="Tests Created" value={data.testCount.created} />
                     <Row icon={FileCheck2} tone="green" label="Tests Completed" value={data.testCount.completed} />
                     <Row icon={PauseCircle} tone="amber" label="Suspended Tests" value={data.testCount.suspended} />
@@ -307,22 +341,27 @@ function OverallPerformance() {
 }
 
 const TONES: Record<string, { bg: string; text: string; pill: string }> = {
-  blue:   { bg: "bg-blue-100",   text: "text-blue-600",   pill: "bg-blue-500 text-white" },
-  green:  { bg: "bg-green-100",  text: "text-green-600",  pill: "bg-green-500 text-white" },
-  amber:  { bg: "bg-amber-100",  text: "text-amber-600",  pill: "bg-amber-500 text-white" },
-  violet: { bg: "bg-violet-100", text: "text-violet-600", pill: "bg-violet-500 text-white" },
-  rose:   { bg: "bg-rose-100",   text: "text-rose-600",   pill: "bg-rose-500 text-white" },
-  sky:    { bg: "bg-sky-100",    text: "text-sky-600",    pill: "bg-sky-500 text-white" },
+  blue:   { bg: "bg-blue-500/12",    text: "text-blue-600 dark:text-blue-400",       pill: "bg-blue-500/12 text-blue-700 dark:text-blue-300" },
+  green:  { bg: "bg-emerald-500/12", text: "text-emerald-600 dark:text-emerald-400", pill: "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300" },
+  amber:  { bg: "bg-amber-500/12",   text: "text-amber-600 dark:text-amber-400",     pill: "bg-amber-500/12 text-amber-700 dark:text-amber-300" },
+  violet: { bg: "bg-violet-500/12",  text: "text-violet-600 dark:text-violet-400",   pill: "bg-violet-500/12 text-violet-700 dark:text-violet-300" },
+  rose:   { bg: "bg-rose-500/12",    text: "text-rose-600 dark:text-rose-400",       pill: "bg-rose-500/12 text-rose-700 dark:text-rose-300" },
+  sky:    { bg: "bg-sky-500/12",     text: "text-sky-600 dark:text-sky-400",         pill: "bg-sky-500/12 text-sky-700 dark:text-sky-300" },
 };
 
-function BigTile({ from, to, icon: Icon, label, value }: { from: string; to: string; icon: any; label: string; value: number }) {
+function KpiCard({ icon: Icon, tone, label, value, compactValue }: { icon: any; tone: keyof typeof TONES; label: string; value: string; compactValue?: boolean }) {
+  const t = TONES[tone];
   return (
-    <div className={`rounded-2xl bg-gradient-to-br ${from} ${to} text-white p-6 shadow-sm flex items-center justify-between`}>
-      <div>
-        <div className="text-4xl font-extrabold leading-none">{value.toLocaleString()}</div>
-        <div className="text-sm font-medium mt-1 opacity-90">{label}</div>
+    <div className="rounded-xl bg-card border border-border p-4 flex items-center gap-3.5">
+      <div className={cn("h-10 w-10 rounded-lg grid place-items-center shrink-0", t.bg, t.text)}>
+        <Icon className="h-5 w-5" />
       </div>
-      <Icon className="h-8 w-8 opacity-80" />
+      <div className="min-w-0">
+        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className={cn("font-bold tabular-nums leading-tight mt-0.5 truncate", compactValue ? "text-base" : "text-2xl")}>
+          {value}
+        </div>
+      </div>
     </div>
   );
 }
@@ -331,20 +370,22 @@ function Row({ icon: Icon, label, sub, value, tone }: { icon: any; label: string
   const t = TONES[tone];
   return (
     <div className="flex items-center gap-3">
-      <div className={`h-9 w-9 rounded-lg ${t.bg} ${t.text} grid place-items-center shrink-0`}>
+      <div className={cn("h-8 w-8 rounded-lg grid place-items-center shrink-0", t.bg, t.text)}>
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">{label}</div>
+        <div className="text-xs sm:text-sm font-medium truncate">{label}</div>
         {sub && <div className="text-[11px] text-muted-foreground">{sub}</div>}
       </div>
-      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${t.pill}`}>{value.toLocaleString()}</div>
+      <div className={cn("px-2.5 py-0.5 rounded-md text-xs font-semibold tabular-nums", t.pill)}>
+        {value.toLocaleString()}
+      </div>
     </div>
   );
 }
 
 function Donut({ size, segments, center }: { size: number; segments: { value: number; color: string }[]; center?: React.ReactNode }) {
-  const stroke = 16;
+  const stroke = 14;
   const r = (size - stroke) / 2;
   const cx = size / 2;
   const cy = size / 2;
@@ -352,9 +393,9 @@ function Donut({ size, segments, center }: { size: number; segments: { value: nu
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
   let acc = 0;
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(0 0% 92%)" strokeWidth={stroke} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth={stroke} />
         {segments.map((s, i) => {
           const len = (s.value / total) * circ;
           const el = (

@@ -1,17 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import {
-  Search, Copy, Info, Loader2, Eye, ArrowUpDown,
+  Search, Copy, Info, Loader2, Eye, ArrowUpDown, Play,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, FileText,
   Maximize2, FlaskConical, StickyNote, Notebook, Calculator, Settings,
   Library, Zap, MessageSquare, ArrowLeft, Flag, Clock, CheckCircle2, Menu,
 } from "lucide-react";
 import { toast } from "sonner";
-import { searchQuestions, toggleBookmark } from "@/lib/qbank.functions";
+import { searchQuestions, toggleBookmark, createCustomTest } from "@/lib/qbank.functions";
 import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
 import { rewriteMedia } from "@/lib/media";
 import { useMediaToken } from "@/lib/use-media-token";
@@ -54,10 +54,13 @@ type SearchResult = {
 };
 
 function SearchPage() {
+  const nav = useNavigate();
   const searchFn = useServerFn(searchQuestions);
+  const createTestFn = useServerFn(createCustomTest);
   const qbankId = useActiveQbankId();
   const urlSearch = Route.useSearch();
   const [query, setQuery] = useState(urlSearch.q ?? "");
+  const [creatingTest, setCreatingTest] = useState(false);
   const currentBank = QBANKS.find((q) => q.id === qbankId) ?? QBANKS[0];
 
   const mutation = useMutation({
@@ -89,77 +92,128 @@ function SearchPage() {
     toast.success(`Copied ${results.length} IDs`);
   };
 
+  const practiceResults = async () => {
+    if (!results.length || creatingTest) return;
+    setCreatingTest(true);
+    try {
+      const ids = results.slice(0, 50).map((r) => r.id);
+      const created = await createTestFn({
+        data: {
+          qbankId,
+          questionIds: ids,
+          mode: "practice",
+          timed: false,
+          name: `Search: ${query.trim().slice(0, 36)}`,
+        },
+      });
+      nav({ to: "/test/$id", params: { id: String(created.id) } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create test");
+    } finally {
+      setCreatingTest(false);
+    }
+  };
 
   return (
-    <div className="sf-fluid-page">
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-[#1e3a8a]">Search Questions</h1>
-        <p className="text-muted-foreground text-sm mt-1">Find questions by ID or keywords from your question bank</p>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm border p-5 mb-4">
-        <div className="grid gap-4 md:grid-cols-[1fr_240px_auto] items-end">
+    <div className="min-h-screen bg-muted/20">
+      <div className="sf-fluid-page space-y-5">
+        {/* Clinical Studio Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-border">
           <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Enter Question ID or Keywords</label>
-            <div className="relative mt-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && runSearch()}
-                placeholder="Type to search..."
-                className="w-full pl-9 pr-3 py-2.5 border rounded-md bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
-              />
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Search Questions</h1>
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                {currentBank.name}
+              </span>
             </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Find questions by ID or clinical keywords, inspect explanations, or launch a custom quiz
+            </p>
           </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Course</label>
-            <div className="w-full mt-1 py-2.5 px-3 border rounded-md bg-slate-100 text-slate-700 font-medium">
-              {currentBank.name}
-            </div>
-          </div>
-
-          <button
-            onClick={runSearch}
-            disabled={mutation.isPending}
-            className="h-11 px-6 rounded-full bg-[#1e3a8a] text-white font-semibold flex items-center gap-2 hover:bg-[#2a4ba0] disabled:opacity-60"
-          >
-            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            Search
-          </button>
         </div>
+
+        {/* Search Card */}
+        <div className="rounded-xl bg-card border border-border p-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+            <div className="flex-1 min-w-0">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                Question ID or Keywords
+              </label>
+              <div className="relative mt-1.5">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && runSearch()}
+                  placeholder="e.g. 14203, pheochromocytoma, diabetic ketoacidosis…"
+                  className="h-10 w-full pl-9 pr-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+            </div>
+            <button
+              onClick={runSearch}
+              disabled={mutation.isPending}
+              className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-60 transition-colors shrink-0"
+            >
+              {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              Search
+            </button>
+          </div>
+        </div>
+
+        {/* Tip banner */}
+        <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 flex gap-3 items-start">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs text-muted-foreground leading-relaxed space-y-0.5">
+            <p>Search returns up to <span className="font-medium text-foreground">200 questions</span>. Refine your keywords for narrower results.</p>
+            <p>Clicking <span className="font-medium text-foreground">View</span> reveals the answer immediately. Use <span className="font-medium text-foreground">Practice as Test</span> (up to 50) or <span className="font-medium text-foreground">Copy IDs</span> to practice unanswered.</p>
+          </div>
+        </div>
+
+        {mutation.isPending && (
+          <div className="rounded-xl bg-card border border-border py-12 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" /> Searching question bank…
+          </div>
+        )}
+
+        {mutation.isSuccess && results.length === 0 && (
+          <div className="rounded-xl bg-card border border-border py-12 text-center text-sm text-muted-foreground">
+            No matching questions found for "{query}".
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <ResultsTable
+            results={results}
+            truncated={mutation.data?.truncated ?? false}
+            onCopyIds={copyIds}
+            onPractice={practiceResults}
+            creatingTest={creatingTest}
+            autoOpenId={autoOpenId}
+          />
+        )}
       </div>
-
-      <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6 flex gap-3">
-        <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-        <ol className="text-sm text-slate-700 space-y-1 list-decimal list-inside">
-          <li>Search can generate up to a maximum of 200 questions. To generate more questions, please refine your search criteria.</li>
-          <li>Questions viewed through Search will have their correct answers revealed. To practice these questions unanswered, copy the question IDs using the "Copy IDs" button and use them to generate a custom quiz.</li>
-        </ol>
-      </div>
-
-      {mutation.isPending && (
-        <div className="text-center py-12 text-slate-500">Searching...</div>
-      )}
-
-      {mutation.isSuccess && results.length === 0 && (
-        <div className="text-center py-12 text-slate-500">No questions found.</div>
-      )}
-
-      {results.length > 0 && <ResultsTable results={results} truncated={mutation.data?.truncated ?? false} onCopyIds={copyIds} autoOpenId={autoOpenId} />}
     </div>
   );
 }
 
 type SortKey = "id" | "subject" | "system" | "topic";
 
-function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: SearchResult[]; truncated: boolean; onCopyIds: () => void; autoOpenId?: number | null }) {
+function ResultsTable({
+  results, truncated, onCopyIds, onPractice, creatingTest, autoOpenId,
+}: {
+  results: SearchResult[];
+  truncated: boolean;
+  onCopyIds: () => void;
+  onPractice: () => void;
+  creatingTest: boolean;
+  autoOpenId?: number | null;
+}) {
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [viewingIdx, setViewingIdx] = useState<number | null>(null);
-  const pageSize = 20;
-
+  const pageSize = 25;
 
   const sorted = useMemo(() => {
     const arr = [...results];
@@ -180,7 +234,6 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
     if (idx >= 0) setViewingIdx(idx);
   }, [autoOpenId, sorted]);
 
-
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const start = (currentPage - 1) * pageSize;
@@ -192,56 +245,66 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
   };
 
   const th = (label: string, k: SortKey) => (
-    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-white">
-      <button onClick={() => toggleSort(k)} className="inline-flex items-center gap-1.5 hover:opacity-80">
-        {label} <ArrowUpDown className="h-3 w-3 opacity-70" />
+    <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <button onClick={() => toggleSort(k)} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+        {label} <ArrowUpDown className="h-3 w-3 opacity-60" />
       </button>
     </th>
   );
 
   return (
     <>
-      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between p-4 bg-slate-50 border-b">
+      <div className="rounded-xl bg-card border border-border overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-muted/30 border-b border-border">
           <div>
-            <div className="font-bold text-slate-800">Search Results</div>
-            <div className="text-xs text-slate-500 mt-0.5">
+            <div className="font-semibold text-sm">Search Results</div>
+            <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
               {sorted.length} question{sorted.length === 1 ? "" : "s"} found
-              {truncated && <span className="text-amber-600 ml-2">(showing first 200)</span>}
+              {truncated && <span className="text-amber-600 dark:text-amber-400 ml-2">(showing first 200)</span>}
             </div>
           </div>
-          <button
-            onClick={onCopyIds}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-100"
-          >
-            <Copy className="h-4 w-4" /> Copy IDs
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onCopyIds}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-background border border-border text-xs font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              <Copy className="h-3.5 w-3.5" /> Copy IDs
+            </button>
+            <button
+              onClick={onPractice}
+              disabled={creatingTest}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
+            >
+              {creatingTest ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+              Practice as Test {sorted.length > 50 ? "(50)" : `(${sorted.length})`}
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-[#2c5aa0]">
+          <table className="w-full text-xs sm:text-sm">
+            <thead className="bg-muted/40 border-b border-border">
               <tr>
                 {th("ID", "id")}
                 {th("Subject", "subject")}
                 {th("System", "system")}
                 {th("Topic", "topic")}
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-white">Actions</th>
+                <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {pageRows.map((r) => {
                 const absIdx = sorted.findIndex((x) => x.id === r.id);
                 return (
-                  <tr key={r.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-mono text-slate-700">{r.id}</td>
-                    <td className="px-4 py-3 text-slate-700">{r.subject || "—"}</td>
-                    <td className="px-4 py-3 text-slate-700">{r.system || "—"}</td>
-                    <td className="px-4 py-3 text-slate-700">{r.title || "—"}</td>
-                    <td className="px-4 py-3 text-right">
+                  <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground tabular-nums">#{r.id}</td>
+                    <td className="px-4 py-2.5 font-medium">{r.subject || "—"}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{r.system || "—"}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{r.title || "—"}</td>
+                    <td className="px-4 py-2.5 text-right">
                       <button
                         onClick={() => setViewingIdx(absIdx)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600"
+                        className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 text-xs font-semibold hover:bg-emerald-500/20 transition-colors"
                       >
                         <Eye className="h-3.5 w-3.5" /> View
                       </button>
@@ -253,13 +316,13 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 p-4 border-t bg-white text-sm text-slate-600">
-          <span>
-            Showing {sorted.length === 0 ? 0 : start + 1} to {Math.min(start + pageSize, sorted.length)} of {sorted.length} entries
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-border bg-muted/20 text-xs text-muted-foreground">
+          <span className="tabular-nums">
+            Showing {sorted.length === 0 ? 0 : start + 1}–{Math.min(start + pageSize, sorted.length)} of {sorted.length}
           </span>
           <div className="flex items-center gap-1">
-            <PagerBtn onClick={() => setPage(1)} disabled={currentPage === 1}><ChevronsLeft className="h-4 w-4" /></PagerBtn>
-            <PagerBtn onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></PagerBtn>
+            <PagerBtn onClick={() => setPage(1)} disabled={currentPage === 1}><ChevronsLeft className="h-3.5 w-3.5" /></PagerBtn>
+            <PagerBtn onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1}><ChevronLeft className="h-3.5 w-3.5" /></PagerBtn>
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter((p) => Math.abs(p - currentPage) <= 2 || p === 1 || p === totalPages)
               .reduce<(number | "…")[]>((acc, p, i, arr) => {
@@ -269,21 +332,21 @@ function ResultsTable({ results, truncated, onCopyIds, autoOpenId }: { results: 
               }, [])
               .map((p, i) =>
                 p === "…" ? (
-                  <span key={`e${i}`} className="px-2 text-slate-400">…</span>
+                  <span key={`e${i}`} className="px-1.5 text-muted-foreground">…</span>
                 ) : (
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`min-w-[32px] h-8 px-2 rounded text-sm font-medium ${
-                      p === currentPage ? "bg-[#1e3a8a] text-white" : "text-slate-600 hover:bg-slate-100"
+                    className={`min-w-[28px] h-7 px-2 rounded-md text-xs font-semibold transition-colors ${
+                      p === currentPage ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     {p}
                   </button>
                 )
               )}
-            <PagerBtn onClick={() => setPage(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></PagerBtn>
-            <PagerBtn onClick={() => setPage(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-4 w-4" /></PagerBtn>
+            <PagerBtn onClick={() => setPage(currentPage + 1)} disabled={currentPage === totalPages}><ChevronRight className="h-3.5 w-3.5" /></PagerBtn>
+            <PagerBtn onClick={() => setPage(totalPages)} disabled={currentPage === totalPages}><ChevronsRight className="h-3.5 w-3.5" /></PagerBtn>
           </div>
         </div>
       </div>
@@ -305,7 +368,7 @@ function PagerBtn({ children, onClick, disabled }: { children: React.ReactNode; 
     <button
       onClick={onClick}
       disabled={disabled}
-      className="h-8 w-8 flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent"
+      className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
     >
       {children}
     </button>
