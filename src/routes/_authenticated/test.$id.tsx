@@ -273,7 +273,7 @@ function NbmeTextZoom({ fontSize, setFontSize }: { fontSize: number; setFontSize
           );
         })}
       </div>
-      <span className="hidden sm:block text-[11px] text-[#fcfcfc] mt-0.5">Text Zoom</span>
+      <span className="block text-[10.5px] text-[#fcfcfc] mt-0.5 whitespace-nowrap">Text Zoom</span>
     </div>
   );
 }
@@ -314,7 +314,7 @@ function TopBtn({
         ) : Icon ? (
           <Icon className="h-5 w-5" />
         ) : null}
-        <span className="hidden sm:block text-[11px] mt-0.5 whitespace-nowrap">{label}</span>
+        <span className="block text-[10.5px] mt-0.5 whitespace-nowrap">{label}</span>
       </button>
     );
   }
@@ -324,7 +324,7 @@ function TopBtn({
       onClick={onClick}
       title={label}
       aria-label={label}
-      className="shrink-0 flex flex-col items-center justify-center px-1.5 sm:px-2 py-0.5 text-white/95 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[38px] sm:min-w-[58px] leading-tight"
+      className="shrink-0 flex flex-col items-center justify-center px-1.5 sm:px-2 py-0.5 text-white/95 hover:text-white hover:bg-white/10 rounded transition-colors min-w-[44px] sm:min-w-[58px] leading-tight"
     >
       <span className={`flex items-center justify-center h-6 w-6 rounded-[4px] bg-white text-[#004a77] shadow-xs ${tileClass ?? ""}`}>
         {Icon ? (
@@ -333,7 +333,7 @@ function TopBtn({
           <img src={imgSrc} alt="" className={imgClass ?? "h-4 w-4 object-contain"} style={imgFlip ? { transform: "scaleX(-1)" } : undefined} />
         ) : null}
       </span>
-      <span className="hidden sm:block text-[10px] font-medium mt-0.5 whitespace-nowrap">{label}</span>
+      <span className="block text-[10px] font-medium mt-0.5 whitespace-nowrap">{label}</span>
     </button>
   );
 }
@@ -1395,7 +1395,7 @@ function TestRunner() {
               <span className="h-6 w-6 rounded-full bg-white text-[#004673] flex items-center justify-center">
                 <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
               </span>
-              <span className="hidden sm:block text-[10.5px] mt-0.5">Previous</span>
+              <span className="block text-[10.5px] mt-0.5">Previous</span>
             </button>
             <button
               type="button"
@@ -1407,7 +1407,7 @@ function TestRunner() {
               <span className="h-6 w-6 rounded-full bg-white text-[#004673] flex items-center justify-center">
                 <ChevronRight className="h-4 w-4 stroke-[2.5]" />
               </span>
-              <span className="hidden sm:block text-[10.5px] mt-0.5">Next</span>
+              <span className="block text-[10.5px] mt-0.5">Next</span>
             </button>
           </div>
 
@@ -1450,7 +1450,7 @@ function TestRunner() {
               <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
                 <ChevronLeft className="h-4 w-4 stroke-[2.5]" />
               </span>
-              <span className="hidden sm:block text-[10px] font-medium mt-0.5">Previous</span>
+              <span className="block text-[10px] font-medium mt-0.5">Previous</span>
             </button>
             <span className="text-[12px] font-medium tabular-nums text-white/95 px-1">
               {idx + 1} / {total}
@@ -1465,7 +1465,7 @@ function TestRunner() {
               <span className="h-6 w-6 rounded-full bg-white text-[#004a77] flex items-center justify-center shadow-xs">
                 <ChevronRight className="h-4 w-4 stroke-[2.5]" />
               </span>
-              <span className="hidden sm:block text-[10px] font-medium mt-0.5">Next</span>
+              <span className="block text-[10px] font-medium mt-0.5">Next</span>
             </button>
           </div>
 
@@ -2159,14 +2159,11 @@ function TestRunner() {
               style={{ background: navBg }}
             >
               <div
-                className="px-2.5 py-1 leading-tight tabular-nums shrink-0"
+                className="px-2.5 py-1.5 leading-tight tabular-nums shrink-0"
                 style={{ border: "1px solid #6b93b8" }}
               >
-                <div className="text-[12.5px] font-normal">
-                  Block Time Remaining: <span className="ml-1 font-medium">{mmss}</span>
-                </div>
-                <div className="text-[11.5px] text-white/90">
-                  Day Time Remaining: <span className="ml-1">{mmss}</span>
+                <div className="text-[12.5px] font-medium">
+                  Block Time Remaining: <span className="ml-1">{mmss}</span>
                 </div>
               </div>
               <button
