@@ -617,9 +617,9 @@ function SettingsPage() {
                   Choose your Tutor &amp; Review layout. Exam Mode always uses the official NBME WebFRED simulator interface.
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {TUTOR_INTERFACE_STYLES.map((st) => {
-                  const active = (s.tutorInterface ?? "uworld") === st.id;
+                  const active = (s.tutorInterface === "nbme-fred" ? "nbme-fred" : "uworld") === st.id;
                   return (
                     <button
                       key={st.id}

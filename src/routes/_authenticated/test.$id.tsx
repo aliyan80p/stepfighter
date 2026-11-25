@@ -538,39 +538,33 @@ function TestRunner() {
   const isPractice = data?.test.mode === "practice";
   const isRealExam = data?.test.mode === "test";
   const isReview = !!data?.test.done;
-  const isExamUI = isRealExam && !isReview;
-  const tutorIface: TutorInterfaceStyle = userSettings.tutorInterface ?? "uworld";
+  const isExamUI = !isReview && (isRealExam || !tutorMode);
+  const tutorIface: TutorInterfaceStyle = userSettings.tutorInterface === "nbme-fred" ? "nbme-fred" : "uworld";
   const isWebFred = isExamUI || tutorIface === "nbme-fred";
-  const isUwModern = !isExamUI && tutorIface === "uworld-modern";
   const isUworldUI = !isWebFred;
   const total = data?.questions.length ?? 0;
 
   const navBg = isWebFred
     ? "#004976"
-    : isUwModern
-      ? "#324a67"
-      : userSettings.useAccentInQuizNav
-        ? darkenHex(userSettings.accentColor, 0.78)
-        : NAV_BG;
+    : userSettings.useAccentInQuizNav
+      ? darkenHex(userSettings.accentColor, 0.78)
+      : NAV_BG;
 
   const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
+  const isWebFredDark = isWebFred && (theme === "dark" || (!isExamUI && baseThemeStyles.isDark));
   const themeStyles =
-    isWebFred && baseThemeStyles.isDark
-      ? { ...baseThemeStyles, pageBg: "#000000", sideBg: "#111827", cardBg: "#000000", text: "#ffffff", border: "#334155" }
-      : isWebFred && !baseThemeStyles.isDark && theme === "light"
-        ? { ...baseThemeStyles, pageBg: "#fcfcfc", sideBg: "#fcfcfc", cardBg: "#fcfcfc", text: "#000000", border: "#c0c0c0" }
-        : isUwModern && !baseThemeStyles.isDark && theme === "light"
-          ? { ...baseThemeStyles, pageBg: "#f1f5fa", sideBg: "#eef2f7", cardBg: "#f7f9fc", text: "#1e293b", border: "#cbd5e1" }
-          : !baseThemeStyles.isDark && theme === "light"
-            ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
-            : baseThemeStyles;
+    isWebFred && isWebFredDark
+      ? { ...baseThemeStyles, isDark: true, pageBg: "#000000", sideBg: "#111827", cardBg: "#000000", text: "#ffffff", border: "#334155" }
+      : isWebFred
+        ? { ...baseThemeStyles, isDark: false, pageBg: "#fcfcfc", sideBg: "#fcfcfc", cardBg: "#fcfcfc", text: "#000000", border: "#c0c0c0" }
+        : !baseThemeStyles.isDark && theme === "light"
+          ? { ...baseThemeStyles, pageBg: "#ffffff", sideBg: "#ffffff", cardBg: "#ffffff", text: "#1e293b", border: "#d8dee6" }
+          : baseThemeStyles;
 
   const effectiveReadingFont =
     isWebFred && userSettings.fontFamily === "system"
       ? '"Arial Unicode MS", Arial, Helvetica, sans-serif'
-      : isUwModern && userSettings.fontFamily === "system"
-        ? 'Georgia, "Times New Roman", Times, serif'
-        : getFontStack(userSettings.fontFamily);
+      : getFontStack(userSettings.fontFamily);
 
   // Preload next question's images in the background so switching questions feels instant.
   useEffect(() => {
@@ -1404,65 +1398,6 @@ function TestRunner() {
             {!isExamUI && <TopBtn plain icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />}
           </div>
         </div>
-      ) : isUwModern ? (
-        <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-1.5 text-white" style={{ background: navBg }}>
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <button
-              type="button"
-              className="p-1.5 hover:bg-white/10 rounded shrink-0"
-              onClick={() => setSidebarOpen(v => !v)}
-              title={sidebarOpen ? "Hide question list" : "Show question list"}
-            >
-              <span className="block w-4 h-0.5 bg-white mb-1" />
-              <span className="block w-4 h-0.5 bg-white mb-1" />
-              <span className="block w-4 h-0.5 bg-white" />
-            </button>
-            <div className="text-[11px] sm:text-[12px] leading-tight shrink-0">
-              <div className="font-semibold">Item {idx + 1} of {total}</div>
-              <div className="hidden sm:block text-[10.5px] text-white/75">Question Id: {question.id}</div>
-            </div>
-            <button
-              type="button"
-              onClick={bookmark}
-              className="p-1.5 rounded hover:bg-white/10 shrink-0"
-              title={isBookmarked ? "Remove flag" : "Flag question"}
-            >
-              <Flag className={`h-4 w-4 ${isBookmarked ? "fill-red-500 text-red-400" : "text-white/85"}`} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => goToQuestion(idx - 1)}
-              disabled={idx <= 0}
-              title="Previous"
-              aria-label="Previous"
-              className="h-7 w-7 rounded-full border border-white/70 flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => goToQuestion(idx + 1)}
-              disabled={idx >= total - 1}
-              title="Next"
-              aria-label="Next"
-              className="h-7 w-7 rounded-full border border-white/70 flex items-center justify-center text-white hover:bg-white/15 disabled:opacity-35 transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-0.5 shrink-0">
-            <TopBtn modern icon={Maximize2} label="Full Screen" onClick={goFullscreen} />
-            {mediaItems.length > 0 && <TopBtn modern icon={ImageIcon} label="Media" onClick={() => setMediaModalIndex(0)} />}
-            <TopBtn modern icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
-            <TopBtn modern icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
-            <TopBtn modern icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-            <TopBtn modern icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
-          </div>
-        </div>
       ) : (
         <div className="qbank-nav-scroll flex items-center justify-between gap-2 px-2 sm:px-3 py-1.5 text-white" style={{ background: navBg }}>
           <div className="flex items-center gap-2 shrink-0">
@@ -1639,14 +1574,14 @@ function TestRunner() {
           className="sf-main-canvas flex-1 overflow-auto"
           ref={contentRef}
           style={
-            isWebFred && !themeStyles.isDark && theme === "light"
+            isWebFred && !isWebFredDark
               ? { backgroundImage: "linear-gradient(#fcfcfc 30%, #d7dced 100%)" }
               : undefined
           }
         >
           <div
             ref={splitGridRef}
-            className={`w-full mx-0 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${(isRealExam && !isReview) ? "qbank-exam-stem" : ""}`}
+            className={`w-full mx-0 py-3 qbank-theme-${theme} ${largeImages ? "qbank-large-images" : ""} ${(userSettings.splitExplanations && showAnswers && !!question.explanation) ? "qbank-split-mode" : ""} ${isExamUI ? "qbank-exam-stem" : ""}`}
             style={{
               fontSize,
               fontWeight,
@@ -1656,13 +1591,13 @@ function TestRunner() {
               paddingInline: isWebFred ? "30px" : "clamp(0.75rem, calc(1rem + var(--sf-content-padding, 0px)), 4rem)",
               paddingTop: isWebFred ? "22px" : undefined,
               ["--sf-split-left" as string]: `${liveSplitRatio ?? userSettings.splitRatio ?? 50}%`,
-              maxWidth: (!isRealExam || isReview) && !(userSettings.splitExplanations && showAnswers && !!question.explanation)
+              maxWidth: !isExamUI && !(userSettings.splitExplanations && showAnswers && !!question.explanation)
                 ? `${Math.max(50, Math.min(100, userSettings.lineWidthPercent ?? 85))}%`
                 : undefined,
             }}
           >
             {/* Official UWorld Mark Question bar (Official UWorld Tutor mode only) */}
-            {!isWebFred && !isUwModern ? (
+            {!isWebFred ? (
               <div className="mb-3 flex items-center justify-between gap-2">
                 <button
                   type="button"
@@ -1770,9 +1705,7 @@ function TestRunner() {
                     ? "#000000"
                     : isWebFred
                       ? "#004976"
-                      : isUwModern
-                        ? "#43648a"
-                        : "#004a77",
+                      : "#004a77",
                 borderWidth: isWebFred ? "1px 1px 5px 1px" : "1px 1px 2.5px 1px",
                 background:
                   themeStyles.isDark
@@ -1829,17 +1762,7 @@ function TestRunner() {
                     className={`qbank-answer-choice w-full text-left flex items-center gap-2 py-1.5 px-1.5 rounded-[3px] transition-colors text-[15px] ${
                       isWebFred && !themeStyles.isDark ? "hover:bg-[#ececec]" : ""
                     } ${isReview || (submitted && showAnswers) ? "cursor-text" : "cursor-pointer"}`}
-                    style={{
-                      color: themeStyles.text,
-                      background:
-                        isUwModern
-                          ? isThisWrong
-                            ? "rgba(239, 68, 68, 0.14)"
-                            : isThisCorrect
-                              ? "rgba(34, 197, 94, 0.15)"
-                              : undefined
-                          : undefined,
-                    }}
+                    style={{ color: themeStyles.text }}
                   >
                     <span className="w-4 flex justify-center shrink-0">
                       {isThisCorrect && <span className="text-green-600 font-bold text-base leading-none">✓</span>}
@@ -2198,8 +2121,7 @@ function TestRunner() {
         const bm = String(Math.floor((blockSec % 3600) / 60)).padStart(2, "0");
         const bs = String(blockSec % 60).padStart(2, "0");
 
-        const examUI = isRealExam && !isReview;
-        if (examUI) {
+        if (isExamUI) {
           const mmss = bh !== "00" ? `${bh}:${bm}:${bs}` : `${bm}:${bs}`;
           return (
             <div
@@ -2217,17 +2139,28 @@ function TestRunner() {
                   Day Time Remaining: <span className="ml-2">{mmss}</span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setBreakModal("suspend")}
-                title="Unauthorized Break"
-                className="flex flex-col items-center justify-center min-w-[60px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] transition-colors leading-none text-[#fcfcfc]"
-              >
-                <span className="flex items-center justify-center h-6 w-6">
-                  <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
-                </span>
-                <span className="text-[11px] mt-0.5">Lock</span>
-              </button>
+              <div className="flex items-center gap-3">
+                {isPractice && (
+                  <button
+                    type="button"
+                    onClick={() => setTutorMode(true)}
+                    className="px-2.5 py-1 rounded-[2px] border border-white/50 text-[11px] font-medium text-[#fcfcfc] hover:bg-[#407699] transition-colors"
+                  >
+                    Back to Tutor
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setBreakModal("suspend")}
+                  title="Unauthorized Break"
+                  className="flex flex-col items-center justify-center min-w-[60px] py-0.5 px-2 rounded-[2px] hover:bg-[#407699] transition-colors leading-none text-[#fcfcfc]"
+                >
+                  <span className="flex items-center justify-center h-6 w-6">
+                    <img src={lockIconImg.url} alt="" className="h-6 w-6 object-contain" />
+                  </span>
+                  <span className="text-[11px] mt-0.5">Lock</span>
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={async () => {
@@ -2251,72 +2184,35 @@ function TestRunner() {
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 sm:px-3 py-1.5 text-white text-xs leading-tight" style={{ background: navBg }}>
             <div className="shrink-0">
               {!isReview && userSettings.showTimer && (
-                isUwModern ? (
-                  <div className="leading-tight tabular-nums">
-                    <div className="text-[11px] font-semibold text-white/95">Test ID: {id}</div>
-                    <div className="text-[11px] text-white/85">
-                      {timedMode ? `Block Time Remaining: ${bh}:${bm}:${bs}` : `Block Time Elapsed: ${bh}:${bm}:${bs}`}
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="rounded-[2px] px-2.5 py-1 text-[11px] font-semibold tracking-wide tabular-nums"
-                    style={{ border: isWebFred ? "1px outset #5872c4" : "1px solid rgba(255,255,255,0.55)" }}
-                  >
-                    {timedMode ? `Block Time Remaining: ${bh}:${bm}:${bs}` : `Block Time Elapsed: ${bh}:${bm}:${bs}`}
-                  </div>
-                )
+                <div
+                  className="rounded-[2px] px-2.5 py-1 text-[11px] font-semibold tracking-wide tabular-nums"
+                  style={{ border: isWebFred ? "1px outset #5872c4" : "1px solid rgba(255,255,255,0.55)" }}
+                >
+                  {timedMode ? `Block Time Remaining: ${bh}:${bm}:${bs}` : `Block Time Elapsed: ${bh}:${bm}:${bs}`}
+                </div>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-1 sm:gap-x-1.5 gap-y-1">
+              <ToggleSwitch
+                label="UWorld"
+                rightLabel="NBME"
+                checked={tutorIface === "nbme-fred"}
+                onChange={(v) => setUserSettings({ tutorInterface: v ? "nbme-fred" : "uworld" })}
+              />
               {!isReview && (
                 <>
+                  <div className="w-px h-6 bg-white/20 mx-0.5 hidden sm:block" />
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={handleToggleTimed} />
                   <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
                   <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
                 </>
               )}
 
-              <TopBtn modern={isUwModern} plain={isWebFred} icon={BookOpen} label="Medical Library" onClick={() => setShowLibrary(true)} />
-              <TopBtn modern={isUwModern} plain={isWebFred} icon={Zap} label="Flashcards" onClick={() => setShowFlashcards(true)} />
-              <TopBtn modern={isUwModern} plain={isWebFred} icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
+              <TopBtn plain={isWebFred} icon={BookOpen} label="Medical Library" onClick={() => setShowLibrary(true)} />
+              <TopBtn plain={isWebFred} icon={Zap} label="Flashcards" onClick={() => setShowFlashcards(true)} />
+              <TopBtn plain={isWebFred} icon={MessageSquare} label="Feedback" onClick={() => setShowFeedback(true)} />
               {isReview ? (
-                <TopBtn modern={isUwModern} plain={isWebFred} icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
-              ) : isUwModern ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const ok = await confirm({
-                        title: "Suspend this test?",
-                        description: "Your progress is saved and you can resume the test later from the Tests page.",
-                        confirmLabel: "Suspend",
-                        tone: "warning",
-                      });
-                      if (ok) nav({ to: "/tests" });
-                    }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-white/10 text-white text-xs font-medium transition-colors"
-                  >
-                    <PauseCircle className="h-4 w-4 text-rose-300" />
-                    <span>Suspend</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const ok = await confirm({
-                        title: "End this block?",
-                        description: "Your answers will be submitted and the block will be scored. This cannot be undone.",
-                        confirmLabel: "End Block",
-                        tone: "danger",
-                      });
-                      if (ok) finish();
-                    }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded hover:bg-white/10 text-white text-xs font-medium transition-colors"
-                  >
-                    <XCircle className="h-4 w-4 text-white/90" />
-                    <span>End Block</span>
-                  </button>
-                </>
+                <TopBtn plain={isWebFred} icon={ArrowLeft} label="Go Back" onClick={() => nav({ to: "/test-results/$id", params: { id } })} />
               ) : (
                 <>
                   <TopBtn
@@ -2781,17 +2677,17 @@ export function SettingsPanel(props: any) {
           />
         </Row>
         <Row label="Tutor Interface">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {TUTOR_INTERFACE_STYLES.map((st) => {
-              const active = (us.tutorInterface ?? "uworld") === st.id;
-              const shortLabel = st.id === "uworld" ? "UWorld" : st.id === "uworld-modern" ? "Modern" : "NBME";
+              const active = (us.tutorInterface === "nbme-fred" ? "nbme-fred" : "uworld") === st.id;
+              const shortLabel = st.id === "uworld" ? "UWorld" : "NBME";
               return (
                 <button
                   key={st.id}
                   type="button"
                   title={st.label}
                   onClick={() => setUserSettings({ tutorInterface: st.id })}
-                  className={`px-2 py-1 text-[11px] font-medium rounded border transition-colors ${
+                  className={`px-3 py-1 text-xs font-medium rounded border transition-colors ${
                     active
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-muted/60 text-popover-foreground border-border hover:bg-muted"

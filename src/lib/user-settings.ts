@@ -57,7 +57,7 @@ export type ExhibitStyle = "button" | "link" | "plain";
 export type ExhibitViewerSize = "default" | "small" | "medium" | "large";
 export type ExplanationAlign = "left" | "justify" | "center";
 export type ImageAlign = "left" | "center";
-export type TutorInterfaceStyle = "uworld" | "uworld-modern" | "nbme-fred";
+export type TutorInterfaceStyle = "uworld" | "nbme-fred";
 
 export const TUTOR_INTERFACE_STYLES: {
   id: TutorInterfaceStyle;
@@ -72,14 +72,8 @@ export const TUTOR_INTERFACE_STYLES: {
     preview: { nav: "#004a77", side: "#ffffff", sideAlt: "#e9edf2", page: "#ffffff", active: "#004a77" },
   },
   {
-    id: "uworld-modern",
-    label: "Modern UWorld Slate",
-    description: "Slate-blue #324a67 bars, clean line-art icons, Georgia serif stem, full-row tinted answers & inline Suspend/End",
-    preview: { nav: "#324a67", side: "#eef2f7", sideAlt: "#e3eaf3", page: "#f1f5fa", active: "#43648a" },
-  },
-  {
     id: "nbme-fred",
-    label: "NBME WebFRED",
+    label: "NBME Style (WebFRED)",
     description: "Exact USMLE/NBME WebFRED look: full-height 80px sidebar, #004976 bars, cool gradient canvas & A|A|A Text Zoom",
     preview: { nav: "#004976", side: "#fcfcfc", sideAlt: "#e3e3e3", page: "#eef1f8", active: "#004976" },
   },
