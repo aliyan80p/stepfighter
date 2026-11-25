@@ -1415,7 +1415,6 @@ function TestRunner() {
             <TopBtn icon={FlaskConical} label="Lab Values" onClick={() => setShowLabValues(true)} />
             <TopBtn icon={StickyNote} label="Notes" onClick={() => setShowNotes(true)} />
             <TopBtn icon={Calculator} label="Calculator" onClick={() => setShowCalc(v => !v)} />
-            <TopBtn plain imgSrc={reverseColorIcon.url} label="Reverse Color" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} />
             <NbmeTextZoom fontSize={fontSize} setFontSize={setFontSize} />
             <TopBtn icon={Settings} label="Settings" onClick={() => setShowSettings(v => !v)} />
           </div>
@@ -2731,6 +2730,12 @@ export function SettingsPanel(props: any) {
           </div>
         </Row>
         )}
+        <Row label="Reverse Color">
+          <Toggle
+            on={theme === "dark"}
+            onChange={(on) => setTheme(on ? "dark" : "light")}
+          />
+        </Row>
         <Row label="Canvas Theme">
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
             {[
