@@ -458,6 +458,12 @@ function TestRunner() {
   const [activeHighlight, setActiveHighlight] = useState<string>("#ffeb3b");
   const [enabledHighlights, setEnabledHighlights] = useState<Record<string, boolean>>(DEFAULT_SETTINGS.enabledHighlights);
   const [settingsApplied, setSettingsApplied] = useState(false);
+  const [darkBarUsesAccent, setDarkBarUsesAccent] = useState(false);
+
+  // Reset dark-mode bar back to sleek black whenever entering Reverse Color / Dark / Forest theme
+  useEffect(() => {
+    if (theme === "dark" || theme === "forest") setDarkBarUsesAccent(false);
+  }, [theme]);
 
   // Apply user's saved defaults once hydrated
   useEffect(() => {
@@ -547,15 +553,13 @@ function TestRunner() {
 
   const baseThemeStyles = getQuizPalette(theme, userSettings.customTheme);
   const navBg =
-    theme === "dark"
-      ? "#0a0d14"
-      : theme === "forest"
-        ? "#071410"
-        : userSettings.useAccentInQuizNav
-          ? darkenHex(userSettings.accentColor, 0.78)
-          : isWebFred
-            ? "#004673"
-            : NAV_BG;
+    (theme === "dark" || theme === "forest") && !darkBarUsesAccent
+      ? (theme === "forest" ? "#071410" : "#0a0d14")
+      : userSettings.useAccentInQuizNav
+        ? darkenHex(userSettings.accentColor, baseThemeStyles.isDark ? 0.62 : 0.78)
+        : isWebFred
+          ? "#004673"
+          : NAV_BG;
 
   const themeStyles =
     isWebFred && !baseThemeStyles.isDark && theme === "light"
@@ -1836,7 +1840,7 @@ function TestRunner() {
                     onClick={proceedExam}
                     className="px-4 py-1.5 rounded-[3px] text-white text-[13.5px] font-medium disabled:opacity-40 transition-opacity hover:brightness-95"
                     style={
-                      themeStyles.isDark
+                      themeStyles.isDark && !darkBarUsesAccent
                         ? {
                             background: "#111827",
                             border: "1px solid #334155",
@@ -2360,6 +2364,7 @@ function TestRunner() {
           enabledHighlights={enabledHighlights} setEnabledHighlights={setEnabledHighlights}
           userSettings={userSettings}
           isSelfAssessment={isSelfAssessment}
+          onPickAccent={() => setDarkBarUsesAccent(true)}
         />
       )}
 
@@ -2620,7 +2625,7 @@ export function SettingsPanel(props: any) {
     transparentExpl, setTransparentExpl, largeImages, setLargeImages,
     multicolor, setMulticolor,
     activeHighlight, setActiveHighlight, enabledHighlights, setEnabledHighlights,
-    userSettings, isSelfAssessment,
+    userSettings, isSelfAssessment, onPickAccent,
   } = props;
   const us = userSettings ?? DEFAULT_SETTINGS;
   const customColors: string[] = us.customHighlights ?? [];
@@ -2766,7 +2771,10 @@ export function SettingsPanel(props: any) {
               <button
                 key={p.id}
                 title={p.label}
-                onClick={() => setUserSettings({ accentColor: p.hex })}
+                onClick={() => {
+                  onPickAccent?.();
+                  setUserSettings({ accentColor: p.hex });
+                }}
                 className={`h-5 w-5 rounded-full border ${us.accentColor?.toLowerCase() === p.hex.toLowerCase() ? "ring-2 ring-foreground" : "border-black/20"}`}
                 style={{ background: p.hex }}
               />
@@ -2774,7 +2782,10 @@ export function SettingsPanel(props: any) {
             <input
               type="color"
               value={us.accentColor ?? "#2563eb"}
-              onChange={(e) => setUserSettings({ accentColor: e.target.value })}
+              onChange={(e) => {
+                onPickAccent?.();
+                setUserSettings({ accentColor: e.target.value });
+              }}
               aria-label="Custom accent color"
               className="h-5 w-6 rounded border border-border cursor-pointer bg-transparent p-0"
             />
