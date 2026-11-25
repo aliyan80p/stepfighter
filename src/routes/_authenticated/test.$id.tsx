@@ -538,9 +538,10 @@ function TestRunner() {
   const isPractice = data?.test.mode === "practice";
   const isRealExam = data?.test.mode === "test";
   const isReview = !!data?.test.done;
-  const isExamUI = !isReview && (isRealExam || !tutorMode);
+  const isSelfAssessment = !isReview && /\bBlock #\d+$/i.test(String((data?.test as { name?: string | null } | undefined)?.name ?? ""));
+  const isExamUI = isSelfAssessment;
   const tutorIface: TutorInterfaceStyle = userSettings.tutorInterface === "nbme-fred" ? "nbme-fred" : "uworld";
-  const isWebFred = isExamUI || tutorIface === "nbme-fred";
+  const isWebFred = isSelfAssessment || tutorIface === "nbme-fred";
   const isUworldUI = !isWebFred;
   const total = data?.questions.length ?? 0;
 
@@ -2193,15 +2194,8 @@ function TestRunner() {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-1 sm:gap-x-1.5 gap-y-1">
-              <ToggleSwitch
-                label="UWorld"
-                rightLabel="NBME"
-                checked={tutorIface === "nbme-fred"}
-                onChange={(v) => setUserSettings({ tutorInterface: v ? "nbme-fred" : "uworld" })}
-              />
               {!isReview && (
                 <>
-                  <div className="w-px h-6 bg-white/20 mx-0.5 hidden sm:block" />
                   <ToggleSwitch label="Timed" checked={timedMode} onChange={handleToggleTimed} />
                   <ToggleSwitch label="Tutor" rightLabel="Exam" checked={!tutorMode} onChange={(v) => setTutorMode(!v)} />
                   <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
@@ -2676,7 +2670,7 @@ export function SettingsPanel(props: any) {
             className="w-32 accent-primary"
           />
         </Row>
-        <Row label="Tutor Interface">
+        <Row label="Interface Style">
           <div className="flex items-center gap-1.5">
             {TUTOR_INTERFACE_STYLES.map((st) => {
               const active = (us.tutorInterface === "nbme-fred" ? "nbme-fred" : "uworld") === st.id;

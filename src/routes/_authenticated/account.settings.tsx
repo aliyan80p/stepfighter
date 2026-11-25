@@ -612,9 +612,9 @@ function SettingsPage() {
           >
             <div className="pb-3 border-b border-border space-y-2.5">
               <div>
-                <div className="font-semibold text-sm">Tutor Mode Interface</div>
+                <div className="font-semibold text-sm">Test Interface Style</div>
                 <div className="text-xs text-muted-foreground">
-                  Choose your Tutor &amp; Review layout. Exam Mode always uses the official NBME WebFRED simulator interface.
+                  Choose Official UWorld (default) or NBME Style for Tutor &amp; Exam tests. Self-Assessments always use the real NBME WebFRED interface.
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
