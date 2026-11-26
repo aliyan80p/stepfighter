@@ -757,7 +757,43 @@ a.qbank-media-anchor[data-media-kind="video"]:hover {
 .qbank-large-images .qbank-inline-media-wrap .qbank-inline-media {
   width: auto;
   max-width: 100%;
-  max-height: none;
+  max-height: 75vh;
+}
+
+/* MCQ answer-choice images (e.g., visual field defects, histology, chemical structures):
+   keep them compact & aligned with the option letter/radio so choices A–E stay scannable
+   without giant full-width posters. Clicking opens full-resolution zoom. */
+.qbank-answer-choice .qbank-html img,
+.qbank-html img.anschs_non_ekg_img {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: min(100%, 300px);
+  max-height: 160px;
+  width: auto;
+  height: auto;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+  object-fit: contain;
+}
+.qbank-answer-choice .qbank-html img.anschs_ekg_img,
+.qbank-html img.anschs_ekg_img {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: min(100%, 520px);
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  margin: 0.25rem 0;
+  object-fit: contain;
+}
+.qbank-large-images .qbank-answer-choice .qbank-html img,
+.qbank-large-images .qbank-html img.anschs_non_ekg_img {
+  max-width: min(100%, 380px);
+  max-height: 220px;
+}
+.qbank-large-images .qbank-answer-choice .qbank-html img.anschs_ekg_img,
+.qbank-large-images .qbank-html img.anschs_ekg_img {
+  max-width: min(100%, 640px);
+  max-height: 200px;
 }
 
 /* ---------- Mobile / tablet responsive polish ---------- */

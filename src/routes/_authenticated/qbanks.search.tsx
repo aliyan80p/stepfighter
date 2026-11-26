@@ -686,7 +686,7 @@ function QuestionModal({
                             isCorrect ? "border-emerald-600 bg-emerald-600/15" : "border-gray-400"
                           }`}
                         />
-                        <span className="flex-1 min-w-0">
+                        <span className="qbank-answer-choice flex-1 min-w-0">
                           <span
                             data-hlkey={`a${i}`}
                             className="qbank-html qbank-light inline"
