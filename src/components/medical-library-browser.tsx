@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   ChevronRight, ChevronDown, BookOpen, Search, X, Star,
-  Highlighter, StickyNote, Layers, Copy, Trash2, Minus, Plus,
+  Highlighter, StickyNote, Layers, Copy, Trash2, Minus, Plus, Image as ImageIcon,
 } from "lucide-react";
 
 type Tree = { node: LibraryNode; children: Tree[] };
@@ -226,7 +226,8 @@ export function MedicalLibraryBrowser({
   const [highlights, setHighlights] = useState<TextHighlight[]>([]);
   const [noteText, setNoteText] = useState("");
   const [notesOpen, setNotesOpen] = useState(false);
-  const [exhibit, setExhibit] = useState<ExhibitContent | null>(null);
+  const [showInlineImages, setShowInlineImages] = useState(false);
+  const [exhibit, setExhibit] = useState<{ content: ExhibitContent; title: string } | null>(null);
   const [cardDraft, setCardDraft] = useState<CardValue | null>(null);
 
   // Floating selection toolbar state
@@ -307,8 +308,15 @@ export function MedicalLibraryBrowser({
   }, [toc, activeDoc]);
 
   const html = useMemo(
-    () => (doc && mediaToken ? rewriteMedia(doc.html, { qbankId: LIBRARY_QBANK_ID, mediaToken }) : ""),
-    [doc, mediaToken],
+    () =>
+      doc && mediaToken
+        ? rewriteMedia(doc.html, {
+            qbankId: LIBRARY_QBANK_ID,
+            mediaToken,
+            collapseImages: !showInlineImages,
+          })
+        : "",
+    [doc, mediaToken, showInlineImages],
   );
 
   // Seed article HTML imperatively so token refreshes never remount images
@@ -316,14 +324,14 @@ export function MedicalLibraryBrowser({
   useEffect(() => {
     const el = bodyRef.current;
     if (!el || !html || !mediaToken) return;
-    const key = `${doc?.id ?? ""}:${html.length}`;
+    const key = `${doc?.id ?? ""}:${showInlineImages ? "inline" : "collapsed"}:${html.length}`;
     if (seededRef.current !== key) {
       seededRef.current = key;
       el.innerHTML = html;
       applyHighlightsToDom(el, readJson<TextHighlight[]>(hlStorageKey(doc!.id), []));
     }
     attachLibraryMediaReload(el, mediaToken);
-  }, [html, doc?.id, mediaToken]);
+  }, [html, doc?.id, mediaToken, showInlineImages]);
 
   // Re-apply highlights whenever highlights array updates on current doc
   useEffect(() => {
@@ -352,16 +360,29 @@ export function MedicalLibraryBrowser({
         }
         return;
       }
+      const figBtn = target.closest("button[data-sf-exhibit-src]") as HTMLButtonElement | null;
+      if (figBtn && el.contains(figBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const rawSrc = figBtn.dataset.sfExhibitSrc || "";
+        const freshSrc = (mediaToken && mediaUrlWithFreshToken(rawSrc, mediaToken)) || rawSrc;
+        const figTitle = figBtn.dataset.sfExhibitTitle || doc.title;
+        if (freshSrc) {
+          setExhibit({ content: { kind: "image", src: freshSrc, alt: figTitle }, title: figTitle });
+        }
+        return;
+      }
       const img = target.closest("img") as HTMLImageElement | null;
       if (img && el.contains(img)) {
         e.preventDefault();
         e.stopPropagation();
-        setExhibit({ kind: "image", src: img.currentSrc || img.src, alt: img.alt || doc.title });
+        const figTitle = img.alt || doc.title;
+        setExhibit({ content: { kind: "image", src: img.currentSrc || img.src, alt: figTitle }, title: figTitle });
       }
     };
     el.addEventListener("click", onClick);
     return () => el.removeEventListener("click", onClick);
-  }, [doc, activeDoc]);
+  }, [doc, activeDoc, mediaToken]);
 
   // Selection listener for floating study toolbar
   const handleSelection = useCallback(() => {
@@ -743,6 +764,22 @@ export function MedicalLibraryBrowser({
                   </button>
                 )}
 
+                {/* Toggle Figures on demand vs Inline Images */}
+                <button
+                  type="button"
+                  onClick={() => setShowInlineImages((v) => !v)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border text-xs font-medium transition-colors",
+                    showInlineImages
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-border bg-background text-foreground hover:bg-muted",
+                  )}
+                  title={showInlineImages ? "Collapse images into clickable Figure buttons" : "Expand all figures inline"}
+                >
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{showInlineImages ? "Hide Images" : "Show All"}</span>
+                </button>
+
                 {/* Article Notes toggle */}
                 <button
                   type="button"
@@ -896,7 +933,11 @@ export function MedicalLibraryBrowser({
       )}
 
       {/* Zoomable Exhibit Modal for Library Images */}
-      <ExhibitModal content={exhibit} title={doc?.title ?? "Exhibit Display"} onClose={() => setExhibit(null)} />
+      <ExhibitModal
+        content={exhibit?.content ?? null}
+        title={exhibit?.title ?? doc?.title ?? "Exhibit Display"}
+        onClose={() => setExhibit(null)}
+      />
 
       {/* Create Flashcard Modal from Selection */}
       {cardDraft && (

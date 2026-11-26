@@ -66,6 +66,8 @@ type RewriteMediaOptions = {
   deferMedia?: boolean;
   qbankId?: number;
   mediaToken?: string;
+  /** Replace inline images & image links with clickable Figure buttons that open in Exhibit Display on demand. */
+  collapseImages?: boolean;
 };
 
 function renderImage(url: string, alt: string): string {
@@ -102,6 +104,19 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
     return `${labelHtml}<!--QBM:${idx}-->`;
   };
 
+  let figIndex = 0;
+  const renderFigureChip = (url: string, rawLabel: string): string => {
+    figIndex += 1;
+    const clean = rawLabel.trim();
+    const isGeneric = !clean || /^(image|img|photo|picture|exhibit|related image)$/i.test(clean);
+    const display = isGeneric
+      ? `Figure ${figIndex}`
+      : /^fig(?:ure)?\b/i.test(clean)
+        ? clean
+        : `Figure ${figIndex}: ${clean.slice(0, 64)}`;
+    return `<button type="button" class="sf-fig-chip" data-sf-exhibit-src="${escapeAttr(url)}" data-sf-exhibit-title="${escapeAttr(display)}">🖼 ${escapeAttr(display)}</button>`;
+  };
+
   out = out.replace(
     /<a\b([^>]*?)\bhref=["']([^"']+\.(?:png|jpe?g|gif|webp|bmp|svg))["']([^>]*)>(.*?)<\/a>/gis,
     (full, _before, href, _after, labelHtml) => {
@@ -109,11 +124,26 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
       const url = resolve(href, qb, token);
       if (!url) return full;
       const label = stripTags(labelHtml);
+      if (options.collapseImages) {
+        return renderFigureChip(url, label);
+      }
       const media = renderImage(url, label || "Related image");
       if (options.deferMedia) return parkMedia(media, labelHtml);
       return `${labelHtml}${media}`;
     },
   );
+  if (options.collapseImages) {
+    out = out.replace(/<img\b([^>]*)>/gi, (full, attrs) => {
+      const srcMatch = attrs.match(/\bsrc=(["'])([^"']+)\1/i);
+      if (!srcMatch?.[2]) return full;
+      const src = srcMatch[2];
+      // Skip tiny inline icons or data URIs
+      if (/^data:/i.test(src)) return full;
+      const altMatch = attrs.match(/\balt=(["'])([^"']*)\1/i);
+      const alt = altMatch?.[2] ?? "";
+      return renderFigureChip(src, alt);
+    });
+  }
   out = out.replace(
     /<a\b([^>]*?)\bhref=(["'])([^"']+\.(?:mp4|webm|mov|m4v|ogv|mp3|wav|ogg|m4a|aac))\2([^>]*)>/gi,
     (full, before, q, href, after) => {
