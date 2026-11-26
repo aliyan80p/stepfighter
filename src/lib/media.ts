@@ -133,11 +133,52 @@ export function rewriteMedia(html: string, options: RewriteMediaOptions = {}): s
     },
   );
   if (options.collapseImages) {
+    // 1) Collect all internal #id links (e.g., <a href="#L31969_jpg">...figure 1</a>)
+    const linkedIds = new Set<string>();
+    for (const m of out.matchAll(/<a\b[^>]*\bhref=["']#([^"']+)["']/gi)) {
+      if (m[1]) linkedIds.add(m[1]);
+    }
+
+    // 2) Extract image/video/audio media divs whose id is referenced by an in-text link
+    //    (e.g., <div id="L31969_jpg"><img src="/api/media/..."></div>) so they don't
+    //    auto-download or render duplicate buttons — clicking the in-text "figure 1"
+    //    or "image 1" link opens them directly in Exhibit Display.
+    const mediaById = new Map<string, { kind: "image" | "video" | "audio"; src: string }>();
+    out = out.replace(
+      /<div\b([^>]*)\bid=(["'])([^"']+)\2([^>]*)>\s*<(img|video|audio)\b([^>]*)>(?:[\s\S]*?<\/\5>)?\s*<\/div>/gi,
+      (full, _pre, _q, id, _post, tag, innerAttrs) => {
+        if (!linkedIds.has(id)) return full;
+        const srcMatch =
+          innerAttrs.match(/\bsrc=(["'])([^"']+)\1/i) ??
+          full.match(/<source\b[^>]*\bsrc=(["'])([^"']+)\1/i);
+        if (!srcMatch?.[2]) return full;
+        const t = tag.toLowerCase();
+        const kind: "image" | "video" | "audio" = t === "video" ? "video" : t === "audio" ? "audio" : "image";
+        mediaById.set(id, { kind, src: srcMatch[2] });
+        // Remove the inline media div so zero bytes download until user clicks the link
+        return "";
+      },
+    );
+
+    // 3) Annotate the native in-text <a href="#L31969_jpg">figure 1</a> links with
+    //    data-sf-exhibit-src and data-sf-exhibit-kind so clicking them opens ExhibitModal.
+    if (mediaById.size > 0) {
+      out = out.replace(
+        /<a\b([^>]*?)\bhref=(["'])#([^"']+)\2([^>]*)>([\s\S]*?)<\/a>/gi,
+        (full, before, q, id, after, labelHtml) => {
+          const hit = mediaById.get(id);
+          if (!hit) return full;
+          const label = stripTags(labelHtml) || id;
+          return `<a${before}href=${q}#${id}${q}${after} data-sf-exhibit-src="${escapeAttr(hit.src)}" data-sf-exhibit-kind="${hit.kind}" data-sf-exhibit-title="${escapeAttr(label)}">${labelHtml}</a>`;
+        },
+      );
+    }
+
+    // 4) Any remaining unlinked standalone <img> tags collapse into a clean clickable chip
     out = out.replace(/<img\b([^>]*)>/gi, (full, attrs) => {
       const srcMatch = attrs.match(/\bsrc=(["'])([^"']+)\1/i);
       if (!srcMatch?.[2]) return full;
       const src = srcMatch[2];
-      // Skip tiny inline icons or data URIs
       if (/^data:/i.test(src)) return full;
       const altMatch = attrs.match(/\balt=(["'])([^"']*)\1/i);
       const alt = altMatch?.[2] ?? "";

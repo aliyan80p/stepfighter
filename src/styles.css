@@ -625,6 +625,17 @@ a.qbank-media-anchor {
 .sf-fig-chip:active {
   transform: scale(0.98);
 }
+
+/* Brief visual highlight when jumping to a Medical Library table/section anchor */
+@keyframes sfAnchorPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35); background-color: rgba(37, 99, 235, 0.08); }
+  70%  { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); background-color: rgba(37, 99, 235, 0.04); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); background-color: transparent; }
+}
+.sf-anchor-pulse {
+  border-radius: 0.5rem;
+  animation: sfAnchorPulse 1.3s ease-out;
+}
 a.qbank-media-anchor:hover { color: #0ea5e9; }
 .qbank-theme-dark a.qbank-media-anchor { color: #93c5fd; }
 

@@ -360,17 +360,41 @@ export function MedicalLibraryBrowser({
         }
         return;
       }
-      const figBtn = target.closest("button[data-sf-exhibit-src]") as HTMLButtonElement | null;
-      if (figBtn && el.contains(figBtn)) {
+      const figEl = target.closest("[data-sf-exhibit-src]") as HTMLElement | null;
+      if (figEl && el.contains(figEl)) {
         e.preventDefault();
         e.stopPropagation();
-        const rawSrc = figBtn.dataset.sfExhibitSrc || "";
+        const rawSrc = figEl.dataset.sfExhibitSrc || "";
         const freshSrc = (mediaToken && mediaUrlWithFreshToken(rawSrc, mediaToken)) || rawSrc;
-        const figTitle = figBtn.dataset.sfExhibitTitle || doc.title;
+        const rawTitle = (figEl.dataset.sfExhibitTitle || doc.title).trim();
+        const figTitle = rawTitle ? rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1) : doc.title;
+        const kind = (figEl.dataset.sfExhibitKind as "image" | "video" | "audio" | undefined) ?? "image";
         if (freshSrc) {
-          setExhibit({ content: { kind: "image", src: freshSrc, alt: figTitle }, title: figTitle });
+          if (kind === "video") {
+            setExhibit({ content: { kind: "video", src: freshSrc }, title: figTitle });
+          } else if (kind === "audio") {
+            setExhibit({ content: { kind: "audio", src: freshSrc }, title: figTitle });
+          } else {
+            setExhibit({ content: { kind: "image", src: freshSrc, alt: figTitle }, title: figTitle });
+          }
         }
         return;
+      }
+      // Smooth-scroll internal #id links (e.g., table 1, section links) and briefly highlight target
+      const anchorEl = target.closest('a[href^="#"]') as HTMLAnchorElement | null;
+      if (anchorEl && el.contains(anchorEl)) {
+        const hashId = anchorEl.getAttribute("href")?.slice(1);
+        if (hashId) {
+          const targetEl = el.querySelector<HTMLElement>(`#${CSS.escape(hashId)}`);
+          if (targetEl) {
+            e.preventDefault();
+            e.stopPropagation();
+            targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            targetEl.classList.add("sf-anchor-pulse");
+            window.setTimeout(() => targetEl.classList.remove("sf-anchor-pulse"), 1400);
+            return;
+          }
+        }
       }
       const img = target.closest("img") as HTMLImageElement | null;
       if (img && el.contains(img)) {
