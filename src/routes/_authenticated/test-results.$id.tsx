@@ -152,7 +152,7 @@ function TestResults() {
         <div className="flex items-center gap-6 text-sm">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Test Name</div>
-            <div className="font-medium">Custom Quiz {created.toLocaleString()}</div>
+            <div className="font-medium">{(data.test as any).name || `Custom Quiz ${created.toLocaleString()}`}</div>
           </div>
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">ID</div>

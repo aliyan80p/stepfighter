@@ -750,7 +750,7 @@ function TestRunner() {
 
   // Silently prefetch the next question's images in the background so clicking Next renders them instantly
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !mediaToken) return;
     const nextQ = data?.questions?.[idx + 1];
     if (!nextQ) return;
     const html = rewriteMedia(`${nextQ.question ?? ""} ${nextQ.explanation ?? ""}`, {
@@ -772,6 +772,22 @@ function TestRunner() {
     }, 250);
     return () => window.clearTimeout(timer);
   }, [data?.questions, data?.qbankId, idx, mediaToken]);
+
+  // Refresh any /api/media/ images in-place when mediaToken arrives so none stay stuck on 401
+  useEffect(() => {
+    if (!mediaToken || !contentRef.current) return;
+    contentRef.current.querySelectorAll<HTMLImageElement>('img[src*="/api/media/"]').forEach((img) => {
+      const src = img.getAttribute("src") || "";
+      if (!src) return;
+      try {
+        const u = new URL(src, window.location.origin);
+        if (u.searchParams.get("t") !== mediaToken || (img.complete && img.naturalWidth === 0)) {
+          u.searchParams.set("t", mediaToken);
+          img.setAttribute("src", `${u.pathname}${u.search}`);
+        }
+      } catch {}
+    });
+  }, [mediaToken, question?.id, submitted]);
 
 
   const optimisticAttempt = (questionId: number, selectedIndex: number, secs: number, isCorrect: boolean) => {

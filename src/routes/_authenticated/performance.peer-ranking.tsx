@@ -128,17 +128,18 @@ function PeerRankingPage() {
 
 /* ---------- Percentile bell curve ---------- */
 function PercentileCard({ yourPct, medianPct, percentile, totalPeers }: { yourPct: number; medianPct: number; percentile: number; totalPeers: number }) {
-  const W = 520, H = 190, cx = W / 2, base = H - 20;
+  const W = 520, H = 190, padX = 28, innerW = W - padX * 2, cx = W / 2, base = H - 22;
   const bell = (x: number) => {
-    const t = (x - cx) / (W / 5);
-    return base - Math.exp(-t * t) * (H - 42);
+    const t = (x - cx) / (innerW / 5);
+    return base - Math.exp(-t * t) * (H - 46);
   };
   const path = Array.from({ length: 100 }, (_, i) => {
-    const x = (i / 99) * W;
-    return `${i === 0 ? "M" : "L"}${x},${bell(x)}`;
+    const x = padX + (i / 99) * innerW;
+    return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${bell(x).toFixed(1)}`;
   }).join(" ");
-  const youX = (Math.max(0, Math.min(100, percentile)) / 100) * W;
-  const medianX = W / 2;
+  const clampedPct = Math.max(0, Math.min(100, percentile));
+  const youX = padX + (clampedPct / 100) * innerW;
+  const medianX = cx;
 
   return (
     <div className="rounded-xl bg-card border border-border overflow-hidden">
@@ -158,8 +159,9 @@ function PercentileCard({ yourPct, medianPct, percentile, totalPeers }: { yourPc
       </div>
       <div className="p-5 grid gap-6 md:grid-cols-[1fr_250px] items-center">
         <div className="relative">
-          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
-            <path d={path} fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} opacity={0.45} />
+          <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto text-muted-foreground">
+            <line x1={padX} y1={base} x2={W - padX} y2={base} stroke="currentColor" strokeWidth={1} opacity={0.3} />
+            <path d={path} fill="none" stroke="currentColor" strokeWidth={2} opacity={0.65} />
             <line x1={medianX} y1={20} x2={medianX} y2={base} stroke="hsl(217 91% 60%)" strokeWidth={1.2} strokeDasharray="3 3" />
             <text x={medianX} y={14} textAnchor="middle" className="fill-blue-500" fontSize={12} fontWeight={600}>50th</text>
             <circle cx={youX} cy={bell(youX)} r={6.5} fill="hsl(142 71% 45%)" stroke="hsl(var(--card))" strokeWidth={2} />

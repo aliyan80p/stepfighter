@@ -384,7 +384,17 @@ function PagerBtn({ children, onClick, disabled }: { children: React.ReactNode; 
 const UWORLD_BAR_BG = "#004a77";
 const NBME_BAR_BG = "#004673";
 
+function getAnswerCountSum(r: SearchResult): number {
+  return r.answers.reduce((sum, a) => sum + Math.max(0, Number(a.correct_percentage ?? 0)), 0);
+}
+
 function getPeerAccuracy(r: SearchResult): number | null {
+  const answerSum = getAnswerCountSum(r);
+  const correctIdx = r.answers.findIndex((a) => a.answer_index === r.correctAnswer);
+  if (answerSum > 0 && correctIdx >= 0) {
+    const val = Math.max(0, Number(r.answers[correctIdx].correct_percentage ?? 0));
+    return Math.max(0, Math.min(100, Math.round((val / answerSum) * 100)));
+  }
   const ppl = r.pplTaken ?? 0;
   const corr = r.corrTaken ?? 0;
   if (ppl <= 0) return null;
@@ -394,8 +404,7 @@ function getPeerAccuracy(r: SearchResult): number | null {
 }
 
 function hasRealOptionStats(r: SearchResult): boolean {
-  if (getPeerAccuracy(r) == null) return false;
-  return r.answers.some((a) => typeof a.correct_percentage === "number" && a.correct_percentage > 0);
+  return getAnswerCountSum(r) > 0;
 }
 
 function TopBtn({ icon: Icon, imgSrc, imgFlip, imgClass, label, onClick }: { icon?: any; imgSrc?: string; imgFlip?: boolean; imgClass?: string; label: string; onClick?: () => void }) {
@@ -424,8 +433,9 @@ function QuestionModal({
 }) {
   const r = items[index];
   const total = items.length;
-  const correctAns = r.answers.find((a) => a.answer_index === r.correctAnswer);
-  const correctLetter = correctAns ? String.fromCharCode(65 + correctAns.answer_index) : "";
+  const correctIdx = r.answers.findIndex((a) => a.answer_index === r.correctAnswer);
+  const correctAns = correctIdx >= 0 ? r.answers[correctIdx] : undefined;
+  const correctLetter = correctIdx >= 0 ? String.fromCharCode(65 + correctIdx) : "";
   const correctText = correctAns?.answer_text ?? "";
   const go = (dir: number) => {
     const next = index + dir;
@@ -656,10 +666,11 @@ function QuestionModal({
                   }
                 >
                   {r.answers.map((a, i) => {
-                    const letter = String.fromCharCode(65 + a.answer_index);
+                    const letter = String.fromCharCode(65 + i);
                     const isCorrect = a.answer_index === r.correctAnswer;
-                    const optPct = showOptPct && typeof a.correct_percentage === "number"
-                      ? Math.round(a.correct_percentage)
+                    const answerSum = getAnswerCountSum(r);
+                    const optPct = showOptPct && answerSum > 0
+                      ? Math.round((Math.max(0, Number(a.correct_percentage ?? 0)) / answerSum) * 100)
                       : null;
                     return (
                       <div

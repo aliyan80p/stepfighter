@@ -495,7 +495,7 @@ function AuthedLayout() {
       </aside>
       )}
 
-      <main className="sf-main-canvas flex-1 overflow-auto min-w-0 flex flex-col">
+      <main className={cn("sf-main-canvas flex-1 overflow-auto min-w-0 flex flex-col", !hideSidebar && !sidebarOpen && "md:pl-12")}>
         {!hideSidebar && !sidebarOpen && (
           <button
             type="button"
