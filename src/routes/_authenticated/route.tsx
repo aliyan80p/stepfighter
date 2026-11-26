@@ -47,7 +47,6 @@ import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { QBANKS, useActiveQbankId, setActiveQbankId } from "@/lib/active-qbank";
 import { PageLoader } from "@/components/loader";
-import { AppearanceQuickPanel } from "@/components/appearance-quick-panel";
 import { useUserSettings } from "@/lib/user-settings";
 
 type Item = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
@@ -487,7 +486,6 @@ function AuthedLayout() {
 
         <div className="p-3 border-t border-sidebar-border">
           <TrialBanner />
-          <AppearanceQuickPanel onNavigate={closeAfterNav} />
           <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
             <LogOut className="h-4 w-4 mr-2" /> Logout
           </Button>
