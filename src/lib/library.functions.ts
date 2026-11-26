@@ -21,11 +21,19 @@ export type LibraryNode = {
   leaf: number | null;
 };
 
+const TOC_CACHE_TTL_MS = 30 * 60 * 1000;
+let tocCache: { rows: LibraryNode[]; expiresAt: number } | null = null;
+
 /** Full table of contents for a qbank's medical library (flat; the UI nests it). */
 export const getLibraryToc = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
+    const now = Date.now();
+    if (tocCache && tocCache.expiresAt > now) {
+      return tocCache.rows;
+    }
+
     const page = 1000;
 
     const fetchPage = async (from: number) => {
@@ -65,8 +73,10 @@ export const getLibraryToc = createServerFn({ method: "GET" })
         });
       }
     }
+    if (rows.length > 0) {
+      tocCache = { rows, expiresAt: now + TOC_CACHE_TTL_MS };
+    }
     return rows;
-
   });
 
 /** One decrypted library article. */
@@ -92,18 +102,20 @@ export const searchLibrary = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const term = data.q.replace(/[%,()]/g, " ").trim();
-    const byTitle = await context.supabase
-      .from("library_docs")
-      .select("id,title")
-      .eq("qbank_id", LIBRARY_QBANK_ID)
-      .ilike("title", `%${term}%`)
-      .limit(40);
-    const byBody = await context.supabase
-      .from("library_docs")
-      .select("id,title")
-      .eq("qbank_id", LIBRARY_QBANK_ID)
-      .ilike("plain", `%${term}%`)
-      .limit(40);
+    const [byTitle, byBody] = await Promise.all([
+      context.supabase
+        .from("library_docs")
+        .select("id,title")
+        .eq("qbank_id", LIBRARY_QBANK_ID)
+        .ilike("title", `%${term}%`)
+        .limit(40),
+      context.supabase
+        .from("library_docs")
+        .select("id,title")
+        .eq("qbank_id", LIBRARY_QBANK_ID)
+        .ilike("plain", `%${term}%`)
+        .limit(40),
+    ]);
     const seen = new Set<number>();
     const out: { id: number; title: string; inBody: boolean }[] = [];
     for (const r of (byTitle.data ?? []) as any[]) {

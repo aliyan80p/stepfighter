@@ -627,14 +627,26 @@ export const listTests = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(500);
     const allQIds = Array.from(new Set((tests ?? []).flatMap((t) => t.question_ids as number[])));
-    const [qsRes, subjRes] = await Promise.all([
-      allQIds.length
-        ? context.supabase.from("questions").select("id,subject_id").eq("qbank_id", qbankId).in("id", allQIds)
-        : Promise.resolve({ data: [] as { id: number; subject_id: number | null }[] }),
+    // Chunk large ID arrays in parallel to prevent PostgREST URL length limits
+    const CHUNK = 500;
+    const idChunks: number[][] = [];
+    for (let i = 0; i < allQIds.length; i += CHUNK) idChunks.push(allQIds.slice(i, i + CHUNK));
+    const [qsChunks, subjRes] = await Promise.all([
+      Promise.all(
+        idChunks.map((chunk) =>
+          context.supabase
+            .from("questions")
+            .select("id,subject_id")
+            .eq("qbank_id", qbankId)
+            .in("id", chunk)
+            .then((r) => (r.data ?? []) as { id: number; subject_id: number | null }[]),
+        ),
+      ),
       context.supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
     ]);
+    const qsFlat = qsChunks.flat();
     const subjMap = new Map<number, string>(((subjRes.data ?? []) as { id: number; name: string }[]).map((s) => [s.id, s.name]));
-    const qSubj = new Map<number, number | null>(((qsRes.data ?? []) as { id: number; subject_id: number | null }[]).map((q) => [q.id, q.subject_id]));
+    const qSubj = new Map<number, number | null>(qsFlat.map((q) => [q.id, q.subject_id]));
     return (tests ?? []).map((t) => {
       const ids = t.question_ids as number[];
       const subjIds = new Set<number>();
