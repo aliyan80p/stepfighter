@@ -42,6 +42,7 @@ import { TrialBanner } from "@/components/trial-banner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { isCurrentUserAdmin } from "@/lib/admin.functions";
+import { clearMfaVerification } from "@/lib/mfa.functions";
 import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 import { getMyEntitlement, QBANK_ID_TO_SLUG } from "@/lib/entitlements.functions";
 import { QBANKS, useActiveQbankId, setActiveQbankId } from "@/lib/active-qbank";
@@ -254,10 +255,11 @@ function AuthedLayout() {
     }
   }, [pathname, sidebarPinned, userSettings.autoHideSidebar]);
 
+  const clearMfaFn = useServerFn(clearMfaVerification);
   const signOut = async () => {
+    cachedAuth = null;
     try {
-      const { clearMfaVerification } = await import("@/lib/mfa.functions");
-      await clearMfaVerification();
+      await clearMfaFn();
     } catch {
       // non-fatal; proceed with sign-out
     }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle2, LoaderCircle, LockKeyhole } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole } from "lucide-react";
 import logoAsset from "@/assets/stepfighter-logo.png.asset.json";
 
 export const Route = createFileRoute("/reset-password")({
@@ -59,6 +59,8 @@ function ResetPasswordPage() {
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const settledRef = useRef(false);
   const linkIdRef = useRef<string | null>(null);
@@ -182,12 +184,23 @@ function ResetPasswordPage() {
     if (password !== confirm) return toast.error("Passwords do not match");
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { data, error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       markLinkUsed(linkIdRef.current);
       settledRef.current = true;
       toast.success("Password updated — signing you in.");
-      navigate({ to: "/dashboard" });
+
+      let mfaVerified = false;
+      if (data.user) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("mfa_verified_until")
+          .eq("id", data.user.id)
+          .maybeSingle();
+        const until = prof?.mfa_verified_until ? new Date(prof.mfa_verified_until).getTime() : 0;
+        mfaVerified = until > Date.now();
+      }
+      navigate({ to: mfaVerified ? "/dashboard" : "/verify-2fa" });
 
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not update password");
@@ -203,8 +216,8 @@ function ResetPasswordPage() {
           <img src={logoAsset.url} alt="StepFighter" className="h-14 w-14 object-contain" />
           <span className="text-lg font-bold text-primary">StepFighter</span>
         </Link>
-        <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-          <div className="h-1 bg-accent" />
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="h-1 bg-primary" />
           <div className="p-6 sm:p-8">
           {status === "checking" ? (
             <div className="py-8 text-center" aria-live="polite">
@@ -218,7 +231,7 @@ function ResetPasswordPage() {
               <h1 className="mt-4 text-xl font-semibold">Reset link expired</h1>
               <p className="mt-2 text-sm text-muted-foreground">This reset link is invalid or has expired. Request a fresh link to continue.</p>
               <Button asChild className="mt-6 w-full">
-                <Link to="/auth">Request a new reset link</Link>
+                <Link to="/auth" search={{ mode: "forgot" }}>Request a new reset link</Link>
               </Button>
             </div>
           ) : (
@@ -230,16 +243,72 @@ function ResetPasswordPage() {
                 <h1 className="mt-4 text-xl font-semibold">Set a new password</h1>
                 <p className="mt-1 text-sm text-muted-foreground">Choose a secure password with at least 8 characters.</p>
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label htmlFor="pw">New password</Label>
-                <Input id="pw" type="password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+                <div className="relative">
+                  <Input
+                    id="pw"
+                    type={showPassword ? "text" : "password"}
+                    minLength={8}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {password.length > 0 && password.length < 8 && (
+                  <p className="text-xs text-muted-foreground">
+                    {8 - password.length} more character{8 - password.length === 1 ? "" : "s"} needed
+                  </p>
+                )}
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label htmlFor="pw2">Confirm password</Label>
-                <Input id="pw2" type="password" minLength={8} required value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
+                <div className="relative">
+                  <Input
+                    id="pw2"
+                    type={showConfirm ? "text" : "password"}
+                    minLength={8}
+                    required
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                    aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {confirm.length > 0 && confirm !== password && (
+                  <p className="text-xs text-destructive">Passwords do not match</p>
+                )}
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Updating…" : "Update password"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || password.length < 8 || password !== confirm}
+              >
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <LoaderCircle className="h-4 w-4 animate-spin" /> Updating…
+                  </span>
+                ) : (
+                  "Update password"
+                )}
               </Button>
             </form>
           )}

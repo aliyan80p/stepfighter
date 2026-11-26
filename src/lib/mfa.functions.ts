@@ -140,7 +140,11 @@ export const verifyLoginOtp = createServerFn({ method: 'POST' })
 
     const verifiedUntil = new Date(Date.now() + VERIFY_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
     await supabaseAdmin.from('login_otps').update({ consumed_at: new Date().toISOString() }).eq('id', row.id)
-    await context.supabase.from('profiles').update({ mfa_verified_until: verifiedUntil }).eq('id', context.userId)
+    const { error: profErr } = await supabaseAdmin
+      .from('profiles')
+      .update({ mfa_verified_until: verifiedUntil })
+      .eq('id', context.userId)
+    if (profErr) throw new Error(profErr.message)
     return { ok: true as const }
   })
 
@@ -149,7 +153,12 @@ export const verifyLoginOtp = createServerFn({ method: 'POST' })
 export const clearMfaVerification = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await context.supabase.from('profiles').update({ mfa_verified_until: null }).eq('id', context.userId)
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ mfa_verified_until: null })
+      .eq('id', context.userId)
+    if (error) throw new Error(error.message)
     return { ok: true as const }
   })
 
