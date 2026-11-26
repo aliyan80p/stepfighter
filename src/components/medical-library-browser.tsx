@@ -474,6 +474,51 @@ export function MedicalLibraryBrowser({
     if (mediaToken) attachLibraryMediaReload(el, mediaToken);
   }, [html, doc?.id, mediaToken, showInlineImages]);
 
+  // Quietly preload the open article's collapsed figure/image exhibits in the background
+  // right after the text paints, so clicking "figure 1" or "image 1" displays instantly (0ms).
+  useEffect(() => {
+    if (typeof window === "undefined" || showInlineImages || !mediaToken || !html) return;
+    const el = bodyRef.current;
+    if (!el) return;
+    const urls: string[] = [];
+    const seen = new Set<string>();
+    el.querySelectorAll<HTMLElement>("[data-sf-exhibit-src]").forEach((node) => {
+      const kind = node.dataset.sfExhibitKind ?? "image";
+      if (kind !== "image") return;
+      const raw = node.dataset.sfExhibitSrc || "";
+      const fresh = mediaUrlWithFreshToken(raw, mediaToken) || raw;
+      if (fresh && !seen.has(fresh)) {
+        seen.add(fresh);
+        urls.push(fresh);
+      }
+    });
+    if (urls.length === 0) return;
+
+    let cancelled = false;
+    let cursor = 0;
+    const CONCURRENCY = 2;
+
+    const loadNext = () => {
+      if (cancelled || cursor >= urls.length) return;
+      const src = urls[cursor++];
+      const img = new Image();
+      img.decoding = "async";
+      (img as any).fetchPriority = "low";
+      img.onload = loadNext;
+      img.onerror = loadNext;
+      img.src = src;
+    };
+
+    const timer = window.setTimeout(() => {
+      for (let i = 0; i < Math.min(CONCURRENCY, urls.length); i++) loadNext();
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [html, doc?.id, mediaToken, showInlineImages]);
+
   // Re-apply highlights whenever highlights array updates on current doc
   useEffect(() => {
     const el = bodyRef.current;
