@@ -467,7 +467,7 @@ export const getTest = createServerFn({ method: "GET" })
     const qbankId = (test.qbank_id ?? 1) as number;
     const qIds = test.question_ids as number[];
 
-    // Run entitlement check and all 8 data queries in a single parallel batch (cuts 8 roundtrips -> 1)
+    // Run entitlement check and all data queries in a single parallel batch
     const [
       ,
       { data: questions },
@@ -478,6 +478,7 @@ export const getTest = createServerFn({ method: "GET" })
       { data: subjects },
       { data: systems },
       { data: refsRaw },
+      highlightsRes,
     ] = await Promise.all([
       assertQbankAccess(supabase, userId, qbankId),
       supabase
@@ -518,6 +519,14 @@ export const getTest = createServerFn({ method: "GET" })
         .eq("qbank_id", qbankId)
         .in("question_id", qIds)
         .order("id"),
+      (supabase as any)
+        .from("question_highlights")
+        .select("question_id,highlights")
+        .eq("user_id", userId)
+        .eq("qbank_id", qbankId)
+        .in("question_id", qIds)
+        .then((r: any) => (r.error ? [] : (r.data ?? [])))
+        .catch(() => []),
     ]);
 
     const priorByQ: Record<number, { is_correct: boolean; selected_answer: number | null }> = {};
@@ -565,6 +574,12 @@ export const getTest = createServerFn({ method: "GET" })
     }));
     const subjectMap: Record<number, string> = Object.fromEntries((subjects ?? []).map((s) => [s.id, s.name]));
     const systemMap: Record<number, string> = Object.fromEntries((systems ?? []).map((s) => [s.id, s.name]));
+    const highlightsByQ: Record<number, Record<string, string>> = {};
+    for (const h of highlightsRes ?? []) {
+      if (h?.highlights && typeof h.highlights === "object") {
+        highlightsByQ[h.question_id] = h.highlights as Record<string, string>;
+      }
+    }
     return {
       test,
       qbankId,
@@ -573,6 +588,7 @@ export const getTest = createServerFn({ method: "GET" })
       attemptsByQ: Object.fromEntries((attempts ?? []).map((a) => [a.question_id, a])),
       refsByQ: groupBy(enrichedRefs, (r) => r.question_id),
       bookmarkedIds: new Set((bookmarks ?? []).map((b) => b.question_id)),
+      highlightsByQ,
       subjectMap,
       systemMap,
       answerChanges: { correctToIncorrect: c2i, incorrectToCorrect: i2c, incorrectToIncorrect: i2i },
@@ -601,10 +617,13 @@ export const submitAnswer = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: t } = await supabase.from("tests").select("qbank_id").eq("id", data.testId).eq("user_id", userId).single();
     const qbankId = ((t?.qbank_id ?? 1) as number);
-    const { data: q } = await supabase.from("questions").select("correct_answer").eq("qbank_id", qbankId).eq("id", data.questionId).single();
+    // Fetch correct answer and clear any prior attempt for this question in parallel
+    const [{ data: q }] = await Promise.all([
+      supabase.from("questions").select("correct_answer").eq("qbank_id", qbankId).eq("id", data.questionId).single(),
+      supabase.from("attempts").delete().eq("user_id", userId).eq("test_id", data.testId).eq("question_id", data.questionId),
+    ]);
     if (!q) throw new Error("Question not found");
     const isCorrect = q.correct_answer === data.selectedIndex;
-    await supabase.from("attempts").delete().eq("user_id", userId).eq("test_id", data.testId).eq("question_id", data.questionId);
     await supabase.from("attempts").insert({
       user_id: userId, test_id: data.testId, question_id: data.questionId, qbank_id: qbankId,
       selected_answer: data.selectedIndex, is_correct: isCorrect, time_seconds: data.timeSeconds,
@@ -614,6 +633,33 @@ export const submitAnswer = createServerFn({ method: "POST" })
     const wrong = (attempts ?? []).filter((a) => a.is_correct === false).length;
     await supabase.from("tests").update({ right_count: right, wrong_count: wrong }).eq("id", data.testId).eq("user_id", userId);
     return { isCorrect, correctAnswer: q.correct_answer };
+  });
+
+/** Persist QBank question highlights to Supabase so they survive browser cache clears & sync across devices. */
+export const saveQuestionHighlights = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      qbankId: qb(),
+      questionId: z.number().int().positive(),
+      highlights: z.record(z.string(), z.string()),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await (context.supabase as any)
+      .from("question_highlights")
+      .upsert(
+        {
+          user_id: context.userId,
+          qbank_id: data.qbankId,
+          question_id: data.questionId,
+          highlights: data.highlights,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,qbank_id,question_id" },
+      );
+    if (error) return { ok: false };
+    return { ok: true };
   });
 
 export const toggleBookmark = createServerFn({ method: "POST" })

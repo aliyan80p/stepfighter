@@ -2,7 +2,7 @@ import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
-import { getTest, submitAnswer, toggleBookmark, finishTest } from "@/lib/qbank.functions";
+import { getTest, submitAnswer, toggleBookmark, finishTest, saveQuestionHighlights } from "@/lib/qbank.functions";
 import { rewriteMedia, withMediaToken } from "@/lib/media";
 import { useMediaToken } from "@/lib/use-media-token";
 import {
@@ -368,6 +368,7 @@ function TestRunner() {
   const subFn = useServerFn(submitAnswer);
   const bmFn = useServerFn(toggleBookmark);
   const finFn = useServerFn(finishTest);
+  const saveHlFn = useServerFn(saveQuestionHighlights);
   const qc = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -712,12 +713,15 @@ function TestRunner() {
   // parent effect can reset state.
   const savedHighlights = useMemo<Record<string, string>>(() => {
     if (!question) return {};
+    const cloud = (data as any)?.highlightsByQ?.[question.id] as Record<string, string> | undefined;
     try {
       const raw = localStorage.getItem(`qbank-hl-${question.id}`);
-      const parsed = raw ? JSON.parse(raw) : {};
-      return parsed && typeof parsed === "object" ? parsed : {};
-    } catch { return {}; }
-  }, [question?.id, submitted]);
+      const local = raw ? JSON.parse(raw) : {};
+      const localObj = local && typeof local === "object" ? local : {};
+      // Prefer local if present, else restore from Supabase cloud backup
+      return Object.keys(localObj).length > 0 ? localObj : (cloud ?? {});
+    } catch { return cloud ?? {}; }
+  }, [question?.id, submitted, (data as any)?.highlightsByQ]);
 
   // Click-to-open exhibit modal for any image in the question/explanation.
   // Also decorates inline .mp4/.mp3/.wav anchors and opens them in the
@@ -1027,6 +1031,14 @@ function TestRunner() {
       if (el.querySelector("mark.qbank-hl")) snap[el.dataset.hlkey!] = el.innerHTML;
     });
     try { localStorage.setItem(`qbank-hl-${question.id}`, JSON.stringify(snap)); } catch {}
+    // Also sync highlights to Supabase in the background so clearing browser data never loses them
+    saveHlFn({
+      data: {
+        qbankId: data?.qbankId ?? 1,
+        questionId: question.id,
+        highlights: snap,
+      },
+    }).catch(() => {});
     // Intentionally do NOT setHighlightHtml here — the DOM is already mutated
     // in place by the highlighter. Updating state would change the __html seed,
     // which would cause HighlightableHtml to reseed and remount inline media

@@ -79,11 +79,19 @@ export const getLibraryToc = createServerFn({ method: "GET" })
     return rows;
   });
 
-/** One decrypted library article. */
+const DOC_CACHE_TTL_MS = 30 * 60 * 1000;
+const docCache = new Map<number, { row: { id: number; title: string; html: string; qbank_id: number }; expiresAt: number }>();
+
+/** One decrypted library article (with 30-min server LRU cache). */
 export const getLibraryDoc = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.number().int() }).parse(d))
   .handler(async ({ data, context }) => {
+    const now = Date.now();
+    const hit = docCache.get(data.id);
+    if (hit && hit.expiresAt > now) {
+      return hit.row;
+    }
     const { data: row, error } = await context.supabase
       .from("library_docs")
       .select("id,title,html,qbank_id")
@@ -91,7 +99,13 @@ export const getLibraryDoc = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw internalError(error);
     if (!row) throw new Error("Article not found");
-    return row as { id: number; title: string; html: string; qbank_id: number };
+    const typed = row as { id: number; title: string; html: string; qbank_id: number };
+    if (docCache.size >= 100) {
+      const oldestKey = docCache.keys().next().value;
+      if (oldestKey !== undefined) docCache.delete(oldestKey);
+    }
+    docCache.set(data.id, { row: typed, expiresAt: now + DOC_CACHE_TTL_MS });
+    return typed;
   });
 
 /** Title + full-text search across library articles. */

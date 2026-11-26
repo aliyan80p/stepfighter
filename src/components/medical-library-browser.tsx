@@ -43,6 +43,7 @@ const HIGHLIGHT_COLORS = [
 const BOOKMARKS_KEY = "sf:lib:bookmarks:v1";
 const FONT_SIZE_KEY = "sf:lib:fontSize:v1";
 const LAST_DOC_KEY = "sf:lib:lastDoc:v1";
+const TOC_CACHE_KEY = "sf:lib:toc:v1";
 const hlStorageKey = (docId: number) => `sf:lib:hl:v1:${docId}`;
 const noteStorageKey = (docId: number) => `sf:lib:note:v1:${docId}`;
 
@@ -290,7 +291,15 @@ export function MedicalLibraryBrowser({
 
   const { data: toc, isLoading } = useQuery({
     queryKey: ["library-toc"],
-    queryFn: () => tocFn({ data: { qbankId: 2 } }),
+    queryFn: async () => {
+      const rows = await tocFn({ data: { qbankId: 2 } });
+      if (rows.length > 0) writeJson(TOC_CACHE_KEY, rows);
+      return rows;
+    },
+    initialData: () => {
+      const cached = readJson<LibraryNode[] | null>(TOC_CACHE_KEY, null);
+      return cached && cached.length > 0 ? cached : undefined;
+    },
     staleTime: 60 * 60 * 1000,
   });
 
@@ -323,24 +332,68 @@ export function MedicalLibraryBrowser({
     staleTime: 30 * 60 * 1000,
   });
 
-  // Load saved highlights & notes instantly from localStorage (0ms, zero failing network calls)
+  const { data: cloudUserData } = useQuery({
+    queryKey: ["library-user-data"],
+    queryFn: () => listUserDataFn(),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // Merge cloud-synced bookmarks once loaded
+  useEffect(() => {
+    if (!cloudUserData?.length) return;
+    const cloudBms: SavedBookmark[] = cloudUserData
+      .filter((r) => r.bookmarked)
+      .map((r) => ({ id: r.doc_id, title: r.doc_title || `Article #${r.doc_id}`, savedAt: new Date(r.updated_at).getTime() }));
+    if (cloudBms.length > 0) {
+      setBookmarks((prev) => {
+        const merged = new Map<number, SavedBookmark>();
+        for (const b of cloudBms) merged.set(b.id, b);
+        for (const b of prev) if (!merged.has(b.id)) merged.set(b.id, b);
+        const arr = Array.from(merged.values()).sort((a, b) => b.savedAt - a.savedAt);
+        writeJson(BOOKMARKS_KEY, arr);
+        return arr;
+      });
+    }
+  }, [cloudUserData]);
+
+  // Load saved highlights & notes (preferring Supabase cloud data, falling back to localStorage)
   useEffect(() => {
     if (activeDoc == null) {
       setHighlights([]);
       setNoteText("");
       return;
     }
-    setHighlights(readJson<TextHighlight[]>(hlStorageKey(activeDoc), []));
-    setNoteText(readJson<string>(noteStorageKey(activeDoc), ""));
+    const cloudRow = cloudUserData?.find((r) => r.doc_id === activeDoc);
+    const localHl = readJson<TextHighlight[]>(hlStorageKey(activeDoc), []);
+    const localNote = readJson<string>(noteStorageKey(activeDoc), "");
+    const mergedHl = cloudRow?.highlights?.length ? cloudRow.highlights : localHl;
+    const mergedNote = cloudRow?.note ? cloudRow.note : localNote;
+    setHighlights(mergedHl);
+    setNoteText(mergedNote);
+    if (cloudRow?.highlights?.length) writeJson(hlStorageKey(activeDoc), mergedHl);
+    if (cloudRow?.note) writeJson(noteStorageKey(activeDoc), mergedNote);
     setSelBar(null);
-  }, [activeDoc]);
+  }, [activeDoc, cloudUserData]);
 
+  // Debounced background sync to Supabase (zero UI lag)
+  const syncCloudRef = useRef<number | null>(null);
   const queueCloudSync = useCallback(
-    (_docId: number, _docTitle: string, _nextBookmarked: boolean, _nextNote: string, _nextHighlights: TextHighlight[]) => {
-      // LocalStorage persistence is already instant and zero-latency;
-      // cloud sync activates once library_user_data migration is applied.
+    (docId: number, docTitle: string, nextBookmarked: boolean, nextNote: string, nextHighlights: TextHighlight[]) => {
+      if (syncCloudRef.current) window.clearTimeout(syncCloudRef.current);
+      syncCloudRef.current = window.setTimeout(() => {
+        saveUserDataFn({
+          data: {
+            docId,
+            docTitle,
+            bookmarked: nextBookmarked,
+            note: nextNote,
+            highlights: nextHighlights,
+          },
+        }).catch(() => {});
+      }, 700);
     },
-    [],
+    [saveUserDataFn],
   );
 
   const practiceRelatedQuestions = async () => {
@@ -394,9 +447,10 @@ export function MedicalLibraryBrowser({
     return toc.filter((n) => n.parentId === topic.id && n.section);
   }, [toc, activeDoc]);
 
+  // Render article immediately in fast Figure-link mode without waiting for mediaToken
   const html = useMemo(
     () =>
-      doc && mediaToken
+      doc && (!showInlineImages || mediaToken)
         ? rewriteMedia(doc.html, {
             qbankId: LIBRARY_QBANK_ID,
             mediaToken,
@@ -410,14 +464,14 @@ export function MedicalLibraryBrowser({
   const seededRef = useRef<string>("");
   useEffect(() => {
     const el = bodyRef.current;
-    if (!el || !html || !mediaToken) return;
+    if (!el || !html) return;
     const key = `${doc?.id ?? ""}:${showInlineImages ? "inline" : "collapsed"}:${html.length}`;
     if (seededRef.current !== key) {
       seededRef.current = key;
       el.innerHTML = html;
       applyHighlightsToDom(el, readJson<TextHighlight[]>(hlStorageKey(doc!.id), []));
     }
-    attachLibraryMediaReload(el, mediaToken);
+    if (mediaToken) attachLibraryMediaReload(el, mediaToken);
   }, [html, doc?.id, mediaToken, showInlineImages]);
 
   // Re-apply highlights whenever highlights array updates on current doc
@@ -491,8 +545,27 @@ export function MedicalLibraryBrowser({
         setExhibit({ content: { kind: "image", src: img.currentSrc || img.src, alt: figTitle }, title: figTitle });
       }
     };
+    const prefetched = new Set<string>();
+    const onMouseOver = (e: MouseEvent) => {
+      if (!mediaToken) return;
+      const figEl = (e.target as HTMLElement | null)?.closest("[data-sf-exhibit-src]") as HTMLElement | null;
+      if (!figEl || !el.contains(figEl)) return;
+      const kind = figEl.dataset.sfExhibitKind ?? "image";
+      if (kind !== "image") return;
+      const rawSrc = figEl.dataset.sfExhibitSrc || "";
+      const freshSrc = mediaUrlWithFreshToken(rawSrc, mediaToken) || rawSrc;
+      if (!freshSrc || prefetched.has(freshSrc)) return;
+      prefetched.add(freshSrc);
+      const img = new Image();
+      img.decoding = "async";
+      img.src = freshSrc;
+    };
     el.addEventListener("click", onClick);
-    return () => el.removeEventListener("click", onClick);
+    el.addEventListener("mouseover", onMouseOver);
+    return () => {
+      el.removeEventListener("click", onClick);
+      el.removeEventListener("mouseover", onMouseOver);
+    };
   }, [doc, activeDoc, mediaToken]);
 
   // Selection listener for floating study toolbar
@@ -835,7 +908,7 @@ export function MedicalLibraryBrowser({
               )}
             </div>
           </div>
-        ) : (loadingDoc && !doc) || (doc && !mediaToken) ? (
+        ) : (loadingDoc && !doc) || (showInlineImages && doc && !mediaToken) ? (
           <div className="p-10"><Loader label="Opening article…" /></div>
         ) : (
           <>
