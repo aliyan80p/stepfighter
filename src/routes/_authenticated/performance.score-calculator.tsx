@@ -27,9 +27,11 @@ function ScoreCalculator() {
   const [input, setInput] = useState<number>(20);
 
   const formula = SCORE_FORMULAS.find((f) => f.id === formulaId) ?? SCORE_FORMULAS[0];
-  const isPercentMode = formula.inputMode === "wrongPercent";
+  const isPercentMode = formula.inputMode === "correctPercent";
   const predicted = predictScore(formula, input);
-  const pointsPerQ = Math.abs(formula.slope).toFixed(4);
+  const pointsPerQ = isPercentMode
+    ? ((Math.abs(formula.slope) * 100) / formula.totalQuestions).toFixed(2)
+    : Math.abs(formula.slope).toFixed(4);
 
   const curve = useMemo(() => {
     const rows: { x: number; score: number }[] = [];
@@ -129,7 +131,7 @@ function ScoreCalculator() {
             <span>
               Each question on {formula.label.split(" · ")[1]} is worth{" "}
               <strong className="text-foreground">{pointsPerQ} points</strong>.
-              {isPercentMode && " Input is number wrong (Fighter converts to % wrong internally)."}
+              {isPercentMode && " Input is number wrong (converted to % correct internally)."}
             </span>
           </div>
         </div>
@@ -165,7 +167,7 @@ function ScoreCalculator() {
             <div className="text-xs text-muted-foreground">
               y = {formula.slope.toFixed(4)}x {formula.intercept >= 0 ? "+" : "-"}{" "}
               {Math.abs(formula.intercept).toFixed(2)}
-              {isPercentMode && "   (x = % wrong)"}
+              {isPercentMode && "   (x = % correct)"}
             </div>
           </div>
           <div className="text-[11px] text-muted-foreground">
