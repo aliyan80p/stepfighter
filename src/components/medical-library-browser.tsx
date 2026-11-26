@@ -1,7 +1,18 @@
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { getLibraryToc, getLibraryDoc, searchLibrary, type LibraryNode } from "@/lib/library.functions";
+import {
+  getLibraryToc,
+  getLibraryDoc,
+  searchLibrary,
+  getRelatedLibraryQuestions,
+  listLibraryUserData,
+  saveLibraryUserData,
+  type LibraryNode,
+} from "@/lib/library.functions";
+import { createCustomTest } from "@/lib/qbank.functions";
+import { useActiveQbankId } from "@/lib/active-qbank";
 import { listDecks } from "@/lib/decks.functions";
 import { createFlashcard } from "@/lib/flashcards.functions";
 import { useLibraryMediaToken } from "@/lib/use-media-token";
@@ -14,7 +25,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   ChevronRight, ChevronDown, BookOpen, Search, X, Star,
-  Highlighter, StickyNote, Layers, Copy, Trash2, Minus, Plus, Image as ImageIcon,
+  Highlighter, StickyNote, Layers, Copy, Trash2, Minus, Plus,
+  Image as ImageIcon, Play, Loader2,
 } from "lucide-react";
 
 type Tree = { node: LibraryNode; children: Tree[] };
@@ -208,12 +220,19 @@ export function MedicalLibraryBrowser({
 }) {
   const LIBRARY_QBANK_ID = 2;
   const qc = useQueryClient();
+  const nav = useNavigate();
+  const activeQbankId = useActiveQbankId();
   const tocFn = useServerFn(getLibraryToc);
   const docFn = useServerFn(getLibraryDoc);
   const searchFn = useServerFn(searchLibrary);
+  const relatedQFn = useServerFn(getRelatedLibraryQuestions);
+  const listUserDataFn = useServerFn(listLibraryUserData);
+  const saveUserDataFn = useServerFn(saveLibraryUserData);
+  const createTestFn = useServerFn(createCustomTest);
   const decksFn = useServerFn(listDecks);
   const createCardFn = useServerFn(createFlashcard);
   const mediaToken = useLibraryMediaToken();
+  const [startingRelated, setStartingRelated] = useState(false);
 
   const [sidebarTab, setSidebarTab] = useState<"browse" | "saved">("browse");
   const [open, setOpen] = useState<Set<number>>(new Set());
@@ -287,17 +306,92 @@ export function MedicalLibraryBrowser({
   });
   const decks = (decksData?.decks as any[]) ?? [];
 
-  // Load saved highlights & notes when switching articles
+  const { data: relatedQ } = useQuery({
+    queryKey: ["library-related-qs", doc?.title, activeQbankId],
+    queryFn: () => relatedQFn({ data: { title: doc!.title, qbankId: activeQbankId } }),
+    enabled: !!doc?.title,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: cloudUserData } = useQuery({
+    queryKey: ["library-user-data"],
+    queryFn: () => listUserDataFn(),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Hydrate cloud-synced bookmarks once loaded
+  useEffect(() => {
+    if (!cloudUserData?.length) return;
+    const cloudBms: SavedBookmark[] = cloudUserData
+      .filter((r) => r.bookmarked)
+      .map((r) => ({ id: r.doc_id, title: r.doc_title || `Article #${r.doc_id}`, savedAt: new Date(r.updated_at).getTime() }));
+    if (cloudBms.length > 0) {
+      setBookmarks((prev) => {
+        const merged = new Map<number, SavedBookmark>();
+        for (const b of cloudBms) merged.set(b.id, b);
+        for (const b of prev) if (!merged.has(b.id)) merged.set(b.id, b);
+        const arr = Array.from(merged.values()).sort((a, b) => b.savedAt - a.savedAt);
+        writeJson(BOOKMARKS_KEY, arr);
+        return arr;
+      });
+    }
+  }, [cloudUserData]);
+
+  // Load saved highlights & notes (preferring cloud if available, else localStorage)
   useEffect(() => {
     if (activeDoc == null) {
       setHighlights([]);
       setNoteText("");
       return;
     }
-    setHighlights(readJson<TextHighlight[]>(hlStorageKey(activeDoc), []));
-    setNoteText(readJson<string>(noteStorageKey(activeDoc), ""));
+    const cloudRow = cloudUserData?.find((r) => r.doc_id === activeDoc);
+    const localHl = readJson<TextHighlight[]>(hlStorageKey(activeDoc), []);
+    const localNote = readJson<string>(noteStorageKey(activeDoc), "");
+    setHighlights(cloudRow?.highlights?.length ? cloudRow.highlights : localHl);
+    setNoteText(cloudRow?.note ? cloudRow.note : localNote);
     setSelBar(null);
-  }, [activeDoc]);
+  }, [activeDoc, cloudUserData]);
+
+  // Debounced cloud sync helper for the active article
+  const syncCloudRef = useRef<number | null>(null);
+  const queueCloudSync = useCallback(
+    (docId: number, docTitle: string, nextBookmarked: boolean, nextNote: string, nextHighlights: TextHighlight[]) => {
+      if (syncCloudRef.current) window.clearTimeout(syncCloudRef.current);
+      syncCloudRef.current = window.setTimeout(() => {
+        saveUserDataFn({
+          data: {
+            docId,
+            docTitle,
+            bookmarked: nextBookmarked,
+            note: nextNote,
+            highlights: nextHighlights,
+          },
+        }).catch(() => {});
+      }, 600);
+    },
+    [saveUserDataFn],
+  );
+
+  const practiceRelatedQuestions = async () => {
+    if (!relatedQ?.questionIds?.length || !doc || startingRelated) return;
+    setStartingRelated(true);
+    try {
+      const created = await createTestFn({
+        data: {
+          qbankId: activeQbankId,
+          questionIds: relatedQ.questionIds.slice(0, 50),
+          mode: "practice",
+          timed: false,
+          name: `Library: ${doc.title.slice(0, 40)}`,
+        },
+      });
+      nav({ to: "/test/$id", params: { id: String(created.id) } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create related quiz");
+    } finally {
+      setStartingRelated(false);
+    }
+  };
 
   const tree = useMemo(() => buildTree(toc ?? []), [toc]);
   const sections = useMemo(() => {
@@ -453,10 +547,10 @@ export function MedicalLibraryBrowser({
       text: selBar.text.slice(0, 200),
     };
     setHighlights((prev) => {
-      // Remove overlapping highlights cleanly before adding new one
       const nonOverlapping = prev.filter((h) => h.end <= nextItem.start || h.start >= nextItem.end);
       const next = [...nonOverlapping, nextItem];
       writeJson(hlStorageKey(activeDoc), next);
+      queueCloudSync(activeDoc, doc?.title ?? "", isBookmarked, noteText, next);
       return next;
     });
     window.getSelection()?.removeAllRanges();
@@ -467,6 +561,7 @@ export function MedicalLibraryBrowser({
     if (activeDoc == null) return;
     setHighlights([]);
     writeJson(hlStorageKey(activeDoc), []);
+    queueCloudSync(activeDoc, doc?.title ?? "", isBookmarked, noteText, []);
     toast.success("Cleared all highlights on this article");
   };
 
@@ -477,6 +572,7 @@ export function MedicalLibraryBrowser({
       : `• ${selBar.text}`;
     setNoteText(next);
     writeJson(noteStorageKey(activeDoc), next);
+    queueCloudSync(activeDoc, doc?.title ?? "", isBookmarked, next, highlights);
     setNotesOpen(true);
     window.getSelection()?.removeAllRanges();
     setSelBar(null);
@@ -520,6 +616,7 @@ export function MedicalLibraryBrowser({
         ? prev.filter((b) => b.id !== doc.id)
         : [{ id: doc.id, title: doc.title, savedAt: Date.now() }, ...prev];
       writeJson(BOOKMARKS_KEY, next);
+      queueCloudSync(doc.id, doc.title, !exists, noteText, highlights);
       toast.success(exists ? "Removed from Saved Articles" : "Saved to Bookmarks");
       return next;
     });
@@ -755,6 +852,20 @@ export function MedicalLibraryBrowser({
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
+                {/* Practice Related QBank Questions */}
+                {(relatedQ?.count ?? 0) > 0 && (
+                  <button
+                    type="button"
+                    onClick={practiceRelatedQuestions}
+                    disabled={startingRelated}
+                    className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
+                    title={`Launch a practice quiz with ${relatedQ!.count} QBank question(s) linked to this topic`}
+                  >
+                    {startingRelated ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                    <span>Practice ({relatedQ!.count})</span>
+                  </button>
+                )}
+
                 {/* Font size controls */}
                 <div className="inline-flex items-center rounded-md border border-border bg-background">
                   <button
@@ -891,6 +1002,7 @@ export function MedicalLibraryBrowser({
                       onChange={(e) => {
                         setNoteText(e.target.value);
                         writeJson(noteStorageKey(activeDoc), e.target.value);
+                        queueCloudSync(activeDoc, doc?.title ?? "", isBookmarked, e.target.value, highlights);
                       }}
                       placeholder="Write high-yield pearls for this article, or select text and click 'Note'…"
                       className="flex-1 w-full resize-none rounded-lg border border-border bg-background p-2.5 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-primary/30"

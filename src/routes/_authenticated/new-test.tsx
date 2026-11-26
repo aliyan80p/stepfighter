@@ -181,6 +181,7 @@ function NewTest() {
 
   const [scope, setScope] = useState<Scope>("unused");
   const [difficulty, setDifficulty] = useState<Difficulty>("all");
+  const [mediaOnly, setMediaOnly] = useState(false);
   const [mode, setMode] = useState<"practice" | "test">("practice");
   const [timed, setTimed] = useState(false);
   const [count, setCount] = useState(20);
@@ -286,10 +287,10 @@ function NewTest() {
   }, [data, questionMeta, systemIds, hasSystem]);
 
   const { data: pool, isFetching: poolFetching } = useQuery({
-    queryKey: ["pool", selectedQbankId, selectedSources, subjectIds, systemIds, topicNames, scope, difficulty],
+    queryKey: ["pool", selectedQbankId, selectedSources, subjectIds, systemIds, topicNames, scope, difficulty, mediaOnly],
     queryFn: () =>
       poolFn({
-        data: { qbankId: selectedQbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope, difficulty },
+        data: { qbankId: selectedQbankId, sources: selectedSources, subjectIds, systemIds, topicNames, scope, difficulty, mediaOnly },
       }),
     enabled: selectedSources.length > 0,
     staleTime: 60 * 1000,
@@ -356,6 +357,7 @@ function NewTest() {
           timed,
           scope,
           difficulty,
+          mediaOnly,
           name: quizName.trim() || undefined,
         },
       });
@@ -569,6 +571,19 @@ function NewTest() {
           </button>
         );
       })}
+      <button
+        type="button"
+        title="Only include questions with attached clinical images, ECGs, scans, or audio"
+        onClick={() => setMediaOnly((v) => !v)}
+        className={cn(
+          "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors",
+          mediaOnly
+            ? "bg-violet-600 text-white border-violet-600 shadow-xs"
+            : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-accent/50",
+        )}
+      >
+        🖼 With Media Only
+      </button>
     </div>
   );
 

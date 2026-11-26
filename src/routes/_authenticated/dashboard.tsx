@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { getDashboardStats } from "@/lib/qbank.functions";
 import { useActiveQbankId, QBANKS } from "@/lib/active-qbank";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { DashboardSkeleton } from "@/components/loader";
+import { toast } from "sonner";
 import {
   BookOpen, CheckCircle2, XCircle, MinusCircle, HelpCircle, User, Percent,
   BarChart3, Flag, ArrowRightLeft, RefreshCw, Repeat, FilePlus2, FileCheck2,
-  PauseCircle, Plus, History,
+  PauseCircle, Plus, History, Calendar, TrendingUp,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -16,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const qc = useQueryClient();
   const fn = useServerFn(getDashboardStats);
   const qbankId = useActiveQbankId();
   const activeBank = QBANKS.find((q) => q.id === qbankId);
@@ -24,6 +28,51 @@ function Dashboard() {
     queryFn: () => fn({ data: { qbankId } }),
     staleTime: 30_000,
   });
+
+  const { data: profileGoal } = useQuery({
+    queryKey: ["profile-exam-goal"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("target_exam,target_date")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      return p;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [editingDate, setEditingDate] = useState(false);
+  const [dateDraft, setDateDraft] = useState("");
+  const [savingDate, setSavingDate] = useState(false);
+
+  const saveTargetDate = async () => {
+    setSavingDate(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ target_date: dateDraft || null, target_exam: activeBank?.name ?? null })
+        .eq("id", u.user.id);
+      if (error) throw error;
+      qc.invalidateQueries({ queryKey: ["profile-exam-goal"] });
+      setEditingDate(false);
+      toast.success(dateDraft ? "Exam date saved" : "Exam date cleared");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to save exam date");
+    } finally {
+      setSavingDate(false);
+    }
+  };
+
+  const targetDateStr = profileGoal?.target_date ?? null;
+  const daysLeft = targetDateStr
+    ? Math.ceil((new Date(`${targetDateStr}T00:00:00`).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000)
+    : null;
+  const dailyPace = daysLeft && daysLeft > 0 && data ? Math.ceil(data.unused / daysLeft) : null;
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -70,7 +119,74 @@ function Dashboard() {
                 <Flag className="h-3.5 w-3.5" /> Flagged ({data?.bookmarks ?? 0})
               </Link>
             </Button>
+            <Button asChild size="sm" variant="outline" className="gap-1.5">
+              <Link to="/self-assessments/score-predictor">
+                <TrendingUp className="h-3.5 w-3.5" /> Score Predictor
+              </Link>
+            </Button>
           </div>
+        </div>
+
+        {/* Exam Countdown & Daily Study Pace Strip */}
+        <div className="rounded-xl bg-card border border-border px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary grid place-items-center shrink-0">
+              <Calendar className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              {daysLeft != null && daysLeft > 0 ? (
+                <>
+                  <div className="text-xs sm:text-sm font-semibold">
+                    <span className="text-primary tabular-nums">{daysLeft} days</span> until {profileGoal?.target_exam || activeBank?.name || "Exam Day"}
+                    <span className="text-muted-foreground font-normal ml-1.5">({new Date(`${targetDateStr}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })})</span>
+                  </div>
+                  {dailyPace != null && data && (
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Recommended pace: <span className="font-semibold text-foreground tabular-nums">{dailyPace} unused Qs/day</span> to finish all {data.unused.toLocaleString()} remaining questions
+                    </div>
+                  )}
+                </>
+              ) : daysLeft != null && daysLeft <= 0 ? (
+                <div className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                  Exam date reached ({targetDateStr}) — update your target date for your next exam!
+                </div>
+              ) : (
+                <>
+                  <div className="text-xs sm:text-sm font-semibold">Set Your Target Exam Date</div>
+                  <div className="text-xs text-muted-foreground">Track your countdown and daily questions needed to finish 100% of the QBank</div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {editingDate ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={dateDraft}
+                onChange={(e) => setDateDraft(e.target.value)}
+                className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+              />
+              <Button size="sm" className="h-8 text-xs" disabled={savingDate} onClick={saveTargetDate}>
+                Save
+              </Button>
+              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditingDate(false)}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs shrink-0"
+              onClick={() => {
+                setDateDraft(targetDateStr ?? "");
+                setEditingDate(true);
+              }}
+            >
+              {targetDateStr ? "Change Date" : "Set Exam Date"}
+            </Button>
+          )}
         </div>
 
         {/* Top KPI Row */}

@@ -237,33 +237,44 @@ const CreateTestInput = z.object({
   timed: z.boolean().default(false),
   scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
   difficulty: DifficultySchema,
+  mediaOnly: z.boolean().default(false),
   name: z.string().trim().max(120).optional(),
 });
 
-async function filterIdsByDifficulty(
+async function filterIdsByCriteria(
   supabase: any,
   qbankId: number,
   ids: number[],
   difficulty: "all" | "easy" | "medium" | "hard",
+  mediaOnly: boolean,
 ): Promise<number[]> {
-  if (difficulty === "all" || !ids.length) return ids;
+  if ((difficulty === "all" && !mediaOnly) || !ids.length) return ids;
   const matched: number[] = [];
   for (let i = 0; i < ids.length; i += 1000) {
     const chunk = ids.slice(i, i + 1000);
     const { data: rows, error } = await supabase
       .from("questions")
-      .select("id,ppl_taken,corr_taken")
+      .select("id,ppl_taken,corr_taken,media_name,other_medias")
       .eq("qbank_id", qbankId)
       .in("id", chunk);
     if (error) throw error;
     for (const r of rows ?? []) {
-      const ppl = Number(r.ppl_taken ?? 0);
-      const corr = Number(r.corr_taken ?? 0);
-      if (ppl <= 0 || (ppl === 100 && corr <= 1)) continue;
-      const pct = (corr / ppl) * 100;
-      if (difficulty === "easy" && pct >= 70) matched.push(r.id);
-      else if (difficulty === "medium" && pct >= 45 && pct < 70) matched.push(r.id);
-      else if (difficulty === "hard" && pct < 45) matched.push(r.id);
+      if (mediaOnly) {
+        const hasPrimary = typeof r.media_name === "string" && r.media_name.trim().length > 0;
+        const otherStr = r.other_medias != null ? String(r.other_medias).trim() : "";
+        const hasOther = otherStr.length > 0 && otherStr !== "[]" && otherStr !== "{}" && otherStr !== "null";
+        if (!hasPrimary && !hasOther) continue;
+      }
+      if (difficulty !== "all") {
+        const ppl = Number(r.ppl_taken ?? 0);
+        const corr = Number(r.corr_taken ?? 0);
+        if (ppl <= 0 || (ppl === 100 && corr <= 1)) continue;
+        const pct = (corr / ppl) * 100;
+        if (difficulty === "easy" && pct < 70) continue;
+        if (difficulty === "medium" && (pct < 45 || pct >= 70)) continue;
+        if (difficulty === "hard" && pct >= 45) continue;
+      }
+      matched.push(r.id);
     }
   }
   return matched;
@@ -275,6 +286,7 @@ export const createTest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertQbankAccess(supabase, userId, data.qbankId);
+    const needsExtraFilter = data.difficulty !== "all" || data.mediaOnly;
     const { data: picked, error: pickErr } = await supabase.rpc("pick_question_ids", {
       p_qbank_id: data.qbankId,
       p_sources: data.sources.length ? data.sources : undefined,
@@ -282,12 +294,12 @@ export const createTest = createServerFn({ method: "POST" })
       p_system_ids: data.systemIds.length ? data.systemIds : undefined,
       p_topic_names: data.topicNames.length ? data.topicNames : undefined,
       p_scope: data.scope,
-      p_count: data.difficulty === "all" ? data.count : 10000,
+      p_count: needsExtraFilter ? 10000 : data.count,
     });
     if (pickErr) throw pickErr;
     let ids = (picked as number[] | null) ?? [];
-    if (data.difficulty !== "all") {
-      ids = shuffle(await filterIdsByDifficulty(supabase, data.qbankId, ids, data.difficulty)).slice(0, data.count);
+    if (needsExtraFilter) {
+      ids = shuffle(await filterIdsByCriteria(supabase, data.qbankId, ids, data.difficulty, data.mediaOnly)).slice(0, data.count);
     }
     if (!ids.length) throw new Error("No questions match those filters.");
     return await insertTest(supabase, userId, ids, data);
@@ -348,11 +360,12 @@ export const getPoolCount = createServerFn({ method: "POST" })
     sources: z.array(z.string()).default([]),
     scope: z.enum(["all", "unused", "incorrect", "correct", "omitted", "marked"]).default("all"),
     difficulty: DifficultySchema,
+    mediaOnly: z.boolean().default(false),
   }).parse(d))
 
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    if (data.difficulty === "all") {
+    if (data.difficulty === "all" && !data.mediaOnly) {
       const { data: count, error } = await supabase.rpc("pool_count", {
         p_qbank_id: data.qbankId,
         p_sources: data.sources.length ? data.sources : undefined,
@@ -374,7 +387,7 @@ export const getPoolCount = createServerFn({ method: "POST" })
       p_count: 10000,
     });
     if (error) throw error;
-    const filtered = await filterIdsByDifficulty(supabase, data.qbankId, (picked as number[] | null) ?? [], data.difficulty);
+    const filtered = await filterIdsByCriteria(supabase, data.qbankId, (picked as number[] | null) ?? [], data.difficulty, data.mediaOnly);
     return { count: filtered.length };
   });
 

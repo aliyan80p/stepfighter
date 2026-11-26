@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/performance/graphs")({
 });
 
 type Opt = { key: string; label: string; qbankId: number; sources?: string[] };
-const STEP1_NBMES = [25, 26, 27, 28, 30, 31, 32, 33];
+const STEP1_NBMES = [25, 26, 27, 28, 29, 30, 31, 32, 33];
 const STEP2_NBMES = [8, 9, 10, 11, 12, 13, 14, 15, 16];
 const STEP2_CMS: Array<{ specialty: string; tag: string; forms: number[] }> = [
   { specialty: "Emergency Medicine", tag: "EM", forms: [1, 2, 3] },

@@ -16,8 +16,18 @@ export const Route = createFileRoute("/_authenticated/self-assessments/report")(
 });
 
 type Opt = { key: string; label: string; qbankId: number; sources: string[]; group: string };
-const STEP1_NBMES = [25, 26, 27, 28, 30, 31, 32, 33];
+const STEP1_NBMES = [25, 26, 27, 28, 29, 30, 31, 32, 33];
 const STEP2_NBMES = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+const STEP2_CMS_FORMS: Array<{ specialty: string; tag: string; forms: number[] }> = [
+  { specialty: "Emergency Medicine", tag: "EM",   forms: [1, 2, 3] },
+  { specialty: "Family Medicine",    tag: "FM",   forms: [2, 3, 5] },
+  { specialty: "Internal Medicine",  tag: "IM",   forms: [5, 6, 7, 8, 9, 10] },
+  { specialty: "Neurology",          tag: "NEU",  forms: [5, 6, 7, 8, 9] },
+  { specialty: "Ob/Gyn",             tag: "OBG",  forms: [5, 6, 7, 8, 9, 10] },
+  { specialty: "Pediatrics",         tag: "PEDS", forms: [5, 6, 7, 8, 9] },
+  { specialty: "Psychiatry",         tag: "PSY",  forms: [5, 6, 7, 8] },
+  { specialty: "Surgery",            tag: "SUR",  forms: [5, 6, 7, 8, 9] },
+];
 const qbId = (slug: string) => QBANKS.find((q) => q.slug === slug)?.id ?? 1;
 
 function buildOptions(): Opt[] {
@@ -30,6 +40,11 @@ function buildOptions(): Opt[] {
   for (const n of STEP1_NBMES) out.push({ key: `step1-nbme${n}`, label: `NBME ${n}`, group: "USMLE Step 1", qbankId: s1, sources: [`NBME${n}`] });
   const s2 = qbId("step2");
   for (const n of STEP2_NBMES) out.push({ key: `step2-nbme${n}`, label: `NBME ${n}`, group: "USMLE Step 2 CK", qbankId: s2, sources: [`NBME${n}`] });
+  for (const cms of STEP2_CMS_FORMS) {
+    for (const n of cms.forms) {
+      out.push({ key: `step2-cms-${cms.tag}${n}`, label: `CMS ${cms.specialty} Form ${n}`, group: "USMLE Step 2 CK", qbankId: s2, sources: [`CMS_${cms.tag}${n}`] });
+    }
+  }
   return out;
 }
 const OPTIONS = buildOptions();

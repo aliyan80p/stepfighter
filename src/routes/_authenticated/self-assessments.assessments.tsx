@@ -26,6 +26,17 @@ const NBME_COUNTS: Record<string, number> = {
   NBME8: 200, NBME9: 200, NBME10: 200, NBME11: 200, NBME12: 200,
   NBME13: 200, NBME14: 200, NBME15: 200, NBME16: 200,
 };
+const STEP2_CMS_FORMS: Array<{ specialty: string; tag: string; forms: number[] }> = [
+  { specialty: "Emergency Medicine", tag: "EM",   forms: [1, 2, 3] },
+  { specialty: "Family Medicine",    tag: "FM",   forms: [2, 3, 5] },
+  { specialty: "Internal Medicine",  tag: "IM",   forms: [5, 6, 7, 8, 9, 10] },
+  { specialty: "Neurology",          tag: "NEU",  forms: [5, 6, 7, 8, 9] },
+  { specialty: "Ob/Gyn",             tag: "OBG",  forms: [5, 6, 7, 8, 9, 10] },
+  { specialty: "Pediatrics",         tag: "PEDS", forms: [5, 6, 7, 8, 9] },
+  { specialty: "Psychiatry",         tag: "PSY",  forms: [5, 6, 7, 8] },
+  { specialty: "Surgery",            tag: "SUR",  forms: [5, 6, 7, 8, 9] },
+];
+
 const ASSESSMENTS: Assessment[] = [
   { id: "step1:SA1", label: "UWorld Self Assessment 1", source: "SA1", qbankId: 2, total: 160 },
   { id: "step1:SA2", label: "UWorld Self Assessment 2", source: "SA2", qbankId: 2, total: 159 },
@@ -40,6 +51,15 @@ const ASSESSMENTS: Assessment[] = [
   ...[8, 9, 10, 11, 12, 13, 14, 15, 16].map((n) => ({
     id: `step2:NBME${n}`, label: `NBME ${n}`, source: `NBME${n}`, qbankId: 1, total: NBME_COUNTS[`NBME${n}`],
   })),
+  ...STEP2_CMS_FORMS.flatMap((c) =>
+    c.forms.map((n) => ({
+      id: `step2:CMS_${c.tag}${n}`,
+      label: `CMS ${c.specialty} Form ${n}`,
+      source: `CMS_${c.tag}${n}`,
+      qbankId: 1,
+      total: c.tag === "IM" && n === 6 ? 49 : 50,
+    })),
+  ),
   { id: "step3:SA1", label: "UWorld Self Assessment 1", source: "SA1", qbankId: 3, total: 160 },
   { id: "step3:SA2", label: "UWorld Self Assessment 2", source: "SA2", qbankId: 3, total: 160 },
 ];

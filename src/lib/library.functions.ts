@@ -130,3 +130,82 @@ export const searchLibrary = createServerFn({ method: "GET" })
     }
     return out.slice(0, 60);
   });
+
+/** Find QBank question IDs linked to a Medical Library article via public.refs (ref_type = 18). */
+export const getRelatedLibraryQuestions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ title: z.string().min(1), qbankId: z.number().int().positive() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const cleanTitle = data.title.trim();
+    const { data: rows, error } = await context.supabase
+      .from("refs")
+      .select("question_id")
+      .eq("qbank_id", data.qbankId)
+      .eq("ref_type", 18)
+      .ilike("ref_title", cleanTitle)
+      .limit(100);
+    if (error) throw internalError(error);
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.question_id as number))).filter((n) => n > 0);
+    return { questionIds: ids, count: ids.length };
+  });
+
+/** Load all cloud-synced bookmarks + highlights/notes for the current user. */
+export const listLibraryUserData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: rows, error } = await (context.supabase as any)
+      .from("library_user_data")
+      .select("doc_id,doc_title,bookmarked,note,highlights,updated_at")
+      .eq("user_id", context.userId)
+      .order("updated_at", { ascending: false });
+    if (error) return [];
+    return (rows ?? []) as Array<{
+      doc_id: number;
+      doc_title: string;
+      bookmarked: boolean;
+      note: string;
+      highlights: Array<{ id: string; start: number; end: number; color: string; text: string }>;
+      updated_at: string;
+    }>;
+  });
+
+/** Upsert a user's highlights, study note, and bookmark status for one Medical Library article. */
+export const saveLibraryUserData = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      docId: z.number().int(),
+      docTitle: z.string().default(""),
+      bookmarked: z.boolean(),
+      note: z.string().max(20000).default(""),
+      highlights: z.array(
+        z.object({
+          id: z.string(),
+          start: z.number().int().nonnegative(),
+          end: z.number().int().nonnegative(),
+          color: z.string(),
+          text: z.string().max(500),
+        }),
+      ).max(300).default([]),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await (context.supabase as any)
+      .from("library_user_data")
+      .upsert(
+        {
+          user_id: context.userId,
+          doc_id: data.docId,
+          doc_title: data.docTitle,
+          bookmarked: data.bookmarked,
+          note: data.note,
+          highlights: data.highlights,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,doc_id" },
+      );
+    if (error) return { ok: false };
+    return { ok: true };
+  });

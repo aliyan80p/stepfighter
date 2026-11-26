@@ -965,3 +965,82 @@ export const getAssessmentReport = createServerFn({ method: "GET" })
       subjectBreakdown, systemBreakdown,
     };
   });
+
+/** Aggregate user's NBME, UWSA, and main QBank performance for automatic 3-digit score prediction. */
+export const getScorePredictorData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ qbankId: qb() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Fetch all user attempts for this qbank in paginated 1,000-row batches
+    const attempts: Array<{ question_id: number; is_correct: boolean | null; selected_answer: number | null; created_at: string }> = [];
+    for (let from = 0; ; from += 1000) {
+      const { data: batch, error } = await supabase
+        .from("attempts")
+        .select("question_id,is_correct,selected_answer,created_at")
+        .eq("user_id", userId)
+        .eq("qbank_id", data.qbankId)
+        .order("created_at", { ascending: true })
+        .range(from, from + 999);
+      if (error) throw error;
+      const rows = batch ?? [];
+      attempts.push(...(rows as any));
+      if (rows.length < 1000) break;
+    }
+
+    if (!attempts.length) {
+      return { assessments: [] as Array<{ source: string; attempted: number; correct: number; lastDate: string }>, mainAttempted: 0, mainAccuracy: 0 };
+    }
+
+    // Latest attempt per question
+    const latestByQ = new Map<number, { is_correct: boolean; created_at: string }>();
+    for (const a of attempts) {
+      if (a.selected_answer == null) continue;
+      latestByQ.set(a.question_id, { is_correct: !!a.is_correct, created_at: a.created_at });
+    }
+
+    const qIds = Array.from(latestByQ.keys());
+    const sourceByQ = new Map<number, string>();
+    for (let i = 0; i < qIds.length; i += 500) {
+      const chunk = qIds.slice(i, i + 500);
+      const { data: qRows } = await supabase
+        .from("questions")
+        .select("id,source")
+        .eq("qbank_id", data.qbankId)
+        .in("id", chunk);
+      for (const r of qRows ?? []) {
+        sourceByQ.set(r.id, (r.source ?? "main") as string);
+      }
+    }
+
+    let mainAttempted = 0;
+    let mainCorrect = 0;
+    const bySource = new Map<string, { attempted: number; correct: number; lastDate: string }>();
+
+    for (const [qId, a] of latestByQ.entries()) {
+      const src = sourceByQ.get(qId) ?? "main";
+      if (src === "main") {
+        mainAttempted++;
+        if (a.is_correct) mainCorrect++;
+      } else if (/^(NBME\d+|SA\d+)$/i.test(src)) {
+        const cur = bySource.get(src) ?? { attempted: 0, correct: 0, lastDate: a.created_at };
+        cur.attempted++;
+        if (a.is_correct) cur.correct++;
+        if (a.created_at > cur.lastDate) cur.lastDate = a.created_at;
+        bySource.set(src, cur);
+      }
+    }
+
+    // Only include assessments with at least 20 answered questions for meaningful score prediction
+    const assessments = Array.from(bySource.entries())
+      .filter(([, v]) => v.attempted >= 20)
+      .map(([source, v]) => ({ source, ...v }))
+      .sort((a, b) => a.lastDate.localeCompare(b.lastDate));
+
+    return {
+      assessments,
+      mainAttempted,
+      mainAccuracy: mainAttempted ? Math.round((mainCorrect / mainAttempted) * 100) : 0,
+    };
+  });
