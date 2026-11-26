@@ -59,12 +59,16 @@ function GraphsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["perf-graphs", opt.qbankId, opt.sources?.join(",") ?? "all", days],
     queryFn: () => fn({ data: { qbankId: opt.qbankId, sources: opt.sources, days } }),
+    placeholderData: (prev) => prev,
+    staleTime: 60_000,
   });
 
   const chartsFn = useServerFn(getPerformanceCharts);
   const { data: chartsData } = useQuery({
     queryKey: ["perf-charts", opt.qbankId, opt.sources?.join(",") ?? "all"],
     queryFn: () => chartsFn({ data: { qbankId: opt.qbankId, sources: opt.sources } }),
+    placeholderData: (prev) => prev,
+    staleTime: 60_000,
   });
   const tests = chartsData?.tests ?? [];
   const byTest = tests.map((t: any) => ({ x: String(t.id), y: t.score, label: t.name }));

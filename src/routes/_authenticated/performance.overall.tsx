@@ -86,12 +86,15 @@ function OverallPerformance() {
   const { data, isLoading } = useQuery({
     queryKey: ["perf-overall", opt.qbankId, opt.sources?.join(",") ?? "all"],
     queryFn: () => fn({ data: { qbankId: opt.qbankId, sources: opt.sources } }),
+    placeholderData: (prev) => prev,
+    staleTime: 60_000,
   });
 
   const { data: analysis, isLoading: analysisLoading } = useQuery({
     queryKey: ["perf-overall-analysis", opt.qbankId, opt.sources?.join(",") ?? "all"],
     queryFn: () => graphsFn({ data: { qbankId: opt.qbankId, sources: opt.sources, days: 365 } }),
     enabled: tab === "analysis",
+    placeholderData: (prev) => prev,
     staleTime: 60_000,
   });
 

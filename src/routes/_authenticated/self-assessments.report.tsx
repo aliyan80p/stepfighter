@@ -67,6 +67,8 @@ function ReportPage() {
     queryKey: ["assessment-report", opt?.qbankId, opt?.sources.join(",")],
     queryFn: () => fn({ data: { qbankId: opt!.qbankId, sources: opt!.sources } }),
     enabled: !!opt,
+    placeholderData: (prev) => prev,
+    staleTime: 60_000,
   });
 
   const entFn = useServerFn(getMyEntitlement);

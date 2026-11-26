@@ -13,6 +13,23 @@ export const listQbanks = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+const SOURCE_META_CACHE_TTL_MS = 10 * 60 * 1000;
+const sourceMetaCache = new Map<string, { rows: { id: number; subject_id: number | null }[]; expiresAt: number }>();
+
+async function getCachedSourceQuestionMeta(supabase: any, qbankId: number, sources: string[]) {
+  const key = `${qbankId}:${sources.slice().sort().join(",")}`;
+  const now = Date.now();
+  const hit = sourceMetaCache.get(key);
+  if (hit && hit.expiresAt > now) return hit.rows;
+  const rows = (await fetchAllQuestionRows(supabase, "id,subject_id", { qbankId, sources })) as { id: number; subject_id: number | null }[];
+  if (sourceMetaCache.size >= 60) {
+    const oldest = sourceMetaCache.keys().next().value;
+    if (oldest) sourceMetaCache.delete(oldest);
+  }
+  sourceMetaCache.set(key, { rows, expiresAt: now + SOURCE_META_CACHE_TTL_MS });
+  return rows;
+}
+
 export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ qbankId: qb(), sources: z.array(z.string()).optional() }).parse(d))
@@ -21,15 +38,12 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     const qbankId = data.qbankId;
     const sources = data.sources && data.sources.length ? data.sources : undefined;
 
-    // If sources filter is active, resolve the question id set for those sources within this qbank.
-    let sourceQIdSet: Set<number> | null = null;
-    if (sources) {
-      const qrows = await fetchAllQuestionRows(supabase, "id", { qbankId, sources });
-      sourceQIdSet = new Set(qrows.map((r: any) => r.id as number));
-    }
+    // Fetch (id, subject_id) ONCE (and cache for 10 min) instead of scanning twice
+    const questionMeta = sources ? await getCachedSourceQuestionMeta(supabase, qbankId, sources) : null;
+    const sourceQIdSet = questionMeta ? new Set(questionMeta.map((r) => r.id)) : null;
 
     const questionsCountQ = sources
-      ? supabase.from("questions").select("id", { count: "exact", head: true }).eq("qbank_id", qbankId).in("source", sources)
+      ? Promise.resolve({ count: questionMeta!.length })
       : supabase.from("questions").select("id", { count: "exact", head: true }).eq("qbank_id", qbankId);
 
     // Paginate user attempts in 1,000-row chunks to avoid PostgREST's 1,000-row cap
@@ -82,15 +96,9 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       .eq("id", userId)
       .maybeSingle();
 
-    const [countRes, { data: subjectsRaw }, questionMeta, allAttempts, bookmarks, { data: testsRaw }, { data: profileGoal }] = await Promise.all([
+    const [countRes, { data: subjectsRaw }, allAttempts, bookmarks, { data: testsRaw }, { data: profileGoal }] = await Promise.all([
       questionsCountQ,
       supabase.from("subjects").select("id,name,count").eq("qbank_id", qbankId).order("id"),
-      // Only fetch per-question subject mapping when a source filter is active.
-      // Otherwise the pre-computed `subjects.count` column is accurate and avoids
-      // scanning every row in the qbank on each dashboard load.
-      sources
-        ? fetchAllQuestionRows(supabase, "id,subject_id", { qbankId, sources })
-        : Promise.resolve(null as any),
       fetchAllUserAttempts(),
       fetchBookmarksCount(),
       testsQ,
