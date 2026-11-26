@@ -131,7 +131,10 @@ export const searchLibrary = createServerFn({ method: "GET" })
     return out.slice(0, 60);
   });
 
-/** Find QBank question IDs linked to a Medical Library article via public.refs (ref_type = 18) + questions.title/explanation. */
+const RELATED_CACHE_TTL_MS = 30 * 60 * 1000;
+const relatedCache = new Map<string, { value: { questionIds: number[]; count: number }; expiresAt: number }>();
+
+/** Find QBank question IDs linked to a Medical Library article via public.refs (ref_type = 18) + questions.title (cached). */
 export const getRelatedLibraryQuestions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -139,74 +142,55 @@ export const getRelatedLibraryQuestions = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const cleanTitle = data.title.trim();
+    const cacheKey = `${data.qbankId}:${cleanTitle.toLowerCase()}`;
+    const now = Date.now();
+    const hit = relatedCache.get(cacheKey);
+    if (hit && hit.expiresAt > now) return hit.value;
+
     const esc = (s: string) => s.replace(/[%_]/g, (m) => `\\${m}`);
     const stripped = cleanTitle
       .replace(/^(?:acute|chronic|overview of|approach to|management of|diagnosis of|evaluation of|primary|secondary|congenital|acquired)\s+/i, "")
       .replace(/\s*\([^)]*\)\s*/g, " ")
       .trim();
 
-    const queries: Promise<any>[] = [
-      Promise.resolve(
-        context.supabase
-          .from("refs")
-          .select("question_id")
-          .eq("qbank_id", data.qbankId)
-          .eq("ref_type", 18)
-          .ilike("ref_title", cleanTitle)
-          .limit(100),
-      ),
-      Promise.resolve(
-        context.supabase
-          .from("questions")
-          .select("id")
-          .eq("qbank_id", data.qbankId)
-          .ilike("title", `%${esc(cleanTitle)}%`)
-          .limit(100),
-      ),
-    ];
+    const titlePattern = stripped.length >= 4 && stripped.toLowerCase() !== cleanTitle.toLowerCase()
+      ? `%${esc(stripped)}%`
+      : `%${esc(cleanTitle)}%`;
 
-    if (stripped.length >= 4 && stripped.toLowerCase() !== cleanTitle.toLowerCase()) {
-      queries.push(
-        Promise.resolve(
-          context.supabase
-            .from("questions")
-            .select("id")
-            .eq("qbank_id", data.qbankId)
-            .ilike("title", `%${esc(stripped)}%`)
-            .limit(100),
-        ),
-      );
-    }
-
-    const results = await Promise.all(queries);
-    const idSet = new Set<number>();
-    for (const r of results[0]?.data ?? []) {
-      const id = Number((r as any).question_id);
-      if (id > 0) idSet.add(id);
-    }
-    for (let i = 1; i < results.length; i++) {
-      for (const q of results[i]?.data ?? []) {
-        const id = Number((q as any).id);
-        if (id > 0) idSet.add(id);
-      }
-    }
-
-    // Final fallback: search explanation text if still 0 matches
-    if (idSet.size === 0 && cleanTitle.length >= 5) {
-      const { data: expRows } = await context.supabase
+    const [refRes, titleRes] = await Promise.all([
+      context.supabase
+        .from("refs")
+        .select("question_id")
+        .eq("qbank_id", data.qbankId)
+        .eq("ref_type", 18)
+        .ilike("ref_title", cleanTitle)
+        .limit(50),
+      context.supabase
         .from("questions")
         .select("id")
         .eq("qbank_id", data.qbankId)
-        .ilike("explanation", `%${esc(stripped.length >= 5 ? stripped : cleanTitle)}%`)
-        .limit(25);
-      for (const q of expRows ?? []) {
-        const id = Number((q as any).id);
-        if (id > 0) idSet.add(id);
-      }
+        .ilike("title", titlePattern)
+        .limit(50),
+    ]);
+
+    const idSet = new Set<number>();
+    for (const r of refRes.data ?? []) {
+      const id = Number((r as any).question_id);
+      if (id > 0) idSet.add(id);
+    }
+    for (const q of titleRes.data ?? []) {
+      const id = Number((q as any).id);
+      if (id > 0) idSet.add(id);
     }
 
     const ids = Array.from(idSet);
-    return { questionIds: ids, count: ids.length };
+    const result = { questionIds: ids, count: ids.length };
+    if (relatedCache.size >= 300) {
+      const oldest = relatedCache.keys().next().value;
+      if (oldest) relatedCache.delete(oldest);
+    }
+    relatedCache.set(cacheKey, { value: result, expiresAt: now + RELATED_CACHE_TTL_MS });
+    return result;
   });
 
 /** Load all cloud-synced bookmarks + highlights/notes for the current user. */

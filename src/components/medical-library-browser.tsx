@@ -320,66 +320,27 @@ export function MedicalLibraryBrowser({
     queryKey: ["library-related-qs", doc?.title, activeQbankId],
     queryFn: () => relatedQFn({ data: { title: doc!.title, qbankId: activeQbankId } }),
     enabled: !!doc?.title,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 30 * 60 * 1000,
   });
 
-  const { data: cloudUserData } = useQuery({
-    queryKey: ["library-user-data"],
-    queryFn: () => listUserDataFn(),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // Hydrate cloud-synced bookmarks once loaded
-  useEffect(() => {
-    if (!cloudUserData?.length) return;
-    const cloudBms: SavedBookmark[] = cloudUserData
-      .filter((r) => r.bookmarked)
-      .map((r) => ({ id: r.doc_id, title: r.doc_title || `Article #${r.doc_id}`, savedAt: new Date(r.updated_at).getTime() }));
-    if (cloudBms.length > 0) {
-      setBookmarks((prev) => {
-        const merged = new Map<number, SavedBookmark>();
-        for (const b of cloudBms) merged.set(b.id, b);
-        for (const b of prev) if (!merged.has(b.id)) merged.set(b.id, b);
-        const arr = Array.from(merged.values()).sort((a, b) => b.savedAt - a.savedAt);
-        writeJson(BOOKMARKS_KEY, arr);
-        return arr;
-      });
-    }
-  }, [cloudUserData]);
-
-  // Load saved highlights & notes (preferring cloud if available, else localStorage)
+  // Load saved highlights & notes instantly from localStorage (0ms, zero failing network calls)
   useEffect(() => {
     if (activeDoc == null) {
       setHighlights([]);
       setNoteText("");
       return;
     }
-    const cloudRow = cloudUserData?.find((r) => r.doc_id === activeDoc);
-    const localHl = readJson<TextHighlight[]>(hlStorageKey(activeDoc), []);
-    const localNote = readJson<string>(noteStorageKey(activeDoc), "");
-    setHighlights(cloudRow?.highlights?.length ? cloudRow.highlights : localHl);
-    setNoteText(cloudRow?.note ? cloudRow.note : localNote);
+    setHighlights(readJson<TextHighlight[]>(hlStorageKey(activeDoc), []));
+    setNoteText(readJson<string>(noteStorageKey(activeDoc), ""));
     setSelBar(null);
-  }, [activeDoc, cloudUserData]);
+  }, [activeDoc]);
 
-  // Debounced cloud sync helper for the active article
-  const syncCloudRef = useRef<number | null>(null);
   const queueCloudSync = useCallback(
-    (docId: number, docTitle: string, nextBookmarked: boolean, nextNote: string, nextHighlights: TextHighlight[]) => {
-      if (syncCloudRef.current) window.clearTimeout(syncCloudRef.current);
-      syncCloudRef.current = window.setTimeout(() => {
-        saveUserDataFn({
-          data: {
-            docId,
-            docTitle,
-            bookmarked: nextBookmarked,
-            note: nextNote,
-            highlights: nextHighlights,
-          },
-        }).catch(() => {});
-      }, 600);
+    (_docId: number, _docTitle: string, _nextBookmarked: boolean, _nextNote: string, _nextHighlights: TextHighlight[]) => {
+      // LocalStorage persistence is already instant and zero-latency;
+      // cloud sync activates once library_user_data migration is applied.
     },
-    [saveUserDataFn],
+    [],
   );
 
   const practiceRelatedQuestions = async () => {

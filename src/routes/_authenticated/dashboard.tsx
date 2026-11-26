@@ -26,22 +26,7 @@ function Dashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard", qbankId],
     queryFn: () => fn({ data: { qbankId } }),
-    staleTime: 30_000,
-  });
-
-  const { data: profileGoal } = useQuery({
-    queryKey: ["profile-exam-goal"],
-    queryFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return null;
-      const { data: p } = await supabase
-        .from("profiles")
-        .select("target_exam,target_date")
-        .eq("id", u.user.id)
-        .maybeSingle();
-      return p;
-    },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60_000,
   });
 
   const [editingDate, setEditingDate] = useState(false);
@@ -58,7 +43,7 @@ function Dashboard() {
         .update({ target_date: dateDraft || null, target_exam: activeBank?.name ?? null })
         .eq("id", u.user.id);
       if (error) throw error;
-      qc.invalidateQueries({ queryKey: ["profile-exam-goal"] });
+      qc.invalidateQueries({ queryKey: ["dashboard", qbankId] });
       setEditingDate(false);
       toast.success(dateDraft ? "Exam date saved" : "Exam date cleared");
     } catch (e: any) {
@@ -68,7 +53,8 @@ function Dashboard() {
     }
   };
 
-  const targetDateStr = profileGoal?.target_date ?? null;
+  const targetDateStr = data?.targetDate ?? null;
+  const targetExamName = data?.targetExam ?? activeBank?.name ?? "Exam Day";
   const daysLeft = targetDateStr
     ? Math.ceil((new Date(`${targetDateStr}T00:00:00`).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000)
     : null;
@@ -137,7 +123,7 @@ function Dashboard() {
               {daysLeft != null && daysLeft > 0 ? (
                 <>
                   <div className="text-xs sm:text-sm font-semibold">
-                    <span className="text-primary tabular-nums">{daysLeft} days</span> until {profileGoal?.target_exam || activeBank?.name || "Exam Day"}
+                    <span className="text-primary tabular-nums">{daysLeft} days</span> until {targetExamName}
                     <span className="text-muted-foreground font-normal ml-1.5">({new Date(`${targetDateStr}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })})</span>
                   </div>
                   {dailyPace != null && data && (

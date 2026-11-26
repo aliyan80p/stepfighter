@@ -71,9 +71,18 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       return (bms ?? []).filter((b: any) => sourceQIdSet!.has(b.question_id)).length;
     };
 
-    const testsQ = supabase.from("tests").select("id,done,name,question_ids").eq("user_id", userId).eq("qbank_id", qbankId);
+    const testsQ = supabase
+      .from("tests")
+      .select(sources ? "id,done,name,question_ids" : "id,done")
+      .eq("user_id", userId)
+      .eq("qbank_id", qbankId);
+    const profileQ = supabase
+      .from("profiles")
+      .select("target_exam,target_date")
+      .eq("id", userId)
+      .maybeSingle();
 
-    const [countRes, { data: subjectsRaw }, questionMeta, allAttempts, bookmarks, { data: testsRaw }] = await Promise.all([
+    const [countRes, { data: subjectsRaw }, questionMeta, allAttempts, bookmarks, { data: testsRaw }, { data: profileGoal }] = await Promise.all([
       questionsCountQ,
       supabase.from("subjects").select("id,name,count").eq("qbank_id", qbankId).order("id"),
       // Only fetch per-question subject mapping when a source filter is active.
@@ -85,6 +94,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       fetchAllUserAttempts(),
       fetchBookmarksCount(),
       testsQ,
+      profileQ,
     ]);
     const attempts = sourceQIdSet
       ? allAttempts.filter((a: any) => sourceQIdSet!.has(a.question_id))
@@ -158,6 +168,8 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       bookmarks: bookmarks ?? 0,
       answerChanges: { correctToCorrect: c2c, correctToIncorrect: c2i, incorrectToCorrect: i2c, incorrectToIncorrect: i2i },
       testCount: { created: testsCreated, completed: testsCompleted, suspended: testsSuspended },
+      targetExam: (profileGoal?.target_exam ?? null) as string | null,
+      targetDate: (profileGoal?.target_date ?? null) as string | null,
     };
   });
 

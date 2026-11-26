@@ -1002,14 +1002,20 @@ export const getScorePredictorData = createServerFn({ method: "GET" })
 
     const qIds = Array.from(latestByQ.keys());
     const sourceByQ = new Map<number, string>();
-    for (let i = 0; i < qIds.length; i += 500) {
-      const chunk = qIds.slice(i, i + 500);
-      const { data: qRows } = await supabase
-        .from("questions")
-        .select("id,source")
-        .eq("qbank_id", data.qbankId)
-        .in("id", chunk);
-      for (const r of qRows ?? []) {
+    const chunks: number[][] = [];
+    for (let i = 0; i < qIds.length; i += 500) chunks.push(qIds.slice(i, i + 500));
+    const chunkResults = await Promise.all(
+      chunks.map((chunk) =>
+        supabase
+          .from("questions")
+          .select("id,source")
+          .eq("qbank_id", data.qbankId)
+          .in("id", chunk)
+          .then((r) => r.data ?? []),
+      ),
+    );
+    for (const qRows of chunkResults) {
+      for (const r of qRows) {
         sourceByQ.set(r.id, (r.source ?? "main") as string);
       }
     }
