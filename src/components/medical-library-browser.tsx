@@ -42,6 +42,7 @@ const HIGHLIGHT_COLORS = [
 
 const BOOKMARKS_KEY = "sf:lib:bookmarks:v1";
 const FONT_SIZE_KEY = "sf:lib:fontSize:v1";
+const LAST_DOC_KEY = "sf:lib:lastDoc:v1";
 const hlStorageKey = (docId: number) => `sf:lib:hl:v1:${docId}`;
 const noteStorageKey = (docId: number) => `sf:lib:note:v1:${docId}`;
 
@@ -236,7 +237,16 @@ export function MedicalLibraryBrowser({
 
   const [sidebarTab, setSidebarTab] = useState<"browse" | "saved">("browse");
   const [open, setOpen] = useState<Set<number>>(new Set());
-  const [activeDoc, setActiveDoc] = useState<number | null>(initialDocId ?? null);
+  const [activeDoc, setActiveDoc] = useState<number | null>(() => {
+    if (initialDocId != null) return initialDocId;
+    if (typeof window !== "undefined") {
+      const urlDoc = new URLSearchParams(window.location.search).get("doc");
+      if (urlDoc && /^\d+$/.test(urlDoc)) return Number(urlDoc);
+      const saved = readJson<number | null>(LAST_DOC_KEY, null);
+      if (saved != null && Number.isFinite(saved)) return saved;
+    }
+    return null;
+  });
   const [anchor, setAnchor] = useState<string | null>(null);
   const [query, setQuery] = useState(initialSearch ?? "");
   const [debounced, setDebounced] = useState(initialSearch?.trim() ?? "");
@@ -639,6 +649,12 @@ export function MedicalLibraryBrowser({
 
   const openDoc = (docId: number, section?: string | null) => {
     setActiveDoc(docId);
+    writeJson(LAST_DOC_KEY, docId);
+    if (typeof window !== "undefined" && window.location.pathname === "/medical-library") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("doc", String(docId));
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
     if (section) setAnchor(section);
   };
 

@@ -89,12 +89,28 @@ function AssessmentsPage() {
   }, [availableCourses, courseId]);
 
   const assessmentsForCourse = useMemo(() => ASSESSMENTS.filter((a) => a.qbankId === courseId), [courseId]);
-  const [assessmentId, setAssessmentId] = useState<string>(assessmentsForCourse[0]?.id ?? "");
+  const [assessmentId, setAssessmentId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem(`sf:lastAssessment:${courseId}`);
+      if (saved && assessmentsForCourse.some((a) => a.id === saved)) return saved;
+    }
+    return assessmentsForCourse[0]?.id ?? "";
+  });
   useEffect(() => {
     if (!assessmentsForCourse.find((a) => a.id === assessmentId)) {
-      setAssessmentId(assessmentsForCourse[0]?.id ?? "");
+      const saved = typeof window !== "undefined" ? window.localStorage.getItem(`sf:lastAssessment:${courseId}`) : null;
+      if (saved && assessmentsForCourse.some((a) => a.id === saved)) {
+        setAssessmentId(saved);
+      } else {
+        setAssessmentId(assessmentsForCourse[0]?.id ?? "");
+      }
     }
-  }, [assessmentsForCourse, assessmentId]);
+  }, [assessmentsForCourse, assessmentId, courseId]);
+  useEffect(() => {
+    if (typeof window !== "undefined" && assessmentId) {
+      window.localStorage.setItem(`sf:lastAssessment:${courseId}`, assessmentId);
+    }
+  }, [assessmentId, courseId]);
 
   const [status, setStatus] = useState<"all" | "not_started" | "suspended" | "completed">("all");
 

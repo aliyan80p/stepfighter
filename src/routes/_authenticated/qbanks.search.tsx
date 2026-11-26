@@ -75,11 +75,13 @@ function SearchPage() {
   const autoOpenId = urlSearch.open ? Number(urlSearch.open) : null;
 
   const runSearch = () => {
-    if (!query.trim()) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       toast.error("Enter a question ID or keyword");
       return;
     }
-    mutation.mutate(query);
+    nav({ to: "/qbanks/search", search: { q: trimmed, open: "" }, replace: true });
+    mutation.mutate(trimmed);
   };
 
   // Auto-run search when arriving with ?q=... (e.g. from Notes browser)
