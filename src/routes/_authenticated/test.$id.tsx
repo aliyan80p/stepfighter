@@ -882,13 +882,27 @@ function TestRunner() {
         if (!ok) return;
       }
     }
-    await finFn({ data: { testId } });
+    // Optimistically seed test-results cache so closing a block opens Results in 0ms
+    if (data) {
+      const finishedData = {
+        ...data,
+        test: { ...data.test, done: true },
+      };
+      qc.setQueryData(["test-results", id], finishedData);
+      qc.setQueryData(["test", testId], finishedData);
+    }
     try {
       window.localStorage.removeItem(`test:${id}:idx`);
       window.localStorage.removeItem(`blockStartedAt:${id}`);
       window.localStorage.removeItem(`timedBase:${id}`);
     } catch {}
-    qc.invalidateQueries({ queryKey: ["test", testId] });
+    // Fire finishTest in the background and navigate immediately
+    finFn({ data: { testId } })
+      .then(() => {
+        qc.invalidateQueries({ queryKey: ["tests"] });
+        qc.invalidateQueries({ queryKey: ["dashboard"] });
+      })
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to save test completion"));
     nav({ to: "/test-results/$id", params: { id } });
   };
 

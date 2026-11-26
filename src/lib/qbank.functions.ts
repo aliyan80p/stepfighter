@@ -379,7 +379,6 @@ export const getPoolCount = createServerFn({ method: "POST" })
   });
 
 async function insertTest(supabase: any, userId: string, ids: number[], data: z.infer<typeof CreateTestInput>) {
-  await assertQbankAccess(supabase, userId, data.qbankId);
   const insertRow: any = { user_id: userId, question_ids: ids, mode: data.mode, qbank_id: data.qbankId, timed: !!data.timed };
   if (data.name) insertRow.name = data.name;
   const { data: inserted, error } = await supabase
@@ -441,32 +440,61 @@ export const getTest = createServerFn({ method: "GET" })
     const { data: test, error } = await supabase.from("tests").select("*").eq("id", data.id).eq("user_id", userId).single();
     if (error || !test) throw new Error("Test not found");
     const qbankId = (test.qbank_id ?? 1) as number;
-    await assertQbankAccess(supabase, userId, qbankId);
-    const { data: questions } = await supabase
-      .from("questions")
-      .select("id,title,question,explanation,correct_answer,subject_id,system_id,media_name,other_medias,ppl_taken,corr_taken")
-      .eq("qbank_id", qbankId)
-      .in("id", test.question_ids);
-    const { data: answers } = await supabase
-      .from("answers")
-      .select("id,question_id,answer_index,answer_text,correct_percentage")
-      .eq("qbank_id", qbankId)
-      .in("question_id", test.question_ids)
-      .order("answer_index");
-    const { data: attempts } = await supabase
-      .from("attempts")
-      .select("question_id,selected_answer,is_correct,time_seconds")
-      .eq("user_id", userId)
-      .eq("test_id", data.id);
-    // Prior attempts on the same questions BEFORE this test was created — used for Answer Changes
-    const { data: priorAttemptsRaw } = await supabase
-      .from("attempts")
-      .select("question_id,is_correct,selected_answer,created_at")
-      .eq("user_id", userId)
-      .eq("qbank_id", qbankId)
-      .in("question_id", test.question_ids as number[])
-      .lt("created_at", test.created_at)
-      .order("created_at", { ascending: false });
+    const qIds = test.question_ids as number[];
+
+    // Run entitlement check and all 8 data queries in a single parallel batch (cuts 8 roundtrips -> 1)
+    const [
+      ,
+      { data: questions },
+      { data: answers },
+      { data: attempts },
+      { data: priorAttemptsRaw },
+      { data: bookmarks },
+      { data: subjects },
+      { data: systems },
+      { data: refsRaw },
+    ] = await Promise.all([
+      assertQbankAccess(supabase, userId, qbankId),
+      supabase
+        .from("questions")
+        .select("id,title,question,explanation,correct_answer,subject_id,system_id,media_name,other_medias,ppl_taken,corr_taken")
+        .eq("qbank_id", qbankId)
+        .in("id", qIds),
+      supabase
+        .from("answers")
+        .select("id,question_id,answer_index,answer_text,correct_percentage")
+        .eq("qbank_id", qbankId)
+        .in("question_id", qIds)
+        .order("answer_index"),
+      supabase
+        .from("attempts")
+        .select("question_id,selected_answer,is_correct,time_seconds")
+        .eq("user_id", userId)
+        .eq("test_id", data.id),
+      supabase
+        .from("attempts")
+        .select("question_id,is_correct,selected_answer,created_at")
+        .eq("user_id", userId)
+        .eq("qbank_id", qbankId)
+        .in("question_id", qIds)
+        .lt("created_at", test.created_at)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("bookmarks")
+        .select("question_id")
+        .eq("user_id", userId)
+        .eq("qbank_id", qbankId)
+        .in("question_id", qIds),
+      supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
+      supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
+      supabase
+        .from("refs")
+        .select("id,question_id,ref_title,ref_link,ref_type")
+        .eq("qbank_id", qbankId)
+        .in("question_id", qIds)
+        .order("id"),
+    ]);
+
     const priorByQ: Record<number, { is_correct: boolean; selected_answer: number | null }> = {};
     for (const p of priorAttemptsRaw ?? []) {
       if (priorByQ[p.question_id] === undefined) {
@@ -481,17 +509,6 @@ export const getTest = createServerFn({ method: "GET" })
       else if (!prior.is_correct && a.is_correct) i2c++;
       else if (!prior.is_correct && !a.is_correct) i2i++;
     }
-    const { data: bookmarks } = await supabase.from("bookmarks").select("question_id").eq("user_id", userId).eq("qbank_id", qbankId).in("question_id", test.question_ids);
-    const [{ data: subjects }, { data: systems }, { data: refsRaw }] = await Promise.all([
-      supabase.from("subjects").select("id,name").eq("qbank_id", qbankId),
-      supabase.from("systems").select("id,name").eq("qbank_id", qbankId),
-      supabase
-        .from("refs")
-        .select("id,question_id,ref_title,ref_link,ref_type")
-        .eq("qbank_id", qbankId)
-        .in("question_id", test.question_ids as number[])
-        .order("id"),
-    ]);
     const libTitles = Array.from(
       new Set(
         (refsRaw ?? [])

@@ -700,24 +700,27 @@ a.qbank-media-anchor[data-media-kind="video"]:hover {
   height: auto;
 }
 
-/* Fighter-style inline images: render at their natural size, capped at
-   container width. Do NOT stretch small annotated thumbnails to full width. */
+/* Inline clinical images: render at natural size without stretching small
+   thumbnails, while capping high-resolution (highresdefault_*) images so they
+   stay comfortably readable inline. Clicking opens full-resolution Exhibit Display. */
 .qbank-html img,
 .qbank-deferred-media img,
 .qbank-inline-media-wrap .qbank-inline-media {
   display: block;
-  max-width: 100%;
+  max-width: min(100%, 640px);
+  max-height: 460px;
   width: auto;
   height: auto;
   object-fit: contain;
   margin: 0.5rem auto;
 }
-/* "Maximize images" setting: allow images to fill container up to native res */
+/* "Large images" setting: allow images to expand to full container width */
 .qbank-large-images .qbank-html img,
 .qbank-large-images .qbank-deferred-media img,
 .qbank-large-images .qbank-inline-media-wrap .qbank-inline-media {
-  width: 100%;
+  width: auto;
   max-width: 100%;
+  max-height: none;
 }
 
 /* ---------- Mobile / tablet responsive polish ---------- */
