@@ -131,7 +131,7 @@ export const searchLibrary = createServerFn({ method: "GET" })
     return out.slice(0, 60);
   });
 
-/** Find QBank question IDs linked to a Medical Library article via public.refs (ref_type = 18) + questions.title. */
+/** Find QBank question IDs linked to a Medical Library article via public.refs (ref_type = 18) + questions.title/explanation. */
 export const getRelatedLibraryQuestions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -139,31 +139,72 @@ export const getRelatedLibraryQuestions = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const cleanTitle = data.title.trim();
-    const safeLike = `%${cleanTitle.replace(/[%_]/g, (m) => `\\${m}`)}%`;
-    const [refRes, titleRes] = await Promise.all([
-      context.supabase
-        .from("refs")
-        .select("question_id")
-        .eq("qbank_id", data.qbankId)
-        .eq("ref_type", 18)
-        .ilike("ref_title", cleanTitle)
-        .limit(100),
-      context.supabase
-        .from("questions")
-        .select("id")
-        .eq("qbank_id", data.qbankId)
-        .ilike("title", safeLike)
-        .limit(100),
-    ]);
+    const esc = (s: string) => s.replace(/[%_]/g, (m) => `\\${m}`);
+    const stripped = cleanTitle
+      .replace(/^(?:acute|chronic|overview of|approach to|management of|diagnosis of|evaluation of|primary|secondary|congenital|acquired)\s+/i, "")
+      .replace(/\s*\([^)]*\)\s*/g, " ")
+      .trim();
+
+    const queries: Promise<any>[] = [
+      Promise.resolve(
+        context.supabase
+          .from("refs")
+          .select("question_id")
+          .eq("qbank_id", data.qbankId)
+          .eq("ref_type", 18)
+          .ilike("ref_title", cleanTitle)
+          .limit(100),
+      ),
+      Promise.resolve(
+        context.supabase
+          .from("questions")
+          .select("id")
+          .eq("qbank_id", data.qbankId)
+          .ilike("title", `%${esc(cleanTitle)}%`)
+          .limit(100),
+      ),
+    ];
+
+    if (stripped.length >= 4 && stripped.toLowerCase() !== cleanTitle.toLowerCase()) {
+      queries.push(
+        Promise.resolve(
+          context.supabase
+            .from("questions")
+            .select("id")
+            .eq("qbank_id", data.qbankId)
+            .ilike("title", `%${esc(stripped)}%`)
+            .limit(100),
+        ),
+      );
+    }
+
+    const results = await Promise.all(queries);
     const idSet = new Set<number>();
-    for (const r of refRes.data ?? []) {
+    for (const r of results[0]?.data ?? []) {
       const id = Number((r as any).question_id);
       if (id > 0) idSet.add(id);
     }
-    for (const q of titleRes.data ?? []) {
-      const id = Number((q as any).id);
-      if (id > 0) idSet.add(id);
+    for (let i = 1; i < results.length; i++) {
+      for (const q of results[i]?.data ?? []) {
+        const id = Number((q as any).id);
+        if (id > 0) idSet.add(id);
+      }
     }
+
+    // Final fallback: search explanation text if still 0 matches
+    if (idSet.size === 0 && cleanTitle.length >= 5) {
+      const { data: expRows } = await context.supabase
+        .from("questions")
+        .select("id")
+        .eq("qbank_id", data.qbankId)
+        .ilike("explanation", `%${esc(stripped.length >= 5 ? stripped : cleanTitle)}%`)
+        .limit(25);
+      for (const q of expRows ?? []) {
+        const id = Number((q as any).id);
+        if (id > 0) idSet.add(id);
+      }
+    }
+
     const ids = Array.from(idSet);
     return { questionIds: ids, count: ids.length };
   });
