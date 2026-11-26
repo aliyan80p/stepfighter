@@ -404,6 +404,28 @@ export function MedicalLibraryBrowser({
   };
 
   const tree = useMemo(() => buildTree(toc ?? []), [toc]);
+
+  // Auto-expand ancestor folders in the sidebar for the active article (e.g., after a page refresh)
+  useEffect(() => {
+    if (!toc?.length || activeDoc == null) return;
+    const nodeById = new Map<number, LibraryNode>();
+    for (const n of toc) nodeById.set(n.id, n);
+    const topic = toc.find((n) => n.docId === activeDoc && n.section == null);
+    if (!topic) return;
+    const ancestors: number[] = [];
+    let cur = topic.parentId != null ? nodeById.get(topic.parentId) : undefined;
+    while (cur) {
+      ancestors.push(cur.id);
+      cur = cur.parentId != null ? nodeById.get(cur.parentId) : undefined;
+    }
+    if (ancestors.length > 0) {
+      setOpen((prev) => {
+        const next = new Set(prev);
+        for (const id of ancestors) next.add(id);
+        return next;
+      });
+    }
+  }, [toc, activeDoc]);
   const sections = useMemo(() => {
     if (!toc || activeDoc == null) return [] as LibraryNode[];
     const topic = toc.find((n) => n.docId === activeDoc && n.section == null);
