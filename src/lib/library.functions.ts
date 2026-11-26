@@ -131,7 +131,7 @@ export const searchLibrary = createServerFn({ method: "GET" })
     return out.slice(0, 60);
   });
 
-/** Find QBank question IDs linked to a Medical Library article via public.refs (ref_type = 18). */
+/** Find QBank question IDs linked to a Medical Library article via public.refs (ref_type = 18) + questions.title. */
 export const getRelatedLibraryQuestions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -139,15 +139,32 @@ export const getRelatedLibraryQuestions = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const cleanTitle = data.title.trim();
-    const { data: rows, error } = await context.supabase
-      .from("refs")
-      .select("question_id")
-      .eq("qbank_id", data.qbankId)
-      .eq("ref_type", 18)
-      .ilike("ref_title", cleanTitle)
-      .limit(100);
-    if (error) throw internalError(error);
-    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.question_id as number))).filter((n) => n > 0);
+    const safeLike = `%${cleanTitle.replace(/[%_]/g, (m) => `\\${m}`)}%`;
+    const [refRes, titleRes] = await Promise.all([
+      context.supabase
+        .from("refs")
+        .select("question_id")
+        .eq("qbank_id", data.qbankId)
+        .eq("ref_type", 18)
+        .ilike("ref_title", cleanTitle)
+        .limit(100),
+      context.supabase
+        .from("questions")
+        .select("id")
+        .eq("qbank_id", data.qbankId)
+        .ilike("title", safeLike)
+        .limit(100),
+    ]);
+    const idSet = new Set<number>();
+    for (const r of refRes.data ?? []) {
+      const id = Number((r as any).question_id);
+      if (id > 0) idSet.add(id);
+    }
+    for (const q of titleRes.data ?? []) {
+      const id = Number((q as any).id);
+      if (id > 0) idSet.add(id);
+    }
+    const ids = Array.from(idSet);
     return { questionIds: ids, count: ids.length };
   });
 
