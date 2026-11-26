@@ -162,11 +162,28 @@ export const getDashboardStats = createServerFn({ method: "GET" })
   });
 
 
+type FiltersResult = {
+  subjects: { id: number; name: string; count: number }[];
+  systems: { id: number; name: string; count: number }[];
+  topics: { name: string; count: number; subjectIds: number[]; systemIds: number[] }[];
+  questionMeta: { id: number; title: string; subjectId: number | null; systemId: number | null }[];
+  totalQuestions: number;
+};
+
+const FILTERS_CACHE_TTL_MS = 5 * 60 * 1000;
+const filtersCache = new Map<string, { value: FiltersResult; expiresAt: number }>();
+
 export const getFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ qbankId: qb(), sources: z.array(z.string()).default([]) }).parse(d))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<FiltersResult> => {
     const qbankId = data.qbankId;
+    const cacheKey = `${qbankId}:${data.sources.slice().sort().join(",")}`;
+    const now = Date.now();
+    const hit = filtersCache.get(cacheKey);
+    if (hit && hit.expiresAt > now) {
+      return hit.value;
+    }
     const [{ data: subjectsRaw }, { data: systemsRaw }, qs] = await Promise.all([
       context.supabase.from("subjects").select("id,name").eq("qbank_id", qbankId).order("name"),
       context.supabase.from("systems").select("id,name").eq("qbank_id", qbankId).order("name"),
@@ -198,7 +215,13 @@ export const getFilters = createServerFn({ method: "GET" })
       subjectId: q.subject_id as number | null,
       systemId: q.system_id as number | null,
     }));
-    return { subjects, systems, topics, questionMeta, totalQuestions: questionMeta.length };
+    const result = { subjects, systems, topics, questionMeta, totalQuestions: questionMeta.length };
+    if (filtersCache.size >= 40) {
+      const oldestKey = filtersCache.keys().next().value;
+      if (oldestKey) filtersCache.delete(oldestKey);
+    }
+    filtersCache.set(cacheKey, { value: result, expiresAt: now + FILTERS_CACHE_TTL_MS });
+    return result;
   });
 
 const DifficultySchema = z.enum(["all", "easy", "medium", "hard"]).default("all");

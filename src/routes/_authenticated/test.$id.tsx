@@ -744,6 +744,31 @@ function TestRunner() {
     };
   }, [question?.id, submitted]);
 
+  // Silently prefetch the next question's images in the background so clicking Next renders them instantly
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nextQ = data?.questions?.[idx + 1];
+    if (!nextQ) return;
+    const html = rewriteMedia(`${nextQ.question ?? ""} ${nextQ.explanation ?? ""}`, {
+      qbankId: data?.qbankId,
+      mediaToken,
+    });
+    const srcs = new Set<string>();
+    for (const m of html.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)) {
+      if (m[1]) srcs.add(m[1]);
+      if (srcs.size >= 4) break;
+    }
+    if (srcs.size === 0) return;
+    const timer = window.setTimeout(() => {
+      for (const src of srcs) {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = src;
+      }
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [data?.questions, data?.qbankId, idx, mediaToken]);
+
 
   const optimisticAttempt = (questionId: number, selectedIndex: number, secs: number, isCorrect: boolean) => {
     qc.setQueryData(["test", testId], (old: any) => {

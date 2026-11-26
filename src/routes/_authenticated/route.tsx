@@ -132,18 +132,44 @@ const groups: Group[] = [
   },
 ];
 
+const AUTH_CACHE_TTL_MS = 3 * 60 * 1000;
+let cachedAuth: { user: any; mfaUntil: number; fetchedAt: number } | null = null;
+let authListenerBound = false;
+
+function ensureAuthCacheListener() {
+  if (authListenerBound || typeof window === "undefined") return;
+  authListenerBound = true;
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "SIGNED_IN") {
+      cachedAuth = null;
+    }
+  });
+}
+
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
+    ensureAuthCacheListener();
+    const now = Date.now();
+    if (cachedAuth && now - cachedAuth.fetchedAt < AUTH_CACHE_TTL_MS && cachedAuth.mfaUntil > now) {
+      return { user: cachedAuth.user };
+    }
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
+    if (error || !data.user) {
+      cachedAuth = null;
+      throw redirect({ to: "/auth" });
+    }
     const { data: prof } = await supabase
       .from("profiles")
       .select("mfa_verified_until")
       .eq("id", data.user.id)
       .maybeSingle();
     const until = prof?.mfa_verified_until ? new Date(prof.mfa_verified_until).getTime() : 0;
-    if (until <= Date.now()) throw redirect({ to: "/verify-2fa" });
+    if (until <= now) {
+      cachedAuth = null;
+      throw redirect({ to: "/verify-2fa" });
+    }
+    cachedAuth = { user: data.user, mfaUntil: until, fetchedAt: now };
     return { user: data.user };
   },
   component: AuthedLayout,
@@ -171,9 +197,8 @@ function AuthedLayout() {
   const entQ = useQuery({
     queryKey: ["my-entitlement"],
     queryFn: () => entFn(),
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const trialEnded = entQ.data?.plan === "expired" || (entQ.data?.plan === "trial" && !entQ.data?.is_active);
 
