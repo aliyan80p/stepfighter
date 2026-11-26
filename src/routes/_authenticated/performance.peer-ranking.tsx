@@ -4,7 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getPeerRanking, getPeerCategoryBreakdown } from "@/lib/performance.functions";
 import { QBANKS, useActiveQbankId } from "@/lib/active-qbank";
-import { BarChart3, Users, TrendingUp, Star, ThumbsUp, ThumbsDown, BookOpen, Layers, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  BarChart3, Users, TrendingUp, ThumbsUp, ThumbsDown,
+  BookOpen, Layers, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/performance/peer-ranking")({
   component: PeerRankingPage,
@@ -46,7 +50,8 @@ function PeerRankingPage() {
   const peerFn = useServerFn(getPeerRanking);
   const catFn = useServerFn(getPeerCategoryBreakdown);
   const activeQbankId = useActiveQbankId();
-  const activeSlug = QBANKS.find((q) => q.id === activeQbankId)?.slug ?? "step2";
+  const activeQbank = QBANKS.find((q) => q.id === activeQbankId) ?? QBANKS[0];
+  const activeSlug = activeQbank.slug ?? "step2";
   const filtered = useMemo(() => OPTIONS.filter((o) => o.key.startsWith(`${activeSlug}-`)), [activeSlug]);
   const [optKey, setOptKey] = useState(`${activeSlug}-uw`);
   useEffect(() => {
@@ -64,29 +69,43 @@ function PeerRankingPage() {
   });
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-primary">Peer Ranking</h1>
-          <p className="text-sm text-muted-foreground mt-1">Compare your performance with other students</p>
-        </div>
+    <div className="min-h-screen bg-muted/20">
+      <div className="sf-fluid-page space-y-5">
+        {/* Clinical Studio Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-border">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Peer Ranking</h1>
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                {activeQbank.name}
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Compare your percentile and category accuracy against other students
+            </p>
+          </div>
 
-        <div className="flex items-center gap-3 justify-center">
-          <label className="text-sm text-muted-foreground">QBank</label>
-          <select value={optKey} onChange={(e) => setOptKey(e.target.value)} className="rounded-md border border-border bg-background px-3 py-2 text-sm min-w-[260px]">
-            {filtered.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-          </select>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <label className="text-xs font-medium text-muted-foreground shrink-0">QBank</label>
+            <select
+              value={optKey}
+              onChange={(e) => setOptKey(e.target.value)}
+              className="h-9 min-w-0 flex-1 sm:flex-none sm:min-w-[240px] rounded-lg border border-border bg-card px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {filtered.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+          </div>
         </div>
 
         {error ? (
-          <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">{(error as Error).message}</div>
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">{(error as Error).message}</div>
         ) : isLoading || !data ? (
-          <div className="h-64 rounded-2xl border border-border animate-pulse bg-card" />
+          <div className="h-64 rounded-xl border border-border animate-pulse bg-card" />
         ) : data.totalPeers <= 1 ? (
-          <div className="rounded-2xl bg-card border border-border p-10 text-center">
+          <div className="rounded-xl bg-card border border-border p-10 text-center">
             <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-            <div className="font-semibold">Not enough peers yet</div>
-            <div className="text-sm text-muted-foreground">Peer ranking activates once at least 2 users have attempted this QBank.</div>
+            <div className="font-semibold text-sm">Not enough peers yet</div>
+            <div className="text-xs text-muted-foreground mt-1">Peer ranking activates once at least 2 students have attempted this QBank.</div>
           </div>
         ) : (
           <>
@@ -94,6 +113,7 @@ function PeerRankingPage() {
               yourPct={data.you.accuracy}
               medianPct={data.peers.medianAccuracy}
               percentile={data.percentile.accuracy}
+              totalPeers={data.totalPeers}
             />
 
             <SubjectsPerformanceCard subjects={cat?.subjects ?? []} />
@@ -107,12 +127,11 @@ function PeerRankingPage() {
 }
 
 /* ---------- Percentile bell curve ---------- */
-function PercentileCard({ yourPct, medianPct, percentile }: { yourPct: number; medianPct: number; percentile: number }) {
-  // bell curve path
-  const W = 520, H = 200, cx = W / 2, base = H - 20;
+function PercentileCard({ yourPct, medianPct, percentile, totalPeers }: { yourPct: number; medianPct: number; percentile: number; totalPeers: number }) {
+  const W = 520, H = 190, cx = W / 2, base = H - 20;
   const bell = (x: number) => {
     const t = (x - cx) / (W / 5);
-    return base - Math.exp(-t * t) * (H - 40);
+    return base - Math.exp(-t * t) * (H - 42);
   };
   const path = Array.from({ length: 100 }, (_, i) => {
     const x = (i / 99) * W;
@@ -122,47 +141,50 @@ function PercentileCard({ yourPct, medianPct, percentile }: { yourPct: number; m
   const medianX = W / 2;
 
   return (
-    <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="h-10 w-10 rounded-lg bg-blue-500/15 flex items-center justify-center">
-          <TrendingUp className="h-5 w-5 text-blue-500" />
+    <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-muted/30">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-blue-500/12 text-blue-600 dark:text-blue-400 grid place-items-center">
+            <TrendingUp className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="font-semibold text-sm">Percentile Rank</div>
+            <div className="text-xs text-muted-foreground">Your position across {totalPeers.toLocaleString()} peers</div>
+          </div>
         </div>
-        <div>
-          <div className="font-semibold">Percentile Rank</div>
-          <div className="text-xs text-muted-foreground">Your position compared to other students</div>
-        </div>
+        <span className="inline-flex items-center rounded-md bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 text-xs font-bold tabular-nums">
+          {percentile}th Percentile
+        </span>
       </div>
-      <div className="p-6 bg-muted/40 grid gap-6 md:grid-cols-[1fr_240px] items-center">
+      <div className="p-5 grid gap-6 md:grid-cols-[1fr_250px] items-center">
         <div className="relative">
           <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto">
-            <path d={path} fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} opacity={0.5} />
-            {/* median vertical line */}
-            <line x1={medianX} y1={20} x2={medianX} y2={base} stroke="hsl(217 91% 60%)" strokeWidth={1} />
-            <text x={medianX} y={15} textAnchor="middle" className="fill-blue-500" fontSize={13} fontWeight={600}>50th</text>
-            {/* your point */}
-            <circle cx={youX} cy={bell(youX)} r={7} fill="hsl(142 71% 45%)" stroke="white" strokeWidth={2} />
-            <text x={youX} y={bell(youX) - 12} textAnchor="middle" className="fill-emerald-600" fontSize={13} fontWeight={600}>
+            <path d={path} fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} opacity={0.45} />
+            <line x1={medianX} y1={20} x2={medianX} y2={base} stroke="hsl(217 91% 60%)" strokeWidth={1.2} strokeDasharray="3 3" />
+            <text x={medianX} y={14} textAnchor="middle" className="fill-blue-500" fontSize={12} fontWeight={600}>50th</text>
+            <circle cx={youX} cy={bell(youX)} r={6.5} fill="hsl(142 71% 45%)" stroke="hsl(var(--card))" strokeWidth={2} />
+            <text x={youX} y={bell(youX) - 12} textAnchor="middle" className="fill-emerald-600 dark:fill-emerald-400" fontSize={12} fontWeight={700}>
               {percentile}th
             </text>
           </svg>
         </div>
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <span className="h-3 w-3 rounded-full bg-emerald-500" />
+        <div className="space-y-3">
+          <div className="rounded-lg bg-muted/40 p-3 flex items-center justify-between text-xs font-semibold">
+            <span className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
               Your Score ({percentile}th)
-              <span className="ml-auto bg-emerald-500 text-white text-xs px-2 py-0.5 rounded-md">{yourPct}%</span>
-            </div>
+            </span>
+            <span className="rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 tabular-nums">{yourPct}%</span>
           </div>
-          <div className="border-t border-border pt-3">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <span className="h-3 w-3 rounded-full bg-blue-500" />
+          <div className="rounded-lg bg-muted/40 p-3 flex items-center justify-between text-xs font-semibold">
+            <span className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
               Median Score (50th)
-              <span className="ml-auto bg-blue-500 text-white text-xs px-2 py-0.5 rounded-md">{medianPct}%</span>
-            </div>
+            </span>
+            <span className="rounded-md bg-blue-500/15 text-blue-700 dark:text-blue-300 px-2 py-0.5 tabular-nums">{medianPct}%</span>
           </div>
-          <p className="text-xs text-muted-foreground border-t border-border pt-3">
-            You got a score that is higher than {percentile}% of course subscribers and {100 - percentile}% of course subscribers got a score higher than yours.
+          <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+            You scored higher than <span className="font-semibold text-foreground">{percentile}%</span> of course subscribers.
           </p>
         </div>
       </div>
@@ -178,41 +200,41 @@ function SubjectsPerformanceCard({ subjects }: { subjects: CatRow[] }) {
   const best = attempted.slice().sort((a, b) => (b.you! - a.you!))[0];
   const worst = attempted.slice().sort((a, b) => (a.you! - b.you!))[0];
   return (
-    <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="h-10 w-10 rounded-lg bg-amber-500 flex items-center justify-center">
-          <Star className="h-5 w-5 text-white" />
+    <div className="grid gap-3 md:grid-cols-2">
+      <div className="rounded-xl bg-card border border-border p-4 flex items-center gap-3.5">
+        <div className="h-10 w-10 rounded-lg bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0">
+          <ThumbsUp className="h-5 w-5" />
         </div>
-        <div>
-          <div className="font-semibold">Subjects Performance</div>
-          <div className="text-xs text-muted-foreground">Your strongest and weakest areas</div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Strongest Subject</div>
+          <div className="font-semibold text-sm truncate mt-0.5">{best?.name ?? "—"}</div>
         </div>
+        {best?.you != null && (
+          <span className="rounded-md bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 text-xs font-bold tabular-nums">
+            {best.you.toFixed(0)}%
+          </span>
+        )}
       </div>
-      <div className="p-4 grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-border p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-emerald-500 flex items-center justify-center">
-            <ThumbsUp className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Best Subject</div>
-            <div className="font-semibold">{best?.name ?? "—"}</div>
-          </div>
+
+      <div className="rounded-xl bg-card border border-border p-4 flex items-center gap-3.5">
+        <div className="h-10 w-10 rounded-lg bg-rose-500/12 text-rose-600 dark:text-rose-400 grid place-items-center shrink-0">
+          <ThumbsDown className="h-5 w-5" />
         </div>
-        <div className="rounded-xl border border-border p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-rose-500 flex items-center justify-center">
-            <ThumbsDown className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Worst Subject</div>
-            <div className="font-semibold">{worst?.name ?? "—"}</div>
-          </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Weakest Subject</div>
+          <div className="font-semibold text-sm truncate mt-0.5">{worst?.name ?? "—"}</div>
         </div>
+        {worst?.you != null && (
+          <span className="rounded-md bg-rose-500/12 text-rose-600 dark:text-rose-400 px-2.5 py-1 text-xs font-bold tabular-nums">
+            {worst.you.toFixed(0)}%
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
-/* ---------- Peer ranking by category (tabs + bar chart + search + pagination) ---------- */
+/* ---------- Peer ranking by category ---------- */
 function CategoryRankingCard({ subjects, systems, loading }: { subjects: CatRow[]; systems: CatRow[]; loading: boolean }) {
   const [tab, setTab] = useState<"subjects" | "systems">("subjects");
   const [search, setSearch] = useState("");
@@ -231,45 +253,44 @@ function CategoryRankingCard({ subjects, systems, loading }: { subjects: CatRow[
   useEffect(() => { setPage(1); }, [tab, search]);
 
   return (
-    <div className="rounded-2xl bg-card border border-border shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="h-10 w-10 rounded-lg bg-violet-500/15 flex items-center justify-center">
-          <BarChart3 className="h-5 w-5 text-violet-500" />
+    <div className="rounded-xl bg-card border border-border overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-border bg-muted/30">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded-lg bg-violet-500/12 text-violet-600 dark:text-violet-400 grid place-items-center">
+            <BarChart3 className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="font-semibold text-sm">Peer Comparison by Category</div>
+            <div className="text-xs text-muted-foreground">Compare your accuracy against peers per subject or system</div>
+          </div>
         </div>
-        <div>
-          <div className="font-semibold">Peer Ranking By Categories</div>
-          <div className="text-xs text-muted-foreground">Compare your performance across different categories</div>
+        <div className="inline-flex rounded-lg bg-muted/80 p-1 gap-1">
+          <TabBtn active={tab === "subjects"} onClick={() => setTab("subjects")} icon={<BookOpen className="h-3.5 w-3.5" />} label="Subjects" />
+          <TabBtn active={tab === "systems"} onClick={() => setTab("systems")} icon={<Layers className="h-3.5 w-3.5" />} label="Systems" />
         </div>
       </div>
 
       <div className="p-4 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/50" /> Your Ranking</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Peer Ranking</span>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-blue-500" /> You</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> Peer Average</span>
           </div>
-          <div className="relative">
-            <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative w-full sm:w-64">
+            <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={`Search ${tab === "subjects" ? "Subject" : "System"}...`}
-              className="rounded-full border border-border bg-background pl-9 pr-3 py-1.5 text-sm w-64"
+              placeholder={`Search ${tab === "subjects" ? "subjects" : "systems"}…`}
+              className="h-8 w-full rounded-lg border border-border bg-background pl-8 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
         </div>
 
-        <div className="flex justify-center">
-          <div className="inline-flex rounded-full bg-muted p-1 gap-1">
-            <TabBtn active={tab === "subjects"} onClick={() => setTab("subjects")} icon={<BookOpen className="h-4 w-4" />} label="Subjects" />
-            <TabBtn active={tab === "systems"} onClick={() => setTab("systems")} icon={<Layers className="h-4 w-4" />} label="Systems" />
-          </div>
-        </div>
-
         {loading ? (
-          <div className="h-72 rounded-xl bg-muted animate-pulse" />
+          <div className="h-72 rounded-lg bg-muted animate-pulse" />
         ) : rows.length === 0 ? (
-          <div className="h-32 flex items-center justify-center text-sm text-muted-foreground">No categories to show.</div>
+          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">No categories to show.</div>
         ) : (
           <BarsChart rows={rows} />
         )}
@@ -284,9 +305,10 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5 transition-colors ${
-        active ? "bg-emerald-500 text-white shadow-sm" : "text-foreground hover:bg-background"
-      }`}
+      className={cn(
+        "px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors",
+        active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+      )}
     >
       {icon} {label}
     </button>
@@ -294,21 +316,19 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
 }
 
 function BarsChart({ rows }: { rows: CatRow[] }) {
-  const H = 260;
-  const chartH = 220;
+  const H = 250;
+  const chartH = 210;
   const [hover, setHover] = useState<{ i: number; kind: "you" | "peer" } | null>(null);
 
   return (
-    <div className="relative rounded-xl bg-muted/40 p-4 pt-2 overflow-x-auto">
-      <div className="flex" style={{ minWidth: rows.length * 90 }}>
-        {/* Y axis */}
-        <div className="flex flex-col justify-between text-[10px] text-muted-foreground pr-2" style={{ height: chartH }}>
-          {[100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0].map((n) => <div key={n}>{n}</div>)}
+    <div className="relative rounded-lg bg-muted/30 p-4 pt-2 overflow-x-auto">
+      <div className="flex" style={{ minWidth: rows.length * 86 }}>
+        <div className="flex flex-col justify-between text-[10px] text-muted-foreground pr-2 tabular-nums" style={{ height: chartH }}>
+          {[100, 80, 60, 40, 20, 0].map((n) => <div key={n}>{n}%</div>)}
         </div>
         <div className="flex-1 relative" style={{ height: H }}>
-          {/* grid lines */}
           <div className="absolute inset-0 flex flex-col justify-between" style={{ height: chartH }}>
-            {Array.from({ length: 11 }).map((_, i) => (
+            {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="border-t border-border/60" />
             ))}
           </div>
@@ -317,15 +337,15 @@ function BarsChart({ rows }: { rows: CatRow[] }) {
               const youH = ((r.you ?? 0) / 100) * (chartH - 10);
               const peerH = ((r.peer ?? 0) / 100) * (chartH - 10);
               return (
-                <div key={r.id} className="flex-1 min-w-[60px] flex items-end justify-center gap-1 relative">
+                <div key={r.id} className="flex-1 min-w-[58px] flex items-end justify-center gap-1 relative">
                   {r.you != null && (
                     <div
                       onMouseEnter={() => setHover({ i, kind: "you" })}
                       onMouseLeave={() => setHover(null)}
-                      className="w-4 rounded-t-sm bg-muted-foreground/50 hover:bg-muted-foreground transition-colors relative"
+                      className="w-4 rounded-t-sm bg-blue-500 hover:bg-blue-600 transition-colors relative"
                       style={{ height: youH }}
                     >
-                      {hover?.i === i && hover.kind === "you" && <Tip title={r.name} label="You" value={r.you} color="bg-muted-foreground" />}
+                      {hover?.i === i && hover.kind === "you" && <Tip title={r.name} label="You" value={r.you} color="bg-blue-500" />}
                     </div>
                   )}
                   <div
@@ -334,16 +354,15 @@ function BarsChart({ rows }: { rows: CatRow[] }) {
                     className="w-4 rounded-t-sm bg-emerald-500 hover:bg-emerald-600 transition-colors relative"
                     style={{ height: peerH }}
                   >
-                    {hover?.i === i && hover.kind === "peer" && <Tip title={r.name} label="" value={r.peer} color="bg-emerald-500" />}
+                    {hover?.i === i && hover.kind === "peer" && <Tip title={r.name} label="Peers" value={r.peer} color="bg-emerald-500" />}
                   </div>
                 </div>
               );
             })}
           </div>
-          {/* X labels */}
           <div className="flex gap-4 mt-2">
             {rows.map((r) => (
-              <div key={r.id} className="flex-1 min-w-[60px] text-center">
+              <div key={r.id} className="flex-1 min-w-[58px] text-center">
                 <div className="text-[10px] text-muted-foreground truncate rotate-[-15deg] origin-top-left inline-block" title={r.name}>
                   {r.name}
                 </div>
@@ -363,8 +382,7 @@ function Tip({ title, label, value, color }: { title: string; label: string; val
         <div className="font-semibold">{title}</div>
         <div className="flex items-center gap-1.5">
           <span className={`h-2 w-2 rounded-sm ${color}`} />
-          {label && <span>{label}</span>}
-          <span>{value.toFixed(2)}</span>
+          <span>{label}: {value.toFixed(1)}%</span>
         </div>
       </div>
     </div>
@@ -372,26 +390,27 @@ function Tip({ title, label, value, color }: { title: string; label: string; val
 }
 
 function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
+  if (totalPages <= 1) return null;
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1).slice(
     Math.max(0, page - 3),
     Math.max(0, page - 3) + 5,
   );
-  const btn = "h-8 w-8 rounded-md flex items-center justify-center text-sm hover:bg-muted";
+  const btn = "h-8 w-8 rounded-md flex items-center justify-center text-xs hover:bg-muted disabled:opacity-40";
   return (
-    <div className="flex items-center justify-center gap-1 pt-2">
-      <button className={btn} onClick={() => onChange(1)} disabled={page === 1}><ChevronsLeft className="h-4 w-4" /></button>
-      <button className={btn} onClick={() => onChange(Math.max(1, page - 1))} disabled={page === 1}><ChevronLeft className="h-4 w-4" /></button>
+    <div className="flex items-center justify-center gap-1 pt-1">
+      <button className={btn} onClick={() => onChange(1)} disabled={page === 1}><ChevronsLeft className="h-3.5 w-3.5" /></button>
+      <button className={btn} onClick={() => onChange(Math.max(1, page - 1))} disabled={page === 1}><ChevronLeft className="h-3.5 w-3.5" /></button>
       {pages.map((n) => (
         <button
           key={n}
           onClick={() => onChange(n)}
-          className={`${btn} ${n === page ? "bg-primary/10 text-primary font-semibold" : ""}`}
+          className={cn(btn, n === page && "bg-primary/12 text-primary font-semibold")}
         >
           {n}
         </button>
       ))}
-      <button className={btn} onClick={() => onChange(Math.min(totalPages, page + 1))} disabled={page === totalPages}><ChevronRight className="h-4 w-4" /></button>
-      <button className={btn} onClick={() => onChange(totalPages)} disabled={page === totalPages}><ChevronsRight className="h-4 w-4" /></button>
+      <button className={btn} onClick={() => onChange(Math.min(totalPages, page + 1))} disabled={page === totalPages}><ChevronRight className="h-3.5 w-3.5" /></button>
+      <button className={btn} onClick={() => onChange(totalPages)} disabled={page === totalPages}><ChevronsRight className="h-3.5 w-3.5" /></button>
     </div>
   );
 }
