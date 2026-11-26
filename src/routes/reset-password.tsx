@@ -127,14 +127,18 @@ function ResetPasswordPage() {
           if (error) throw error;
           sessionEstablished = Boolean(data.session);
         } else {
-          // The auth client may already be consuming an implicit recovery hash.
-          // Wait only for the authoritative recovery event; never show an error
-          // and then reverse it into the password form.
-          await Promise.race([
-            recoveryEvent,
-            new Promise<void>((resolve) => window.setTimeout(resolve, 5000)),
-          ]);
-          sessionEstablished = recoveryEventReceived || settledRef.current;
+          // If the auth client already consumed the recovery hash/code before mount,
+          // check the live session immediately instead of waiting for an event.
+          const { data: existing } = await supabase.auth.getSession();
+          if (existing.session) {
+            sessionEstablished = true;
+          } else {
+            await Promise.race([
+              recoveryEvent,
+              new Promise<void>((resolve) => window.setTimeout(resolve, 1200)),
+            ]);
+            sessionEstablished = recoveryEventReceived || settledRef.current;
+          }
         }
 
         if (sessionEstablished) {

@@ -74,10 +74,13 @@ export const requestLoginOtp = createServerFn({ method: 'POST' })
       }
     }
 
-    // Look up caller email
-    const { data: userRes, error: userErr } = await context.supabase.auth.getUser()
-    if (userErr || !userRes?.user?.email) throw new Error('Unable to look up account email')
-    const email = userRes.user.email
+    // Prefer email from the verified JWT claims (0ms) to avoid an extra Auth round-trip.
+    let email = typeof context.claims?.email === 'string' ? context.claims.email : ''
+    if (!email) {
+      const { data: userRes, error: userErr } = await context.supabase.auth.getUser()
+      if (userErr || !userRes?.user?.email) throw new Error('Unable to look up account email')
+      email = userRes.user.email
+    }
 
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
     const expiresAt = new Date(Date.now() + CODE_TTL_MIN * 60 * 1000).toISOString()
